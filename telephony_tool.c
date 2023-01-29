@@ -45,6 +45,12 @@
 #define EVENT_APN_RESTORE_DONE 0x06
 #define EVENT_IP_SETTINGS_QUERY_DONE 0x07
 
+#define EVENT_CHANGE_SIM_PIN_DONE 0x08
+#define EVENT_ENTER_SIM_PIN_DONE 0x09
+#define EVENT_RESET_SIM_PIN_DONE 0x0A
+#define EVENT_LOCK_SIM_PIN_DONE 0x0B
+#define EVENT_UNLOCK_SIM_PIN_DONE 0x0C
+
 /****************************************************************************
  * Public Type Declarations
  ****************************************************************************/
@@ -107,6 +113,19 @@ static int telephonytool_cmd_get_data_roaming(tapi_context context, char* pargs)
 static int telephonytool_cmd_set_data_enabled(tapi_context context, char* pargs);
 static int telephonytool_cmd_get_data_enabled(tapi_context context, char* pargs);
 static int telephonytool_cmd_get_ip_settings(tapi_context context, char* pargs);
+
+/** Sim interface*/
+static int telephonytool_cmd_has_icc_card(tapi_context context, char* pargs);
+static int telephonytool_cmd_get_sim_iccid(tapi_context context, char* pargs);
+static int telephonytool_cmd_get_sim_operator(tapi_context context, char* pargs);
+static int telephonytool_cmd_get_sim_operator_name(tapi_context context, char* pargs);
+static int telephonytool_cmd_change_sim_pin(tapi_context context, char* pargs);
+static int telephonytool_cmd_enter_sim_pin(tapi_context context, char* pargs);
+static int telephonytool_cmd_reset_sim_pin(tapi_context context, char* pargs);
+static int telephonytool_cmd_lock_sim_pin(tapi_context context, char* pargs);
+static int telephonytool_cmd_unlock_sim_pin(tapi_context context, char* pargs);
+static int telephonytool_cmd_listen_sim_state_change(tapi_context context, char* pargs);
+static int telephonytool_cmd_unlisten_sim_state_change(tapi_context context, char* pargs);
 
 /****************************************************************************
  * Private Data
@@ -198,6 +217,30 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         "get ip-settings (enter example : ip-settings 0 1 [slot_id][apn_type])" },
     { "listen-data", telephonytool_cmd_data_register,
         "listen data event (enter example : listen-data 0 1 [slot_id][event_id])" },
+    { "has-icc", telephonytool_cmd_has_icc_card,
+        "has icc card (enter example : has-icc 0 [slot_id])" },
+    { "iccid", telephonytool_cmd_get_sim_iccid,
+        "get sim iccid (enter example : iccid 0 [slot_id])" },
+    { "operator", telephonytool_cmd_get_sim_operator,
+        "get sim operator (mcc+mnc) : operator 0 [slot_id])" },
+    { "operator-name", telephonytool_cmd_get_sim_operator_name,
+        "get sim operator name (enter example : operator-name 0 [slot_id])" },
+    { "change-pin", telephonytool_cmd_change_sim_pin,
+        "change old pin to new pin (enter example : \
+        change-pin 0 pin 1234 2345 [slot_id][pin_type, pin or pin2][old_pin][new_pin])" },
+    { "enter-pin", telephonytool_cmd_enter_sim_pin,
+        "enter pin to verify (enter example : enter-pin 0 pin 1234 [slot_id][pin_type, pin or pin2][pin])" },
+    { "reset-pin", telephonytool_cmd_reset_sim_pin,
+        "using puk reset pin (enter example : \
+        reset-pin 0 puk 12345678 2345 [slot_id][puk_type, puk or puk2][puk][new_pin])" },
+    { "lock-pin", telephonytool_cmd_lock_sim_pin,
+        "active sim lock (enter example : lock-pin 0 pin 1234 [slot_id][pin_type, pin or pin2][pin])" },
+    { "unlock-pin", telephonytool_cmd_unlock_sim_pin,
+        "deactive sim lock (enter example : unlock-pin 0 pin 1234 [slot_id][pin_type, pin or pin2][pin])" },
+    { "listen-sim", telephonytool_cmd_listen_sim_state_change,
+        "register sim state change (enter example : listen-sim 0 [slot_id])" },
+    { "unlisten-sim", telephonytool_cmd_unlisten_sim_state_change,
+        "unregister sim state change (enter example : unlisten-sim 0 [slot_id])" },
     { "q", NULL, "Quit (pls enter : q)" },
     { "help", telephonytool_cmd_help,
         "Show this message (pls enter : help)" },
@@ -1052,6 +1095,310 @@ static int telephonytool_cmd_data_register(tapi_context context, char* pargs)
         atoi(target_state), watch_id);
 
     return watch_id;
+}
+
+static int telephonytool_cmd_has_icc_card(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    bool value;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", NULL);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    tapi_sim_has_icc_card(context, atoi(slot_id), &value);
+
+    printf("%s, slotId : %s value : %d \n", __func__, slot_id, value);
+
+    return 0;
+}
+
+static int telephonytool_cmd_get_sim_iccid(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* iccid;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = pargs;
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    tapi_sim_get_sim_iccid(context, atoi(slot_id), &iccid);
+
+    printf("%s, slotId : %s iccid : %s \n", __func__, slot_id, iccid);
+
+    return 0;
+}
+
+static int telephonytool_cmd_get_sim_operator(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char operator[MAX_MCC_LENGTH + MAX_MNC_LENGTH + 1];
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = pargs;
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    tapi_sim_get_sim_operator(context,
+        atoi(slot_id), (MAX_MCC_LENGTH + MAX_MNC_LENGTH + 1), operator);
+
+    printf("%s, slotId : %s operator : %s \n", __func__, slot_id, operator);
+
+    return 0;
+}
+
+static int telephonytool_cmd_get_sim_operator_name(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* spn;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = pargs;
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    tapi_sim_get_sim_operator_name(context, atoi(slot_id), &spn);
+
+    printf("%s, slotId : %s spn : %s \n", __func__, slot_id, spn);
+
+    return 0;
+}
+
+static int telephonytool_cmd_change_sim_pin(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* pin_type;
+    char* old_pin;
+    char* new_pin;
+    char *temp, *temp2;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &temp);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*temp == ' ')
+        temp++;
+
+    pin_type = strtok_r(temp, " ", &temp2);
+    if (pin_type == NULL)
+        return -EINVAL;
+
+    while (*temp2 == ' ')
+        temp2++;
+
+    old_pin = strtok_r(temp2, " ", &new_pin);
+    if (old_pin == NULL)
+        return -EINVAL;
+
+    while (*new_pin == ' ')
+        new_pin++;
+
+    if (new_pin == NULL)
+        return -EINVAL;
+
+    printf("%s, slot_id: %s pin_type: %s old_pin: %s new_pin: %s \n", __func__, slot_id, pin_type, old_pin, new_pin);
+
+    tapi_sim_change_pin(context, atoi(slot_id),
+        EVENT_CHANGE_SIM_PIN_DONE, pin_type, old_pin, new_pin, tele_call_async_fun);
+
+    return 0;
+}
+
+static int telephonytool_cmd_enter_sim_pin(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* pin_type;
+    char* pin;
+    char* temp;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &temp);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*temp == ' ')
+        temp++;
+
+    pin_type = strtok_r(temp, " ", &pin);
+    if (pin_type == NULL)
+        return -EINVAL;
+
+    while (*pin == ' ')
+        pin++;
+
+    if (pin == NULL)
+        return -EINVAL;
+
+    printf("%s, slot_id: %s pin_type: %s pin: %s \n", __func__, slot_id, pin_type, pin);
+
+    tapi_sim_enter_pin(context, atoi(slot_id),
+        EVENT_ENTER_SIM_PIN_DONE, pin_type, pin, tele_call_async_fun);
+
+    return 0;
+}
+
+static int telephonytool_cmd_reset_sim_pin(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* puk_type;
+    char* puk;
+    char* new_pin;
+    char *temp, *temp2;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &temp);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*temp == ' ')
+        temp++;
+
+    puk_type = strtok_r(temp, " ", &temp2);
+    if (puk_type == NULL)
+        return -EINVAL;
+
+    while (*temp2 == ' ')
+        temp2++;
+
+    puk = strtok_r(temp2, " ", &new_pin);
+    if (puk == NULL)
+        return -EINVAL;
+
+    while (*new_pin == ' ')
+        new_pin++;
+
+    if (new_pin == NULL)
+        return -EINVAL;
+
+    printf("%s, slot_id: %s puk_type: %s puk: %s new_pin: %s \n", __func__, slot_id, puk_type, puk, new_pin);
+
+    tapi_sim_reset_pin(context, atoi(slot_id),
+        EVENT_RESET_SIM_PIN_DONE, puk_type, puk, new_pin, tele_call_async_fun);
+
+    return 0;
+}
+
+static int telephonytool_cmd_lock_sim_pin(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* pin_type;
+    char* pin;
+    char* temp;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &temp);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*temp == ' ')
+        temp++;
+
+    pin_type = strtok_r(temp, " ", &pin);
+    if (pin_type == NULL)
+        return -EINVAL;
+
+    while (*pin == ' ')
+        pin++;
+
+    if (pin == NULL)
+        return -EINVAL;
+
+    printf("%s, slot_id: %s pin_type: %s pin: %s \n", __func__, slot_id, pin_type, pin);
+
+    tapi_sim_lock_pin(context, atoi(slot_id),
+        EVENT_LOCK_SIM_PIN_DONE, pin_type, pin, tele_call_async_fun);
+
+    return 0;
+}
+
+static int telephonytool_cmd_unlock_sim_pin(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* pin_type;
+    char* pin;
+    char* temp;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &temp);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*temp == ' ')
+        temp++;
+
+    pin_type = strtok_r(temp, " ", &pin);
+    if (pin_type == NULL)
+        return -EINVAL;
+
+    while (*pin == ' ')
+        pin++;
+
+    if (pin == NULL)
+        return -EINVAL;
+
+    printf("%s, slot_id: %s pin_type: %s pin: %s \n", __func__, slot_id, pin_type, pin);
+
+    tapi_sim_unlock_pin(context, atoi(slot_id),
+        EVENT_UNLOCK_SIM_PIN_DONE, pin_type, pin, tele_call_async_fun);
+
+    return 0;
+}
+
+static int telephonytool_cmd_listen_sim_state_change(tapi_context context, char* pargs)
+{
+    char* slot_id;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", NULL);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    printf("%s, slotId : %s \n", __func__, slot_id);
+
+    tapi_sim_register_sim_state_change(context, atoi(slot_id), tele_call_async_fun);
+
+    return 0;
+}
+
+static int telephonytool_cmd_unlisten_sim_state_change(tapi_context context, char* pargs)
+{
+    char* watch_id;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    watch_id = strtok_r(pargs, " ", NULL);
+    if (watch_id == NULL)
+        return -EINVAL;
+
+    printf("%s, watch_id : %s \n", __func__, watch_id);
+
+    tapi_sim_unregister_sim_state_change(context, atoi(watch_id));
+
+    return 0;
 }
 
 static int telephonytool_cmd_help(tapi_context context, char* pargs)
