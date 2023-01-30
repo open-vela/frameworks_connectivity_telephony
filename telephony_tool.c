@@ -128,6 +128,20 @@ static int telephonytool_cmd_unlock_sim_pin(tapi_context context, char* pargs);
 static int telephonytool_cmd_listen_sim_state_change(tapi_context context, char* pargs);
 static int telephonytool_cmd_unlisten_sim_state_change(tapi_context context, char* pargs);
 
+/** Sms interface*/
+static int telephonytool_tapi_sms_send_message(tapi_context context, char* pargs);
+static int telephonytool_tapi_sms_send_data_message(tapi_context context, char* pargs);
+static int telephonytool_tapi_sms_get_service_center_number(tapi_context context, char* pargs);
+static int telephonytool_tapi_sms_set_service_center_number(tapi_context context, char* pargs);
+static int telephonytool_tapi_sms_register(tapi_context context, char* pargs);
+static int telephonytool_tapi_sms_copy_message_to_sim(tapi_context context, char* pargs);
+static int telephonytool_tapi_sms_delete_message_from_sim(tapi_context context, char* pargs);
+static int telephonytool_tapi_sms_get_cell_broadcast_power(tapi_context context, char* pargs);
+static int telephonytool_tapi_sms_set_cell_broadcast_power(tapi_context context, char* pargs);
+static int telephonytool_tapi_sms_get_cell_broadcast_topics(tapi_context context, char* pargs);
+static int telephonytool_tapi_sms_set_cell_broadcast_topics(tapi_context context, char* pargs);
+static int telephonytool_tapi_cbs_register(tapi_context context, char* pargs);
+
 /****************************************************************************
  * Private Data
  ****************************************************************************/
@@ -244,6 +258,30 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         "register sim state change (enter example : listen-sim 0 [slot_id])" },
     { "unlisten-sim", telephonytool_cmd_unlisten_sim_state_change,
         "unregister sim state change (enter example : unlisten-sim 0 [slot_id])" },
+    { "send-sms", telephonytool_tapi_sms_send_message,
+        "send message (enter example : send-sms 0 10086 hello)" },
+    { "send-data-sms", telephonytool_tapi_sms_send_data_message,
+        "send message (enter example : send-data-sms 0 10086 hello)" },
+    { "get-service-center-number", telephonytool_tapi_sms_get_service_center_number,
+        "get service center number ? (enter example : get-service-center-number 0)" },
+    { "set-service-center-number", telephonytool_tapi_sms_set_service_center_number,
+        "set service center number ? (enter example : set-service-center-number 0 10086)" },
+    { "register-incoming-sms", telephonytool_tapi_sms_register,
+        "get incoming sms ? (enter example : register-incoming-sms 0)" },
+    { "get-cell-broadcast-power", telephonytool_tapi_sms_get_cell_broadcast_power,
+        "get cell broadcast power ? (enter example : get-cell-broadcast-power 0)" },
+    { "set-cell-broadcast-power", telephonytool_tapi_sms_set_cell_broadcast_power,
+        "set service center number ? (enter example : set-cell-broadcast-power 0 1)" },
+    { "get-cell-broadcast-topics", telephonytool_tapi_sms_get_cell_broadcast_topics,
+        "get cell broadcast topics ? (enter example : get-cell-broadcast-topics 0)" },
+    { "set-cell-broadcast-topics", telephonytool_tapi_sms_set_cell_broadcast_topics,
+        "set cell broadcast topics ? (enter example : set-cell-broadcast-topics 0 1)" },
+    { "register-incoming-cbs", telephonytool_tapi_cbs_register,
+        "get incoming cbs ? (enter example : register-incoming-cbs 0)" },
+    { "copy-sms-to-sim", telephonytool_tapi_sms_copy_message_to_sim,
+        "send message (enter example : copy-sms-to-sim 0 10086 hello)" },
+    { "delete-sms-from-sim", telephonytool_tapi_sms_delete_message_from_sim,
+        "send message (enter example : delete-sms-from-sim 0 1)" },
     { "q", NULL, "Quit (pls enter : q)" },
     { "help", telephonytool_cmd_help,
         "Show this message (pls enter : help)" },
@@ -307,6 +345,10 @@ static void tele_call_ecc_list_async_fun(tapi_async_result* result)
             printf("ecc number : %s \n", ret[i]);
         }
     }
+}
+
+static void tele_sms_async_fun(tapi_async_result* result)
+{
 }
 
 static void modem_list_query_complete(tapi_async_result* result)
@@ -1435,6 +1477,290 @@ static int telephonytool_cmd_unlisten_sim_state_change(tapi_context context, cha
     printf("%s, watch_id : %s \n", __func__, watch_id);
 
     tapi_sim_unregister_sim_state_change(context, atoi(watch_id));
+
+    return 0;
+}
+
+static int telephonytool_tapi_sms_send_message(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* to;
+    char* temp;
+    char* text;
+    int ret;
+
+    if (!strlen(pargs))
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &temp);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*temp == ' ')
+        temp++;
+
+    to = strtok_r(temp, " ", &text);
+    if (to == NULL)
+        return -EINVAL;
+
+    while (*text == ' ')
+        text++;
+
+    if (text == NULL)
+        return -EINVAL;
+
+    printf("%s, slotId : %s  number : %s text: %s \n", __func__, slot_id, to, text);
+    ret = tapi_sms_send_message(context, atoi(slot_id), to, text);
+    return ret;
+}
+
+static int telephonytool_tapi_sms_send_data_message(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* to;
+    char* temp;
+    char* text;
+    int ret;
+
+    if (!strlen(pargs))
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &temp);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*temp == ' ')
+        temp++;
+
+    to = strtok_r(temp, " ", &text);
+    if (to == NULL)
+        return -EINVAL;
+
+    while (*text == ' ')
+        text++;
+
+    if (text == NULL)
+        return -EINVAL;
+
+    printf("%s, slotId : %s  number : %s text: %s port %d \n", __func__, slot_id, to, text, 0);
+    ret = tapi_sms_send_data_message(context, atoi(slot_id), to, 0, text);
+    return ret;
+}
+
+static int telephonytool_tapi_sms_get_service_center_number(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* smsc_addr;
+
+    if (!strlen(pargs))
+        return -EINVAL;
+
+    slot_id = pargs;
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    tapi_sms_get_service_center_address(context, atoi(slot_id), &smsc_addr);
+    printf("%s, slotId : %s  smsc_addr: %s \n", __func__, slot_id, smsc_addr);
+
+    return 0;
+}
+
+static int telephonytool_tapi_sms_set_service_center_number(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* smsc_addr;
+
+    if (!strlen(pargs))
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &smsc_addr);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*smsc_addr == ' ')
+        smsc_addr++;
+
+    if (smsc_addr == NULL)
+        return -EINVAL;
+
+    printf("%s, slotId : %s smsc_addr: %s \n", __func__, slot_id, smsc_addr);
+    tapi_sms_set_service_center_address(context, atoi(slot_id), smsc_addr);
+
+    return 0;
+}
+
+static int telephonytool_tapi_sms_register(tapi_context context, char* pargs)
+{
+    char* slot_id;
+
+    if (!strlen(pargs))
+        return -EINVAL;
+
+    slot_id = pargs;
+    printf("telephonytool_tapi_sms_register slotId : %s\n", slot_id);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    printf("%s, slotId : %s \n", __func__, slot_id);
+    tapi_sms_register(context, atoi(slot_id), MSG_INCOMING_MESSAGE_IND, tele_sms_async_fun);
+
+    return 0;
+}
+
+static int telephonytool_tapi_sms_get_cell_broadcast_power(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    bool state;
+
+    if (!strlen(pargs))
+        return -EINVAL;
+
+    slot_id = pargs;
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    tapi_sms_get_cell_broadcast_power_on(context, atoi(slot_id), &state);
+    printf("%s, slotId : %s state: %d \n", __func__, slot_id, state);
+
+    return 0;
+}
+
+static int telephonytool_tapi_sms_set_cell_broadcast_power(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* state;
+
+    if (!strlen(pargs))
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &state);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*state == ' ')
+        state++;
+
+    if (state == NULL)
+        return -EINVAL;
+
+    printf("%s, slotId : %s state: %s \n", __func__, slot_id, state);
+    tapi_sms_set_cell_broadcast_power_on(context, atoi(slot_id), atoi(state));
+
+    return 0;
+}
+
+static int telephonytool_tapi_sms_get_cell_broadcast_topics(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* cbs_topics;
+
+    if (!strlen(pargs))
+        return -EINVAL;
+
+    slot_id = pargs;
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    tapi_sms_get_cell_broadcast_topics(context, atoi(slot_id), &cbs_topics);
+    printf("%s, slotId : %s  cbs_topics: %s \n", __func__, slot_id, cbs_topics);
+
+    return 0;
+}
+
+static int telephonytool_tapi_sms_set_cell_broadcast_topics(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* cbs_topics;
+
+    if (!strlen(pargs))
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &cbs_topics);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*cbs_topics == ' ')
+        cbs_topics++;
+
+    if (cbs_topics == NULL)
+        return -EINVAL;
+
+    printf("%s, slotId : %s cbs_topics: %s \n", __func__, slot_id, cbs_topics);
+    tapi_sms_set_cell_broadcast_topics(context, atoi(slot_id), cbs_topics);
+
+    return 0;
+}
+
+static int telephonytool_tapi_cbs_register(tapi_context context, char* pargs)
+{
+    char* slot_id;
+
+    if (!strlen(pargs))
+        return -EINVAL;
+
+    slot_id = pargs;
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    printf("%s, slotId : %s \n", __func__, slot_id);
+    tapi_cbs_register(context, atoi(slot_id), MSG_TAPI_INCOMING_CBS_IND, tele_sms_async_fun);
+
+    return 0;
+}
+
+static int telephonytool_tapi_sms_copy_message_to_sim(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* to;
+    char* temp;
+    char* text;
+    int ret;
+
+    if (!strlen(pargs))
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &temp);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*temp == ' ')
+        temp++;
+
+    to = strtok_r(temp, " ", &text);
+    if (to == NULL)
+        return -EINVAL;
+
+    while (*text == ' ')
+        text++;
+
+    if (text == NULL)
+        return -EINVAL;
+
+    printf("%s, slotId : %s  number : %s text: %s port %d \n", __func__, slot_id, to, text, 0);
+    ret = tapi_sms_copy_message_to_sim(context, atoi(slot_id), to, text, "221020081012", 0);
+    return ret;
+}
+
+static int telephonytool_tapi_sms_delete_message_from_sim(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* index;
+
+    if (!strlen(pargs))
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &index);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*index == ' ')
+        index++;
+
+    if (index == NULL)
+        return -EINVAL;
+
+    tapi_sms_delete_message_from_sim(context, atoi(slot_id), index);
+    printf("%s, slotId : %s index: %s \n", __func__, slot_id, index);
 
     return 0;
 }
