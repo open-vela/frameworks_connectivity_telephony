@@ -184,13 +184,24 @@ typedef enum {
 
     // SIM Indication Message
     MSG_SIM_STATE_CHANGE_IND,
+
+    //SMS Indication Message
+    MSG_INCOMING_MESSAGE_IND,
+    MSG_IMMEDIATE_MESSAGE_IND,
+    MSG_STATUS_REPORT_MESSAGE_IND,
+
+    //CBS Indication Message
+    MSG_TAPI_INCOMING_CBS_IND,
+    MSG_TAPI_EMERGENCY_CBS_IND,
 } tapi_indication_msg;
 
 typedef void* tapi_context;
 
 #include <tapi_call.h>
+#include <tapi_cbs.h>
 #include <tapi_data.h>
 #include <tapi_manager.h>
 #include <tapi_sim.h>
+#include <tapi_sms.h>
 
 #endif /* __TELEPHONY_APIS_H */
