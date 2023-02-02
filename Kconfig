@@ -1,0 +1,60 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config TELEPHONY
+	tristate "Enable telephony library"
+	default n
+	---help---
+		Enable telephony library
+
+if TELEPHONY
+
+menu "Active Modem Count"
+
+config ACTIVE_MODEM_COUNT
+	int "active modem count"
+	default 1
+	range 1 2
+
+config MODEM_PATH
+	string "modem path"
+	default "/phonesim"
+	depends on ACTIVE_MODEM_COUNT = 1
+	help
+	modem path
+
+config MODEM_PATH_1
+	string "modem path 1"
+	default "/ril_0"
+	depends on ACTIVE_MODEM_COUNT = 2
+	help
+	modem path 1
+
+config MODEM_PATH_2
+	string "modem path 2"
+	default "/ril_1"
+	depends on ACTIVE_MODEM_COUNT = 2
+	help
+	modem path 2
+
+endmenu
+
+config TELEPHONY_TOOL
+	bool "Telephony tool"
+	default n
+
+if TELEPHONY_TOOL
+
+config TELEPHONY_TOOL_STACKSIZE
+	int "Telephony tool stack size"
+	default 16384
+
+config TELEPHONY_TOOL_PRIORITY
+	int "Telephony tool priority"
+	default 100
+
+endif
+
+endif
