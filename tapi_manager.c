@@ -15,7 +15,6 @@
  */
 
 /****************************************************************************
-
  * Included Files
  ****************************************************************************/
 
@@ -33,37 +32,33 @@
 #include <sys/signalfd.h>
 #include <unistd.h>
 
-#include "tapi.h"
-#include "tapi_internal.h"
-#include "tapi_manager.h"
+#include <tapi.h>
 
+#include "tapi_internal.h"
 
 /****************************************************************************
-
  * Private Functions
  ****************************************************************************/
 
-static void object_add(GDBusProxy *proxy, void *user_data)
+static void object_add(GDBusProxy* proxy, void* user_data)
 {
-
 }
 
-static void object_remove(GDBusProxy *proxy, void *user_data)
+static void object_remove(GDBusProxy* proxy, void* user_data)
 {
-
 }
 
 static void get_dbus_proxy(dbus_context* ctx)
 {
-    char* dbus_proxy_server[DBUS_PROXY_MAX_COUNT] =
-            { OFONO_MODEM_INTERFACE, \
-                OFONO_RADIO_SETTINGS_INTERFACE, \
-                OFONO_VOICECALL_MANAGER_INTERFACE,\
-                OFONO_SIM_MANAGER_INTERFACE,\
-            };
+    const char* dbus_proxy_server[DBUS_PROXY_MAX_COUNT] = {
+        OFONO_MODEM_INTERFACE,
+        OFONO_RADIO_SETTINGS_INTERFACE,
+        OFONO_VOICECALL_MANAGER_INTERFACE,
+        OFONO_SIM_MANAGER_INTERFACE,
+    };
 
     ctx->dbus_proxy_manager = g_dbus_proxy_new(
-            ctx->client, OFONO_MANAGER_PATH, OFONO_MANAGER_INTERFACE);
+        ctx->client, OFONO_MANAGER_PATH, OFONO_MANAGER_INTERFACE);
 
     for (int i = 0; i < CONFIG_ACTIVE_MODEM_COUNT; i++) {
         for (int j = 0; j < DBUS_PROXY_MAX_COUNT; j++) {
@@ -110,7 +105,7 @@ static void modem_property_set_done(const DBusError* error, void* user_data)
     cb(ar);
 }
 
-static void modem_list_query_done(DBusMessage *message, void *user_data)
+static void modem_list_query_done(DBusMessage* message, void* user_data)
 {
     tapi_async_handler* handler = user_data;
     tapi_async_result* ar;
@@ -240,7 +235,6 @@ static void user_data_free(void* user_data)
 }
 
 /****************************************************************************
-
  * Public Functions
  ****************************************************************************/
 
@@ -320,18 +314,18 @@ int tapi_query_modem_list(tapi_context context, char* list[], tapi_async_functio
     proxy = ctx->dbus_proxy_manager;
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
-        return EIO;
+        return -EIO;
     }
 
     handler = malloc(sizeof(tapi_async_handler));
     if (handler == NULL) {
-        return ENOMEM;
+        return -ENOMEM;
     }
 
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
         free(handler);
-        return ENOMEM;
+        return -ENOMEM;
     }
 
     ar->data = list;
@@ -376,17 +370,17 @@ int tapi_set_pref_net_mode(tapi_context context,
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_RADIO];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
-        return EIO;
+        return -EIO;
     }
 
     handler = malloc(sizeof(tapi_async_handler));
     if (handler == NULL)
-        return ENOMEM;
+        return -ENOMEM;
 
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
         free(handler);
-        return ENOMEM;
+        return -ENOMEM;
     }
     handler->result = ar;
 
@@ -396,8 +390,8 @@ int tapi_set_pref_net_mode(tapi_context context,
     rat = tapi_pref_network_mode_to_string(mode);
 
     g_dbus_proxy_set_property_basic(proxy,
-      "TechnologyPreference", DBUS_TYPE_STRING, &rat,
-      modem_property_set_done, handler, user_data_free);
+        "TechnologyPreference", DBUS_TYPE_STRING, &rat,
+        modem_property_set_done, handler, user_data_free);
 
     return 0;
 }
@@ -416,7 +410,7 @@ int tapi_get_pref_net_mode(tapi_context context, int slot_id, tapi_pref_net_mode
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_RADIO];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
-        return EIO;
+        return -EIO;
     }
 
     if (g_dbus_proxy_get_property(proxy, "TechnologyPreference", &iter)) {
@@ -440,7 +434,7 @@ int tapi_reboot_modem(tapi_context context, int slot_id)
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
-        return EIO;
+        return -EIO;
     }
 
     // Power Off
@@ -468,7 +462,7 @@ int tapi_get_imei(tapi_context context, int slot_id, char** out)
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
-        return EIO;
+        return -EIO;
     }
 
     if (g_dbus_proxy_get_property(proxy, "Serial", &iter)) {
@@ -491,7 +485,7 @@ int tapi_get_imeisv(tapi_context context, int slot_id, char** out)
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
-        return EIO;
+        return -EIO;
     }
 
     if (g_dbus_proxy_get_property(proxy, "SoftwareVersionNumber", &iter)) {
@@ -514,7 +508,7 @@ int tapi_get_modem_manufacturer(tapi_context context, int slot_id, char** out)
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
-        return EIO;
+        return -EIO;
     }
 
     if (g_dbus_proxy_get_property(proxy, "Manufacturer", &iter)) {
@@ -537,7 +531,7 @@ int tapi_get_modem_model(tapi_context context, int slot_id, char** out)
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
-        return EIO;
+        return -EIO;
     }
 
     if (g_dbus_proxy_get_property(proxy, "Model", &iter)) {
@@ -560,7 +554,7 @@ int tapi_get_modem_revision(tapi_context context, int slot_id, char** out)
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
-        return EIO;
+        return -EIO;
     }
 
     if (g_dbus_proxy_get_property(proxy, "Revision", &iter)) {
@@ -583,7 +577,7 @@ int tapi_get_phone_state(tapi_context context, int slot_id, tapi_phone_state* st
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
-        return EIO;
+        return -EIO;
     }
 
     if (g_dbus_proxy_get_property(proxy, "PhoneStatus", &iter)) {
@@ -609,17 +603,17 @@ int tapi_set_radio_power(tapi_context context, int slot_id, bool state,
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
-        return EIO;
+        return -EIO;
     }
 
     handler = malloc(sizeof(tapi_async_handler));
     if (handler == NULL)
-        return ENOMEM;
+        return -ENOMEM;
 
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
         free(handler);
-        return ENOMEM;
+        return -ENOMEM;
     }
     handler->result = ar;
 
@@ -647,7 +641,7 @@ int tapi_get_radio_power(tapi_context context, int slot_id, bool* out)
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
-        return EIO;
+        return -EIO;
     }
 
     if (g_dbus_proxy_get_property(proxy, "Online", &iter)) {
@@ -672,7 +666,7 @@ int tapi_get_radio_state(tapi_context context, int slot_id, tapi_radio_state* ou
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
-        return EIO;
+        return -EIO;
     }
 
     result = false;
@@ -716,11 +710,11 @@ int tapi_get_msisdn_number(tapi_context context, int slot_id, char** out)
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
-        return EIO;
+        return -EIO;
     }
 
     if (!g_dbus_proxy_get_property(proxy, "SubscriberNumbers", &iter))
-        return EIO;
+        return -EIO;
 
     if (dbus_message_iter_get_arg_type(&iter) == DBUS_TYPE_ARRAY) {
         DBusMessageIter var_elem;
@@ -746,24 +740,24 @@ int tapi_register(tapi_context context, int slot_id, tapi_indication_msg msg,
     tapi_async_result* ar;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
-        return ERROR;
+        return -EINVAL;
     }
 
     modem_path = tapi_utils_get_modem_path(slot_id);
     if (modem_path == NULL) {
         tapi_log_error("no available modem ...\n");
-        return ERROR;
+        return -EIO;
     }
 
     handler = malloc(sizeof(tapi_async_handler));
     if (handler == NULL)
-        return ERROR;
-    handler->cb_function = p_handle;
+        return -ENOMEM;
 
+    handler->cb_function = p_handle;
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
         free(handler);
-        return ERROR;
+        return -ENOMEM;
     }
     handler->result = ar;
     ar->msg_id = msg;

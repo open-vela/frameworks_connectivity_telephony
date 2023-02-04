@@ -11,8 +11,6 @@ config TELEPHONY
 
 if TELEPHONY
 
-menu "Active Modem Count"
-
 config ACTIVE_MODEM_COUNT
 	int "active modem count"
 	default 1
@@ -22,24 +20,22 @@ config MODEM_PATH
 	string "modem path"
 	default "/phonesim"
 	depends on ACTIVE_MODEM_COUNT = 1
-	help
-	modem path
+	---help---
+		The modem path
 
 config MODEM_PATH_1
 	string "modem path 1"
 	default "/ril_0"
 	depends on ACTIVE_MODEM_COUNT = 2
-	help
-	modem path 1
+	---help---
+		The modem path 1
 
 config MODEM_PATH_2
 	string "modem path 2"
 	default "/ril_1"
 	depends on ACTIVE_MODEM_COUNT = 2
-	help
-	modem path 2
-
-endmenu
+	---help---
+		The modem path 2
 
 config TELEPHONY_TOOL
 	bool "Telephony tool"

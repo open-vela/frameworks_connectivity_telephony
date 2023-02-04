@@ -15,19 +15,18 @@
  */
 
 /****************************************************************************
-
  * Included Files
  ****************************************************************************/
 
-#include <errno.h>
+#include "tapi_call.h"
+#include "tapi_internal.h"
 #include <dbus/dbus.h>
+#include <errno.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <syslog.h>
 #include <string.h>
-#include "tapi_call.h"
-#include "tapi_internal.h"
+#include <syslog.h>
 
 /****************************************************************************
  * Private Type Declarations
@@ -55,7 +54,6 @@ static int tapi_call_signal_normal(DBusMessage* message, tapi_async_handler* han
 static int tapi_call_signal_ecc_list_change(DBusMessage* message, tapi_async_handler* handler);
 
 /****************************************************************************
-
  * Private Functions
  ****************************************************************************/
 
@@ -83,7 +81,6 @@ static void call_param_append(DBusMessageIter* iter, void* user_data)
         return;
     }
 
-    // append arguments
     switch (param->hide_callerid) {
     case 1:
         hide_callerid_str = "enabled";
@@ -134,7 +131,7 @@ static int tapi_swap_call(tapi_context context, int slot_id)
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
-        return EIO;
+        return -EIO;
     }
 
     return g_dbus_proxy_method_call(proxy, "SwapCalls", NULL, NULL, NULL, NULL);
@@ -245,7 +242,7 @@ static int call_property_changed(DBusConnection* connection, DBusMessage* messag
     }
 
     if (dbus_message_is_signal(message, OFONO_VOICECALL_INTERFACE, "DisconnectReason")
-            && msg_id == MSG_CALL_DISCONNECTED_REASON_MESSAGE_IND) {
+        && msg_id == MSG_CALL_DISCONNECTED_REASON_MESSAGE_IND) {
         if (tapi_is_call_signal_message(message, &iter, DBUS_TYPE_STRING)) {
             char* reason_str; //local,remote,network
             dbus_message_iter_get_basic(&iter, &reason_str);
@@ -255,7 +252,7 @@ static int call_property_changed(DBusConnection* connection, DBusMessage* messag
         }
         ret = true;
     } else if (dbus_message_is_signal(message, OFONO_VOICECALL_INTERFACE, "PropertyChanged")
-                && msg_id == MSG_CALL_PROPERTY_CHANGED_MESSAGE_IND) {
+        && msg_id == MSG_CALL_PROPERTY_CHANGED_MESSAGE_IND) {
         if (tapi_is_call_signal_message(message, &iter, DBUS_TYPE_STRING)) {
             DBusMessageIter value_iter;
             char* key;
@@ -271,7 +268,8 @@ static int call_property_changed(DBusConnection* connection, DBusMessage* messag
 
             ar->data = call_property;
             ar->status = OK;
-            tapi_log_debug("call PropertyChanged [%s, %s]", &call_property->key, call_property->value);
+            tapi_log_debug("call PropertyChanged [%s, %s]", call_property->key,
+                (char*)call_property->value);
         }
         ret = true;
     }
@@ -543,7 +541,7 @@ static int decode_voice_call_info(DBusMessageIter* iter, tapi_call_info* call_in
     while (dbus_message_iter_get_arg_type(&subArrayIter) == DBUS_TYPE_DICT_ENTRY) {
         DBusMessageIter entry, value;
         const char* key;
-        void* result;
+        char* result;
         int ret;
 
         dbus_message_iter_recurse(&subArrayIter, &entry);
@@ -592,7 +590,7 @@ static int decode_voice_call_info(DBusMessageIter* iter, tapi_call_info* call_in
             unsigned char val;
             dbus_message_iter_get_basic(&value, &val);
             call_info->icon = val;
-            tapi_log_debug("call Icon: %s \n", val);
+            tapi_log_debug("call Icon: %d \n", val);
         } else if (strcmp(key, "Emergency") == 0) {
             dbus_message_iter_get_basic(&value, &ret);
             call_info->is_emergency_number = ret;
@@ -618,12 +616,12 @@ int tapi_call_dial(tapi_context context, int slot_id, char* number, int hide_cal
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
-        return EIO;
+        return -EIO;
     }
 
     param = malloc(sizeof(call_param));
     if (param == NULL) {
-        return ENOMEM;
+        return -ENOMEM;
     }
     memset(param->number, 0, sizeof(param->number));
     sprintf(param->number, "%s", number);
@@ -661,7 +659,7 @@ int tapi_release_and_answer(tapi_context context, int slot_id)
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
-        return EIO;
+        return -EIO;
     }
 
     return g_dbus_proxy_method_call(proxy, "ReleaseAndAnswer", NULL, NULL, NULL, NULL);
@@ -679,7 +677,7 @@ int tapi_hold_and_answer(tapi_context context, int slot_id)
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
-        return EIO;
+        return -EIO;
     }
 
     return g_dbus_proxy_method_call(proxy, "HoldAndAnswer", NULL, NULL, NULL, NULL);
@@ -704,7 +702,7 @@ int tapi_call_answer_call(tapi_context context, int slot_id, tapi_call_list* cal
         proxy = g_dbus_proxy_new(ctx->client, call_path, OFONO_VOICECALL_INTERFACE);
         if (proxy == NULL) {
             tapi_log_error("ERROR to initialize GDBusProxy for " OFONO_VOICECALL_MANAGER_INTERFACE);
-            return ENODEV;
+            return -ENODEV;
         }
 
         g_dbus_proxy_method_call(proxy, "Answer", NULL, NULL, NULL, NULL);
@@ -756,7 +754,7 @@ int tapi_call_transfer(tapi_context context, int slot_id)
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
-        return EIO;
+        return -EIO;
     }
 
     return g_dbus_proxy_method_call(proxy, "Transfer", NULL, NULL, NULL, NULL);
@@ -774,7 +772,7 @@ int tapi_call_deflect_call(tapi_context context, int slot_id, char* call_id, cha
     proxy = g_dbus_proxy_new(ctx->client, call_id, OFONO_VOICECALL_INTERFACE);
     if (proxy == NULL) {
         tapi_log_error("ERROR to initialize GDBusProxy for " OFONO_VOICECALL_MANAGER_INTERFACE);
-        return ENODEV;
+        return -ENODEV;
     }
 
     g_dbus_proxy_method_call(proxy, "Deflect", deflect_param_append, NULL, call_id, NULL);
@@ -795,7 +793,7 @@ int tapi_call_hangup_all_calls(tapi_context context, int slot_id)
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
-        return EIO;
+        return -EIO;
     }
 
     return g_dbus_proxy_method_call(proxy, "HangupAll", NULL, NULL, NULL, NULL);
@@ -814,7 +812,7 @@ void tapi_call_tapi_get_call_by_state(tapi_context context, int slot_id,
 }
 
 int tapi_call_get_all_calls(tapi_context context, int slot_id,
-        tapi_call_list* list, tapi_async_function p_handle)
+    tapi_call_list* list, tapi_async_function p_handle)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
@@ -828,12 +826,12 @@ int tapi_call_get_all_calls(tapi_context context, int slot_id,
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
-        return EIO;
+        return -EIO;
     }
 
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
-        return ENOMEM;
+        return -ENOMEM;
     }
     ar->arg1 = slot_id;
     ar->data = list;
@@ -841,7 +839,7 @@ int tapi_call_get_all_calls(tapi_context context, int slot_id,
     handler = malloc(sizeof(tapi_async_handler));
     if (handler == NULL) {
         free(ar);
-        return ENOMEM;
+        return -ENOMEM;
     }
     handler->cb_function = p_handle;
     handler->result = ar;
@@ -866,19 +864,19 @@ int tapi_call_merge_call(tapi_context context,
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
-        return EIO;
+        return -EIO;
     }
 
     conf_param = malloc(sizeof(conference_param));
     if (conf_param == NULL) {
-        return ENOMEM;
+        return -ENOMEM;
     }
     conf_param->out = out;
 
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
         free(conf_param);
-        return ENOMEM;
+        return -ENOMEM;
     }
     ar->msg_id = MSG_CALL_MERGE_IND;
     ar->arg1 = slot_id;
@@ -888,7 +886,7 @@ int tapi_call_merge_call(tapi_context context,
     if (handler == NULL) {
         free(conf_param);
         free(ar);
-        return ENOMEM;
+        return -ENOMEM;
     }
     handler->result = ar;
     handler->cb_function = p_handle;
@@ -913,12 +911,12 @@ int tapi_call_separate_call(tapi_context context,
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
-        return EIO;
+        return -EIO;
     }
 
     conf_param = malloc(sizeof(conference_param));
     if (conf_param == NULL) {
-        return ENOMEM;
+        return -ENOMEM;
     }
     memset(conf_param->path, 0, sizeof(conf_param->path));
     sprintf(conf_param->path, "%s", call_id);
@@ -927,7 +925,7 @@ int tapi_call_separate_call(tapi_context context,
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
         free(conf_param);
-        return ENOMEM;
+        return -ENOMEM;
     }
     ar->msg_id = MSG_CALL_SEPERATE_IND;
     ar->arg1 = slot_id;
@@ -937,7 +935,7 @@ int tapi_call_separate_call(tapi_context context,
     if (handler == NULL) {
         free(conf_param);
         free(ar);
-        return ENOMEM;
+        return -ENOMEM;
     }
     handler->cb_function = p_handle;
     handler->result = ar;
@@ -958,7 +956,7 @@ int tapi_call_hangup_multiparty(tapi_context context, int slot_id)
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
-        return EIO;
+        return -EIO;
     }
 
     return g_dbus_proxy_method_call(proxy, "multiparty_hangup",
@@ -977,7 +975,7 @@ int tapi_call_send_tones(void* context, int slot_id, char* tones)
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
-        return EIO;
+        return -EIO;
     }
 
     return g_dbus_proxy_method_call(proxy, "SendTones", tone_param_append, NULL, tones, NULL);
@@ -997,11 +995,11 @@ int tapi_call_get_ecc_list(tapi_context context, int slot_id, char** out, int* s
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
-        return EIO;
+        return -EIO;
     }
 
     if (!g_dbus_proxy_get_property(proxy, "EmergencyNumbers", &list)) {
-        return EIO;
+        return -EIO;
     }
 
     if (dbus_message_iter_get_arg_type(&list) == DBUS_TYPE_ARRAY) {
@@ -1054,11 +1052,12 @@ int tapi_register_call_signal(tapi_context context, int slot_id, char* path, cha
     }
 
     if (path == NULL) {
-        path = tapi_utils_get_modem_path(slot_id);;
+        path = tapi_utils_get_modem_path(slot_id);
+        ;
     }
     if (path == NULL) {
         tapi_log_error("no available modem ...\n");
-        return ENODEV;
+        return -ENODEV;
     }
 
     member = tapi_get_call_signal_member(msg);
@@ -1069,7 +1068,7 @@ int tapi_register_call_signal(tapi_context context, int slot_id, char* path, cha
 
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
-        return ENOMEM;
+        return -ENOMEM;
     }
     ar->msg_id = msg;
     ar->arg1 = slot_id;
@@ -1077,7 +1076,7 @@ int tapi_register_call_signal(tapi_context context, int slot_id, char* path, cha
     handler = malloc(sizeof(tapi_async_handler));
     if (handler == NULL) {
         free(ar);
-        return ENOMEM;
+        return -ENOMEM;
     }
     handler->cb_function = p_handle;
     handler->result = ar;
@@ -1087,7 +1086,7 @@ int tapi_register_call_signal(tapi_context context, int slot_id, char* path, cha
         if (call_property == NULL) {
             free(ar);
             free(handler);
-            return ENOMEM;
+            return -ENOMEM;
         }
         strcpy(call_property->call_path, path);
         ar->data = call_property;
@@ -1129,7 +1128,7 @@ int tapi_register_emergencylist_change(tapi_context context, int slot_id, tapi_a
 
     return tapi_register_call_signal(context, slot_id, NULL,
         OFONO_VOICECALL_MANAGER_INTERFACE, MSG_ECC_LIST_CHANGE_IND,
-            p_handle, call_manager_property_changed);
+        p_handle, call_manager_property_changed);
 }
 
 void tapi_call_tapi_free_call_list(tapi_call_list* head)
