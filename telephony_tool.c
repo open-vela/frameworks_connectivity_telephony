@@ -22,15 +22,15 @@
  * Included Files
  ****************************************************************************/
 
-#include <tapi.h>
 #include <ctype.h>
 #include <errno.h>
+#include <glib.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <system/readline.h>
+#include <tapi.h>
 #include <unistd.h>
-#include <glib.h>
 
 /****************************************************************************
  * Public Type Declarations
@@ -47,7 +47,6 @@ struct telephonytool_cmd_s {
  * Private Function Prototypes
  ****************************************************************************/
 
-static int telephonytool_cmd_quit(tapi_context context, char* pargs);
 static int telephonytool_cmd_help(tapi_context context, char* pargs);
 
 /** Radio interface*/
@@ -86,95 +85,65 @@ static int telephonytool_cmd_is_emergency_number(tapi_context context, char* par
  ****************************************************************************/
 
 static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
-    { "list-modem",
-        telephonytool_cmd_query_modem_list,
+    { "list-modem", telephonytool_cmd_query_modem_list,
         "list available modem list (enter example : list-modem" },
-    { "listen",
-        telephonytool_cmd_modem_register,
+    { "listen", telephonytool_cmd_modem_register,
         "modem event callback (enter example : listen 0 0 \
         [slot_id][event_id, 0:radio_state_change 1:call_added 2:call_removed])" },
-    { "radio-set",
-        telephonytool_cmd_set_radio_power,
+    { "radio-set", telephonytool_cmd_set_radio_power,
         "set radio power (enter example : radio-set 0 1 [slot_id][state, 0:radio off 1:radio on])" },
-    { "radio-get",
-        telephonytool_cmd_get_radio_power,
+    { "radio-get", telephonytool_cmd_get_radio_power,
         "get radio power (enter example : radio-get 0 [slot_id])" },
-    { "dial",
-        telephonytool_cmd_dial,
+    { "dial", telephonytool_cmd_dial,
         "Dial (enter example : dial 0 10086 0 [slot_id][number][hide_call_id, 0:show 1:hide])" },
-    { "answer",
-        telephonytool_cmd_answer_call,
+    { "answer", telephonytool_cmd_answer_call,
         "Answer (enter example : answer 0 0 [slot_id][action:0-answer 1-realse&answer])" },
-    { "swap",
-        telephonytool_cmd_swap_call,
+    { "swap", telephonytool_cmd_swap_call,
         "callSwap (enter example : swap 0 1 [slot_id][action:1-hold 0-unhold])" },
-    { "call_listen",
-        telephonytool_cmd_listen_call_property_change,
+    { "call_listen", telephonytool_cmd_listen_call_property_change,
         "Call_listen (enter example : call_listen 0 [call_event]" },
-    { "hangup_all",
-        telephonytool_cmd_hangup_all,
+    { "hangup_all", telephonytool_cmd_hangup_all,
         "hangup_all (enter example : hangup_all 0 [slot_id])" },
-    { "hangup",
-        telephonytool_cmd_hangup_call,
+    { "hangup", telephonytool_cmd_hangup_call,
         "hangup (enter example : hangup 0 [call_id] /phonesim/voicecall01)" },
-    { "get_call",
-        telephonytool_cmd_get_call,
+    { "get_call", telephonytool_cmd_get_call,
         "get_call (enter example : get_call 0 \
         [slot_id][state], 0-active 1-held 2-dialing 3-alerting 4-incoming 5-waiting)" },
-    { "transfer",
-        telephonytool_cmd_transfer_call,
+    { "transfer", telephonytool_cmd_transfer_call,
         "call transfer  (enter example : transfer 0 [slot_id])" },
-    { "merge",
-        telephonytool_cmd_merge_call,
+    { "merge", telephonytool_cmd_merge_call,
         "call merge  (enter example : merge 0 [slot_id])" },
-    { "separate",
-        telephonytool_cmd_separate_call,
+    { "separate", telephonytool_cmd_separate_call,
         "call separate  (enter example : separate 0 [slot_id][call_id: /phonesim/voicecall01])" },
-    { "get_ecc_list",
-        telephonytool_cmd_get_ecc_list,
+    { "get_ecc_list", telephonytool_cmd_get_ecc_list,
         "get_ecc_list  (enter example : get_ecc_list 0 [slot_id])" },
-    { "is_ecc_num",
-        telephonytool_cmd_is_emergency_number,
+    { "is_ecc_num", telephonytool_cmd_is_emergency_number,
         "is emergency number  (enter example : is_ecc_num 110 [number])" },
-    { "rat-set",
-        telephonytool_cmd_set_rat_mode,
+    { "rat-set", telephonytool_cmd_set_rat_mode,
         "set rat mode (enter example : rat-set 0 9 \
         [slot_id][mode: 0-any 1-gsm_only 2-wcdma_only 3-umts 9-lte_gsm_wcdma 12-lte_wcdma 14-lte_only])" },
-    { "rat-get",
-        telephonytool_cmd_get_rat_mode,
+    { "rat-get", telephonytool_cmd_get_rat_mode,
         "get rat mode (enter example : rat-get 0 [slot_id])" },
-    { "imei-get",
-        telephonytool_cmd_get_imei,
+    { "imei-get", telephonytool_cmd_get_imei,
         "get imei (enter example : imei-get 0 [slot_id])" },
-    { "imeisv-get",
-        telephonytool_cmd_get_imeisv,
+    { "imeisv-get", telephonytool_cmd_get_imeisv,
         "get imeisv (enter example : imeisv-get 0 [slot_id])" },
-    { "phone-state",
-        telephonytool_cmd_get_phone_state,
+    { "phone-state", telephonytool_cmd_get_phone_state,
         "get phone state (enter example : phone-state 0 [slot_id])" },
-    { "modem-reboot",
-        telephonytool_cmd_reboot_modem,
+    { "modem-reboot", telephonytool_cmd_reboot_modem,
         "reboot modem (enter example : modem-reboot 0 [slot_id])" },
-    { "radio-state",
-        telephonytool_cmd_get_radio_state,
+    { "radio-state", telephonytool_cmd_get_radio_state,
         "get radio state (enter example : radio-state 0 [slot_id])" },
-    { "modem_manufacturer",
-        telephonytool_cmd_get_modem_manufacturer,
+    { "modem_manufacturer", telephonytool_cmd_get_modem_manufacturer,
         "get modem manufacturer (enter example : modem_manufacturer 0 [slot_id])" },
-    { "modem_model",
-        telephonytool_cmd_get_modem_model,
+    { "modem_model", telephonytool_cmd_get_modem_model,
         "get modem_model (enter example : modem_model 0 [slot_id])" },
-    { "modem_revision",
-        telephonytool_cmd_get_modem_revision,
+    { "modem_revision", telephonytool_cmd_get_modem_revision,
         "get modem_revision (enter example : modem_revision 0 [slot_id])" },
-    { "line-number",
-        telephonytool_cmd_get_line_number,
+    { "line-number", telephonytool_cmd_get_line_number,
         "query line number (enter example : line-number 0 [slot_id])" },
-    { "q",
-        telephonytool_cmd_quit,
-        "Quit (pls enter : q)" },
-    { "help",
-        telephonytool_cmd_help,
+    { "q", NULL, "Quit (pls enter : q)" },
+    { "help", telephonytool_cmd_help,
         "Show this message (pls enter : help)" },
     { 0 },
 };
@@ -233,7 +202,7 @@ static void call_list_query_complete(tapi_async_result* result)
     if (pHead == NULL)
         return;
 
-    for (tapi_call_list* p = pHead; p != NULL; p = p->next){
+    for (tapi_call_list* p = pHead; p != NULL; p = p->next) {
         printf("call path : %s\n", p->data->call_path);
     }
 
@@ -273,9 +242,9 @@ static int telephonytool_cmd_dial(tapi_context context, char* pargs)
 
 static int telephonytool_cmd_answer_call(tapi_context context, char* pargs)
 {
-    char* slot_id;
-    int type = 0;
     char dst[2][CONFIG_NSH_LINELEN];
+    char* slot_id;
+    int type;
     int cnt;
 
     if (strlen(pargs) == 0)
@@ -283,7 +252,7 @@ static int telephonytool_cmd_answer_call(tapi_context context, char* pargs)
 
     cnt = split(dst, pargs, " ");
     if (cnt != 2)
-        return -1;
+        return -EINVAL;
 
     slot_id = dst[0];
     type = atoi(dst[1]);
@@ -317,8 +286,8 @@ static int telephonytool_cmd_hangup_all(tapi_context context, char* pargs)
 
 static int telephonytool_cmd_hangup_call(tapi_context context, char* pargs)
 {
-    char* slot_id;
     char dst[2][CONFIG_NSH_LINELEN];
+    char* slot_id;
     int cnt = split(dst, pargs, " ");
 
     slot_id = dst[0];
@@ -335,12 +304,12 @@ static int telephonytool_cmd_hangup_call(tapi_context context, char* pargs)
 
 static int telephonytool_cmd_swap_call(tapi_context context, char* pargs)
 {
-    char* slot_id;
     char dst[2][CONFIG_NSH_LINELEN];
+    char* slot_id;
     int cnt = split(dst, pargs, " ");
 
     if (cnt != 2)
-        return -1;
+        return -EINVAL;
 
     slot_id = dst[0];
     printf("%s, slotId : %s\n", __func__, dst[0]);
@@ -356,8 +325,8 @@ static int telephonytool_cmd_swap_call(tapi_context context, char* pargs)
 
 static int telephonytool_cmd_get_call(tapi_context context, char* pargs)
 {
-    char* slot_id;
     char dst[2][CONFIG_NSH_LINELEN];
+    char* slot_id;
     int cnt = split(dst, pargs, " ");
 
     slot_id = dst[0];
@@ -379,7 +348,7 @@ static int telephonytool_cmd_listen_call_property_change(tapi_context context, c
     int cnt = split(dst, pargs, " ");
 
     if (cnt != 1)
-        return -1;
+        return -EINVAL;
 
     printf("%s, cnt : %d\n", __func__, cnt);
     tapi_register_managercall_change(context, 0, MSG_CALL_ADD_MESSAGE_IND, tele_call_async_fun);
@@ -391,12 +360,12 @@ static int telephonytool_cmd_listen_call_property_change(tapi_context context, c
 
 static int telephonytool_cmd_transfer_call(tapi_context context, char* pargs)
 {
-    char* slot_id;
     char dst[5][CONFIG_NSH_LINELEN];
+    char* slot_id;
     int cnt = split(dst, pargs, " ");
 
     if (cnt != 1)
-        return -1;
+        return -EINVAL;
 
     slot_id = dst[0];
     printf("%s, slotId : %s\n", __func__, slot_id);
@@ -407,13 +376,13 @@ static int telephonytool_cmd_transfer_call(tapi_context context, char* pargs)
 
 static int telephonytool_cmd_merge_call(tapi_context context, char* pargs)
 {
+    char dst[5][CONFIG_NSH_LINELEN];
     char* slot_id;
     char* out[5];
-    char dst[5][CONFIG_NSH_LINELEN];
     int cnt = split(dst, pargs, " ");
 
     if (cnt != 1)
-        return -1;
+        return -EINVAL;
 
     slot_id = dst[0];
     printf("%s, slotId : %s\n", __func__, slot_id);
@@ -424,13 +393,13 @@ static int telephonytool_cmd_merge_call(tapi_context context, char* pargs)
 
 static int telephonytool_cmd_separate_call(tapi_context context, char* pargs)
 {
-    char* slot_id;
     char dst[5][CONFIG_NSH_LINELEN];
     char* out[5];
+    char* slot_id;
     int cnt = split(dst, pargs, " ");
 
     if (cnt != 2)
-        return -1;
+        return -EINVAL;
 
     slot_id = dst[0];
     printf("%s, slotId : %s\n", __func__, slot_id);
@@ -441,20 +410,21 @@ static int telephonytool_cmd_separate_call(tapi_context context, char* pargs)
 
 static int telephonytool_cmd_get_ecc_list(tapi_context context, char* pargs)
 {
-    char* slot_id;
     char dst[5][CONFIG_NSH_LINELEN];
     char* out[5];
+    char* slot_id;
     int size = 0;
     int cnt = split(dst, pargs, " ");
+    int i;
 
     if (cnt != 1)
-        return -1;
+        return -EINVAL;
 
     slot_id = dst[0];
     printf("%s, slotId : %s \n", __func__, slot_id);
 
     tapi_call_get_ecc_list(context, atoi(slot_id), out, &size);
-    for (size_t i = 0; i < size; i++) {
+    for (i = 0; i < size; i++) {
         printf("tapi_call_get_ecc_list : %p \n", out[i]);
         printf("tapi_call_get_ecc_list : %s \n", out[i]);
     }
@@ -464,12 +434,12 @@ static int telephonytool_cmd_get_ecc_list(tapi_context context, char* pargs)
 
 static int telephonytool_cmd_is_emergency_number(tapi_context context, char* pargs)
 {
-    int ret = 0;
     char dst[5][CONFIG_NSH_LINELEN];
     int cnt = split(dst, pargs, " ");
+    int ret;
 
     if (cnt != 1)
-        return -1;
+        return -EINVAL;
 
     ret = tapi_is_emergency_number(context, dst[0]);
     printf("%s, ret : %d\n", __func__, ret);
@@ -529,7 +499,8 @@ static int telephonytool_cmd_set_radio_power(tapi_context context, char* pargs)
         return -EINVAL;
 
     printf("%s, slotId : %s target_state: %s \n", __func__, slot_id, target_state);
-    tapi_set_radio_power(context, atoi(slot_id), (bool)atoi(target_state), tele_call_async_fun);
+    tapi_set_radio_power(context, atoi(slot_id),
+        (bool)atoi(target_state), tele_call_async_fun);
 
     return 0;
 }
@@ -570,8 +541,8 @@ static int telephonytool_cmd_set_rat_mode(tapi_context context, char* pargs)
         return -EINVAL;
 
     printf("%s, slotId : %s target_state: %s \n", __func__, slot_id, target_state);
-    tapi_set_pref_net_mode(context,
-        atoi(slot_id), (tapi_pref_net_mode)atoi(target_state), tele_call_async_fun);
+    tapi_set_pref_net_mode(context, atoi(slot_id),
+        (tapi_pref_net_mode)atoi(target_state), tele_call_async_fun);
 
     return 0;
 }
@@ -750,13 +721,8 @@ static int telephonytool_cmd_get_line_number(tapi_context context, char* pargs)
         return -EINVAL;
 
     tapi_get_msisdn_number(context, atoi(slot_id), &number);
-    printf("%s, slotId : %s  number : %s \n", __func__, slot_id , number);
+    printf("%s, slotId : %s  number : %s \n", __func__, slot_id, number);
 
-    return 0;
-}
-
-static int telephonytool_cmd_quit(tapi_context context, char* pargs)
-{
     return 0;
 }
 
@@ -770,17 +736,15 @@ static int telephonytool_cmd_help(tapi_context context, char* pargs)
     return 0;
 }
 
-static int telephonytool_execute(tapi_context context, char* cmd, char* arg)
+static void telephonytool_execute(tapi_context context, char* cmd, char* arg)
 {
-    int ret = 0;
     int i;
 
-    /* Find the command in our cmd array */
     for (i = 0; g_telephonytool_cmds[i].cmd; i++) {
         if (strcmp(cmd, g_telephonytool_cmds[i].cmd) == 0) {
-            ret = g_telephonytool_cmds[i].pfunc(context, arg);
-            if (g_telephonytool_cmds[i].pfunc == telephonytool_cmd_quit)
-                ret = -1;
+            int ret = g_telephonytool_cmds[i].pfunc(context, arg);
+            if (ret < 0)
+                printf("cmd:%s input parameter:%s invalid, res:%d\n", cmd, arg, ret);
 
             break;
         }
@@ -788,16 +752,13 @@ static int telephonytool_execute(tapi_context context, char* cmd, char* arg)
 
     if (i == sizeof(g_telephonytool_cmds) / sizeof(g_telephonytool_cmds[0]) - 1)
         printf("Unknown cmd: \'%s\'. Type 'help' for more infomation.\n", cmd);
-
-    return ret;
 }
 
-static void *read_stdin(pthread_addr_t pvarg)
+static void* read_stdin(pthread_addr_t pvarg)
 {
-    int ret, arg_len, len;
-    char *cmd, *arg;
-    char* buffer;
-    tapi_context context = (void *)pvarg;
+    int arg_len, len;
+    char *cmd, *arg, *buffer;
+    tapi_context context = (void*)pvarg;
 
     buffer = malloc(CONFIG_NSH_LINELEN);
     if (buffer == NULL) {
@@ -834,10 +795,11 @@ static void *read_stdin(pthread_addr_t pvarg)
         while (isspace(arg[arg_len - 1]))
             arg_len--;
 
-        arg[arg_len] = '\0';
-        ret = telephonytool_execute(context, cmd, arg);
-        if (ret == -1)
+        if (strcmp(cmd, "q") == 0)
             break;
+
+        arg[arg_len] = '\0';
+        telephonytool_execute(context, cmd, arg);
     }
 
     free(buffer);
@@ -848,19 +810,18 @@ static void *read_stdin(pthread_addr_t pvarg)
  * Public Functions
  ****************************************************************************/
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
-    const char* tapi_tool_name = "vela.telephony_tools";
     struct sched_param param;
-    GMainLoop *event_loop;
+    GMainLoop* event_loop;
     tapi_context context;
     pthread_attr_t attr;
     pthread_t thread;
     int ret;
 
-    context = tapi_open(tapi_tool_name);
+    context = tapi_open("vale.telephony.tool");
     if (context == NULL) {
-        printf("telephonytool - tapi init error ... ");
+        return 0;
     }
 
     pthread_attr_init(&attr);
@@ -870,13 +831,14 @@ int main(int argc, char *argv[])
 
     ret = pthread_create(&thread, &attr, read_stdin, context);
     if (ret != 0) {
-        tapi_close(context);
-        return ret;
+        goto out;
     }
 
     event_loop = g_main_loop_new(NULL, FALSE);
     g_main_loop_run(event_loop);
     g_main_loop_unref(event_loop);
+
+out:
     tapi_close(context);
-    return 0;
+    return ret;
 }

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021 Xiaomi Corporation
+# Copyright (C) 2023 Xiaomi Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,13 +22,11 @@ CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" $(APPDIR)/external/dbus/dbus}
 CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" $(APPDIR)/external/glib/glib}
 CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" $(APPDIR)/external/glib/glib/glib}
 CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" $(APPDIR)/frameworks/utils/include}
-CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" $(APPDIR)/frameworks/telephony/include}
 CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" $(APPDIR)/frameworks/telephony}
 
-CSRCS   +=  tapi_manager.c \
-            tapi_call.c \
-            tapi_log.c \
-            tapi_utils.c \
+CSRCS  += tapi_manager.c \
+	tapi_call.c \
+	tapi_utils.c \
 
 ifneq ($(CONFIG_TELEPHONY_TOOL),)
 MAINSRC   += telephony_tool.c

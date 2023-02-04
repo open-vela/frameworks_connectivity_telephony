@@ -21,7 +21,19 @@
 #ifndef __TELEPHONY_MANAGER_H
 #define __TELEPHONY_MANAGER_H
 
+/****************************************************************************
+ * Included Files
+ ****************************************************************************/
+
 #include "tapi.h"
+
+/****************************************************************************
+ * Public Function Prototypes
+ ****************************************************************************/
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * Init telephony library.
@@ -198,5 +210,9 @@ int tapi_register(tapi_context context,
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_unregister(tapi_context context, int watch_id);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __TELEPHONY_MANAGER_H */
