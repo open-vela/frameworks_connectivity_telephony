@@ -21,15 +21,23 @@
 #ifndef __TELEPHONY_CALL_H
 #define __TELEPHONY_CALL_H
 
-#include <time.h>
-#include "tapi.h"
+/****************************************************************************
+ * Included Files
+ ****************************************************************************/
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <tapi.h>
+#include <time.h>
+
+/****************************************************************************
+ * Pre-processor Definitions
+ ****************************************************************************/
 
 #define MAX_CALL_PROPERTY_NAME_LENGTH 20
 #define MAX_CALL_PATH_LENGTH 100
+
+/****************************************************************************
+ * Public Types
+ ****************************************************************************/
 
 enum tapi_call_status {
     CALL_STATUS_UNKNOW = -1,
@@ -79,6 +87,14 @@ typedef struct {
     char key[MAX_CALL_PROPERTY_NAME_LENGTH];
     void* value;
 } tapi_call_property;
+
+/****************************************************************************
+ * Public Function Prototypes
+ ****************************************************************************/
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * Make one outgoing call.
@@ -213,7 +229,7 @@ int tapi_call_get_all_calls(tapi_context context, int slot_id,
  * @param[out] info          Pointer or NULL if no any call is existing.
  */
 void tapi_call_tapi_get_call_by_state(tapi_context context, int slot_id,
-        int state, tapi_call_list* call_list, tapi_call_info* info);
+    int state, tapi_call_list* call_list, tapi_call_info* info);
 
 /**
  * Register call state change event

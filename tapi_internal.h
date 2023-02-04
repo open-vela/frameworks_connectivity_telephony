@@ -21,14 +21,31 @@
 #ifndef __TELEPHONY_INTERNAL_H
 #define __TELEPHONY_INTERNAL_H
 
-#include <stdbool.h>
-#include <ofono/dbus.h>
+/****************************************************************************
+ * Included Files
+ ****************************************************************************/
+
 #include <gdbus.h>
+#include <ofono/dbus.h>
+#include <stdbool.h>
+#include <syslog.h>
+
 #include "tapi.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+/****************************************************************************
+ * Pre-processor Definitions
+ ****************************************************************************/
+
+#define tapi_log_info(format, ...) syslog(LOG_INFO, format, ##__VA_ARGS__)
+#define tapi_log_warn(format, ...) syslog(LOG_WARN, format, ##__VA_ARGS__)
+#define tapi_log_error(format, ...) syslog(LOG_ERR, format, ##__VA_ARGS__)
+#define tapi_log_debug(format, ...) syslog(LOG_DEBUG, format, ##__VA_ARGS__)
+
+#define MAX_CONTEXT_NAME_LENGTH 256
+
+/****************************************************************************
+ * Public Types
+ ****************************************************************************/
 
 enum dbus_proxy_type {
     DBUS_PROXY_MODEM = 0,
@@ -37,8 +54,6 @@ enum dbus_proxy_type {
     DBUS_PROXY_SIM,
     DBUS_PROXY_MAX_COUNT,
 };
-
-#define MAX_CONTEXT_NAME_LENGTH 256
 
 typedef struct {
     char name[MAX_CONTEXT_NAME_LENGTH];
@@ -53,16 +68,18 @@ typedef struct {
     tapi_async_function cb_function;
 } tapi_async_handler;
 
-static inline
-bool tapi_is_valid_slotid(int slot_id)
+/****************************************************************************
+ * Public Function Prototypes
+ ****************************************************************************/
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+static inline bool tapi_is_valid_slotid(int slot_id)
 {
     return (slot_id >= 0 && slot_id < CONFIG_ACTIVE_MODEM_COUNT);
 }
-
-void tapi_log_info(const char* format, ...);
-void tapi_log_warn(const char* format, ...);
-void tapi_log_error(const char* format, ...);
-void tapi_log_debug(const char* format, ...);
 
 const char* tapi_pref_network_mode_to_string(tapi_pref_net_mode mode);
 bool tapi_pref_network_mode_from_string(const char* str, tapi_pref_net_mode* mode);
