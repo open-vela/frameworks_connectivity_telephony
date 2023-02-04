@@ -21,13 +21,17 @@
 #ifndef __TELEPHONY_APIS_H
 #define __TELEPHONY_APIS_H
 
+/****************************************************************************
+ * Included Files
+ ****************************************************************************/
+
 #include <errno.h>
 #include <stdbool.h>
 #include <sys/types.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+/****************************************************************************
+ * Pre-processor Definitions
+ ****************************************************************************/
 
 #define MAX_PHONE_NUMBER_LENGTH 80
 #define MAX_CALLER_NAME_LENGTH 80
@@ -45,13 +49,17 @@ extern "C" {
 #define MAX_MCC_LENGTH 3
 #define MAX_MNC_LENGTH 3
 
+#define DEFAULT_SLOT_ID 0
+
+/****************************************************************************
+ * Public Types
+ ****************************************************************************/
+
 typedef enum {
     SLOT_ID_1 = 0,
     SLOT_ID_2,
     SLOT_ID_MAX
 } tapi_slot_id;
-
-#define DEFAULT_SLOT_ID 0
 
 typedef enum {
     FEATURE_VOICE = 0,
@@ -180,11 +188,7 @@ typedef enum {
 
 typedef void* tapi_context;
 
-#include "tapi_call.h"
-#include "tapi_manager.h"
-
-#ifdef __cplusplus
-}
-#endif
+#include <tapi_call.h>
+#include <tapi_manager.h>
 
 #endif /* __TELEPHONY_APIS_H */

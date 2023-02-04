@@ -15,19 +15,18 @@
  */
 
 /****************************************************************************
-
  * Included Files
  ****************************************************************************/
 
+#include <dbus/dbus.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <dbus/dbus.h>
+
 #include "tapi_internal.h"
 
 /****************************************************************************
-
  * Public Functions
  ****************************************************************************/
 
@@ -206,7 +205,7 @@ const char* tapi_get_call_signal_member(tapi_indication_msg msg)
     case MSG_CALL_ADD_MESSAGE_IND:
         return "CallAdded";
     case MSG_CALL_REMOVE_MESSAGE_IND:
-        return"CallRemoved";
+        return "CallRemoved";
     case MSG_CALL_FORWARDED_MESSAGE_IND:
         return "Forwarded";
     case MSG_CALL_BARRING_ACTIVE_MESSAGE_IND:
@@ -224,18 +223,17 @@ const char* tapi_get_call_signal_member(tapi_indication_msg msg)
 
 char* tapi_utils_get_modem_path(int slot_id)
 {
-    switch (slot_id)
-    {
+    switch (slot_id) {
     case SLOT_ID_1:
-        #ifdef CONFIG_MODEM_PATH_1
+#ifdef CONFIG_MODEM_PATH_1
         return CONFIG_MODEM_PATH_1;
-        #else
+#else
         return CONFIG_MODEM_PATH;
-        #endif
+#endif
     case SLOT_ID_2:
-        #ifdef CONFIG_MODEM_PATH_2
+#ifdef CONFIG_MODEM_PATH_2
         return CONFIG_MODEM_PATH_2;
-        #endif
+#endif
     default:
         break;
     }
