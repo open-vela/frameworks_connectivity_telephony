@@ -176,7 +176,7 @@ int tapi_get_modem_revision(tapi_context context, int slot_id, char** out);
  * Get phone state.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
- * @param[out] state         Phone statereturned from modem.
+ * @param[out] state         Phone state returned from modem.
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_get_phone_state(tapi_context context, int slot_id, tapi_phone_state* state);
