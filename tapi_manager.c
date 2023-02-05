@@ -739,7 +739,8 @@ int tapi_register(tapi_context context, int slot_id, tapi_indication_msg msg,
     tapi_async_handler* handler;
     tapi_async_result* ar;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
+        || msg < MSG_RADIO_STATE_CHANGE_IND || msg > MSG_PHONE_STATE_CHANGE_IND) {
         return -EINVAL;
     }
 
@@ -784,7 +785,7 @@ int tapi_register(tapi_context context, int slot_id, tapi_indication_msg msg,
 int tapi_unregister(tapi_context context, int watch_id)
 {
     dbus_context* ctx = context;
-    if (ctx == NULL)
+    if (ctx == NULL || watch_id <= 0)
         return -EINVAL;
 
     return g_dbus_remove_watch(ctx->connection, watch_id);
