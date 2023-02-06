@@ -33,6 +33,14 @@
 #include <unistd.h>
 
 /****************************************************************************
+ * Pre-processor Definitions
+ ****************************************************************************/
+
+#define EVENT_MODEM_LIST_QUERY_DONE 100
+#define EVENT_RADIO_STATE_SET_DONE 101
+#define EVENT_RAT_MODE_SET_DONE 102
+
+/****************************************************************************
  * Public Type Declarations
  ****************************************************************************/
 
@@ -454,7 +462,8 @@ static int telephonytool_cmd_query_modem_list(tapi_context context, char* pargs)
     if (strlen(pargs) > 0)
         return -EINVAL;
 
-    tapi_query_modem_list(context, modem_list, modem_list_query_complete);
+    tapi_query_modem_list(context,
+        EVENT_MODEM_LIST_QUERY_DONE, modem_list, modem_list_query_complete);
     return 0;
 }
 
@@ -500,7 +509,7 @@ static int telephonytool_cmd_set_radio_power(tapi_context context, char* pargs)
 
     printf("%s, slotId : %s target_state: %s \n", __func__, slot_id, target_state);
     tapi_set_radio_power(context, atoi(slot_id),
-        (bool)atoi(target_state), tele_call_async_fun);
+        EVENT_RADIO_STATE_SET_DONE, (bool)atoi(target_state), tele_call_async_fun);
 
     return 0;
 }
@@ -542,7 +551,7 @@ static int telephonytool_cmd_set_rat_mode(tapi_context context, char* pargs)
 
     printf("%s, slotId : %s target_state: %s \n", __func__, slot_id, target_state);
     tapi_set_pref_net_mode(context, atoi(slot_id),
-        (tapi_pref_net_mode)atoi(target_state), tele_call_async_fun);
+        EVENT_RAT_MODE_SET_DONE, (tapi_pref_net_mode)atoi(target_state), tele_call_async_fun);
 
     return 0;
 }

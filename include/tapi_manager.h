@@ -54,10 +54,12 @@ int tapi_close(tapi_context context);
  * Query availble modem list.
  * @param[in] context        Telephony api context.
  * @param[in] list[]         Modem path list container.
+ * @param[in] event_id       Async event identifier.
  * @param[in] p_handle       Event callback.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_query_modem_list(tapi_context context, char* list[], tapi_async_function p_handle);
+int tapi_query_modem_list(tapi_context context,
+    int event_id, char* list[], tapi_async_function p_handle);
 
 /**
  * Check whether the specified feature is supported or not.
@@ -72,14 +74,13 @@ bool tapi_is_feature_supported(tapi_feature_type feature);
  * Set radio power state.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
+ * @param[in] event_id       Async event identifier.
  * @param[in] state          State passed to modem.
  * @param[in] p_handle       Event callback.
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_set_radio_power(tapi_context context,
-    int slot_id,
-    bool state,
-    tapi_async_function p_handle);
+    int slot_id, int event_id, bool state, tapi_async_function p_handle);
 
 /**
  * Get radio power state.
@@ -94,12 +95,13 @@ int tapi_get_radio_power(tapi_context context, int slot_id, bool* out);
  * Set preferred network mode.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
+ * @param[in] event_id       Async event identifier.
  * @param[in] mode           Network mode passed to modem.
  * @param[in] p_handle       Event callback.
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_set_pref_net_mode(tapi_context context,
-    int slot_id, tapi_pref_net_mode mode, tapi_async_function p_handle);
+    int slot_id, int event_id, tapi_pref_net_mode mode, tapi_async_function p_handle);
 
 /**
  * Get preferred network mode.

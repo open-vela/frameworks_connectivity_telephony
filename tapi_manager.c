@@ -304,7 +304,8 @@ int tapi_close(tapi_context context)
     return 0;
 }
 
-int tapi_query_modem_list(tapi_context context, char* list[], tapi_async_function p_handle)
+int tapi_query_modem_list(tapi_context context,
+    int event_id, char* list[], tapi_async_function p_handle)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
@@ -328,6 +329,7 @@ int tapi_query_modem_list(tapi_context context, char* list[], tapi_async_functio
         return -ENOMEM;
     }
 
+    ar->msg_id = event_id;
     ar->data = list;
     handler->result = ar;
     handler->cb_function = p_handle;
@@ -355,7 +357,7 @@ bool tapi_is_feature_supported(tapi_feature_type feature)
 }
 
 int tapi_set_pref_net_mode(tapi_context context,
-    int slot_id, tapi_pref_net_mode mode, tapi_async_function p_handle)
+    int slot_id, int event_id, tapi_pref_net_mode mode, tapi_async_function p_handle)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
@@ -384,6 +386,7 @@ int tapi_set_pref_net_mode(tapi_context context,
     }
     handler->result = ar;
 
+    ar->msg_id = event_id;
     ar->arg1 = slot_id;
     handler->cb_function = p_handle;
     ar->data = "TechnologyPreference";
@@ -587,8 +590,8 @@ int tapi_get_phone_state(tapi_context context, int slot_id, tapi_phone_state* st
     return 0;
 }
 
-int tapi_set_radio_power(tapi_context context, int slot_id, bool state,
-    tapi_async_function p_handle)
+int tapi_set_radio_power(tapi_context context,
+    int slot_id, int event_id, bool state, tapi_async_function p_handle)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
@@ -617,6 +620,7 @@ int tapi_set_radio_power(tapi_context context, int slot_id, bool state,
     }
     handler->result = ar;
 
+    ar->msg_id = event_id;
     ar->arg1 = slot_id;
     handler->cb_function = p_handle;
 
@@ -730,8 +734,8 @@ int tapi_get_msisdn_number(tapi_context context, int slot_id, char** out)
     return 0;
 }
 
-int tapi_register(tapi_context context, int slot_id, tapi_indication_msg msg,
-    tapi_async_function p_handle)
+int tapi_register(tapi_context context,
+    int slot_id, tapi_indication_msg msg, tapi_async_function p_handle)
 {
     dbus_context* ctx = context;
     char* modem_path;
