@@ -259,10 +259,9 @@ int tapi_register_call_info_change(tapi_context context, int slot_id, char* call
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[out] out           Ecc list container.
- * @param[in] size           Size of ecc list container.
- * @return Zero on success; a negated errno value on failure.
+ * @return size of ecc list on success; a negated errno value on failure.
  */
-int tapi_call_get_ecc_list(tapi_context context, int slot_id, char** out, int* size);
+int tapi_call_get_ecc_list(tapi_context context, int slot_id, char** out);
 
 /**
  * Check whether one give number is one emergency number or not

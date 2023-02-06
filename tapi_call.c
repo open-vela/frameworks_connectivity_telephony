@@ -333,16 +333,13 @@ static void merge_call_complete(DBusMessage* message, void* user_data)
     conf_param = ar->data;
     call_path_list = (char**)conf_param->out;
     while (dbus_message_iter_get_arg_type(&list) == DBUS_TYPE_OBJECT_PATH) {
-        char* property;
-        dbus_message_iter_get_basic(&list, &property); // object path
-        tapi_log_debug("merge_call_complete path %s", property);
-        call_path_list[index] = strdup(property);
-        index++;
+
+        dbus_message_iter_get_basic(&list, &call_path_list[index++]); // object path
         dbus_message_iter_next(&list);
     }
 
     free(conf_param);
-    ar->arg2 = index;
+    ar->arg2 = index; //call count after merge success
 
 done:
     cb(ar);
@@ -479,7 +476,6 @@ static int tapi_call_signal_normal(DBusMessage* message, tapi_async_handler* han
 
 static int tapi_call_signal_ecc_list_change(DBusMessage* message, tapi_async_handler* handler)
 {
-    int ret = false;
     DBusMessageIter iter;
     tapi_async_result* ar;
     tapi_async_function cb;
@@ -507,22 +503,17 @@ static int tapi_call_signal_ecc_list_change(DBusMessage* message, tapi_async_han
         int index = 0;
         char* out[MAX_CALL_PROPERTY_NAME_LENGTH];
         while (dbus_message_iter_get_arg_type(&array) == DBUS_TYPE_STRING) {
-            char* value;
-            dbus_message_iter_get_basic(&array, &value);
-            dbus_message_iter_next(&array);
 
-            tapi_log_debug("tapi_call_signal_ecc_list_change %s", value);
-            out[index++] = strdup(value);
+            dbus_message_iter_get_basic(&array, &out[index++]);
+            dbus_message_iter_next(&array);
         }
 
         ar->data = out;
         ar->arg1 = index;
         ar->status = OK;
         cb(ar);
-
-        ret = true;
     }
-    return ret;
+    return true;
 }
 
 static int decode_voice_call_info(DBusMessageIter* iter, tapi_call_info* call_info)
@@ -981,14 +972,14 @@ int tapi_call_send_tones(void* context, int slot_id, char* tones)
     return g_dbus_proxy_method_call(proxy, "SendTones", tone_param_append, NULL, tones, NULL);
 }
 
-int tapi_call_get_ecc_list(tapi_context context, int slot_id, char** out, int* size)
+int tapi_call_get_ecc_list(tapi_context context, int slot_id, char** out)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
     DBusMessageIter list;
     int index = 0;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || !size) {
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
     }
 
@@ -1008,21 +999,21 @@ int tapi_call_get_ecc_list(tapi_context context, int slot_id, char** out, int* s
         while (dbus_message_iter_get_arg_type(&var_elem) != DBUS_TYPE_INVALID) {
             if (dbus_message_iter_get_arg_type(&var_elem) == DBUS_TYPE_STRING)
                 dbus_message_iter_get_basic(&var_elem, &out[index++]);
-            if (index > *size)
+            if (index >= MAX_CALL_PROPERTY_NAME_LENGTH)
                 break;
             dbus_message_iter_next(&var_elem);
         }
     }
 
-    return 0;
+    return index;
 }
 
 bool tapi_is_emergency_number(tapi_context context, char* number)
 {
     for (int i = 0; i < CONFIG_ACTIVE_MODEM_COUNT; i++) {
-        char* ecc_list[20];
-        int size;
-        if (tapi_call_get_ecc_list(context, i, ecc_list, &size) != 0) {
+        char* ecc_list[MAX_CALL_PROPERTY_NAME_LENGTH];
+        int size = tapi_call_get_ecc_list(context, i, ecc_list);
+        if (size <= 0) {
             tapi_log_error("tapi_is_emergency_number: get ecc list error\n");
             return false;
         }
@@ -1030,12 +1021,12 @@ bool tapi_is_emergency_number(tapi_context context, char* number)
         for (int j = 0; j < size; j++) {
             if (strcmp(number, ecc_list[j]) == 0) {
                 tapi_log_debug("tapi_is_emergency_number:%s is emergency number\n", number);
-                return false;
+                return true;
             }
         }
     }
 
-    return true;
+    return false;
 }
 
 int tapi_register_call_signal(tapi_context context, int slot_id, char* path, char* interface,
