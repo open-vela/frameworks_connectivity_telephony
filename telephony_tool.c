@@ -183,6 +183,24 @@ static void tele_call_async_fun(tapi_async_result* result)
     printf("result->arg2 : %d\n", result->arg2);
 }
 
+static void tele_call_ecc_list_async_fun(tapi_async_result* result)
+{
+    int status = result->status;
+    int list_length = result->arg1;
+    char** ret = result->data;
+
+    printf("tele_call_ecc_list_async_fun : \n");
+    printf("msg_id : %d\n", result->msg_id);
+    printf("status : %d\n", status);
+    printf("list length: %d\n", list_length);
+
+    if (result->status == 0) {
+        for (int i = 0; i < list_length; i++) {
+            printf("ecc number : %s \n", ret[i]);
+        }
+    }
+}
+
 static void modem_list_query_complete(tapi_async_result* result)
 {
     char* modem_path;
@@ -361,7 +379,7 @@ static int telephonytool_cmd_listen_call_property_change(tapi_context context, c
     printf("%s, cnt : %d\n", __func__, cnt);
     tapi_register_managercall_change(context, 0, MSG_CALL_ADD_MESSAGE_IND, tele_call_async_fun);
     tapi_register_managercall_change(context, 0, MSG_CALL_REMOVE_MESSAGE_IND, tele_call_async_fun);
-    tapi_register_emergencylist_change(context, 0, tele_call_async_fun);
+    tapi_register_emergencylist_change(context, 0, tele_call_ecc_list_async_fun);
 
     return 0;
 }
@@ -419,7 +437,7 @@ static int telephonytool_cmd_separate_call(tapi_context context, char* pargs)
 static int telephonytool_cmd_get_ecc_list(tapi_context context, char* pargs)
 {
     char dst[5][CONFIG_NSH_LINELEN];
-    char* out[5];
+    char* out[20];
     char* slot_id;
     int size = 0;
     int cnt = split(dst, pargs, " ");
@@ -431,10 +449,9 @@ static int telephonytool_cmd_get_ecc_list(tapi_context context, char* pargs)
     slot_id = dst[0];
     printf("%s, slotId : %s \n", __func__, slot_id);
 
-    tapi_call_get_ecc_list(context, atoi(slot_id), out, &size);
+    size = tapi_call_get_ecc_list(context, atoi(slot_id), out);
     for (i = 0; i < size; i++) {
-        printf("tapi_call_get_ecc_list : %p \n", out[i]);
-        printf("tapi_call_get_ecc_list : %s \n", out[i]);
+        printf("ecc number : %s \n", out[i]);
     }
 
     return 0;
