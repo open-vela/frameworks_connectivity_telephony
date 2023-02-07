@@ -267,6 +267,103 @@ enum tapi_call_status tapi_call_string_to_status(char* str_status)
     return ret;
 }
 
+const char* tapi_apn_context_type_to_string(tapi_apn_context_type type)
+{
+    switch (type) {
+    case APN_CONTEXT_TYPE_ANY:
+        return NULL;
+    case APN_CONTEXT_TYPE_INTERNET:
+        return "internet";
+    case APN_CONTEXT_TYPE_MMS:
+        return "mms";
+    case APN_CONTEXT_TYPE_WAP:
+        return "wap";
+    case APN_CONTEXT_TYPE_IMS:
+        return "ims";
+    }
+
+    return NULL;
+}
+
+tapi_apn_context_type tapi_apn_context_type_from_string(const char* type)
+{
+    if (type == NULL)
+        return APN_CONTEXT_TYPE_ANY;
+
+    if (strcmp(type, "internet") == 0)
+        return APN_CONTEXT_TYPE_INTERNET;
+    else if (strcmp(type, "mms") == 0)
+        return APN_CONTEXT_TYPE_MMS;
+    else if (strcmp(type, "wap") == 0)
+        return APN_CONTEXT_TYPE_WAP;
+    else if (strcmp(type, "ims") == 0)
+        return APN_CONTEXT_TYPE_IMS;
+
+    return APN_CONTEXT_TYPE_ANY;
+}
+
+const char* tapi_apn_auth_method_to_string(tapi_data_auth_method auth)
+{
+    switch (auth) {
+    case DATA_AUTH_METHOD_CHAP:
+        return "chap";
+    case DATA_AUTH_METHOD_PAP:
+        return "pap";
+    case DATA_AUTH_METHOD_NONE:
+        return "none";
+    };
+
+    return NULL;
+}
+
+tapi_data_auth_method tapi_apn_auth_method_from_string(const char* auth)
+{
+    if (auth == NULL)
+        return DATA_AUTH_METHOD_NONE;
+
+    if (strcmp(auth, "chap") == 0)
+        return DATA_AUTH_METHOD_CHAP;
+    else if (strcmp(auth, "pap") == 0)
+        return DATA_AUTH_METHOD_PAP;
+    else if (strcmp(auth, "none") != 0)
+        return DATA_AUTH_METHOD_NONE;
+
+    return DATA_AUTH_METHOD_NONE;
+}
+
+const char* tapi_apn_proto_to_string(tapi_data_proto proto)
+{
+    switch (proto) {
+    case DATA_PROTO_IP:
+        return "ip";
+    case DATA_PROTO_IPV6:
+        return "ipv6";
+    case DATA_PROTO_IPV4V6:
+        return "dual";
+    };
+
+    return NULL;
+}
+
+bool tapi_apn_proto_from_string(const char* str, tapi_data_proto* proto)
+{
+    if (str == NULL)
+        return false;
+
+    if (strcmp(str, "ip") == 0) {
+        *proto = DATA_PROTO_IP;
+        return true;
+    } else if (strcmp(str, "ipv6") == 0) {
+        *proto = DATA_PROTO_IPV6;
+        return true;
+    } else if (strcmp(str, "dual") == 0) {
+        *proto = DATA_PROTO_IPV4V6;
+        return true;
+    }
+
+    return false;
+}
+
 bool tapi_is_call_signal_message(DBusMessage* message, DBusMessageIter* iter, int msg_type)
 {
     bool ret = false;

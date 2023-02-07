@@ -189,6 +189,7 @@ typedef enum {
 typedef void* tapi_context;
 
 #include <tapi_call.h>
+#include <tapi_data.h>
 #include <tapi_manager.h>
 
 #endif /* __TELEPHONY_APIS_H */

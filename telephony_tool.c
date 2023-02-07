@@ -36,9 +36,14 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define EVENT_MODEM_LIST_QUERY_DONE 100
-#define EVENT_RADIO_STATE_SET_DONE 101
-#define EVENT_RAT_MODE_SET_DONE 102
+#define EVENT_MODEM_LIST_QUERY_DONE 0x01
+#define EVENT_RADIO_STATE_SET_DONE 0x02
+#define EVENT_RAT_MODE_SET_DONE 0x03
+
+#define EVENT_APN_LOADED_DONE 0x04
+#define EVENT_APN_SAVE_DONE 0x05
+#define EVENT_APN_RESTORE_DONE 0x06
+#define EVENT_IP_SETTINGS_QUERY_DONE 0x07
 
 /****************************************************************************
  * Public Type Declarations
@@ -87,6 +92,19 @@ static int telephonytool_cmd_merge_call(tapi_context context, char* pargs);
 static int telephonytool_cmd_separate_call(tapi_context context, char* pargs);
 static int telephonytool_cmd_get_ecc_list(tapi_context context, char* pargs);
 static int telephonytool_cmd_is_emergency_number(tapi_context context, char* pargs);
+
+/** Data interface*/
+static int telephonytool_cmd_data_register(tapi_context context, char* pargs);
+static int telephonytool_cmd_load_apns(tapi_context context, char* pargs);
+static int telephonytool_cmd_save_apn(tapi_context context, char* pargs);
+static int telephonytool_cmd_reset_apn(tapi_context context, char* pargs);
+static int telephonytool_cmd_request_network(tapi_context context, char* pargs);
+static int telephonytool_cmd_release_network(tapi_context context, char* pargs);
+static int telephonytool_cmd_set_data_roaming(tapi_context context, char* pargs);
+static int telephonytool_cmd_get_data_roaming(tapi_context context, char* pargs);
+static int telephonytool_cmd_set_data_enabled(tapi_context context, char* pargs);
+static int telephonytool_cmd_get_data_enabled(tapi_context context, char* pargs);
+static int telephonytool_cmd_get_ip_settings(tapi_context context, char* pargs);
 
 /****************************************************************************
  * Private Data
@@ -150,6 +168,28 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         "get modem_revision (enter example : modem_revision 0 [slot_id])" },
     { "line-number", telephonytool_cmd_get_line_number,
         "query line number (enter example : line-number 0 [slot_id])" },
+    { "load-apns", telephonytool_cmd_load_apns,
+        "load apn settings (enter example : load-apns 0 [slot_id])" },
+    { "save-apn", telephonytool_cmd_save_apn,
+        "save apn (enter example : save-apn 0 1 [slot_id][apn_type])" },
+    { "reset-apn", telephonytool_cmd_reset_apn,
+        "reset apn (enter example : reset-apn 0 [slot_id])" },
+    { "request-network", telephonytool_cmd_request_network,
+        "request network (enter example : request-network 0 internet [slot_id][apn_type_string])" },
+    { "release-network", telephonytool_cmd_release_network,
+        "release network (enter example : release-network 0 internet [slot_id][apn_type_string])" },
+    { "data-roaming-set", telephonytool_cmd_set_data_roaming,
+        "set data roaming (enter example : data-roaming-set 0 1 [slot_id][state])" },
+    { "data-roaming-get", telephonytool_cmd_get_data_roaming,
+        "get data roaming (enter example : data-roaming-get 0 [slot_id])" },
+    { "data-set", telephonytool_cmd_set_data_enabled,
+        "set data enabled (enter example : data-set 0 1 [slot_id][state])" },
+    { "data-get", telephonytool_cmd_get_data_enabled,
+        "get data enabled (enter example : data-get 0 [slot_id])" },
+    { "ip-settings", telephonytool_cmd_get_ip_settings,
+        "get ip-settings (enter example : ip-settings 0 1 [slot_id][apn_type])" },
+    { "listen-data", telephonytool_cmd_data_register,
+        "listen data event (enter example : listen-data 0 1 [slot_id][event_id])" },
     { "q", NULL, "Quit (pls enter : q)" },
     { "help", telephonytool_cmd_help,
         "Show this message (pls enter : help)" },
@@ -480,7 +520,7 @@ static int telephonytool_cmd_query_modem_list(tapi_context context, char* pargs)
         return -EINVAL;
 
     tapi_query_modem_list(context,
-        EVENT_MODEM_LIST_QUERY_DONE, modem_list, modem_list_query_complete);
+        EVENT_MODEM_LIST_QUERY_DONE, modem_list, MAX_MODEM_COUNT, modem_list_query_complete);
     return 0;
 }
 
@@ -498,6 +538,7 @@ static int telephonytool_cmd_modem_register(tapi_context context, char* pargs)
 
     while (*target_state == ' ')
         target_state++;
+
     if (target_state == NULL)
         return -EINVAL;
 
@@ -521,6 +562,7 @@ static int telephonytool_cmd_set_radio_power(tapi_context context, char* pargs)
 
     while (*target_state == ' ')
         target_state++;
+
     if (target_state == NULL)
         return -EINVAL;
 
@@ -563,6 +605,7 @@ static int telephonytool_cmd_set_rat_mode(tapi_context context, char* pargs)
 
     while (*target_state == ' ')
         target_state++;
+
     if (target_state == NULL)
         return -EINVAL;
 
@@ -750,6 +793,211 @@ static int telephonytool_cmd_get_line_number(tapi_context context, char* pargs)
     printf("%s, slotId : %s  number : %s \n", __func__, slot_id, number);
 
     return 0;
+}
+
+static int telephonytool_cmd_load_apns(tapi_context context, char* pargs)
+{
+    tapi_apn_context* apns[MAX_APN_LIST_CAPACITY];
+    char* slot_id;
+
+    if (!strlen(pargs))
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", NULL);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    return tapi_data_load_apn_contexts(context,
+        atoi(slot_id), EVENT_APN_LOADED_DONE, apns, MAX_APN_LIST_CAPACITY, tele_call_async_fun);
+}
+
+static int telephonytool_cmd_save_apn(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    tapi_apn_context* apn;
+
+    if (!strlen(pargs))
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", NULL);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    apn = malloc(sizeof(tapi_apn_context));
+    if (apn == NULL)
+        return -EINVAL;
+
+    apn->type = APN_CONTEXT_TYPE_INTERNET;
+    tapi_data_save_apn_context(context, atoi(slot_id), EVENT_APN_SAVE_DONE, apn, tele_call_async_fun);
+    free(apn);
+
+    return 0;
+}
+
+static int telephonytool_cmd_reset_apn(tapi_context context, char* pargs)
+{
+    char* slot_id;
+
+    if (!strlen(pargs))
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", NULL);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    return tapi_data_reset_apn_contexts(context, atoi(slot_id), EVENT_APN_RESTORE_DONE, NULL);
+}
+
+static int telephonytool_cmd_request_network(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* target_state;
+
+    if (!strlen(pargs))
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &target_state);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*target_state == ' ')
+        target_state++;
+
+    if (target_state == NULL)
+        return -EINVAL;
+
+    return tapi_data_request_network(context, atoi(slot_id), target_state);
+}
+
+static int telephonytool_cmd_release_network(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* target_state;
+
+    if (!strlen(pargs))
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &target_state);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*target_state == ' ')
+        target_state++;
+
+    if (target_state == NULL)
+        return -EINVAL;
+
+    return tapi_data_release_network(context, atoi(slot_id), target_state);
+}
+
+static int telephonytool_cmd_set_data_roaming(tapi_context context, char* pargs)
+{
+    char* status;
+
+    if (!strlen(pargs))
+        return -EINVAL;
+
+    status = strtok_r(pargs, " ", NULL);
+    if (status == NULL)
+        return -EINVAL;
+
+    return tapi_data_enable_roaming(context, atoi(status));
+}
+
+static int telephonytool_cmd_get_data_roaming(tapi_context context, char* pargs)
+{
+    bool result;
+
+    tapi_data_get_roaming_enabled(context, &result);
+    printf("%s : %d \n", __func__, result);
+
+    return 0;
+}
+
+static int telephonytool_cmd_set_data_enabled(tapi_context context, char* pargs)
+{
+    char* value;
+
+    if (!strlen(pargs))
+        return -EINVAL;
+
+    value = strtok_r(pargs, " ", NULL);
+    if (value == NULL)
+        return -EINVAL;
+
+    return tapi_data_enable(context, atoi(value));
+}
+
+static int telephonytool_cmd_get_data_enabled(tapi_context context, char* pargs)
+{
+    bool result;
+
+    tapi_data_get_enabled(context, &result);
+    printf("%s : %d \n", __func__, result);
+
+    return 0;
+}
+
+static int telephonytool_cmd_get_ip_settings(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* target_state;
+    tapi_ip_settings ip_settings;
+    int ret;
+
+    if (!strlen(pargs))
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &target_state);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*target_state == ' ')
+        target_state++;
+
+    if (target_state == NULL)
+        return -EINVAL;
+
+    ip_settings.ipv4 = malloc(sizeof(tapi_ipv4_settings));
+    if (ip_settings.ipv4 == NULL) {
+        return -ENOMEM;
+    }
+
+    ip_settings.ipv6 = malloc(sizeof(tapi_ipv6_settings));
+    if (ip_settings.ipv6 == NULL) {
+        free(ip_settings.ipv4);
+        return -ENOMEM;
+    }
+
+    ret = tapi_data_get_ip_settings(context, atoi(slot_id),
+        EVENT_IP_SETTINGS_QUERY_DONE, atoi(target_state), &ip_settings, tele_call_async_fun);
+    printf("ipv4 settings : %s -- %s \n", ip_settings.ipv4->interface, ip_settings.ipv4->ip);
+    printf("ipv6_settings : %s -- %s \n", ip_settings.ipv6->interface, ip_settings.ipv6->ip);
+
+    free(ip_settings.ipv4);
+    free(ip_settings.ipv6);
+    return ret;
+}
+
+static int telephonytool_cmd_data_register(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* target_state;
+
+    if (!strlen(pargs))
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &target_state);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*target_state == ' ')
+        target_state++;
+
+    if (target_state == NULL)
+        return -EINVAL;
+
+    return tapi_data_register(context, atoi(slot_id), atoi(target_state), tele_call_async_fun);
 }
 
 static int telephonytool_cmd_help(tapi_context context, char* pargs)

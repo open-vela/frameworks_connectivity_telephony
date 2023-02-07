@@ -53,13 +53,14 @@ int tapi_close(tapi_context context);
 /**
  * Query availble modem list.
  * @param[in] context        Telephony api context.
- * @param[in] list[]         Modem path list container.
  * @param[in] event_id       Async event identifier.
+ * @param[in] list[]         Modem path list container.
+ * @param[in] len            Length of list[].
  * @param[in] p_handle       Event callback.
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_query_modem_list(tapi_context context,
-    int event_id, char* list[], tapi_async_function p_handle);
+    int event_id, char* list[], int len, tapi_async_function p_handle);
 
 /**
  * Check whether the specified feature is supported or not.

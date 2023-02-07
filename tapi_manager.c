@@ -20,18 +20,12 @@
 
 #include <dbus/dbus.h>
 #include <errno.h>
-#include <pthread.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-#include <fcntl.h>
 #include <gdbus.h>
-#include <signal.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/signalfd.h>
-#include <unistd.h>
-
 #include <tapi.h>
 
 #include "tapi_internal.h"
@@ -55,6 +49,7 @@ static void get_dbus_proxy(dbus_context* ctx)
         OFONO_RADIO_SETTINGS_INTERFACE,
         OFONO_VOICECALL_MANAGER_INTERFACE,
         OFONO_SIM_MANAGER_INTERFACE,
+        OFONO_CONNECTION_MANAGER_INTERFACE,
     };
 
     ctx->dbus_proxy_manager = g_dbus_proxy_new(
@@ -114,6 +109,7 @@ static void modem_list_query_done(DBusMessage* message, void* user_data)
     DBusError err;
     char** result;
     int index;
+    int length;
 
     tapi_log_debug("modem_list_query_done \n");
     if (handler == NULL)
@@ -131,7 +127,7 @@ static void modem_list_query_done(DBusMessage* message, void* user_data)
     ar->status = OK;
 
     dbus_error_init(&err);
-    if (dbus_set_error_from_message(&err, message) == TRUE) {
+    if (dbus_set_error_from_message(&err, message) == true) {
         tapi_log_error("%s: %s\n", err.name, err.message);
         dbus_error_free(&err);
         ar->status = ERROR;
@@ -144,11 +140,12 @@ static void modem_list_query_done(DBusMessage* message, void* user_data)
     dbus_message_iter_recurse(&args, &list);
 
     index = 0;
+    length = ar->arg1;
     while (dbus_message_iter_get_arg_type(&list) == DBUS_TYPE_STRUCT) {
         DBusMessageIter entry;
         dbus_message_iter_recurse(&list, &entry);
         dbus_message_iter_get_basic(&entry, &result[index++]);
-        if (index >= MAX_MODEM_COUNT)
+        if (index >= length)
             break;
         dbus_message_iter_next(&list);
     }
@@ -305,12 +302,15 @@ int tapi_close(tapi_context context)
 }
 
 int tapi_query_modem_list(tapi_context context,
-    int event_id, char* list[], tapi_async_function p_handle)
+    int event_id, char* list[], int len, tapi_async_function p_handle)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
     tapi_async_handler* handler;
     tapi_async_result* ar;
+
+    if (list == NULL || len <= 0 || len > MAX_MODEM_COUNT)
+        return -EINVAL;
 
     proxy = ctx->dbus_proxy_manager;
     if (proxy == NULL) {
@@ -330,6 +330,7 @@ int tapi_query_modem_list(tapi_context context,
     }
 
     ar->msg_id = event_id;
+    ar->arg1 = len;
     ar->data = list;
     handler->result = ar;
     handler->cb_function = p_handle;
