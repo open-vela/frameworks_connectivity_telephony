@@ -193,6 +193,13 @@ typedef enum {
     //CBS Indication Message
     MSG_TAPI_INCOMING_CBS_IND,
     MSG_TAPI_EMERGENCY_CBS_IND,
+
+    // SS Indication Message
+    MSG_CALL_BARRING_PROPERTY_CHANGE_IND,
+    MSG_CALL_FORWARDING_PROPERTY_CHANGE_IND,
+    MSG_USSD_NOTIFICATION_RECEIVED_IND,
+    MSG_USSD_REQUEST_RECEIVED_IND,
+    MSG_USSD_PROPERTY_CHANGE_IND,
 } tapi_indication_msg;
 
 typedef void* tapi_context;
@@ -204,5 +211,6 @@ typedef void* tapi_context;
 #include <tapi_network.h>
 #include <tapi_sim.h>
 #include <tapi_sms.h>
+#include <tapi_ss.h>
 
 #endif /* __TELEPHONY_APIS_H */

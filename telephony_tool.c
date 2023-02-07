@@ -57,6 +57,16 @@
 #define EVENT_REGISTER_MANUAL 0x10
 #define EVENT_QUERY_SERVING_CELLINFO 0x11
 
+#define EVENT_REQUEST_CALL_BARRING_DONE 0x12
+#define EVENT_CALL_BARRING_PASSWD_CHANGE_DONE 0x13
+#define EVENT_DISABLE_ALL_CALL_BARRINGS_DONE 0x14
+#define EVENT_DISABLE_ALL_INCOMING_DONE 0x15
+#define EVENT_DISABLE_ALL_OUTGOING_DONE 0x16
+#define EVENT_REQUEST_CALL_FORWARDING_DONE 0x17
+#define EVENT_DISABLE_CALL_FORWARDING_DONE 0x18
+#define EVENT_CANCEL_USSD_DONE 0x19
+#define EVENT_REQUEST_CALL_WAITING_DONE 0x1A
+
 /****************************************************************************
  * Public Type Declarations
  ****************************************************************************/
@@ -165,6 +175,24 @@ static int telephonytool_cmd_get_voice_networktype(tapi_context context, char* p
 static int telephonytool_cmd_is_voice_roaming(tapi_context context, char* pargs);
 static int telephonytool_cmd_network_scan(tapi_context context, char* pargs);
 static int telephonytool_cmd_get_serving_cellinfo(tapi_context context, char* pargs);
+
+/** SS interface*/
+static int telephonytool_cmd_ss_register(tapi_context context, char* pargs);
+static int telephonytool_cmd_set_call_barring(tapi_context context, char* pargs);
+static int telephonytool_cmd_get_call_barring(tapi_context context, char* pargs);
+static int telephonytool_cmd_change_call_barring_passwd(tapi_context context, char* pargs);
+static int telephonytool_cmd_disable_all_call_barrings(tapi_context context, char* pargs);
+static int telephonytool_cmd_disable_all_incoming(tapi_context context, char* pargs);
+static int telephonytool_cmd_disable_all_outgoing(tapi_context context, char* pargs);
+static int telephonytool_cmd_set_call_forwarding(tapi_context context, char* pargs);
+static int telephonytool_cmd_get_call_forwarding(tapi_context context, char* pargs);
+static int telephonytool_cmd_disable_call_forwarding(tapi_context context, char* pargs);
+static int telephonytool_cmd_get_ussd_state(tapi_context context, char* pargs);
+static int telephonytool_cmd_cancel_ussd(tapi_context context, char* pargs);
+static int telephonytool_cmd_set_call_waiting(tapi_context context, char* pargs);
+static int telephonytool_cmd_get_call_waiting(tapi_context context, char* pargs);
+static int telephonytool_cmd_get_clip(tapi_context context, char* pargs);
+static int telephonytool_cmd_get_clir(tapi_context context, char* pargs);
 
 /****************************************************************************
  * Private Data
@@ -338,6 +366,49 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         "network-scan  (enter example : network-scan 0 [slot_id])" },
     { "serving-cellinfo", telephonytool_cmd_get_serving_cellinfo,
         "get serving cellinfo  (enter example : serving-cellinfo 0)" },
+    { "set-callbarring", telephonytool_cmd_set_call_barring,
+        "set callbarring (enter example : set-callbarring 0 AI 1234 \
+        [slot_id][facility][pin2])" },
+    { "get-callbarring", telephonytool_cmd_get_call_barring,
+        "get callbarring (enter example : get-callbarring 0 VoiceIncoming \
+        [slot_id][call barring key])" },
+    { "change-callbarring-passwd", telephonytool_cmd_change_call_barring_passwd,
+        "change callbarring passwd (enter example : change-callbarring-passwd 0 1234 2345 \
+        [slot_id][old passwd][new passwd])" },
+    { "disable-all-callbarrings", telephonytool_cmd_disable_all_call_barrings,
+        "disable all callbarrings (enter example : disable-all-callbarrings 0 2345 \
+        [slot_id][passwd])" },
+    { "disable-all-incoming", telephonytool_cmd_disable_all_incoming,
+        "disable all incoming (enter example : disable-all-incoming 0 2345 \
+        [slot_id][passwd])" },
+    { "disable-all-outgoing", telephonytool_cmd_disable_all_outgoing,
+        "disable all outgoing (enter example : disable-all-outgoing 0 2345 \
+        [slot_id][passwd])" },
+    { "set-callforwarding", telephonytool_cmd_set_call_forwarding,
+        "set callforwarding (enter example : set-callforwarding 0 VoiceUnconditional 10086 \
+        [slot_id][call forwarding type][value])" },
+    { "get-callforwarding", telephonytool_cmd_get_call_forwarding,
+        "get callforwarding (enter example : get-callforwarding 0 VoiceUnconditional \
+        [slot_id][call forwarding type])" },
+    { "disable-callforwarding", telephonytool_cmd_disable_call_forwarding,
+        "disable callforwarding (enter example : disable-callforwarding 0 all \
+        [slot_id][type])" },
+    { "get-ussd-state", telephonytool_cmd_get_ussd_state,
+        "get ussd state (enter example : get-ussd-state 0 [slot_id])" },
+    { "cancel-ussd", telephonytool_cmd_cancel_ussd,
+        "cancel ussd (enter example : cancel-ussd 0 [slot_id])" },
+    { "set-callwaiting", telephonytool_cmd_set_call_waiting,
+        "set callwaiting (enter example : set-callwaiting 0 enabled \
+        [slot_id][call waiting value])" },
+    { "get-callwaiting", telephonytool_cmd_get_call_waiting,
+        "get callwaiting (enter example : get-callwaiting 0 [slot_id])" },
+    { "get-clip", telephonytool_cmd_get_clip,
+        "get clip (enter example : get-clip 0 [slot_id])" },
+    { "get-clir", telephonytool_cmd_get_clir,
+        "get clir (enter example : get-clir 0 [slot_id])" },
+    { "listen-ss", telephonytool_cmd_ss_register,
+        "listen ss event (enter example : listen-ss 0 1 \
+        [slot_id][event_id])" },
     { "q", NULL, "Quit (pls enter : q)" },
     { "help", telephonytool_cmd_help,
         "Show this message (pls enter : help)" },
@@ -2137,6 +2208,389 @@ static int telephonytool_cmd_get_serving_cellinfo(tapi_context context, char* pa
     printf("%s, slotId : %s alpha_long value :%s \n", __func__, slot_id, celllist->alpha_long);
 
     return 0;
+}
+
+static int telephonytool_cmd_set_call_barring(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* fac;
+    char* temp;
+    char* pin2;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &temp);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*temp == ' ')
+        temp++;
+
+    fac = strtok_r(temp, " ", &pin2);
+    if (fac == NULL)
+        return -EINVAL;
+
+    while (*pin2 == ' ')
+        pin2++;
+
+    if (pin2 == NULL)
+        return -EINVAL;
+
+    tapi_ss_request_call_barring(context, atoi(slot_id), EVENT_REQUEST_CALL_BARRING_DONE, fac, pin2, tele_call_async_fun);
+    printf("%s, slot_id : %s fc : %s  pin2 : %s \n", __func__, slot_id, fac, pin2);
+
+    return 0;
+}
+
+static int telephonytool_cmd_get_call_barring(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* key;
+    char* cb_info;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &key);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*key == ' ')
+        key++;
+
+    if (key == NULL)
+        return -EINVAL;
+
+    tapi_ss_query_call_barring_info(context, atoi(slot_id), key, &cb_info);
+    printf("%s, slotId : %s key : %s cb_info : %s \n", __func__, slot_id, key, cb_info);
+
+    return 0;
+}
+
+static int telephonytool_cmd_change_call_barring_passwd(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* temp;
+    char* old_passwd;
+    char* new_passwd;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &temp);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*temp == ' ')
+        temp++;
+
+    old_passwd = strtok_r(temp, " ", &new_passwd);
+    if (old_passwd == NULL)
+        return -EINVAL;
+
+    while (*new_passwd == ' ')
+        new_passwd++;
+
+    if (new_passwd == NULL)
+        return -EINVAL;
+
+    tapi_ss_change_call_barring_password(context, atoi(slot_id),
+        EVENT_CALL_BARRING_PASSWD_CHANGE_DONE, old_passwd, old_passwd, tele_call_async_fun);
+    printf("%s, slotId : %s old_passwd : %s new_passwd : %s \n", __func__, slot_id, old_passwd, new_passwd);
+
+    return 0;
+}
+
+static int telephonytool_cmd_disable_all_call_barrings(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* passwd;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &passwd);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*passwd == ' ')
+        passwd++;
+
+    if (passwd == NULL)
+        return -EINVAL;
+
+    tapi_ss_disable_all_call_barrings(context, atoi(slot_id),
+        EVENT_DISABLE_ALL_CALL_BARRINGS_DONE, passwd, tele_call_async_fun);
+    printf("%s, slotId : %s passwd : %s \n", __func__, slot_id, passwd);
+
+    return 0;
+}
+
+static int telephonytool_cmd_disable_all_incoming(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* passwd;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &passwd);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*passwd == ' ')
+        passwd++;
+
+    if (passwd == NULL)
+        return -EINVAL;
+
+    tapi_ss_disable_all_incoming(context, atoi(slot_id),
+        EVENT_DISABLE_ALL_INCOMING_DONE, passwd, tele_call_async_fun);
+    printf("%s, slotId : %s passwd : %s \n", __func__, slot_id, passwd);
+
+    return 0;
+}
+
+static int telephonytool_cmd_disable_all_outgoing(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* passwd;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &passwd);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*passwd == ' ')
+        passwd++;
+
+    if (passwd == NULL)
+        return -EINVAL;
+
+    tapi_ss_disable_all_outgoing(context, atoi(slot_id),
+        EVENT_DISABLE_ALL_OUTGOING_DONE, passwd, tele_call_async_fun);
+    printf("%s, slotId : %s passwd : %s \n", __func__, slot_id, passwd);
+
+    return 0;
+}
+
+static int telephonytool_cmd_set_call_forwarding(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* temp;
+    char* cf_type;
+    char* value;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &temp);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*temp == ' ')
+        temp++;
+
+    cf_type = strtok_r(temp, " ", &value);
+    if (cf_type == NULL)
+        return -EINVAL;
+
+    while (*value == ' ')
+        value++;
+
+    if (value == NULL)
+        return -EINVAL;
+
+    tapi_ss_request_call_forwarding(context, atoi(slot_id),
+        EVENT_REQUEST_CALL_FORWARDING_DONE, cf_type, value, tele_call_async_fun);
+    printf("%s, slot_id : %s cf_type : %s  value : %s \n", __func__, slot_id, cf_type, value);
+
+    return 0;
+}
+
+static int telephonytool_cmd_get_call_forwarding(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* key;
+    char* cf_info;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &key);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*key == ' ')
+        key++;
+
+    if (key == NULL)
+        return -EINVAL;
+
+    tapi_ss_query_call_forwarding_info(context, atoi(slot_id), key, &cf_info);
+    printf("%s, slotId : %s key : %s cf_info : %s \n", __func__, slot_id, key, cf_info);
+
+    return 0;
+}
+
+static int telephonytool_cmd_disable_call_forwarding(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* type;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &type);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*type == ' ')
+        type++;
+
+    if (type == NULL)
+        return -EINVAL;
+
+    tapi_ss_disable_call_forwarding(context, atoi(slot_id),
+        EVENT_DISABLE_CALL_FORWARDING_DONE, type, tele_call_async_fun);
+    printf("%s, slotId : %s type : %s \n", __func__, slot_id, type);
+
+    return 0;
+}
+
+static int telephonytool_cmd_get_ussd_state(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    tapi_ussd_state ussd_state;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", NULL);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    tapi_get_ussd_state(context, atoi(slot_id), &ussd_state);
+    printf("%s, slotId : %s ussd_state : %d \n", __func__, slot_id, ussd_state);
+
+    return 0;
+}
+
+static int telephonytool_cmd_cancel_ussd(tapi_context context, char* pargs)
+{
+    char* slot_id;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", NULL);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    return tapi_ss_cancel_ussd(context, atoi(slot_id), EVENT_CANCEL_USSD_DONE, tele_call_async_fun);
+}
+
+static int telephonytool_cmd_set_call_waiting(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* value;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &value);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*value == ' ')
+        value++;
+
+    if (value == NULL)
+        return -EINVAL;
+
+    tapi_ss_request_call_wating(context, atoi(slot_id),
+        EVENT_REQUEST_CALL_WAITING_DONE, value, tele_call_async_fun);
+    printf("%s, slot_id : %s value : %s \n", __func__, slot_id, value);
+
+    return 0;
+}
+
+static int telephonytool_cmd_get_call_waiting(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* cw_info;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", NULL);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    tapi_ss_query_call_wating(context, atoi(slot_id), &cw_info);
+    printf("%s, slotId : %s cw_info : %s \n", __func__, slot_id, cw_info);
+
+    return 0;
+}
+
+static int telephonytool_cmd_get_clip(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    tapi_clip_status clip_status;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", NULL);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    tapi_ss_query_calling_line_presentation_info(context, atoi(slot_id), &clip_status);
+    printf("%s, slotId : %s clip_status : %d \n", __func__, slot_id, clip_status);
+
+    return 0;
+}
+
+static int telephonytool_cmd_get_clir(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    tapi_clir_status clir_status;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", NULL);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    tapi_ss_query_calling_line_restriction_info(context, atoi(slot_id), &clir_status);
+    printf("%s, slotId : %s clir_status : %d \n", __func__, slot_id, clir_status);
+
+    return 0;
+}
+
+static int telephonytool_cmd_ss_register(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* target_state;
+
+    if (!strlen(pargs))
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &target_state);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*target_state == ' ')
+        target_state++;
+
+    if (target_state == NULL)
+        return -EINVAL;
+
+    return tapi_ss_register(context, atoi(slot_id), atoi(target_state), tele_call_async_fun);
 }
 
 static int telephonytool_cmd_help(tapi_context context, char* pargs)
