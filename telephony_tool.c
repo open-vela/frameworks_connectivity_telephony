@@ -125,15 +125,15 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     { "answer", telephonytool_cmd_answer_call,
         "Answer (enter example : answer 0 0 [slot_id][action:0-answer 1-realse&answer])" },
     { "swap", telephonytool_cmd_swap_call,
-        "callSwap (enter example : swap 0 1 [slot_id][action:1-hold 0-unhold])" },
-    { "call_listen", telephonytool_cmd_listen_call_property_change,
-        "Call_listen (enter example : call_listen 0 [call_event]" },
-    { "hangup_all", telephonytool_cmd_hangup_all,
-        "hangup_all (enter example : hangup_all 0 [slot_id])" },
+        "call Swap (enter example : swap 0 1 [slot_id][action:1-hold 0-unhold])" },
+    { "call-listen", telephonytool_cmd_listen_call_property_change,
+        "call event callback (enter example : call-listen 0 [call_event]" },
+    { "hangup-all", telephonytool_cmd_hangup_all,
+        "hangup all call (enter example : hangup-all 0 [slot_id])" },
     { "hangup", telephonytool_cmd_hangup_call,
         "hangup (enter example : hangup 0 [call_id] /phonesim/voicecall01)" },
-    { "get_call", telephonytool_cmd_get_call,
-        "get_call (enter example : get_call 0 \
+    { "get-call", telephonytool_cmd_get_call,
+        "get call list (enter example : get-call 0 \
         [slot_id][state], 0-active 1-held 2-dialing 3-alerting 4-incoming 5-waiting)" },
     { "transfer", telephonytool_cmd_transfer_call,
         "call transfer  (enter example : transfer 0 [slot_id])" },
@@ -141,10 +141,10 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         "call merge  (enter example : merge 0 [slot_id])" },
     { "separate", telephonytool_cmd_separate_call,
         "call separate  (enter example : separate 0 [slot_id][call_id: /phonesim/voicecall01])" },
-    { "get_ecc_list", telephonytool_cmd_get_ecc_list,
-        "get_ecc_list  (enter example : get_ecc_list 0 [slot_id])" },
-    { "is_ecc_num", telephonytool_cmd_is_emergency_number,
-        "is emergency number  (enter example : is_ecc_num 110 [number])" },
+    { "get-ecclist", telephonytool_cmd_get_ecc_list,
+        "get ecc list  (enter example : get-ecclist 0 [slot_id])" },
+    { "is-ecc", telephonytool_cmd_is_emergency_number,
+        "is emergency number  (enter example : is-ecc 110 [number])" },
     { "rat-set", telephonytool_cmd_set_rat_mode,
         "set rat mode (enter example : rat-set 0 9 \
         [slot_id][mode: 0-any 1-gsm_only 2-wcdma_only 3-umts 9-lte_gsm_wcdma 12-lte_wcdma 14-lte_only])" },
@@ -273,7 +273,7 @@ static void call_list_query_complete(tapi_async_result* result)
     }
 
     printf("result->status : %d \n", result->status);
-    tapi_call_tapi_free_call_list(pHead);
+    tapi_call_free_call_list(pHead);
 }
 
 static int telephonytool_cmd_dial(tapi_context context, char* pargs)
@@ -327,7 +327,7 @@ static int telephonytool_cmd_answer_call(tapi_context context, char* pargs)
     if (type == 0) {
         tapi_call_answer_call(context, atoi(slot_id), NULL);
     } else if (type == 1) {
-        tapi_release_and_answer(context, atoi(slot_id));
+        tapi_call_release_and_answer(context, atoi(slot_id));
     }
 
     return 0;
@@ -417,9 +417,11 @@ static int telephonytool_cmd_listen_call_property_change(tapi_context context, c
         return -EINVAL;
 
     printf("%s, cnt : %d\n", __func__, cnt);
-    tapi_register_managercall_change(context, 0, MSG_CALL_ADD_MESSAGE_IND, tele_call_async_fun);
-    tapi_register_managercall_change(context, 0, MSG_CALL_REMOVE_MESSAGE_IND, tele_call_async_fun);
-    tapi_register_emergencylist_change(context, 0, tele_call_ecc_list_async_fun);
+    tapi_call_register_managercall_change(context, 0, MSG_CALL_ADD_MESSAGE_IND,
+        tele_call_async_fun);
+    tapi_call_register_managercall_change(context, 0, MSG_CALL_REMOVE_MESSAGE_IND,
+        tele_call_async_fun);
+    tapi_call_register_emergencylist_change(context, 0, tele_call_ecc_list_async_fun);
 
     return 0;
 }
@@ -506,7 +508,7 @@ static int telephonytool_cmd_is_emergency_number(tapi_context context, char* par
     if (cnt != 1)
         return -EINVAL;
 
-    ret = tapi_is_emergency_number(context, dst[0]);
+    ret = tapi_call_is_emergency_number(context, dst[0]);
     printf("%s, ret : %d\n", __func__, ret);
 
     return 0;

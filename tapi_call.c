@@ -72,10 +72,10 @@ static void call_event_free(void* user_data)
 
 static void call_param_append(DBusMessageIter* iter, void* user_data)
 {
-    char* number;
-    char* hide_callerid_str;
-
     call_param* param = user_data;
+    char* hide_callerid_str;
+    char* number;
+
     if (param == NULL) {
         tapi_log_error("invalid dial request argument !!");
         return;
@@ -143,16 +143,8 @@ call_manager_property_changed(DBusConnection* connection, DBusMessage* message,
 {
     tapi_async_handler* handler = user_data;
     tapi_async_result* ar;
-    const char* member;
-    const char* interface;
-    const char* path;
-    const char* sender;
-    const char* dest;
-    const char* signature;
     int msg_id;
-    int ret;
 
-    tapi_log_debug("call_manager_property_changed \n");
     if (handler == NULL)
         return false;
 
@@ -163,21 +155,9 @@ call_manager_property_changed(DBusConnection* connection, DBusMessage* message,
     if (dbus_message_get_type(message) != DBUS_MESSAGE_TYPE_SIGNAL)
         return false;
 
-    tapi_log_debug("msg_id: %d, msg_status: %d \n", ar->msg_id, ar->status);
-
-    member = dbus_message_get_member(message);
-    interface = dbus_message_get_interface(message);
-    path = dbus_message_get_path(message);
-    sender = dbus_message_get_sender(message);
-    dest = dbus_message_get_destination(message);
-    signature = dbus_message_get_signature(message);
-    tapi_log_debug("path: %s, interface: %s, sender: %s, dest: %s, member: %s, signature: %s",
-        path, interface, sender, dest, member, signature);
+    tapi_log_debug("call_manager_property_changed msg_id: %d \n", ar->msg_id);
 
     msg_id = ar->msg_id;
-    ret = false;
-
-    //signal messsge
     if (dbus_message_is_signal(message, OFONO_VOICECALL_MANAGER_INTERFACE,
             "CallAdded")
         && msg_id == MSG_CALL_ADD_MESSAGE_IND) {
@@ -199,20 +179,21 @@ call_manager_property_changed(DBusConnection* connection, DBusMessage* message,
         && msg_id == MSG_ECC_LIST_CHANGE_IND) {
         return tapi_call_signal_ecc_list_change(message, handler);
     }
-    return ret;
+
+    return true;
 }
 
 static int call_property_changed(DBusConnection* connection, DBusMessage* message,
     void* user_data)
 {
-    int ret = false;
+    tapi_async_handler* handler = user_data;
+    tapi_call_property* call_property;
+    tapi_async_function cb;
+    tapi_async_result* ar;
     DBusMessageIter iter;
     const char* path;
-    tapi_call_property* call_property;
+    int ret = false;
     int msg_id;
-    tapi_async_handler* handler = user_data;
-    tapi_async_result* ar;
-    tapi_async_function cb;
 
     tapi_log_debug("call_property_changed \n");
     if (handler == NULL)
@@ -282,14 +263,14 @@ static int call_property_changed(DBusConnection* connection, DBusMessage* messag
 
 static void merge_call_complete(DBusMessage* message, void* user_data)
 {
-    DBusMessageIter iter, list;
-    DBusError err;
     tapi_async_handler* handler = user_data;
-    tapi_async_result* ar;
-    tapi_async_function cb;
-    int index;
     conference_param* conf_param;
+    DBusMessageIter iter, list;
+    tapi_async_function cb;
+    tapi_async_result* ar;
     char** call_path_list;
+    DBusError err;
+    int index;
 
     tapi_log_debug("merge_call_complete \n");
     if (dbus_message_get_type(message) == DBUS_MESSAGE_TYPE_ERROR) {
@@ -347,13 +328,13 @@ done:
 
 static void call_list_query_complete(DBusMessage* message, void* user_data)
 {
-    DBusMessageIter args, list;
-    DBusError err;
     tapi_async_handler* handler = user_data;
-    tapi_async_result* ar;
-    tapi_async_function cb;
-    int index;
     tapi_call_list* call_list_head;
+    DBusMessageIter args, list;
+    tapi_async_function cb;
+    tapi_async_result* ar;
+    DBusError err;
+    int index;
 
     if (handler == NULL)
         return;
@@ -424,7 +405,6 @@ static int tapi_call_signal_call_added(DBusMessage* message, tapi_async_handler*
         return false;
 
     if (tapi_is_call_signal_message(message, &iter, DBUS_TYPE_OBJECT_PATH)) {
-        //TODO: it can free data by app
         tapi_call_info* voicecall = malloc(sizeof(tapi_call_info));
         if (voicecall == NULL)
             return false;
@@ -444,10 +424,11 @@ static int tapi_call_signal_call_added(DBusMessage* message, tapi_async_handler*
 
 static int tapi_call_signal_normal(DBusMessage* message, tapi_async_handler* handler, int msg_type)
 {
-    int ret = false;
-    DBusMessageIter iter;
-    tapi_async_result* ar;
     tapi_async_function cb;
+    tapi_async_result* ar;
+    DBusMessageIter iter;
+    int ret = false;
+    char* info;
 
     if (handler == NULL)
         return false;
@@ -461,8 +442,8 @@ static int tapi_call_signal_normal(DBusMessage* message, tapi_async_handler* han
         return false;
 
     if (tapi_is_call_signal_message(message, &iter, msg_type)) {
-        char* info;
         dbus_message_iter_get_basic(&iter, &info);
+
         ar->data = info;
         ar->status = OK;
         cb(ar);
@@ -513,6 +494,7 @@ static int tapi_call_signal_ecc_list_change(DBusMessage* message, tapi_async_han
         ar->status = OK;
         cb(ar);
     }
+
     return true;
 }
 
@@ -594,10 +576,71 @@ static int decode_voice_call_info(DBusMessageIter* iter, tapi_call_info* call_in
     return true;
 }
 
+static int tapi_register_call_signal(tapi_context context, int slot_id, char* path, char* interface,
+    tapi_indication_msg msg, tapi_async_function p_handle, GDBusSignalFunction function)
+{
+    tapi_call_property* call_property;
+    tapi_async_handler* handler;
+    dbus_context* ctx = context;
+    tapi_async_result* ar;
+    const char* member;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+        return -EINVAL;
+    }
+
+    if (path == NULL) {
+        path = tapi_utils_get_modem_path(slot_id);
+    }
+    if (path == NULL) {
+        tapi_log_error("no available modem ...\n");
+        return -ENODEV;
+    }
+
+    member = tapi_get_call_signal_member(msg);
+    if (member == NULL) {
+        tapi_log_error("no signal member found ...\n");
+        return -EINVAL;
+    }
+
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        return -ENOMEM;
+    }
+    ar->msg_id = msg;
+    ar->arg1 = slot_id;
+
+    handler = malloc(sizeof(tapi_async_handler));
+    if (handler == NULL) {
+        free(ar);
+        return -ENOMEM;
+    }
+    handler->cb_function = p_handle;
+    handler->result = ar;
+
+    if (msg == MSG_CALL_PROPERTY_CHANGED_MESSAGE_IND) {
+        call_property = malloc(sizeof(tapi_call_property));
+        if (call_property == NULL) {
+            free(ar);
+            free(handler);
+            return -ENOMEM;
+        }
+        strcpy(call_property->call_path, path);
+        ar->data = call_property;
+    }
+
+    return g_dbus_add_signal_watch(ctx->connection,
+        OFONO_SERVICE, path, interface, member, function, handler, call_event_free);
+}
+
+/****************************************************************************
+ * Public Functions
+ ****************************************************************************/
+
 int tapi_call_dial(tapi_context context, int slot_id, char* number, int hide_callerid)
 {
-    call_param* param;
     dbus_context* ctx = context;
+    call_param* param;
     GDBusProxy* proxy;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
@@ -638,7 +681,7 @@ int tapi_call_hangup_call(tapi_context context, int slot_id, char* call_id)
     return 0;
 }
 
-int tapi_release_and_answer(tapi_context context, int slot_id)
+int tapi_call_release_and_answer(tapi_context context, int slot_id)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
@@ -656,7 +699,7 @@ int tapi_release_and_answer(tapi_context context, int slot_id)
     return g_dbus_proxy_method_call(proxy, "ReleaseAndAnswer", NULL, NULL, NULL, NULL);
 }
 
-int tapi_hold_and_answer(tapi_context context, int slot_id)
+int tapi_call_hold_and_answer(tapi_context context, int slot_id)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
@@ -678,8 +721,8 @@ int tapi_call_answer_call(tapi_context context, int slot_id, tapi_call_list* cal
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    int error;
     char* call_path;
+    int error;
     int count;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || !call_list) {
@@ -701,9 +744,9 @@ int tapi_call_answer_call(tapi_context context, int slot_id, tapi_call_list* cal
 
         error = 0;
     } else if (count == 2) {
-        error = tapi_hold_and_answer(context, slot_id);
+        error = tapi_call_hold_and_answer(context, slot_id);
     } else if (count > 2) {
-        error = tapi_release_and_answer(context, slot_id);
+        error = tapi_call_release_and_answer(context, slot_id);
     } else {
         error = EPERM;
     }
@@ -806,9 +849,9 @@ int tapi_call_get_all_calls(tapi_context context, int slot_id,
     tapi_call_list* list, tapi_async_function p_handle)
 {
     dbus_context* ctx = context;
-    GDBusProxy* proxy;
     tapi_async_handler* handler;
     tapi_async_result* ar;
+    GDBusProxy* proxy;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
@@ -842,11 +885,11 @@ int tapi_call_get_all_calls(tapi_context context, int slot_id,
 int tapi_call_merge_call(tapi_context context,
     int slot_id, char** out, tapi_async_function p_handle)
 {
-    dbus_context* ctx = context;
-    GDBusProxy* proxy;
-    tapi_async_handler* handler;
     conference_param* conf_param;
+    dbus_context* ctx = context;
+    tapi_async_handler* handler;
     tapi_async_result* ar;
+    GDBusProxy* proxy;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
@@ -889,11 +932,11 @@ int tapi_call_merge_call(tapi_context context,
 int tapi_call_separate_call(tapi_context context,
     int slot_id, char* call_id, char** out, tapi_async_function p_handle)
 {
-    dbus_context* ctx = context;
-    GDBusProxy* proxy;
-    tapi_async_handler* handler;
     conference_param* conf_param;
+    dbus_context* ctx = context;
+    tapi_async_handler* handler;
     tapi_async_result* ar;
+    GDBusProxy* proxy;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || !call_id) {
         return -EINVAL;
@@ -975,8 +1018,8 @@ int tapi_call_send_tones(void* context, int slot_id, char* tones)
 int tapi_call_get_ecc_list(tapi_context context, int slot_id, char** out)
 {
     dbus_context* ctx = context;
-    GDBusProxy* proxy;
     DBusMessageIter list;
+    GDBusProxy* proxy;
     int index = 0;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
@@ -1008,7 +1051,7 @@ int tapi_call_get_ecc_list(tapi_context context, int slot_id, char** out)
     return index;
 }
 
-bool tapi_is_emergency_number(tapi_context context, char* number)
+bool tapi_call_is_emergency_number(tapi_context context, char* number)
 {
     for (int i = 0; i < CONFIG_ACTIVE_MODEM_COUNT; i++) {
         char* ecc_list[MAX_CALL_PROPERTY_NAME_LENGTH];
@@ -1029,65 +1072,7 @@ bool tapi_is_emergency_number(tapi_context context, char* number)
     return false;
 }
 
-int tapi_register_call_signal(tapi_context context, int slot_id, char* path, char* interface,
-    tapi_indication_msg msg, tapi_async_function p_handle, GDBusSignalFunction function)
-{
-    dbus_context* ctx = context;
-    tapi_async_handler* handler;
-    tapi_async_result* ar;
-    tapi_call_property* call_property;
-    const char* member;
-
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
-        return -EINVAL;
-    }
-
-    if (path == NULL) {
-        path = tapi_utils_get_modem_path(slot_id);
-        ;
-    }
-    if (path == NULL) {
-        tapi_log_error("no available modem ...\n");
-        return -ENODEV;
-    }
-
-    member = tapi_get_call_signal_member(msg);
-    if (member == NULL) {
-        tapi_log_error("no signal member found ...\n");
-        return -EINVAL;
-    }
-
-    ar = malloc(sizeof(tapi_async_result));
-    if (ar == NULL) {
-        return -ENOMEM;
-    }
-    ar->msg_id = msg;
-    ar->arg1 = slot_id;
-
-    handler = malloc(sizeof(tapi_async_handler));
-    if (handler == NULL) {
-        free(ar);
-        return -ENOMEM;
-    }
-    handler->cb_function = p_handle;
-    handler->result = ar;
-
-    if (msg == MSG_CALL_PROPERTY_CHANGED_MESSAGE_IND) {
-        call_property = malloc(sizeof(tapi_call_property));
-        if (call_property == NULL) {
-            free(ar);
-            free(handler);
-            return -ENOMEM;
-        }
-        strcpy(call_property->call_path, path);
-        ar->data = call_property;
-    }
-
-    return g_dbus_add_signal_watch(ctx->connection,
-        OFONO_SERVICE, path, interface, member, function, handler, call_event_free);
-}
-
-int tapi_register_managercall_change(tapi_context context, int slot_id,
+int tapi_call_register_managercall_change(tapi_context context, int slot_id,
     tapi_indication_msg msg, tapi_async_function p_handle)
 {
     if (context == NULL || !tapi_is_valid_slotid(slot_id)) {
@@ -1099,9 +1084,8 @@ int tapi_register_managercall_change(tapi_context context, int slot_id,
         p_handle, call_manager_property_changed);
 }
 
-int tapi_register_call_info_change(tapi_context context, int slot_id, char* call_path,
-    tapi_indication_msg msg,
-    tapi_async_function p_handle)
+int tapi_call_register_call_info_change(tapi_context context, int slot_id, char* call_path,
+    tapi_indication_msg msg, tapi_async_function p_handle)
 {
     if (context == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
@@ -1111,7 +1095,8 @@ int tapi_register_call_info_change(tapi_context context, int slot_id, char* call
         msg, p_handle, call_property_changed);
 }
 
-int tapi_register_emergencylist_change(tapi_context context, int slot_id, tapi_async_function p_handle)
+int tapi_call_register_emergencylist_change(tapi_context context, int slot_id,
+    tapi_async_function p_handle)
 {
     if (context == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
@@ -1122,7 +1107,7 @@ int tapi_register_emergencylist_change(tapi_context context, int slot_id, tapi_a
         p_handle, call_manager_property_changed);
 }
 
-void tapi_call_tapi_free_call_list(tapi_call_list* head)
+void tapi_call_free_call_list(tapi_call_list* head)
 {
     tapi_free_call_list(head);
 }
