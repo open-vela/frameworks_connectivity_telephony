@@ -138,7 +138,7 @@ int tapi_call_answer_call(tapi_context context, int slot_id, tapi_call_list* cal
  * @param[in] slot_id        Slot id of current sim.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_release_and_answer(tapi_context context, int slot_id);
+int tapi_call_release_and_answer(tapi_context context, int slot_id);
 
 /**
  * Hold one active call as background call.
@@ -239,7 +239,7 @@ void tapi_call_tapi_get_call_by_state(tapi_context context, int slot_id,
  * @param[in] p_handle       Event callback.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_register_managercall_change(tapi_context context, int slot_id,
+int tapi_call_register_managercall_change(tapi_context context, int slot_id,
     tapi_indication_msg msg,
     tapi_async_function p_handle);
 
@@ -251,7 +251,7 @@ int tapi_register_managercall_change(tapi_context context, int slot_id,
  * @param[in] p_handle       Event callback.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_register_call_info_change(tapi_context context, int slot_id, char* call_path,
+int tapi_call_register_call_info_change(tapi_context context, int slot_id, char* call_path,
     tapi_indication_msg msg, tapi_async_function p_handle);
 
 /**
@@ -269,7 +269,7 @@ int tapi_call_get_ecc_list(tapi_context context, int slot_id, char** out);
  * @param[in] number         Phone number.
  * @return true: is emergency number; false: not emergency number.
  */
-bool tapi_is_emergency_number(tapi_context context, char* number);
+bool tapi_call_is_emergency_number(tapi_context context, char* number);
 
 /**
  * Register ecc list change callback.
@@ -278,13 +278,13 @@ bool tapi_is_emergency_number(tapi_context context, char* number);
  * @param[in] p_handle       Event callback.
  * @return Positive value as watch_id on success; a negated errno value on failure.
  */
-int tapi_register_emergencylist_change(tapi_context context, int slot_id, tapi_async_function p_handle);
+int tapi_call_register_emergencylist_change(tapi_context context, int slot_id, tapi_async_function p_handle);
 
 /**
  * Recycle call list.
  * @param[in] head        Call list pointer.
  */
-void tapi_call_tapi_free_call_list(tapi_call_list* head);
+void tapi_call_free_call_list(tapi_call_list* head);
 
 #ifdef __cplusplus
 }
