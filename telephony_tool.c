@@ -94,6 +94,7 @@ static int telephonytool_cmd_hangup_call(tapi_context context, char* pargs);
 static int telephonytool_cmd_answer_call(tapi_context context, char* pargs);
 static int telephonytool_cmd_swap_call(tapi_context context, char* pargs);
 static int telephonytool_cmd_listen_call_property_change(tapi_context context, char* pargs);
+static int telephonytool_cmd_unlisten_call_singal(tapi_context context, char* pargs);
 static int telephonytool_cmd_get_call(tapi_context context, char* pargs);
 static int telephonytool_cmd_transfer_call(tapi_context context, char* pargs);
 static int telephonytool_cmd_merge_call(tapi_context context, char* pargs);
@@ -155,6 +156,8 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         "call Swap (enter example : swap 0 1 [slot_id][action:1-hold 0-unhold])" },
     { "call-listen", telephonytool_cmd_listen_call_property_change,
         "call event callback (enter example : call-listen 0 [call_event]" },
+    { "call-unlisten", telephonytool_cmd_unlisten_call_singal,
+        "call unlisten event callback (enter example : call-unlisten [watch_id]" },
     { "hangup-all", telephonytool_cmd_hangup_all,
         "hangup all call (enter example : hangup-all 0 [slot_id])" },
     { "hangup", telephonytool_cmd_hangup_call,
@@ -272,6 +275,20 @@ static void tele_call_async_fun(tapi_async_result* result)
     printf("result->status : %d\n", result->status);
     printf("result->arg1 : %d\n", result->arg1);
     printf("result->arg2 : %d\n", result->arg2);
+}
+
+static void tele_call_manager_call_async_fun(tapi_async_result* result)
+{
+    tapi_call_info* call_info;
+
+    printf("tele_call_manager_call_async_fun : %d\n", result->status);
+
+    if (result->msg_id == MSG_CALL_ADD_MESSAGE_IND) {
+        call_info = (tapi_call_info*)result->data;
+        printf("call added call_path : %s\n", call_info->call_path);
+    } else if (result->msg_id == MSG_CALL_REMOVE_MESSAGE_IND) {
+        printf("call removed call_path : %s\n\n", (char*)result->data);
+    }
 }
 
 static void tele_call_ecc_list_async_fun(tapi_async_result* result)
@@ -461,6 +478,31 @@ static int telephonytool_cmd_get_call(tapi_context context, char* pargs)
 
 static int telephonytool_cmd_listen_call_property_change(tapi_context context, char* pargs)
 {
+
+    char dst[2][CONFIG_NSH_LINELEN];
+    int cnt = split(dst, pargs, " ");
+    int watch_id;
+
+    if (cnt != 1)
+        return -EINVAL;
+
+    printf("%s, cnt : %d\n", __func__, cnt);
+    watch_id = tapi_call_register_managercall_change(context, 0, MSG_CALL_ADD_MESSAGE_IND,
+        tele_call_manager_call_async_fun);
+    printf("call add change  watch_id: %d\n", watch_id);
+
+    watch_id = tapi_call_register_managercall_change(context, 0, MSG_CALL_REMOVE_MESSAGE_IND,
+        tele_call_manager_call_async_fun);
+    printf("call remove change  watch_id: %d\n", watch_id);
+
+    watch_id = tapi_call_register_emergencylist_change(context, 0, tele_call_ecc_list_async_fun);
+    printf("ecc list change  watch_id: %d\n", watch_id);
+
+    return 0;
+}
+
+static int telephonytool_cmd_unlisten_call_singal(tapi_context context, char* pargs)
+{
     char dst[2][CONFIG_NSH_LINELEN];
     int cnt = split(dst, pargs, " ");
 
@@ -468,11 +510,7 @@ static int telephonytool_cmd_listen_call_property_change(tapi_context context, c
         return -EINVAL;
 
     printf("%s, cnt : %d\n", __func__, cnt);
-    tapi_call_register_managercall_change(context, 0, MSG_CALL_ADD_MESSAGE_IND,
-        tele_call_async_fun);
-    tapi_call_register_managercall_change(context, 0, MSG_CALL_REMOVE_MESSAGE_IND,
-        tele_call_async_fun);
-    tapi_call_register_emergencylist_change(context, 0, tele_call_ecc_list_async_fun);
+    tapi_unregister(context, atoi(dst[0]));
 
     return 0;
 }

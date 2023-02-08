@@ -633,6 +633,50 @@ static int tapi_register_call_signal(tapi_context context, int slot_id, char* pa
         OFONO_SERVICE, path, interface, member, function, handler, call_event_free);
 }
 
+static int tapi_register_manager_call_signal(tapi_context context, int slot_id, char* interface,
+    tapi_indication_msg msg, tapi_async_function p_handle, GDBusSignalFunction function)
+{
+    tapi_async_handler* handler;
+    dbus_context* ctx = context;
+    tapi_async_result* ar;
+    const char* member;
+    char* modem_path;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+        return -EINVAL;
+    }
+
+    member = tapi_get_call_signal_member(msg);
+    if (member == NULL) {
+        tapi_log_error("no signal member found ...\n");
+        return -EINVAL;
+    }
+
+    modem_path = tapi_utils_get_modem_path(slot_id);
+    if (modem_path == NULL) {
+        tapi_log_error("no available modem ...\n");
+        return -EIO;
+    }
+
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        return -ENOMEM;
+    }
+    ar->msg_id = msg;
+    ar->arg1 = slot_id;
+
+    handler = malloc(sizeof(tapi_async_handler));
+    if (handler == NULL) {
+        free(ar);
+        return -ENOMEM;
+    }
+    handler->cb_function = p_handle;
+    handler->result = ar;
+
+    return g_dbus_add_signal_watch(ctx->connection,
+        OFONO_SERVICE, modem_path, interface, member, function, handler, call_event_free);
+}
+
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
@@ -1079,7 +1123,7 @@ int tapi_call_register_managercall_change(tapi_context context, int slot_id,
         return -EINVAL;
     }
 
-    return tapi_register_call_signal(context, slot_id, NULL,
+    return tapi_register_manager_call_signal(context, slot_id,
         OFONO_VOICECALL_MANAGER_INTERFACE, msg,
         p_handle, call_manager_property_changed);
 }
@@ -1102,7 +1146,7 @@ int tapi_call_register_emergencylist_change(tapi_context context, int slot_id,
         return -EINVAL;
     }
 
-    return tapi_register_call_signal(context, slot_id, NULL,
+    return tapi_register_manager_call_signal(context, slot_id,
         OFONO_VOICECALL_MANAGER_INTERFACE, MSG_ECC_LIST_CHANGE_IND,
         p_handle, call_manager_property_changed);
 }
