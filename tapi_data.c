@@ -353,6 +353,9 @@ static void apn_list_loaded(DBusMessage* message, void* user_data)
 
 done:
     cb(ar);
+    while (--index >= 0) {
+        free(result[index]);
+    }
 }
 
 static void apn_list_changd(DBusMessage* message, void* user_data)
