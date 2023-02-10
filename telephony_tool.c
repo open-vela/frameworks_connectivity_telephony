@@ -65,6 +65,8 @@ static int telephonytool_cmd_help(tapi_context context, char* pargs);
 /** Radio interface*/
 static int telephonytool_cmd_query_modem_list(tapi_context context, char* pargs);
 static int telephonytool_cmd_modem_register(tapi_context context, char* pargs);
+static int telephonytool_cmd_modem_unregister(tapi_context context, char* pargs);
+static int telephonytool_cmd_is_feature_supported(tapi_context context, char* pargs);
 static int telephonytool_cmd_set_radio_power(tapi_context context, char* pargs);
 static int telephonytool_cmd_get_radio_power(tapi_context context, char* pargs);
 static int telephonytool_cmd_set_rat_mode(tapi_context context, char* pargs);
@@ -113,9 +115,15 @@ static int telephonytool_cmd_get_ip_settings(tapi_context context, char* pargs);
 static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     { "list-modem", telephonytool_cmd_query_modem_list,
         "list available modem list (enter example : list-modem" },
-    { "listen", telephonytool_cmd_modem_register,
-        "modem event callback (enter example : listen 0 0 \
+    { "listen-modem", telephonytool_cmd_modem_register,
+        "modem event callback (enter example : listen-modem 0 0 \
         [slot_id][event_id, 0:radio_state_change 1:call_added 2:call_removed])" },
+    { "unlisten-modem", telephonytool_cmd_modem_unregister,
+        "modem event callback (enter example : unlisten-modem 0 \
+        [watch_id, one uint value returned from \"listen\"])" },
+    { "radio-capability", telephonytool_cmd_is_feature_supported,
+        "modem event callback (enter example : radio-capability 0 \
+        [feature_type, 0: voice 1: data 2: sms 3: ims])" },
     { "radio-set", telephonytool_cmd_set_radio_power,
         "set radio power (enter example : radio-set 0 1 [slot_id][state, 0:radio off 1:radio on])" },
     { "radio-get", telephonytool_cmd_get_radio_power,
@@ -530,6 +538,7 @@ static int telephonytool_cmd_modem_register(tapi_context context, char* pargs)
 {
     char* slot_id;
     char* target_state;
+    int watch_id;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
@@ -544,10 +553,48 @@ static int telephonytool_cmd_modem_register(tapi_context context, char* pargs)
     if (target_state == NULL)
         return -EINVAL;
 
-    printf("%s, slotId : %s target_state: %s \n", __func__, slot_id, target_state);
-    tapi_register(context, atoi(slot_id), atoi(target_state), tele_call_async_fun);
+    watch_id = tapi_register(context, atoi(slot_id), atoi(target_state), tele_call_async_fun);
+    printf("start to watch radio event : %d , return watch_id : %d \n",
+        atoi(target_state), watch_id);
 
-    return 0;
+    return watch_id;
+}
+
+static int telephonytool_cmd_modem_unregister(tapi_context context, char* pargs)
+{
+    char* watch_id;
+    int ret;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    watch_id = strtok_r(pargs, " ", NULL);
+    if (watch_id == NULL)
+        return -EINVAL;
+
+    ret = tapi_unregister(context, atoi(watch_id));
+    printf("stop to watch radio event : %s , with watch_id : %s with return value : %d \n",
+        watch_id, watch_id, ret);
+
+    return ret;
+}
+
+static int telephonytool_cmd_is_feature_supported(tapi_context context, char* pargs)
+{
+    char* arg;
+    bool ret;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    arg = strtok_r(pargs, " ", NULL);
+    if (arg == NULL)
+        return -EINVAL;
+
+    ret = tapi_is_feature_supported(atoi(arg));
+    printf("radio feature type : %d is supported ? %d \n", atoi(arg), ret);
+
+    return ret;
 }
 
 static int telephonytool_cmd_set_radio_power(tapi_context context, char* pargs)
@@ -985,6 +1032,7 @@ static int telephonytool_cmd_data_register(tapi_context context, char* pargs)
 {
     char* slot_id;
     char* target_state;
+    int watch_id;
 
     if (!strlen(pargs))
         return -EINVAL;
@@ -999,7 +1047,11 @@ static int telephonytool_cmd_data_register(tapi_context context, char* pargs)
     if (target_state == NULL)
         return -EINVAL;
 
-    return tapi_data_register(context, atoi(slot_id), atoi(target_state), tele_call_async_fun);
+    watch_id = tapi_data_register(context, atoi(slot_id), atoi(target_state), tele_call_async_fun);
+    printf("start to watch data event : %d , return watch_id : %d \n",
+        atoi(target_state), watch_id);
+
+    return watch_id;
 }
 
 static int telephonytool_cmd_help(tapi_context context, char* pargs)
