@@ -263,6 +263,24 @@ enum tapi_call_status tapi_call_string_to_status(const char* str_status)
     return ret;
 }
 
+enum tapi_call_disconnect_reason tapi_call_disconnected_reason_from_string(const char* str_status)
+{
+    enum tapi_call_disconnect_reason ret = CALL_DISCONNECT_REASON_UNKNOWN;
+
+    if (str_status == NULL)
+        return ret;
+
+    if (strcmp(str_status, "local") == 0) {
+        ret = CALL_DISCONNECT_REASON_LOCAL_HANGUP;
+    } else if (strcmp(str_status, "remote") == 0) {
+        ret = CALL_DISCONNECT_REASON_REMOTE_HANGUP;
+    } else if (strcmp(str_status, "network") == 0) {
+        ret = CALL_DISCONNECT_REASON_NETWORK_HANGUP;
+    }
+
+    return ret;
+}
+
 const char* tapi_apn_context_type_to_string(tapi_apn_context_type type)
 {
     switch (type) {

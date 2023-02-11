@@ -32,10 +32,16 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define MAX_CALL_PROPERTY_NAME_LENGTH 20
 #define MAX_CALL_PATH_LENGTH 100
 #define MAX_CONFERENCE_PARTICIPANT_COUNT 6
-#define MAX_ECC_LIST_SIZE 20
+#define MAX_ECC_LIST_SIZE 30
+#define MAX_CALL_PROPERTY_NAME_LENGTH 40
+#define MAX_CALL_ID_LENGTH 100
+#define MAX_CALL_NAME_LENGTH 100
+#define MAX_CALL_LINE_ID_LENGTH 100
+#define MAX_CALL_INCOMING_LINE_LENGTH 100
+#define MAX_CALL_START_TIME_LENGTH 100
+#define MAX_CALL_INFO_LENGTH 100
 
 /****************************************************************************
  * Public Types
@@ -52,6 +58,14 @@ enum tapi_call_status {
     CALL_STATUS_DISCONNECTED
 };
 
+enum tapi_call_disconnect_reason {
+    CALL_DISCONNECT_REASON_UNKNOWN = 0,
+    CALL_DISCONNECT_REASON_LOCAL_HANGUP,
+    CALL_DISCONNECT_REASON_REMOTE_HANGUP,
+    CALL_DISCONNECT_REASON_NETWORK_HANGUP,
+    CALL_DISCONNECT_REASON_ERROR,
+};
+
 typedef struct {
     unsigned int id;
     int type;
@@ -65,16 +79,16 @@ typedef struct {
 } tapi_call;
 
 typedef struct {
-    char call_path[MAX_CALL_PATH_LENGTH + 1];
+    char call_id[MAX_CALL_ID_LENGTH + 1];
     int state;
-    char lineIdentification[MAX_CALLER_NAME_LENGTH + 1];
-    char incoming_line[MAX_CALLER_NAME_LENGTH + 1];
-    char name[MAX_CALLER_NAME_LENGTH + 1];
-    char start_time[MAX_CALLER_NAME_LENGTH + 1];
+    char lineIdentification[MAX_CALL_LINE_ID_LENGTH + 1];
+    char incoming_line[MAX_CALL_INCOMING_LINE_LENGTH + 1];
+    char name[MAX_CALL_NAME_LENGTH + 1];
+    char start_time[MAX_CALL_START_TIME_LENGTH + 1];
     bool multiparty;
     bool remote_held;
     bool remote_multiparty;
-    char info[MAX_CALLER_NAME_LENGTH + 1];
+    char info[MAX_CALL_INFO_LENGTH + 1];
     unsigned char icon;
     bool is_emergency_number;
 } tapi_call_info;
@@ -85,7 +99,7 @@ typedef struct call_list {
 } tapi_call_list;
 
 typedef struct {
-    char call_path[MAX_CALL_PATH_LENGTH + 1];
+    char call_id[MAX_CALL_ID_LENGTH + 1];
     char key[MAX_CALL_PROPERTY_NAME_LENGTH + 1];
     void* value;
 } tapi_call_property;
@@ -129,10 +143,11 @@ int tapi_call_hangup_all_calls(tapi_context context, int slot_id);
  * Answer one incoming call.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
- * @param[in] call_list      Ongoing call list.
+ * @param[in] call_id        Call Id.
+ * @param[in] call_count     call count of current sim
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_call_answer_call(tapi_context context, int slot_id, tapi_call_list* call_list);
+int tapi_call_answer_call(tapi_context context, int slot_id, char* call_id, int call_count);
 
 /**
  * Hangup one active call and answer another waiting call.
@@ -223,6 +238,17 @@ int tapi_call_get_all_calls(tapi_context context, int slot_id,
     tapi_call_list* list, tapi_async_function p_handle);
 
 /**
+ * Get all calls.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] call_id        Call id of current call.
+ * @param[out] info          Call info of queryed
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_call_get_call_info(tapi_context context, int slot_id,
+    char* call_id, tapi_call_info* info);
+
+/**
  * Get call by given call state.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
@@ -242,19 +268,37 @@ void tapi_call_tapi_get_call_by_state(tapi_context context, int slot_id,
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_call_register_managercall_change(tapi_context context, int slot_id,
-    tapi_indication_msg msg,
-    tapi_async_function p_handle);
+    tapi_indication_msg msg, tapi_async_function p_handle);
 
 /**
  * Register call info change event
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[in] msg            Call info change event.
+ * @param[in] call_id        Call id of current call.
  * @param[in] p_handle       Event callback.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_call_register_call_info_change(tapi_context context, int slot_id, char* call_path,
+int tapi_call_register_call_info_change(tapi_context context, int slot_id, char* call_id,
     tapi_indication_msg msg, tapi_async_function p_handle);
+
+/**
+ * New voice call proxy
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] call_id        Call id of current call.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_call_new_voice_call_proxy(tapi_context context, int slot_id, char* call_id);
+
+/**
+ * release voice call proxy
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] call_id        Call id of current call.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_call_release_voice_call_proxy(tapi_context context, int slot_id, char* call_id);
 
 /**
  * Get all ecc list

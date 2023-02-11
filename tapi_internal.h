@@ -42,6 +42,7 @@
 #define tapi_log_debug(format, ...) syslog(LOG_DEBUG, format, ##__VA_ARGS__)
 
 #define MAX_CONTEXT_NAME_LENGTH 256
+#define MAX_VOICE_CALL_PROXY_COUNT 20
 
 /****************************************************************************
  * Public Types
@@ -70,6 +71,7 @@ typedef struct {
     GDBusClient* client;
     GDBusProxy* dbus_proxy_manager;
     GDBusProxy* dbus_proxy[CONFIG_ACTIVE_MODEM_COUNT][DBUS_PROXY_MAX_COUNT];
+    GDBusProxy* dbus_voice_call_proxy[CONFIG_ACTIVE_MODEM_COUNT][MAX_VOICE_CALL_PROXY_COUNT];
 } dbus_context;
 
 typedef struct {
@@ -105,6 +107,7 @@ const char* tapi_apn_proto_to_string(tapi_data_proto proto);
 bool tapi_apn_proto_from_string(const char* str, tapi_data_proto* proto);
 char* tapi_utils_get_modem_path(int slot_id);
 enum tapi_call_status tapi_call_string_to_status(const char* str_status);
+enum tapi_call_disconnect_reason tapi_call_disconnected_reason_from_string(const char* str_status);
 bool tapi_is_call_signal_message(DBusMessage* message, DBusMessageIter* iter, int msg_type);
 tapi_call_list* tapi_add_call_to_list(tapi_call_list* head, tapi_call_info* new_val);
 void tapi_free_call_list(tapi_call_list* head);
