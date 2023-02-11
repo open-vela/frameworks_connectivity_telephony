@@ -110,8 +110,10 @@ static int telephonytool_cmd_hangup_all(tapi_context context, char* pargs);
 static int telephonytool_cmd_hangup_call(tapi_context context, char* pargs);
 static int telephonytool_cmd_answer_call(tapi_context context, char* pargs);
 static int telephonytool_cmd_swap_call(tapi_context context, char* pargs);
-static int telephonytool_cmd_listen_call_property_change(tapi_context context, char* pargs);
+static int telephonytool_cmd_listen_call_manager_change(tapi_context context, char* pargs);
 static int telephonytool_cmd_unlisten_call_singal(tapi_context context, char* pargs);
+static int telephonytool_cmd_call_proxy(tapi_context context, char* pargs);
+static int telephonytool_cmd_listen_call_info_change(tapi_context context, char* pargs);
 static int telephonytool_cmd_get_call(tapi_context context, char* pargs);
 static int telephonytool_cmd_transfer_call(tapi_context context, char* pargs);
 static int telephonytool_cmd_merge_call(tapi_context context, char* pargs);
@@ -221,17 +223,23 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         "Answer (enter example : answer 0 0 [slot_id][action:0-answer 1-realse&answer])" },
     { "swap", telephonytool_cmd_swap_call,
         "call Swap (enter example : swap 0 1 [slot_id][action:1-hold 0-unhold])" },
-    { "listen-call", telephonytool_cmd_listen_call_property_change,
-        "call event callback (enter example : listen-call 0 [call_event]" },
-    { "unlisten-call", telephonytool_cmd_unlisten_call_singal,
-        "call unlisten event callback (enter example : unlisten-call [watch_id]" },
+    { "call-manager-listen", telephonytool_cmd_listen_call_manager_change,
+        "call manger event callback (enter example : call-listen 0" },
+    { "call-unlisten", telephonytool_cmd_unlisten_call_singal,
+        "call unlisten event callback (enter example : call-unlisten [watch_id]" },
+    { "call-proxy", telephonytool_cmd_call_proxy,
+        "new/release call proxy (enter example : \
+        call-proxy [slot_id] [action:0-new 1-release] [call_id]" },
+    { "call-info-listen", telephonytool_cmd_listen_call_info_change,
+        "call info event callback (enter example : \
+        call-info-listen [slot_id] [call_event] [call_id]" },
     { "hangup-all", telephonytool_cmd_hangup_all,
         "hangup all call (enter example : hangup-all 0 [slot_id])" },
     { "hangup", telephonytool_cmd_hangup_call,
         "hangup (enter example : hangup 0 [call_id] /phonesim/voicecall01)" },
     { "get-call", telephonytool_cmd_get_call,
-        "get call list (enter example : get-call 0 \
-        [slot_id][state], 0-active 1-held 2-dialing 3-alerting 4-incoming 5-waiting)" },
+        "get call list/call info (enter example : get-call 0 \
+        [slot_id][call_id])" },
     { "transfer", telephonytool_cmd_transfer_call,
         "call transfer  (enter example : transfer 0 [slot_id])" },
     { "merge", telephonytool_cmd_merge_call,
@@ -455,9 +463,31 @@ static void tele_call_manager_call_async_fun(tapi_async_result* result)
 
     if (result->msg_id == MSG_CALL_ADD_MESSAGE_IND) {
         call_info = (tapi_call_info*)result->data;
-        syslog(LOG_DEBUG, "call added call_path : %s\n", call_info->call_path);
+        syslog(LOG_DEBUG, "call added call_path : %s\n", call_info->call_id);
     } else if (result->msg_id == MSG_CALL_REMOVE_MESSAGE_IND) {
         syslog(LOG_DEBUG, "call removed call_path : %s\n", (char*)result->data);
+    }
+}
+
+static void tele_call_info_call_async_fun(tapi_async_result* result)
+{
+    syslog(LOG_DEBUG, "tele_call_info_call_async_fun msg id: %d\n", result->msg_id);
+
+    if (result->msg_id == MSG_CALL_PROPERTY_CHANGED_MESSAGE_IND) {
+        tapi_call_property* call = result->data;
+
+        if (strcmp(call->key, "State") == 0 || strcmp(call->key, "LineIdentification") == 0
+            || strcmp(call->key, "IncomingLine") == 0 || strcmp(call->key, "Name") == 0
+            || strcmp(call->key, "StartTime") == 0 || strcmp(call->key, "Information") == 0) {
+            syslog(LOG_DEBUG, "call property call_id : %s  [%s,%s]\n\n", call->call_id, call->key,
+                (char*)call->value);
+        } else {
+            syslog(LOG_DEBUG, "call property call_id : %s  [%s,%d]\n\n", call->call_id, call->key,
+                (int)call->value);
+        }
+    } else if (result->msg_id == MSG_CALL_DISCONNECTED_REASON_MESSAGE_IND) {
+        syslog(LOG_DEBUG, "call disconnected reason call_id : %s  reason:%d\n\n",
+            (char*)result->data, result->arg2);
     }
 }
 
@@ -511,7 +541,7 @@ static void call_list_query_complete(tapi_async_result* result)
         return;
 
     for (tapi_call_list* p = pHead; p != NULL; p = p->next) {
-        syslog(LOG_DEBUG, "call path : %s\n", p->data->call_path);
+        syslog(LOG_DEBUG, "call path : %s\n", p->data->call_id);
     }
 
     syslog(LOG_DEBUG, "result->status : %d \n", result->status);
@@ -563,29 +593,33 @@ static int telephonytool_cmd_dial(tapi_context context, char* pargs)
 
 static int telephonytool_cmd_answer_call(tapi_context context, char* pargs)
 {
-    char dst[2][CONFIG_NSH_LINELEN];
-    char* slot_id;
-    int type;
-    int cnt;
+    char dst[3][CONFIG_NSH_LINELEN];
+    int slot_id, type;
+    char* call_id;
+    int cnt, ret;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
 
-    cnt = split_input(dst, 2, pargs, " ");
-    if (cnt != 2)
+    cnt = split_input(dst, 3, pargs, " ");
+    if (cnt != 2 && cnt != 3)
         return -EINVAL;
 
-    slot_id = dst[0];
+    slot_id = atoi(dst[0]);
     type = atoi(dst[1]);
 
-    syslog(LOG_DEBUG, "%s, slotId : %s\n", __func__, dst[0]);
-    if (type == 0) {
-        tapi_call_answer_call(context, atoi(slot_id), NULL);
+    if (type == 0 && cnt == 3) {
+        call_id = dst[2];
+        syslog(LOG_DEBUG, "%s, slotId : %d callId : %s\n", __func__, slot_id, call_id);
+        ret = tapi_call_answer_call(context, slot_id, call_id, 1);
     } else if (type == 1) {
-        tapi_call_release_and_answer(context, atoi(slot_id));
+        syslog(LOG_DEBUG, "%s, slotId : %d\n", __func__, slot_id);
+        ret = tapi_call_release_and_answer(context, slot_id);
+    } else {
+        ret = -EINVAL;
     }
 
-    return 0;
+    return ret;
 }
 
 static int telephonytool_cmd_hangup_all(tapi_context context, char* pargs)
@@ -649,48 +683,75 @@ static int telephonytool_cmd_swap_call(tapi_context context, char* pargs)
 static int telephonytool_cmd_get_call(tapi_context context, char* pargs)
 {
     char dst[2][CONFIG_NSH_LINELEN];
-    char* slot_id;
     int cnt = split_input(dst, 2, pargs, " ");
+    tapi_call_info call_info;
+    char* call_id;
+    int ret = -EINVAL;
+    int slot_id;
 
-    if (cnt != 1 && cnt != 2)
-        return -EINVAL;
-
-    slot_id = dst[0];
-    syslog(LOG_DEBUG, "%s, slotId : %s\n", __func__, slot_id);
+    printf("%s\n", __func__);
 
     if (cnt == 1) {
-        tapi_call_get_all_calls(context, atoi(slot_id), NULL, call_list_query_complete);
+        slot_id = atoi(dst[0]);
+        ret = tapi_call_get_all_calls(context, slot_id, NULL, call_list_query_complete);
     } else if (cnt == 2) {
-        tapi_call_info call;
-        tapi_call_tapi_get_call_by_state(context, atoi(slot_id), atoi(dst[1]), NULL, &call);
+        slot_id = atoi(dst[0]);
+        call_id = dst[1];
+
+        memset(&call_info, 0, sizeof(tapi_call_info));
+
+        ret = tapi_call_get_call_info(context, slot_id, call_id, &call_info);
+        if (ret == OK) {
+            syslog(LOG_DEBUG, "call id: %s \n", call_info.call_id);
+            syslog(LOG_DEBUG, "call state: %d \n", call_info.state);
+            syslog(LOG_DEBUG, "call LineIdentification: %s \n", call_info.lineIdentification);
+            syslog(LOG_DEBUG, "call IncomingLine: %s \n", call_info.incoming_line);
+            syslog(LOG_DEBUG, "call Name: %s \n", call_info.name);
+            syslog(LOG_DEBUG, "call StartTime: %s \n", call_info.start_time);
+            syslog(LOG_DEBUG, "call Multiparty: %d \n", call_info.multiparty);
+            syslog(LOG_DEBUG, "call RemoteHeld: %d \n", call_info.remote_held);
+            syslog(LOG_DEBUG, "call RemoteMultiparty: %d \n", call_info.remote_multiparty);
+            syslog(LOG_DEBUG, "call Information: %s \n", call_info.info);
+            syslog(LOG_DEBUG, "call Icon: %d \n", call_info.icon);
+            syslog(LOG_DEBUG, "call Emergency: %d \n", call_info.is_emergency_number);
+        }
+        return ret;
+    } else {
+        return -EINVAL;
     }
 
-    return 0;
+    return ret;
 }
 
-static int telephonytool_cmd_listen_call_property_change(tapi_context context, char* pargs)
+static int telephonytool_cmd_listen_call_manager_change(tapi_context context, char* pargs)
 {
-
-    char dst[2][CONFIG_NSH_LINELEN];
-    int cnt = split_input(dst, 2, pargs, " ");
-    int watch_id;
+    char dst[1][CONFIG_NSH_LINELEN];
+    int cnt = split_input(dst, 1, pargs, " ");
+    int watch_id, slot_id;
 
     if (cnt != 1)
         return -EINVAL;
 
+    slot_id = atoi(dst[0]);
+
     syslog(LOG_DEBUG, "%s, cnt : %d\n", __func__, cnt);
-    watch_id = tapi_call_register_managercall_change(context, 0, MSG_CALL_ADD_MESSAGE_IND,
+    watch_id = tapi_call_register_managercall_change(context, slot_id, MSG_CALL_ADD_MESSAGE_IND,
         tele_call_manager_call_async_fun);
-    syslog(LOG_DEBUG, "call add change  watch_id: %d\n", watch_id);
+    syslog(LOG_DEBUG, "retister call add change, return watch id: %d\n", watch_id);
+    if (watch_id < 0)
+        return watch_id;
 
-    watch_id = tapi_call_register_managercall_change(context, 0, MSG_CALL_REMOVE_MESSAGE_IND,
+    watch_id = tapi_call_register_managercall_change(context, slot_id, MSG_CALL_REMOVE_MESSAGE_IND,
         tele_call_manager_call_async_fun);
-    syslog(LOG_DEBUG, "call remove change  watch_id: %d\n", watch_id);
+    syslog(LOG_DEBUG, "reitster call remove change, return watch id: %d\n", watch_id);
+    if (watch_id < 0)
+        return watch_id;
 
-    watch_id = tapi_call_register_emergencylist_change(context, 0, tele_call_ecc_list_async_fun);
-    syslog(LOG_DEBUG, "ecc list change  watch_id: %d\n", watch_id);
+    watch_id = tapi_call_register_emergencylist_change(context, slot_id,
+        tele_call_ecc_list_async_fun);
+    syslog(LOG_DEBUG, "retister ecc list change, return watch id: %d\n", watch_id);
 
-    return 0;
+    return watch_id;
 }
 
 static int telephonytool_cmd_unlisten_call_singal(tapi_context context, char* pargs)
@@ -702,9 +763,61 @@ static int telephonytool_cmd_unlisten_call_singal(tapi_context context, char* pa
         return -EINVAL;
 
     syslog(LOG_DEBUG, "%s, cnt : %d\n", __func__, cnt);
-    tapi_unregister(context, atoi(dst[0]));
+    return tapi_unregister(context, atoi(dst[0]));
+}
 
-    return 0;
+static int telephonytool_cmd_call_proxy(tapi_context context, char* pargs)
+{
+    char dst[3][CONFIG_NSH_LINELEN];
+    int cnt = split_input(dst, 3, pargs, " ");
+    int slot_id, action;
+    int ret = -EINVAL;
+    char* call_id;
+
+    if (cnt != 3)
+        return -EINVAL;
+
+    slot_id = atoi(dst[0]);
+    action = atoi(dst[1]);
+    call_id = dst[2];
+
+    if (action == 0) {
+        syslog(LOG_DEBUG, "%s, new call proxy\n", __func__);
+
+        ret = tapi_call_new_voice_call_proxy(context, slot_id, call_id);
+    } else if (action == 1) {
+        syslog(LOG_DEBUG, "%s, release call proxy\n", __func__);
+
+        ret = tapi_call_release_voice_call_proxy(context, slot_id, call_id);
+    }
+    return ret;
+}
+
+static int telephonytool_cmd_listen_call_info_change(tapi_context context, char* pargs)
+{
+    char dst[2][CONFIG_NSH_LINELEN];
+    int cnt = split_input(dst, 2, pargs, " ");
+    int slot_id, watch_id;
+    char* call_id;
+
+    if (cnt != 2)
+        return -EINVAL;
+
+    slot_id = atoi(dst[0]);
+    call_id = dst[1];
+
+    syslog(LOG_DEBUG, "%s, cnt : %d\n", __func__, cnt);
+
+    watch_id = tapi_call_register_call_info_change(context, slot_id, call_id,
+        MSG_CALL_PROPERTY_CHANGED_MESSAGE_IND, tele_call_info_call_async_fun);
+    syslog(LOG_DEBUG, "register call info change, return watch id: %d\n", watch_id);
+    if (watch_id < 0)
+        return watch_id;
+
+    watch_id = tapi_call_register_call_info_change(context, slot_id, call_id,
+        MSG_CALL_DISCONNECTED_REASON_MESSAGE_IND, tele_call_info_call_async_fun);
+    syslog(LOG_DEBUG, "register call disconnected reason change, return watch id: %d\n", watch_id);
+    return watch_id;
 }
 
 static int telephonytool_cmd_transfer_call(tapi_context context, char* pargs)
