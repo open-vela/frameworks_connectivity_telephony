@@ -42,14 +42,20 @@
 
 #define EVENT_APN_LOADED_DONE 0x04
 #define EVENT_APN_SAVE_DONE 0x05
-#define EVENT_APN_RESTORE_DONE 0x06
-#define EVENT_IP_SETTINGS_QUERY_DONE 0x07
+#define EVENT_APN_REMOVAL_DONE 0x06
+#define EVENT_APN_RESTORE_DONE 0x07
+#define EVENT_IP_SETTINGS_QUERY_DONE 0x08
 
-#define EVENT_CHANGE_SIM_PIN_DONE 0x08
-#define EVENT_ENTER_SIM_PIN_DONE 0x09
-#define EVENT_RESET_SIM_PIN_DONE 0x0A
-#define EVENT_LOCK_SIM_PIN_DONE 0x0B
-#define EVENT_UNLOCK_SIM_PIN_DONE 0x0C
+#define EVENT_CHANGE_SIM_PIN_DONE 0x09
+#define EVENT_ENTER_SIM_PIN_DONE 0x0A
+#define EVENT_RESET_SIM_PIN_DONE 0x0B
+#define EVENT_LOCK_SIM_PIN_DONE 0x0C
+#define EVENT_UNLOCK_SIM_PIN_DONE 0x0D
+
+#define EVENT_NETWORK_SCAN 0x0E
+#define EVENT_REGISTER_AUTO 0x0F
+#define EVENT_REGISTER_MANUAL 0x10
+#define EVENT_QUERY_SERVING_CELLINFO 0x11
 
 /****************************************************************************
  * Public Type Declarations
@@ -106,6 +112,7 @@ static int telephonytool_cmd_is_emergency_number(tapi_context context, char* par
 static int telephonytool_cmd_data_register(tapi_context context, char* pargs);
 static int telephonytool_cmd_load_apns(tapi_context context, char* pargs);
 static int telephonytool_cmd_save_apn(tapi_context context, char* pargs);
+static int telephonytool_cmd_remove_apn(tapi_context context, char* pargs);
 static int telephonytool_cmd_reset_apn(tapi_context context, char* pargs);
 static int telephonytool_cmd_request_network(tapi_context context, char* pargs);
 static int telephonytool_cmd_release_network(tapi_context context, char* pargs);
@@ -114,6 +121,12 @@ static int telephonytool_cmd_get_data_roaming(tapi_context context, char* pargs)
 static int telephonytool_cmd_set_data_enabled(tapi_context context, char* pargs);
 static int telephonytool_cmd_get_data_enabled(tapi_context context, char* pargs);
 static int telephonytool_cmd_get_ip_settings(tapi_context context, char* pargs);
+static int telephonytool_cmd_get_ps_attached(tapi_context context, char* pargs);
+static int telephonytool_cmd_get_ps_network_type(tapi_context context, char* pargs);
+static int telephonytool_cmd_set_pref_apn(tapi_context context, char* pargs);
+static int telephonytool_cmd_get_pref_apn(tapi_context context, char* pargs);
+static int telephonytool_cmd_set_default_data_slot(tapi_context context, char* pargs);
+static int telephonytool_cmd_get_default_data_slot(tapi_context context, char* pargs);
 
 /** Sim interface*/
 static int telephonytool_cmd_has_icc_card(tapi_context context, char* pargs);
@@ -142,6 +155,17 @@ static int telephonytool_tapi_sms_get_cell_broadcast_topics(tapi_context context
 static int telephonytool_tapi_sms_set_cell_broadcast_topics(tapi_context context, char* pargs);
 static int telephonytool_tapi_cbs_register(tapi_context context, char* pargs);
 
+/** Network interface*/
+static int telephonytool_cmd_network_listen(tapi_context context, char* pargs);
+static int telephonytool_cmd_network_select_auto(tapi_context context, char* pargs);
+static int telephonytool_cmd_query_signalstrength(tapi_context context, char* pargs);
+static int telephonytool_cmd_get_operator_name(tapi_context context, char* pargs);
+static int telephonytool_cmd_get_net_registration_info(tapi_context context, char* pargs);
+static int telephonytool_cmd_get_voice_networktype(tapi_context context, char* pargs);
+static int telephonytool_cmd_is_voice_roaming(tapi_context context, char* pargs);
+static int telephonytool_cmd_network_scan(tapi_context context, char* pargs);
+static int telephonytool_cmd_get_serving_cellinfo(tapi_context context, char* pargs);
+
 /****************************************************************************
  * Private Data
  ****************************************************************************/
@@ -168,10 +192,10 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         "Answer (enter example : answer 0 0 [slot_id][action:0-answer 1-realse&answer])" },
     { "swap", telephonytool_cmd_swap_call,
         "call Swap (enter example : swap 0 1 [slot_id][action:1-hold 0-unhold])" },
-    { "call-listen", telephonytool_cmd_listen_call_property_change,
-        "call event callback (enter example : call-listen 0 [call_event]" },
-    { "call-unlisten", telephonytool_cmd_unlisten_call_singal,
-        "call unlisten event callback (enter example : call-unlisten [watch_id]" },
+    { "listen-call", telephonytool_cmd_listen_call_property_change,
+        "call event callback (enter example : listen-call 0 [call_event]" },
+    { "unlisten-call", telephonytool_cmd_unlisten_call_singal,
+        "call unlisten event callback (enter example : unlisten-call [watch_id]" },
     { "hangup-all", telephonytool_cmd_hangup_all,
         "hangup all call (enter example : hangup-all 0 [slot_id])" },
     { "hangup", telephonytool_cmd_hangup_call,
@@ -216,6 +240,8 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         "load apn settings (enter example : load-apns 0 [slot_id])" },
     { "save-apn", telephonytool_cmd_save_apn,
         "save apn (enter example : save-apn 0 1 [slot_id][apn_type])" },
+    { "remove-apn", telephonytool_cmd_remove_apn,
+        "remove apn (enter example : remove-apn 0 1 [slot_id][id])" },
     { "reset-apn", telephonytool_cmd_reset_apn,
         "reset apn (enter example : reset-apn 0 [slot_id])" },
     { "request-network", telephonytool_cmd_request_network,
@@ -234,6 +260,18 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         "get ip-settings (enter example : ip-settings 0 1 [slot_id][apn_type])" },
     { "listen-data", telephonytool_cmd_data_register,
         "listen data event (enter example : listen-data 0 1 [slot_id][event_id])" },
+    { "ps-attached", telephonytool_cmd_get_ps_attached,
+        "checki if ps attached (enter example : ps-attached 0 [slot_id])" },
+    { "ps-network", telephonytool_cmd_get_ps_network_type,
+        "get ps network type (enter example : ps-network 0 [slot_id])" },
+    { "pref-apn-set", telephonytool_cmd_set_pref_apn,
+        "set preferred apn (enter example : pref-apn-set[slot_id][apn_id])" },
+    { "pref-apn-get", telephonytool_cmd_get_pref_apn,
+        "get preferred apn (enter example : pref-apn-get[slot_id][apn_id])" },
+    { "dds-set", telephonytool_cmd_set_default_data_slot,
+        "set default data slot (enter example : dds-set 0 [slot_id])" },
+    { "dds-get", telephonytool_cmd_get_default_data_slot,
+        "get default data slot (enter example : dds-get)" },
     { "has-icc", telephonytool_cmd_has_icc_card,
         "has icc card (enter example : has-icc 0 [slot_id])" },
     { "iccid", telephonytool_cmd_get_sim_iccid,
@@ -282,6 +320,24 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         "send message (enter example : copy-sms-to-sim 0 10086 hello)" },
     { "delete-sms-from-sim", telephonytool_tapi_sms_delete_message_from_sim,
         "send message (enter example : delete-sms-from-sim 0 1)" },
+    { "listen-network", telephonytool_cmd_network_listen,
+        "listen-network (enter example : listen-network 0 14 [slot_id][event_id])" },
+    { "register-auto", telephonytool_cmd_network_select_auto,
+        "register auto (enter example : register-auto 0 [slot_id])" },
+    { "signalstrength", telephonytool_cmd_query_signalstrength,
+        "signalstrength (enter example : signalstrength 0 [slot_id])" },
+    { "operator-name", telephonytool_cmd_get_operator_name,
+        "operator-name (enter example : operator-name 0 [slot_id])" },
+    { "registration-info", telephonytool_cmd_get_net_registration_info,
+        "query registration-info (enter example : registration-info 0 [slot_id])" },
+    { "cs-network", telephonytool_cmd_get_voice_networktype,
+        "query cs network type (enter example : cs-network 0 [slot_id])" },
+    { "voice-roaming", telephonytool_cmd_is_voice_roaming,
+        "judge voice roaming  (enter example : voice-roaming 0 [slot_id])" },
+    { "network-scan", telephonytool_cmd_network_scan,
+        "network-scan  (enter example : network-scan 0 [slot_id])" },
+    { "serving-cellinfo", telephonytool_cmd_get_serving_cellinfo,
+        "get serving cellinfo  (enter example : serving-cellinfo 0)" },
     { "q", NULL, "Quit (pls enter : q)" },
     { "help", telephonytool_cmd_help,
         "Show this message (pls enter : help)" },
@@ -384,6 +440,18 @@ static void call_list_query_complete(tapi_async_result* result)
 
     printf("result->status : %d \n", result->status);
     tapi_call_free_call_list(pHead);
+}
+
+static void registration_info_query_complete(tapi_async_result* result)
+{
+    tapi_registration_info* info = result->data;
+
+    printf("%s : \n", __func__);
+    if (info == NULL)
+        return;
+
+    printf("reg_state = %d operator_name = %s mcc = %s mnc = %s \n",
+        info->reg_state, info->operator_name, info->mcc, info->mnc);
 }
 
 static int telephonytool_cmd_dial(tapi_context context, char* pargs)
@@ -647,13 +715,11 @@ static int telephonytool_cmd_is_emergency_number(tapi_context context, char* par
 
 static int telephonytool_cmd_query_modem_list(tapi_context context, char* pargs)
 {
-    char* modem_list[MAX_MODEM_COUNT];
-
     if (strlen(pargs) > 0)
         return -EINVAL;
 
     tapi_query_modem_list(context,
-        EVENT_MODEM_LIST_QUERY_DONE, modem_list, MAX_MODEM_COUNT, modem_list_query_complete);
+        EVENT_MODEM_LIST_QUERY_DONE, modem_list_query_complete);
     return 0;
 }
 
@@ -969,7 +1035,6 @@ static int telephonytool_cmd_get_line_number(tapi_context context, char* pargs)
 
 static int telephonytool_cmd_load_apns(tapi_context context, char* pargs)
 {
-    tapi_apn_context* apns[MAX_APN_LIST_CAPACITY];
     char* slot_id;
 
     if (!strlen(pargs))
@@ -980,7 +1045,7 @@ static int telephonytool_cmd_load_apns(tapi_context context, char* pargs)
         return -EINVAL;
 
     return tapi_data_load_apn_contexts(context,
-        atoi(slot_id), EVENT_APN_LOADED_DONE, apns, MAX_APN_LIST_CAPACITY, tele_call_async_fun);
+        atoi(slot_id), EVENT_APN_LOADED_DONE, tele_call_async_fun);
 }
 
 static int telephonytool_cmd_save_apn(tapi_context context, char* pargs)
@@ -1001,6 +1066,37 @@ static int telephonytool_cmd_save_apn(tapi_context context, char* pargs)
 
     apn->type = APN_CONTEXT_TYPE_INTERNET;
     tapi_data_save_apn_context(context, atoi(slot_id), EVENT_APN_SAVE_DONE, apn, tele_call_async_fun);
+    free(apn);
+
+    return 0;
+}
+
+static int telephonytool_cmd_remove_apn(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* target_state;
+    tapi_apn_context* apn;
+
+    if (!strlen(pargs))
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &target_state);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*target_state == ' ')
+        target_state++;
+
+    if (target_state == NULL)
+        return -EINVAL;
+
+    apn = malloc(sizeof(tapi_apn_context));
+    if (apn == NULL)
+        return -EINVAL;
+    apn->id = target_state;
+
+    tapi_data_remove_apn_context(context, atoi(slot_id), EVENT_APN_REMOVAL_DONE,
+        apn, tele_call_async_fun);
     free(apn);
 
     return 0;
@@ -1149,6 +1245,115 @@ static int telephonytool_cmd_get_ip_settings(tapi_context context, char* pargs)
     free(ip_settings.ipv4);
     free(ip_settings.ipv6);
     return ret;
+}
+
+static int telephonytool_cmd_get_ps_attached(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    bool result;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", NULL);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    tapi_data_is_ps_attached(context, atoi(slot_id), &result);
+    printf("%s, slotId : %s result : %d \n", __func__, slot_id, result);
+
+    return 0;
+}
+
+static int telephonytool_cmd_get_ps_network_type(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    tapi_network_type result;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", NULL);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    tapi_data_get_network_type(context, atoi(slot_id), &result);
+    printf("%s, slotId : %s result : %d \n", __func__, slot_id, result);
+
+    return 0;
+}
+
+static int telephonytool_cmd_set_pref_apn(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* target_state;
+    tapi_apn_context* apn;
+
+    if (!strlen(pargs))
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &target_state);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*target_state == ' ')
+        target_state++;
+
+    if (target_state == NULL)
+        return -EINVAL;
+
+    apn = malloc(sizeof(tapi_apn_context));
+    if (apn == NULL)
+        return -EINVAL;
+    apn->id = target_state;
+
+    tapi_data_set_preferred_apn(context, atoi(slot_id), apn);
+    printf("%s, slotId : %s apn : %s \n", __func__, slot_id, target_state);
+    free(apn);
+
+    return 0;
+}
+
+static int telephonytool_cmd_get_pref_apn(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* apn;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", NULL);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    tapi_data_get_preferred_apn(context, atoi(slot_id), &apn);
+    printf("%s, slotId : %s apn : %s \n", __func__, slot_id, apn);
+
+    return 0;
+}
+
+static int telephonytool_cmd_set_default_data_slot(tapi_context context, char* pargs)
+{
+    char* value;
+
+    if (!strlen(pargs))
+        return -EINVAL;
+
+    value = strtok_r(pargs, " ", NULL);
+    if (value == NULL)
+        return -EINVAL;
+
+    return tapi_data_set_default_data_slot(context, atoi(value));
+}
+
+static int telephonytool_cmd_get_default_data_slot(tapi_context context, char* pargs)
+{
+    int result;
+
+    tapi_data_get_default_data_slot(context, &result);
+    printf("%s : %d \n", __func__, result);
+
+    return 0;
 }
 
 static int telephonytool_cmd_data_register(tapi_context context, char* pargs)
@@ -1761,6 +1966,175 @@ static int telephonytool_tapi_sms_delete_message_from_sim(tapi_context context, 
 
     tapi_sms_delete_message_from_sim(context, atoi(slot_id), index);
     printf("%s, slotId : %s index: %s \n", __func__, slot_id, index);
+
+    return 0;
+}
+
+static int telephonytool_cmd_network_listen(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* target_state;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &target_state);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*target_state == ' ')
+        target_state++;
+
+    if (target_state == NULL)
+        return -EINVAL;
+
+    tapi_network_register(context, atoi(slot_id), atoi(target_state), tele_call_async_fun);
+    printf("%s, slotId : %s value :%s \n", __func__, slot_id, target_state);
+
+    return 0;
+}
+
+static int telephonytool_cmd_network_select_auto(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    int ret = -1;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", NULL);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    ret = tapi_network_select_auto(context,
+        atoi(slot_id), EVENT_REGISTER_AUTO, tele_call_async_fun);
+    printf("%s, slotId : %s value :%d \n", __func__, slot_id, ret);
+
+    return 0;
+}
+
+static int telephonytool_cmd_query_signalstrength(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    tapi_signal_strength ss;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", NULL);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    tapi_network_get_signalstrength(context, atoi(slot_id), &ss);
+    printf("%s, slotId : %s RSRP value :%d \n", __func__, slot_id, ss.rsrp);
+
+    return 0;
+}
+
+static int telephonytool_cmd_get_operator_name(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* operator;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", NULL);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    tapi_network_get_display_name(context, atoi(slot_id), &operator);
+    printf("%s, slotId : %s value :%s \n", __func__, slot_id, operator);
+
+    return 0;
+}
+
+static int telephonytool_cmd_get_net_registration_info(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    tapi_registration_info* registration_info = malloc(sizeof(tapi_registration_info));
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", NULL);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    tapi_network_get_registration_info(context, atoi(slot_id), registration_info, registration_info_query_complete);
+
+    return 0;
+}
+
+static int telephonytool_cmd_get_voice_networktype(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    tapi_network_type type;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", NULL);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    tapi_network_get_voice_network_type(context, atoi(slot_id), &type);
+    printf("%s, slotId : %s value :%d \n", __func__, slot_id, type);
+
+    return 0;
+}
+
+static int telephonytool_cmd_is_voice_roaming(tapi_context context, char* pargs)
+{
+    int value;
+    char* slot_id;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", NULL);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    value = tapi_network_is_voice_roaming(context, atoi(slot_id));
+
+    printf("%s, slotId : %s value :%d \n", __func__, slot_id, value);
+
+    return 0;
+}
+
+static int telephonytool_cmd_network_scan(tapi_context context, char* pargs)
+{
+    char* slot_id;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", NULL);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    return tapi_network_scan(context,
+        atoi(slot_id), EVENT_NETWORK_SCAN, tele_call_async_fun);
+}
+
+static int telephonytool_cmd_get_serving_cellinfo(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    tapi_cell_identity* celllist = NULL;
+
+    return 0;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", NULL);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    tapi_network_get_serving_cellinfo(context,
+        atoi(slot_id), EVENT_QUERY_SERVING_CELLINFO, celllist, tele_call_async_fun);
+    printf("%s, slotId : %s alpha_long value :%s \n", __func__, slot_id, celllist->alpha_long);
 
     return 0;
 }

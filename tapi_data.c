@@ -293,9 +293,8 @@ static void apn_list_loaded(DBusMessage* message, void* user_data)
     tapi_async_function cb;
     DBusMessageIter args, list;
     DBusError err;
-    tapi_apn_context** result;
+    tapi_apn_context* result[MAX_APN_LIST_CAPACITY];
     int index;
-    int length;
 
     tapi_log_debug("apn_list_loaded \n");
     if (handler == NULL)
@@ -309,7 +308,6 @@ static void apn_list_loaded(DBusMessage* message, void* user_data)
     if (cb == NULL)
         return;
 
-    result = ar->data;
     ar->status = OK;
 
     dbus_error_init(&err);
@@ -326,7 +324,6 @@ static void apn_list_loaded(DBusMessage* message, void* user_data)
     dbus_message_iter_recurse(&args, &list);
 
     index = 0;
-    length = ar->arg2;
     while (dbus_message_iter_get_arg_type(&list) == DBUS_TYPE_STRUCT) {
         DBusMessageIter entry, dict;
         char* path;
@@ -346,10 +343,11 @@ static void apn_list_loaded(DBusMessage* message, void* user_data)
         dbus_message_iter_next(&list);
 
         result[index++] = apn;
-        if (index >= length)
+        if (index >= MAX_APN_LIST_CAPACITY)
             break;
     }
     ar->arg2 = index; // apn count;
+    ar->data = result;
 
 done:
     cb(ar);
@@ -510,16 +508,14 @@ static void network_operation_append(DBusMessageIter* iter, void* user_data)
  ****************************************************************************/
 
 int tapi_data_load_apn_contexts(tapi_context context,
-    int slot_id, int event_id, tapi_apn_context* out[], int len,
-    tapi_async_function p_handle)
+    int slot_id, int event_id, tapi_async_function p_handle)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
     tapi_async_handler* handler;
     tapi_async_result* ar;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
-        || out == NULL || len <= 0 || len > MAX_APN_LIST_CAPACITY) {
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
     }
 
@@ -542,8 +538,6 @@ int tapi_data_load_apn_contexts(tapi_context context,
 
     ar->msg_id = event_id;
     ar->arg1 = slot_id;
-    ar->arg2 = len;
-    ar->data = out;
     handler->result = ar;
     handler->cb_function = p_handle;
 
@@ -804,7 +798,7 @@ int tapi_data_set_preferred_apn(tapi_context context,
     return 0;
 }
 
-int tapi_data_get_preferred_apn(tapi_context context, int slot_id, char* out)
+int tapi_data_get_preferred_apn(tapi_context context, int slot_id, char** out)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
@@ -821,7 +815,7 @@ int tapi_data_get_preferred_apn(tapi_context context, int slot_id, char* out)
     }
 
     if (g_dbus_proxy_get_property(proxy, "PreferredApn", &iter)) {
-        dbus_message_iter_get_basic(&iter, &out);
+        dbus_message_iter_get_basic(&iter, out);
     }
 
     return 0;

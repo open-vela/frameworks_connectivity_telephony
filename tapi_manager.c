@@ -52,6 +52,8 @@ static void get_dbus_proxy(dbus_context* ctx)
         OFONO_CONNECTION_MANAGER_INTERFACE,
         OFONO_MESSAGE_MANAGER_INTERFACE,
         OFONO_CELL_BROADCAST_INTERFACE,
+        OFONO_NETWORK_REGISTRATION_INTERFACE,
+        OFONO_NETMON_INTERFACE,
     };
 
     ctx->dbus_proxy_manager = g_dbus_proxy_new(
@@ -109,9 +111,8 @@ static void modem_list_query_done(DBusMessage* message, void* user_data)
     tapi_async_function cb;
     DBusMessageIter args, list;
     DBusError err;
-    char** result;
+    char* result[MAX_MODEM_COUNT];
     int index;
-    int length;
 
     tapi_log_debug("modem_list_query_done \n");
     if (handler == NULL)
@@ -125,7 +126,6 @@ static void modem_list_query_done(DBusMessage* message, void* user_data)
     if (cb == NULL)
         return;
 
-    result = ar->data;
     ar->status = OK;
 
     dbus_error_init(&err);
@@ -142,16 +142,16 @@ static void modem_list_query_done(DBusMessage* message, void* user_data)
     dbus_message_iter_recurse(&args, &list);
 
     index = 0;
-    length = ar->arg1;
     while (dbus_message_iter_get_arg_type(&list) == DBUS_TYPE_STRUCT) {
         DBusMessageIter entry;
         dbus_message_iter_recurse(&list, &entry);
         dbus_message_iter_get_basic(&entry, &result[index++]);
-        if (index >= length)
+        if (index >= MAX_MODEM_COUNT)
             break;
         dbus_message_iter_next(&list);
     }
     ar->arg1 = index; // modem count;
+    ar->data = result;
 
 done:
     cb(ar);
@@ -303,16 +303,12 @@ int tapi_close(tapi_context context)
     return 0;
 }
 
-int tapi_query_modem_list(tapi_context context,
-    int event_id, char* list[], int len, tapi_async_function p_handle)
+int tapi_query_modem_list(tapi_context context, int event_id, tapi_async_function p_handle)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
     tapi_async_handler* handler;
     tapi_async_result* ar;
-
-    if (list == NULL || len <= 0 || len > MAX_MODEM_COUNT)
-        return -EINVAL;
 
     proxy = ctx->dbus_proxy_manager;
     if (proxy == NULL) {
@@ -332,8 +328,6 @@ int tapi_query_modem_list(tapi_context context,
     }
 
     ar->msg_id = event_id;
-    ar->arg1 = len;
-    ar->data = list;
     handler->result = ar;
     handler->cb_function = p_handle;
 

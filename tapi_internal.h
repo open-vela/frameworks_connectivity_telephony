@@ -55,6 +55,8 @@ enum dbus_proxy_type {
     DBUS_PROXY_DATA,
     DBUS_PROXY_SMS,
     DBUS_PROXY_CBS,
+    DBUS_PROXY_NETREG,
+    DBUS_PROXY_NETMON,
     DBUS_PROXY_MAX_COUNT,
 };
 

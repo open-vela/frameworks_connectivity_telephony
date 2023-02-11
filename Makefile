@@ -29,6 +29,7 @@ CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" $(APPDIR)/frameworks/utils/incl
 CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" $(APPDIR)/frameworks/telephony}
 
 CSRCS += tapi_manager.c tapi_utils.c tapi_call.c tapi_data.c tapi_sim.c tapi_cbs.c tapi_sms.c
+CSRCS += tapi_network.c
 
 ifneq ($(CONFIG_TELEPHONY_TOOL),)
   MAINSRC   += telephony_tool.c

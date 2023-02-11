@@ -121,14 +121,11 @@ extern "C" {
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[in] event_id       Async event identifier.
- * @param[out] out[]         Apn list container.
- * @param[in] len            Length of out[].
  * @param[in] p_handle       Event callback.
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_data_load_apn_contexts(tapi_context context,
-    int slot_id, int event_id, tapi_apn_context* out[], int len,
-    tapi_async_function p_handle);
+    int slot_id, int event_id, tapi_async_function p_handle);
 
 /**
  * Add Save Item to Apn Storage.
@@ -223,10 +220,10 @@ int tapi_data_set_preferred_apn(tapi_context context, int slot_id, tapi_apn_cont
  * Get preferred apn.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
- * @param[out] apn           Id of Preferred Apn item.
+ * @param[out] out           Pointer to Id of Preferred Apn item.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_data_get_preferred_apn(tapi_context context, int slot_id, char* out);
+int tapi_data_get_preferred_apn(tapi_context context, int slot_id, char** out);
 
 /**
  * Switch data on or off.
