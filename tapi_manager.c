@@ -70,6 +70,10 @@ static void release_dbus_proxy(dbus_context* ctx)
         for (int j = 0; j < DBUS_PROXY_MAX_COUNT; j++) {
             g_dbus_proxy_unref(ctx->dbus_proxy[i][j]);
         }
+
+        for (int k = 0; k < MAX_VOICE_CALL_PROXY_COUNT; k++) {
+            g_dbus_proxy_unref(ctx->dbus_voice_call_proxy[i][k]);
+        }
     }
 }
 
