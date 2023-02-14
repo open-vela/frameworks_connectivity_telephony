@@ -57,6 +57,16 @@ typedef struct {
     int forwarding_flag_on_sim;
 } tapi_call_forwarding_info;
 
+typedef struct {
+    char* ss_service_type;
+    char* ss_service_operation;
+    char* service_operation_requested;
+    char* call_setting_status;
+    char* ussd_response;
+    char* append_service;
+    char* append_service_value;
+} tapi_ss_initiate_info;
+
 typedef enum {
     USSD_STATE_IDLE = 0,
     USSD_STATE_ACTIVE = 1,
@@ -69,7 +79,7 @@ typedef enum {
     CLIR_STATUS_PROVISIONED_PERMANENT = 1,
     CLIR_STATUS_UNKNOWN = 2,
     CLIR_STATUS_TEMPORARY_RESTRICTED = 3,
-    CLIR_STATUS_TEMPORARY_ALLOWED = 4
+    CLIR_STATUS_TEMPORARY_ALLOWED = 4,
 } tapi_clir_status;
 
 typedef enum {
@@ -110,7 +120,7 @@ int tapi_ss_request_call_barring(tapi_context context, int slot_id, int event_id
 int tapi_ss_query_call_barring_info(tapi_context context, int slot_id, const char* service_type, char** out);
 
 /**
- * Register new network password for the Call Barring services.
+ * Registers new network password for the Call Barring services.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[in] event_id       Async event identifier.
@@ -194,7 +204,20 @@ int tapi_ss_disable_call_forwarding(tapi_context context, int slot_id, int event
     char* cf_type, tapi_async_function p_handle);
 
 /**
- * Get USSD state.
+ * If the command is a recognized supplementary service control string,
+ * the corresponding SS request is made and the result is returned.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] event_id       Async event identifier.
+ * @param[in] command        Control string.
+ * @param[in] p_handle       Event callback.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_ss_initiate_service(tapi_context context, int slot_id, int event_id,
+    char* command, tapi_async_function p_handle);
+
+/**
+ * Gets USSD state.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[out] out           The USSD state.
@@ -203,7 +226,19 @@ int tapi_ss_disable_call_forwarding(tapi_context context, int slot_id, int event
 int tapi_get_ussd_state(tapi_context context, int slot_id, tapi_ussd_state* out);
 
 /**
- * Cancel an ongoing USSD session.
+ * Sends an USSD message.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] event_id       Async event identifier.
+ * @param[in] reply          The response to the network.
+ * @param[in] p_handle       Event callback.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_ss_send_ussd(tapi_context context, int slot_id, int event_id, char* reply,
+    tapi_async_function p_handle);
+
+/**
+ * Cancels an ongoing USSD session.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[in] event_id       Async event identifier.
@@ -214,7 +249,7 @@ int tapi_ss_cancel_ussd(tapi_context context, int slot_id, int event_id,
     tapi_async_function p_handle);
 
 /**
- * Set Call Waiting option.
+ * Sets Call Waiting option.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[in] event_id       Async event identifier.
@@ -226,7 +261,7 @@ int tapi_ss_request_call_wating(tapi_context context, int slot_id, int event_id,
     tapi_async_function p_handle);
 
 /**
- * Get Call Waiting info.
+ * Gets Call Waiting info.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[out] out           The value of Call Waiting service.
@@ -235,7 +270,7 @@ int tapi_ss_request_call_wating(tapi_context context, int slot_id, int event_id,
 int tapi_ss_query_call_wating(tapi_context context, int slot_id, char** out);
 
 /**
- * Get Calling Line Presentation info.
+ * Gets Calling Line Presentation info.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[out] out           The value of Calling Line Presentation service.
@@ -245,7 +280,7 @@ int tapi_ss_query_calling_line_presentation_info(tapi_context context, int slot_
     tapi_clip_status* out);
 
 /**
- * Get Connected Line Restriction info.
+ * Gets Connected Line Restriction info.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[out] out           The value Connected Line Restriction service.
@@ -255,7 +290,7 @@ int tapi_ss_query_calling_line_restriction_info(tapi_context context, int slot_i
     tapi_clir_status* out);
 
 /**
- * Register SS event callback.
+ * Registers SS event callback.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[in] msg            SS event ID.
@@ -266,7 +301,7 @@ int tapi_ss_register(tapi_context context,
     int slot_id, tapi_indication_msg msg, tapi_async_function p_handle);
 
 /**
- * Unregister SS event callback.
+ * Unregisters SS event callback.
  * @param[in] context        Telephony api context.
  * @param[in] watch_id       Watch id.
  * @return Zero on success; a negated errno value on failure.

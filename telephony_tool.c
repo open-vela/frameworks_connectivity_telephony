@@ -68,6 +68,8 @@
 #define EVENT_DISABLE_CALL_FORWARDING_DONE 0x19
 #define EVENT_CANCEL_USSD_DONE 0x1A
 #define EVENT_REQUEST_CALL_WAITING_DONE 0x1B
+#define EVENT_SEND_USSD_DONE 0x1C
+#define EVENT_INITIATE_SERVICE_DONE 0x1D
 
 /****************************************************************************
  * Public Type Declarations
@@ -190,7 +192,9 @@ static int telephonytool_cmd_disable_all_outgoing(tapi_context context, char* pa
 static int telephonytool_cmd_set_call_forwarding(tapi_context context, char* pargs);
 static int telephonytool_cmd_get_call_forwarding(tapi_context context, char* pargs);
 static int telephonytool_cmd_disable_call_forwarding(tapi_context context, char* pargs);
+static int telephonytool_cmd_initiate_ss_service(tapi_context context, char* pargs);
 static int telephonytool_cmd_get_ussd_state(tapi_context context, char* pargs);
+static int telephonytool_cmd_send_ussd(tapi_context context, char* pargs);
 static int telephonytool_cmd_cancel_ussd(tapi_context context, char* pargs);
 static int telephonytool_cmd_set_call_waiting(tapi_context context, char* pargs);
 static int telephonytool_cmd_get_call_waiting(tapi_context context, char* pargs);
@@ -406,8 +410,13 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     { "disable-callforwarding", telephonytool_cmd_disable_call_forwarding,
         "disable callforwarding (enter example : disable-callforwarding 0 all \
         [slot_id][type])" },
+    { "initiate-ss", telephonytool_cmd_initiate_ss_service,
+        "initiate supplementary service (enter example : initiate-ss 0 *#06# \
+        [slot_id][supplementary service code])" },
     { "get-ussd-state", telephonytool_cmd_get_ussd_state,
         "get ussd state (enter example : get-ussd-state 0 [slot_id])" },
+    { "send-ussd", telephonytool_cmd_send_ussd,
+        "send ussd (enter example : send-ussd 0 OK [slot_id][response message])" },
     { "cancel-ussd", telephonytool_cmd_cancel_ussd,
         "cancel ussd (enter example : cancel-ussd 0 [slot_id])" },
     { "set-callwaiting", telephonytool_cmd_set_call_waiting,
@@ -2577,6 +2586,31 @@ static int telephonytool_cmd_disable_call_forwarding(tapi_context context, char*
     return 0;
 }
 
+static int telephonytool_cmd_initiate_ss_service(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* ss_control_string;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &ss_control_string);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*ss_control_string == ' ')
+        ss_control_string++;
+
+    if (ss_control_string == NULL)
+        return -EINVAL;
+
+    tapi_ss_initiate_service(context, atoi(slot_id),
+        EVENT_INITIATE_SERVICE_DONE, ss_control_string, tele_call_async_fun);
+    syslog(LOG_DEBUG, "%s, slotId : %s ss_control_string : %s \n", __func__, slot_id, ss_control_string);
+
+    return 0;
+}
+
 static int telephonytool_cmd_get_ussd_state(tapi_context context, char* pargs)
 {
     char* slot_id;
@@ -2591,6 +2625,31 @@ static int telephonytool_cmd_get_ussd_state(tapi_context context, char* pargs)
 
     tapi_get_ussd_state(context, atoi(slot_id), &ussd_state);
     syslog(LOG_DEBUG, "%s, slotId : %s ussd_state : %d \n", __func__, slot_id, ussd_state);
+
+    return 0;
+}
+
+static int telephonytool_cmd_send_ussd(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* response_msg;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &response_msg);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*response_msg == ' ')
+        response_msg++;
+
+    if (response_msg == NULL)
+        return -EINVAL;
+
+    tapi_ss_send_ussd(context, atoi(slot_id),
+        EVENT_SEND_USSD_DONE, response_msg, tele_call_async_fun);
+    syslog(LOG_DEBUG, "%s, slotId : %s response_msg : %s \n", __func__, slot_id, response_msg);
 
     return 0;
 }
