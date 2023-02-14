@@ -140,7 +140,7 @@ typedef enum {
 } tapi_radio_state;
 
 typedef struct {
-    char number[MAX_PHONE_NUMBER_LENGTH];
+    char number[MAX_PHONE_NUMBER_LENGTH + 1];
     int type;
 } tapi_phone_number;
 

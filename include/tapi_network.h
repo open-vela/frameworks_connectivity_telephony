@@ -61,11 +61,11 @@ typedef struct {
 
 typedef struct {
     tapi_registration_state reg_state;
-    char technology[MAX_NETWORK_INFO_LENGTH];
-    char operator_name[MAX_OPERATOR_NAME_LENGTH];
-    char mcc[MAX_MCC_LENGTH];
-    char mnc[MAX_MCC_LENGTH];
-    char station[MAX_NETWORK_INFO_LENGTH];
+    char technology[MAX_NETWORK_INFO_LENGTH + 1];
+    char operator_name[MAX_OPERATOR_NAME_LENGTH + 1];
+    char mcc[MAX_MCC_LENGTH + 1];
+    char mnc[MAX_MCC_LENGTH + 1];
+    char station[MAX_NETWORK_INFO_LENGTH + 1];
     tapi_network_time nitz_time;
     tapi_selection_mode selection_mode;
     bool emergency_only;
@@ -75,12 +75,12 @@ typedef struct {
 } tapi_registration_info;
 
 typedef struct {
-    char id[MAX_NETWORK_INFO_LENGTH];
-    char name[MAX_OPERATOR_NAME_LENGTH];
-    char mcc[MAX_MCC_LENGTH];
-    char mnc[MAX_MNC_LENGTH];
+    char id[MAX_NETWORK_INFO_LENGTH + 1];
+    char name[MAX_OPERATOR_NAME_LENGTH + 1];
+    char mcc[MAX_MCC_LENGTH + 1];
+    char mnc[MAX_MNC_LENGTH + 1];
     int status;
-    char technology[MAX_NETWORK_INFO_LENGTH];
+    char technology[MAX_NETWORK_INFO_LENGTH + 1];
     void* extra;
 } tapi_operator_info;
 
@@ -99,12 +99,12 @@ typedef struct {
     int lac;
     int earfcn;
     int bandwidth;
-    int bands[MAX_NETWORK_INFO_LENGTH];
+    int bands[MAX_NETWORK_INFO_LENGTH + 1];
     tapi_cell_type type;
-    char mcc_str[MAX_MCC_LENGTH];
-    char mnc_str[MAX_MCC_LENGTH];
-    char alpha_long[MAX_NETWORK_INFO_LENGTH];
-    char alpha_short[MAX_NETWORK_INFO_LENGTH];
+    char mcc_str[MAX_MCC_LENGTH + 1];
+    char mnc_str[MAX_MCC_LENGTH + 1];
+    char alpha_long[MAX_NETWORK_INFO_LENGTH + 1];
+    char alpha_short[MAX_NETWORK_INFO_LENGTH + 1];
     tapi_signal_strength signal_strength;
 } tapi_cell_identity;
 
