@@ -18,11 +18,7 @@
  * Included Files
  ****************************************************************************/
 
-#include <dbus/dbus.h>
-#include <errno.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #include "tapi_internal.h"
 
@@ -145,7 +141,7 @@ const char* tapi_registration_status_to_string(int status)
     return "";
 }
 
-int tapi_registration_status_from_string(char* status)
+int tapi_registration_status_from_string(const char* status)
 {
     if (status == NULL)
         return NETWORK_REGISTRATION_STATUS_UNKNOWN;
@@ -167,7 +163,7 @@ int tapi_registration_status_from_string(char* status)
     return NETWORK_REGISTRATION_STATUS_UNKNOWN;
 }
 
-int tapi_registration_mode_from_string(char* mode)
+int tapi_registration_mode_from_string(const char* mode)
 {
     if (mode == NULL)
         return NETWORK_SELECTION_UNKNOWN;
@@ -181,7 +177,7 @@ int tapi_registration_mode_from_string(char* mode)
     return NETWORK_SELECTION_UNKNOWN;
 }
 
-int tapi_operator_status_from_string(char* mode)
+int tapi_operator_status_from_string(const char* mode)
 {
     if (mode == NULL)
         return UNKNOWN;
@@ -241,7 +237,7 @@ char* tapi_utils_get_modem_path(int slot_id)
     return NULL;
 }
 
-enum tapi_call_status tapi_call_string_to_status(char* str_status)
+enum tapi_call_status tapi_call_string_to_status(const char* str_status)
 {
     enum tapi_call_status ret = CALL_STATUS_UNKNOW;
 

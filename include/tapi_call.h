@@ -34,6 +34,8 @@
 
 #define MAX_CALL_PROPERTY_NAME_LENGTH 20
 #define MAX_CALL_PATH_LENGTH 100
+#define MAX_CONFERENCE_PARTICIPANT_COUNT 6
+#define MAX_ECC_LIST_SIZE 20
 
 /****************************************************************************
  * Public Types
@@ -57,22 +59,22 @@ typedef struct {
     int status;
     tapi_phone_number phone_number;
     tapi_phone_number called_number;
-    char name[MAX_CALLER_NAME_LENGTH];
+    char name[MAX_CALLER_NAME_LENGTH + 1];
     int clip_validity;
     int cnap_validity;
 } tapi_call;
 
 typedef struct {
-    char call_path[MAX_CALL_PATH_LENGTH];
+    char call_path[MAX_CALL_PATH_LENGTH + 1];
     int state;
-    char lineIdentification[MAX_CALLER_NAME_LENGTH];
-    char incoming_line[MAX_CALLER_NAME_LENGTH];
-    char name[MAX_CALLER_NAME_LENGTH];
-    char start_time[MAX_CALLER_NAME_LENGTH];
+    char lineIdentification[MAX_CALLER_NAME_LENGTH + 1];
+    char incoming_line[MAX_CALLER_NAME_LENGTH + 1];
+    char name[MAX_CALLER_NAME_LENGTH + 1];
+    char start_time[MAX_CALLER_NAME_LENGTH + 1];
     bool multiparty;
     bool remote_held;
     bool remote_multiparty;
-    char info[MAX_CALLER_NAME_LENGTH];
+    char info[MAX_CALLER_NAME_LENGTH + 1];
     unsigned char icon;
     bool is_emergency_number;
 } tapi_call_info;
@@ -83,8 +85,8 @@ typedef struct call_list {
 } tapi_call_list;
 
 typedef struct {
-    char call_path[MAX_CALL_PATH_LENGTH];
-    char key[MAX_CALL_PROPERTY_NAME_LENGTH];
+    char call_path[MAX_CALL_PATH_LENGTH + 1];
+    char key[MAX_CALL_PROPERTY_NAME_LENGTH + 1];
     void* value;
 } tapi_call_property;
 

@@ -1281,7 +1281,6 @@ static int telephonytool_cmd_get_ip_settings(tapi_context context, char* pargs)
 {
     char* slot_id;
     char* target_state;
-    tapi_ip_settings ip_settings;
     int ret;
 
     if (!strlen(pargs))
@@ -1297,24 +1296,9 @@ static int telephonytool_cmd_get_ip_settings(tapi_context context, char* pargs)
     if (target_state == NULL)
         return -EINVAL;
 
-    ip_settings.ipv4 = malloc(sizeof(tapi_ipv4_settings));
-    if (ip_settings.ipv4 == NULL) {
-        return -ENOMEM;
-    }
-
-    ip_settings.ipv6 = malloc(sizeof(tapi_ipv6_settings));
-    if (ip_settings.ipv6 == NULL) {
-        free(ip_settings.ipv4);
-        return -ENOMEM;
-    }
-
     ret = tapi_data_get_ip_settings(context, atoi(slot_id),
-        EVENT_IP_SETTINGS_QUERY_DONE, atoi(target_state), &ip_settings, tele_call_async_fun);
-    printf("ipv4 settings : %s -- %s \n", ip_settings.ipv4->interface, ip_settings.ipv4->ip);
-    printf("ipv6_settings : %s -- %s \n", ip_settings.ipv6->interface, ip_settings.ipv6->ip);
+        EVENT_IP_SETTINGS_QUERY_DONE, atoi(target_state), tele_call_async_fun);
 
-    free(ip_settings.ipv4);
-    free(ip_settings.ipv6);
     return ret;
 }
 
@@ -2701,7 +2685,7 @@ int main(int argc, char* argv[])
         goto out;
     }
 
-    event_loop = g_main_loop_new(NULL, FALSE);
+    event_loop = g_main_loop_new(NULL, false);
     g_main_loop_run(event_loop);
     g_main_loop_unref(event_loop);
 

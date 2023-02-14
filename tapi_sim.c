@@ -18,17 +18,10 @@
  * Included Files
  ****************************************************************************/
 
-#include <dbus/dbus.h>
-#include <errno.h>
-#include <gdbus.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-
-#include <tapi.h>
 
 #include "tapi_internal.h"
+#include "tapi_sim.h"
 
 /****************************************************************************
  * Private Type Declarations
@@ -70,9 +63,6 @@ static int sim_state_changed(DBusConnection* connection,
     tapi_async_handler* handler = user_data;
     tapi_async_result* ar;
     tapi_async_function cb;
-    int msg_id;
-
-    tapi_log_debug(" %s \n", __func__);
 
     if (handler == NULL)
         return false;
@@ -85,14 +75,7 @@ static int sim_state_changed(DBusConnection* connection,
     if (cb == NULL)
         return false;
 
-    msg_id = ar->msg_id;
-    if (!dbus_message_is_signal(message, OFONO_SIM_MANAGER_INTERFACE, "PropertyChanged")
-        || msg_id != MSG_SIM_STATE_CHANGE_IND) {
-        return false;
-    }
-
     cb(ar);
-
     return true;
 }
 
@@ -139,8 +122,6 @@ static void method_call_complete(DBusMessage* message, void* user_data)
     tapi_async_function cb;
     DBusMessageIter iter;
     DBusError err;
-
-    tapi_log_debug(" %s  \n", __func__);
 
     if (dbus_message_get_type(message) == DBUS_MESSAGE_TYPE_ERROR) {
         const char* dbus_error = dbus_message_get_error_name(message);
@@ -284,11 +265,12 @@ int tapi_sim_has_icc_card(tapi_context context, int slot_id, bool* out)
 
     if (g_dbus_proxy_get_property(proxy, "Present", &iter)) {
         dbus_message_iter_get_basic(&iter, &result);
+
+        *out = result;
+        return OK;
     }
 
-    *out = result;
-
-    return 0;
+    return ERROR;
 }
 
 int tapi_sim_get_sim_iccid(tapi_context context, int slot_id, char** out)
@@ -309,9 +291,10 @@ int tapi_sim_get_sim_iccid(tapi_context context, int slot_id, char** out)
 
     if (g_dbus_proxy_get_property(proxy, "CardIdentifier", &iter)) {
         dbus_message_iter_get_basic(&iter, out);
+        return OK;
     }
 
-    return 0;
+    return ERROR;
 }
 
 int tapi_sim_get_sim_operator(tapi_context context, int slot_id, int length, char* out)
@@ -336,10 +319,12 @@ int tapi_sim_get_sim_operator(tapi_context context, int slot_id, int length, cha
         return -EIO;
     }
 
+    mcc = NULL;
     if (g_dbus_proxy_get_property(proxy, "MobileCountryCode", &iter)) {
         dbus_message_iter_get_basic(&iter, &mcc);
     }
 
+    mnc = NULL;
     if (g_dbus_proxy_get_property(proxy, "MobileNetworkCode", &iter)) {
         dbus_message_iter_get_basic(&iter, &mnc);
     }
@@ -353,7 +338,7 @@ int tapi_sim_get_sim_operator(tapi_context context, int slot_id, int length, cha
         *out++ = *mnc++;
     *out = '\0';
 
-    return 0;
+    return OK;
 }
 
 int tapi_sim_get_sim_operator_name(tapi_context context, int slot_id, char** out)
@@ -374,9 +359,10 @@ int tapi_sim_get_sim_operator_name(tapi_context context, int slot_id, char** out
 
     if (g_dbus_proxy_get_property(proxy, "ServiceProviderName", &iter)) {
         dbus_message_iter_get_basic(&iter, out);
+        return OK;
     }
 
-    return 0;
+    return ERROR;
 }
 
 int tapi_sim_register_sim_state_change(tapi_context context, int slot_id,

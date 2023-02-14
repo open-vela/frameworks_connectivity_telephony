@@ -65,7 +65,7 @@ enum dbus_proxy_type {
 };
 
 typedef struct {
-    char name[MAX_CONTEXT_NAME_LENGTH];
+    char name[MAX_CONTEXT_NAME_LENGTH + 1];
     DBusConnection* connection;
     GDBusClient* client;
     GDBusProxy* dbus_proxy_manager;
@@ -94,9 +94,9 @@ const char* tapi_pref_network_mode_to_string(tapi_pref_net_mode mode);
 bool tapi_pref_network_mode_from_string(const char* str, tapi_pref_net_mode* mode);
 bool tapi_network_type_from_string(const char* str, tapi_network_type* type);
 const char* tapi_registration_status_to_string(int status);
-int tapi_registration_status_from_string(char* status);
-int tapi_registration_mode_from_string(char* mode);
-int tapi_operator_status_from_string(char* mode);
+int tapi_registration_status_from_string(const char* status);
+int tapi_registration_mode_from_string(const char* mode);
+int tapi_operator_status_from_string(const char* mode);
 const char* tapi_apn_context_type_to_string(tapi_apn_context_type type);
 tapi_apn_context_type tapi_apn_context_type_from_string(const char* type);
 const char* tapi_apn_auth_method_to_string(tapi_data_auth_method auth);
@@ -104,7 +104,7 @@ tapi_data_auth_method tapi_apn_auth_method_from_string(const char* auth);
 const char* tapi_apn_proto_to_string(tapi_data_proto proto);
 bool tapi_apn_proto_from_string(const char* str, tapi_data_proto* proto);
 char* tapi_utils_get_modem_path(int slot_id);
-enum tapi_call_status tapi_call_string_to_status(char* str_status);
+enum tapi_call_status tapi_call_string_to_status(const char* str_status);
 bool tapi_is_call_signal_message(DBusMessage* message, DBusMessageIter* iter, int msg_type);
 tapi_call_list* tapi_add_call_to_list(tapi_call_list* head, tapi_call_info* new_val);
 void tapi_free_call_list(tapi_call_list* head);

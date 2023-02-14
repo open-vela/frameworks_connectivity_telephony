@@ -18,17 +18,10 @@
  * Included Files
  ****************************************************************************/
 
-#include <dbus/dbus.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <unistd.h>
-
-#include <gdbus.h>
 #include <stdio.h>
-#include <string.h>
-#include <tapi.h>
 
 #include "tapi_internal.h"
+#include "tapi_manager.h"
 
 /****************************************************************************
  * Private Functions
@@ -44,7 +37,7 @@ static void object_remove(GDBusProxy* proxy, void* user_data)
 
 static void get_dbus_proxy(dbus_context* ctx)
 {
-    const char* dbus_proxy_server[DBUS_PROXY_MAX_COUNT] = {
+    const char* dbus_proxy_server[] = {
         OFONO_MODEM_INTERFACE,
         OFONO_RADIO_SETTINGS_INTERFACE,
         OFONO_VOICECALL_MANAGER_INTERFACE,
@@ -86,7 +79,6 @@ static void modem_property_set_done(const DBusError* error, void* user_data)
     tapi_async_result* ar;
     tapi_async_function cb;
 
-    tapi_log_debug("modem_property_set_done \n");
     if (handler == NULL)
         return;
 
@@ -118,7 +110,6 @@ static void modem_list_query_done(DBusMessage* message, void* user_data)
     char* result[MAX_MODEM_COUNT];
     int index;
 
-    tapi_log_debug("modem_list_query_done \n");
     if (handler == NULL)
         return;
 
@@ -137,6 +128,7 @@ static void modem_list_query_done(DBusMessage* message, void* user_data)
         tapi_log_error("%s: %s\n", err.name, err.message);
         dbus_error_free(&err);
         ar->status = ERROR;
+        goto done;
     }
 
     if (dbus_message_has_signature(message, "a(oa{sv})") == false)
@@ -167,8 +159,8 @@ static int radio_state_changed(DBusConnection* connection,
     tapi_async_handler* handler = user_data;
     tapi_async_result* ar;
     tapi_async_function cb;
+    DBusMessageIter args;
 
-    tapi_log_debug("radio_state_changed \n");
     if (handler == NULL)
         return false;
 
@@ -180,11 +172,13 @@ static int radio_state_changed(DBusConnection* connection,
     if (cb == NULL)
         return false;
 
-    if (!dbus_message_is_signal(message, OFONO_MODEM_INTERFACE, "PropertyChanged")
-        || ar->msg_id != MSG_RADIO_STATE_CHANGE_IND) {
-        return false;
-    }
+    if (dbus_message_iter_init(message, &args) == false)
+        goto done;
 
+    ar->status = OK;
+    dbus_message_iter_get_basic(&args, &ar->arg2);
+
+done:
     cb(ar);
     return true;
 }
@@ -197,7 +191,6 @@ static int phone_state_changed(DBusConnection* connection,
     tapi_async_function cb;
     DBusMessageIter args;
 
-    tapi_log_debug("phone_state_changed \n");
     if (handler == NULL)
         return false;
 
@@ -209,17 +202,13 @@ static int phone_state_changed(DBusConnection* connection,
     if (cb == NULL)
         return false;
 
-    if (!dbus_message_is_signal(message, OFONO_VOICECALL_MANAGER_INTERFACE, "PhoneStatusChanged")
-        || ar->msg_id != MSG_PHONE_STATE_CHANGE_IND) {
-        return false;
-    }
-
-    if (dbus_message_has_signature(message, "i") == false)
-        return false;
     if (dbus_message_iter_init(message, &args) == false)
-        return false;
+        goto done;
+
+    ar->status = OK;
     dbus_message_iter_get_basic(&args, &ar->arg2);
 
+done:
     cb(ar);
     return true;
 }
@@ -276,8 +265,7 @@ tapi_context tapi_open(const char* client_name)
 
     ctx->connection = connection;
     ctx->client = client;
-    memset(ctx->name, 0, sizeof(ctx->name));
-    sprintf(ctx->name, "%s", client_name);
+    snprintf(ctx->name, sizeof(ctx->name), "%s", client_name);
     get_dbus_proxy(ctx);
 
     return ctx;
@@ -304,7 +292,7 @@ int tapi_close(tapi_context context)
     dbus_connection_unref(ctx->connection);
 
     free(context);
-    return 0;
+    return OK;
 }
 
 int tapi_query_modem_list(tapi_context context, int event_id, tapi_async_function p_handle)
@@ -393,11 +381,9 @@ int tapi_set_pref_net_mode(tapi_context context,
     ar->data = "TechnologyPreference";
     rat = tapi_pref_network_mode_to_string(mode);
 
-    g_dbus_proxy_set_property_basic(proxy,
+    return g_dbus_proxy_set_property_basic(proxy,
         "TechnologyPreference", DBUS_TYPE_STRING, &rat,
         modem_property_set_done, handler, user_data_free);
-
-    return 0;
 }
 
 int tapi_get_pref_net_mode(tapi_context context, int slot_id, tapi_pref_net_mode* out)
@@ -419,10 +405,12 @@ int tapi_get_pref_net_mode(tapi_context context, int slot_id, tapi_pref_net_mode
 
     if (g_dbus_proxy_get_property(proxy, "TechnologyPreference", &iter)) {
         dbus_message_iter_get_basic(&iter, &result);
-    }
-    tapi_pref_network_mode_from_string(result, out);
 
-    return 0;
+        tapi_pref_network_mode_from_string(result, out);
+        return OK;
+    }
+
+    return ERROR;
 }
 
 int tapi_reboot_modem(tapi_context context, int slot_id)
@@ -443,14 +431,17 @@ int tapi_reboot_modem(tapi_context context, int slot_id)
 
     // Power Off
     state = false;
-    g_dbus_proxy_set_property_basic(proxy,
-        "Powered", DBUS_TYPE_BOOLEAN, &state, NULL, NULL, NULL);
+    if (!g_dbus_proxy_set_property_basic(proxy,
+            "Powered", DBUS_TYPE_BOOLEAN, &state, NULL, NULL, NULL))
+        return ERROR;
+
     // Power on
     state = true;
-    g_dbus_proxy_set_property_basic(proxy,
-        "Powered", DBUS_TYPE_BOOLEAN, &state, NULL, NULL, NULL);
+    if (!g_dbus_proxy_set_property_basic(proxy,
+            "Powered", DBUS_TYPE_BOOLEAN, &state, NULL, NULL, NULL))
+        return ERROR;
 
-    return 0;
+    return OK;
 }
 
 int tapi_get_imei(tapi_context context, int slot_id, char** out)
@@ -471,9 +462,10 @@ int tapi_get_imei(tapi_context context, int slot_id, char** out)
 
     if (g_dbus_proxy_get_property(proxy, "Serial", &iter)) {
         dbus_message_iter_get_basic(&iter, out);
+        return OK;
     }
 
-    return 0;
+    return ERROR;
 }
 
 int tapi_get_imeisv(tapi_context context, int slot_id, char** out)
@@ -494,9 +486,10 @@ int tapi_get_imeisv(tapi_context context, int slot_id, char** out)
 
     if (g_dbus_proxy_get_property(proxy, "SoftwareVersionNumber", &iter)) {
         dbus_message_iter_get_basic(&iter, out);
+        return OK;
     }
 
-    return 0;
+    return ERROR;
 }
 
 int tapi_get_modem_manufacturer(tapi_context context, int slot_id, char** out)
@@ -517,9 +510,10 @@ int tapi_get_modem_manufacturer(tapi_context context, int slot_id, char** out)
 
     if (g_dbus_proxy_get_property(proxy, "Manufacturer", &iter)) {
         dbus_message_iter_get_basic(&iter, out);
+        return OK;
     }
 
-    return 0;
+    return ERROR;
 }
 
 int tapi_get_modem_model(tapi_context context, int slot_id, char** out)
@@ -540,9 +534,10 @@ int tapi_get_modem_model(tapi_context context, int slot_id, char** out)
 
     if (g_dbus_proxy_get_property(proxy, "Model", &iter)) {
         dbus_message_iter_get_basic(&iter, out);
+        return OK;
     }
 
-    return 0;
+    return ERROR;
 }
 
 int tapi_get_modem_revision(tapi_context context, int slot_id, char** out)
@@ -563,9 +558,10 @@ int tapi_get_modem_revision(tapi_context context, int slot_id, char** out)
 
     if (g_dbus_proxy_get_property(proxy, "Revision", &iter)) {
         dbus_message_iter_get_basic(&iter, out);
+        return OK;
     }
 
-    return 0;
+    return ERROR;
 }
 
 int tapi_get_phone_state(tapi_context context, int slot_id, tapi_phone_state* state)
@@ -586,9 +582,10 @@ int tapi_get_phone_state(tapi_context context, int slot_id, tapi_phone_state* st
 
     if (g_dbus_proxy_get_property(proxy, "PhoneStatus", &iter)) {
         dbus_message_iter_get_basic(&iter, state);
+        return OK;
     }
 
-    return 0;
+    return ERROR;
 }
 
 int tapi_set_radio_power(tapi_context context,
@@ -625,11 +622,9 @@ int tapi_set_radio_power(tapi_context context,
     ar->arg1 = slot_id;
     handler->cb_function = p_handle;
 
-    g_dbus_proxy_set_property_basic(proxy,
+    return g_dbus_proxy_set_property_basic(proxy,
         "Online", DBUS_TYPE_BOOLEAN, &value,
         modem_property_set_done, handler, user_data_free);
-
-    return 0;
 }
 
 int tapi_get_radio_power(tapi_context context, int slot_id, bool* out)
@@ -651,10 +646,12 @@ int tapi_get_radio_power(tapi_context context, int slot_id, bool* out)
 
     if (g_dbus_proxy_get_property(proxy, "Online", &iter)) {
         dbus_message_iter_get_basic(&iter, &result);
+
+        *out = result;
+        return OK;
     }
 
-    *out = result;
-    return 0;
+    return ERROR;
 }
 
 int tapi_get_radio_state(tapi_context context, int slot_id, tapi_radio_state* out)
@@ -677,36 +674,40 @@ int tapi_get_radio_state(tapi_context context, int slot_id, tapi_radio_state* ou
     result = false;
     if (g_dbus_proxy_get_property(proxy, "Powered", &iter)) {
         dbus_message_iter_get_basic(&iter, &result);
+
+        if (!result) {
+            *out = RADIO_STATE_UNAVAILABLE;
+            return OK;
+        }
     }
 
-    if (!result) {
-        *out = RADIO_STATE_UNAVAILABLE;
-        return 0;
-    }
     if (g_dbus_proxy_get_property(proxy, "Emergency", &iter)) {
         dbus_message_iter_get_basic(&iter, &result);
-    }
-    if (result) {
-        *out = RADIO_STATE_EMERGENCY_ONLY;
-        return 0;
-    }
-    if (g_dbus_proxy_get_property(proxy, "Online", &iter)) {
-        dbus_message_iter_get_basic(&iter, &result);
-    }
-    if (result) {
-        *out = RADIO_STATE_ON;
-    } else {
-        *out = RADIO_STATE_OFF;
+
+        if (result) {
+            *out = RADIO_STATE_EMERGENCY_ONLY;
+            return OK;
+        }
     }
 
-    return 0;
+    if (g_dbus_proxy_get_property(proxy, "Online", &iter)) {
+        dbus_message_iter_get_basic(&iter, &result);
+
+        if (result) {
+            *out = RADIO_STATE_ON;
+        } else {
+            *out = RADIO_STATE_OFF;
+        }
+    }
+
+    return ERROR;
 }
 
 int tapi_get_msisdn_number(tapi_context context, int slot_id, char** out)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    DBusMessageIter iter;
+    DBusMessageIter iter, var_elem;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
@@ -722,7 +723,6 @@ int tapi_get_msisdn_number(tapi_context context, int slot_id, char** out)
         return -EIO;
 
     if (dbus_message_iter_get_arg_type(&iter) == DBUS_TYPE_ARRAY) {
-        DBusMessageIter var_elem;
         dbus_message_iter_recurse(&iter, &var_elem);
         while (dbus_message_iter_get_arg_type(&var_elem) != DBUS_TYPE_INVALID) {
             if (dbus_message_iter_get_arg_type(&var_elem) == DBUS_TYPE_STRING) {
@@ -730,9 +730,11 @@ int tapi_get_msisdn_number(tapi_context context, int slot_id, char** out)
                 break;
             }
         }
+
+        return OK;
     }
 
-    return 0;
+    return ERROR;
 }
 
 int tapi_register(tapi_context context,
@@ -773,7 +775,7 @@ int tapi_register(tapi_context context,
     case MSG_RADIO_STATE_CHANGE_IND:
         watch_id = g_dbus_add_signal_watch(ctx->connection,
             OFONO_SERVICE, modem_path, OFONO_MODEM_INTERFACE,
-            "PropertyChanged", radio_state_changed, handler, user_data_free);
+            "RadioStateChanged", radio_state_changed, handler, user_data_free);
         break;
     case MSG_PHONE_STATE_CHANGE_IND:
         watch_id = g_dbus_add_signal_watch(ctx->connection,

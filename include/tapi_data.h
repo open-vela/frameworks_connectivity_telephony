@@ -36,7 +36,7 @@
 #define DATA_TYPE_IMS "ims"
 #define MAX_APN_LIST_CAPACITY 10
 #define MAX_APN_DOMAIN_LENGTH 128
-#define MAX_IP_INTERFACE_NAME 128
+#define MAX_IP_INTERFACE_NAME_LENGTH 128
 #define MAX_IP_STRING_LENGTH 128
 #define MAX_DATA_DNS_COUNT 10
 
@@ -73,18 +73,18 @@ typedef enum {
 } tapi_data_auth_method;
 
 typedef struct {
-    char interface[MAX_IP_INTERFACE_NAME];
-    char ip[MAX_IP_STRING_LENGTH];
-    char gateway[MAX_IP_STRING_LENGTH];
-    char* dns[MAX_DATA_DNS_COUNT];
-    char proxy[MAX_IP_STRING_LENGTH];
+    char interface[MAX_IP_INTERFACE_NAME_LENGTH + 1];
+    char ip[MAX_IP_STRING_LENGTH + 1];
+    char gateway[MAX_IP_STRING_LENGTH + 1];
+    char* dns[MAX_DATA_DNS_COUNT + 1];
+    char proxy[MAX_IP_STRING_LENGTH + 1];
 } tapi_ipv4_settings;
 
 typedef struct {
-    char interface[MAX_IP_INTERFACE_NAME];
-    char ip[MAX_IP_STRING_LENGTH];
-    char gateway[MAX_IP_STRING_LENGTH];
-    char* dns[MAX_DATA_DNS_COUNT];
+    char interface[MAX_IP_INTERFACE_NAME_LENGTH + 1];
+    char ip[MAX_IP_STRING_LENGTH + 1];
+    char gateway[MAX_IP_STRING_LENGTH + 1];
+    char* dns[MAX_DATA_DNS_COUNT + 1];
 } tapi_ipv6_settings;
 
 typedef struct {
@@ -94,15 +94,15 @@ typedef struct {
 
 typedef struct {
     char* id;
-    char name[MAX_APN_DOMAIN_LENGTH];
+    char name[MAX_APN_DOMAIN_LENGTH + 1];
     int type;
     bool active;
     bool preferred;
-    char username[MAX_APN_DOMAIN_LENGTH];
-    char password[MAX_APN_DOMAIN_LENGTH];
-    char accesspointname[MAX_APN_DOMAIN_LENGTH];
-    char messageproxy[MAX_APN_DOMAIN_LENGTH];
-    char messagecenter[MAX_APN_DOMAIN_LENGTH];
+    char username[MAX_APN_DOMAIN_LENGTH + 1];
+    char password[MAX_APN_DOMAIN_LENGTH + 1];
+    char accesspointname[MAX_APN_DOMAIN_LENGTH + 1];
+    char messageproxy[MAX_APN_DOMAIN_LENGTH + 1];
+    char messagecenter[MAX_APN_DOMAIN_LENGTH + 1];
     tapi_data_proto protocol;
     tapi_data_auth_method auth_method;
     tapi_ip_settings* ip_settings;
@@ -263,13 +263,11 @@ int tapi_data_get_roaming_enabled(tapi_context context, bool* out);
  * @param[in] slot_id        Slot id of current sim.
  * @param[in] event_id       Async event identifier.
  * @param[in] type           Apn type.
- * @param[out] out           Pointer of Ip settings.
  * @param[in] p_handle       Event callback.
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_data_get_ip_settings(tapi_context context,
-    int slot_id, int event_id, tapi_apn_context_type type, tapi_ip_settings* out,
-    tapi_async_function p_handle);
+    int slot_id, int event_id, tapi_apn_context_type type, tapi_async_function p_handle);
 
 /**
  * Set default data slot id.
