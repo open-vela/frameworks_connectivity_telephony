@@ -98,29 +98,143 @@ static void disable_cf_param_append(DBusMessageIter* iter, void* user_data)
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &disable_cf_param);
 }
 
+static void ss_initiate_param_append(DBusMessageIter* iter, void* user_data)
+{
+    tapi_async_handler* param;
+    char* ss_initiate_param;
+
+    param = user_data;
+    if (param == NULL || param->result == NULL)
+        return;
+
+    ss_initiate_param = param->result->data;
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &ss_initiate_param);
+}
+
+static void send_ussd_param_append(DBusMessageIter* iter, void* user_data)
+{
+    tapi_async_handler* param;
+    char* send_ussd_param;
+
+    param = user_data;
+    if (param == NULL || param->result == NULL)
+        return;
+
+    send_ussd_param = param->result->data;
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &send_ussd_param);
+}
+
 static void fill_call_forwarding(const char* prop,
     DBusMessageIter* iter, tapi_call_forwarding_info* cf)
 {
+    const char* value;
     if (strcmp(prop, "VoiceUnconditional") == 0) {
-        const char* value;
         dbus_message_iter_get_basic(iter, &value);
         snprintf(cf->phone_number, sizeof(cf->phone_number), "%s", value);
     } else if (strcmp(prop, "VoiceBusy") == 0) {
-        const char* value;
         dbus_message_iter_get_basic(iter, &value);
         snprintf(cf->voice_busy, sizeof(cf->voice_busy), "%s", value);
     } else if (strcmp(prop, "VoiceNoReply") == 0) {
-        const char* value;
         dbus_message_iter_get_basic(iter, &value);
         snprintf(cf->voice_no_reply, sizeof(cf->voice_no_reply), "%s", value);
     } else if (strcmp(prop, "VoiceNoReplyTimeout") == 0) {
         dbus_message_iter_get_basic(iter, &cf->voice_no_reply_timeout);
     } else if (strcmp(prop, "VoiceNotReachable") == 0) {
-        const char* value;
         dbus_message_iter_get_basic(iter, &value);
         snprintf(cf->voice_not_reachable, sizeof(cf->voice_not_reachable), "%s", value);
     } else if (strcmp(prop, "ForwardingFlagOnSim") == 0) {
         dbus_message_iter_get_basic(iter, &cf->forwarding_flag_on_sim);
+    }
+}
+
+static void fill_ss_cb_cf_response_info(DBusMessageIter* iter,
+    tapi_ss_initiate_info* info)
+{
+    while (dbus_message_iter_get_arg_type(iter) == DBUS_TYPE_DICT_ENTRY) {
+        DBusMessageIter entry, value;
+
+        dbus_message_iter_recurse(iter, &entry);
+        dbus_message_iter_get_basic(&entry, &info->append_service);
+
+        dbus_message_iter_next(&entry);
+        dbus_message_iter_recurse(&entry, &value);
+        dbus_message_iter_get_basic(&value, &info->append_service_value);
+
+        dbus_message_iter_next(iter);
+    }
+}
+
+static void fill_ss_initiate_cb_or_cf_service(DBusMessageIter* iter,
+    tapi_ss_initiate_info* info)
+{
+    while (dbus_message_iter_get_arg_type(iter) == DBUS_TYPE_STRUCT) {
+        DBusMessageIter entry, value, dict;
+
+        dbus_message_iter_recurse(iter, &entry);
+        dbus_message_iter_get_basic(&entry, &info->ss_service_operation);
+
+        dbus_message_iter_next(&entry);
+        dbus_message_iter_recurse(&entry, &value);
+        dbus_message_iter_get_basic(&value, &info->service_operation_requested);
+
+        dbus_message_iter_next(&value);
+        dbus_message_iter_recurse(&value, &dict);
+
+        fill_ss_cb_cf_response_info(&dict, info);
+
+        dbus_message_iter_next(iter);
+    }
+}
+
+static void fill_ss_initiate_cw_append_service(DBusMessageIter* iter,
+    tapi_ss_initiate_info* info)
+{
+    while (dbus_message_iter_get_arg_type(iter) == DBUS_TYPE_DICT_ENTRY) {
+        DBusMessageIter entry, value;
+
+        dbus_message_iter_recurse(iter, &entry);
+        dbus_message_iter_get_basic(&entry, &info->append_service);
+
+        dbus_message_iter_next(&entry);
+        dbus_message_iter_recurse(&entry, &value);
+        dbus_message_iter_get_basic(&value, &info->append_service_value);
+
+        dbus_message_iter_next(iter);
+    }
+}
+
+static void fill_ss_initiate_cw_service(DBusMessageIter* iter,
+    tapi_ss_initiate_info* info)
+{
+    while (dbus_message_iter_get_arg_type(iter) == DBUS_TYPE_STRUCT) {
+        DBusMessageIter entry, value;
+
+        dbus_message_iter_recurse(iter, &entry);
+        dbus_message_iter_get_basic(&entry, &info->ss_service_operation);
+
+        dbus_message_iter_next(&entry);
+        dbus_message_iter_recurse(&entry, &value);
+
+        fill_ss_initiate_cw_append_service(&value, info);
+
+        dbus_message_iter_next(iter);
+    }
+}
+
+static void fill_ss_initiate_cs_service(DBusMessageIter* iter,
+    tapi_ss_initiate_info* info)
+{
+    while (dbus_message_iter_get_arg_type(iter) == DBUS_TYPE_STRUCT) {
+        DBusMessageIter entry, value;
+
+        dbus_message_iter_recurse(iter, &entry);
+        dbus_message_iter_get_basic(&entry, &info->ss_service_operation);
+
+        dbus_message_iter_next(&entry);
+        dbus_message_iter_recurse(&entry, &value);
+        dbus_message_iter_get_basic(&value, info->call_setting_status);
+
+        dbus_message_iter_next(iter);
     }
 }
 
@@ -152,6 +266,151 @@ static void ss_set_property_complete(const DBusError* error, void* user_data)
     cb(ar);
 }
 
+static void method_call_complete(DBusMessage* message, void* user_data)
+{
+    tapi_async_handler* handler = user_data;
+    tapi_async_result* ar;
+    tapi_async_function cb;
+    DBusError err;
+
+    if (handler == NULL)
+        return;
+
+    ar = handler->result;
+    if (ar == NULL)
+        return;
+
+    cb = handler->cb_function;
+    if (cb == NULL)
+        return;
+
+    dbus_error_init(&err);
+    if (dbus_set_error_from_message(&err, message) == true) {
+        tapi_log_error("%s error %s: %s \n", __func__, err.name, err.message);
+        dbus_error_free(&err);
+        ar->status = ERROR;
+        goto done;
+    }
+
+    ar->status = OK;
+
+done:
+    cb(ar);
+}
+
+static void ss_initiate_complete(DBusMessage* message, void* user_data)
+{
+    tapi_ss_initiate_info* info = NULL;
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
+    tapi_async_function cb;
+    DBusMessageIter iter, value, var;
+    DBusError err;
+
+    handler = user_data;
+    if (handler == NULL)
+        return;
+
+    ar = handler->result;
+    if (ar == NULL)
+        return;
+
+    cb = handler->cb_function;
+    if (cb == NULL)
+        return;
+
+    dbus_error_init(&err);
+    if (dbus_set_error_from_message(&err, message) == true) {
+        tapi_log_error("%s: %s\n", err.name, err.message);
+        dbus_error_free(&err);
+        ar->status = ERROR;
+        goto done;
+    }
+
+    if (dbus_message_iter_init(message, &iter) == false) {
+        ar->status = ERROR;
+        goto done;
+    }
+
+    info = malloc(sizeof(tapi_ss_initiate_info));
+    if (info == NULL) {
+        tapi_log_error("no memory ... \n");
+        ar->status = ERROR;
+        goto done;
+    }
+
+    dbus_message_iter_recurse(&iter, &value);
+    dbus_message_iter_get_basic(&value, &info->ss_service_type);
+
+    dbus_message_iter_next(&value);
+    dbus_message_iter_recurse(&value, &var);
+
+    if (dbus_message_iter_get_arg_type(&var) == DBUS_TYPE_VARIANT) {
+        if (strcmp(info->ss_service_type, "CallBarring") == 0
+            || strcmp(info->ss_service_type, "CallForwarding") == 0) {
+            fill_ss_initiate_cb_or_cf_service(&var, info);
+        } else if (strcmp(info->ss_service_type, "CallWaiting") == 0) {
+            fill_ss_initiate_cw_service(&var, info);
+        } else if (strcmp(info->ss_service_type, "USSD") == 0) {
+            dbus_message_iter_get_basic(&var, &info->ussd_response);
+        } else {
+            fill_ss_initiate_cs_service(&var, info);
+        }
+    }
+
+    ar->data = info;
+    ar->status = OK;
+
+done:
+    cb(ar);
+    if (info != NULL)
+        free(info);
+}
+
+static void ss_send_ussd_cb(DBusMessage* message, void* user_data)
+{
+    DBusMessageIter iter, value;
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
+    tapi_async_function cb;
+    DBusError err;
+    char* response;
+
+    handler = user_data;
+    if (handler == NULL)
+        return;
+
+    ar = handler->result;
+    if (ar == NULL)
+        return;
+
+    cb = handler->cb_function;
+    if (cb == NULL)
+        return;
+
+    dbus_error_init(&err);
+    if (dbus_set_error_from_message(&err, message) == true) {
+        tapi_log_error("%s: %s\n", err.name, err.message);
+        dbus_error_free(&err);
+        ar->status = ERROR;
+        goto done;
+    }
+
+    if (dbus_message_iter_init(message, &iter) == false) {
+        ar->status = ERROR;
+        goto done;
+    }
+
+    dbus_message_iter_recurse(&iter, &value);
+    dbus_message_iter_get_basic(&value, &response);
+
+    ar->data = response;
+    ar->status = OK;
+
+done:
+    cb(ar);
+}
+
 static void user_data_free(void* user_data)
 {
     tapi_async_handler* handler;
@@ -162,6 +421,24 @@ static void user_data_free(void* user_data)
         ar = handler->result;
         if (ar)
             free(ar);
+        free(handler);
+    }
+}
+
+static void change_passwd_data_free(void* user_data)
+{
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
+
+    handler = user_data;
+    if (handler) {
+        ar = handler->result;
+        if (ar) {
+            if (ar->data)
+                free(ar->data);
+            free(ar);
+        }
+
         free(handler);
     }
 }
@@ -195,10 +472,12 @@ static int call_barring_property_changed(DBusConnection* connection,
     if (dbus_set_error_from_message(&err, message) == true) {
         tapi_log_error("%s: %s\n", err.name, err.message);
         dbus_error_free(&err);
+        ar->status = ERROR;
         goto done;
     }
 
     if (dbus_message_iter_init(message, &iter) == false) {
+        ar->status = ERROR;
         goto done;
     }
 
@@ -216,12 +495,12 @@ static int call_barring_property_changed(DBusConnection* connection,
         if (strcmp(property, "VoiceIncoming") == 0) {
             char* voiceincoming;
             dbus_message_iter_get_basic(&value, &voiceincoming);
-            ar->data = &voiceincoming;
+            ar->data = voiceincoming;
             ar->status = OK;
         } else if (strcmp(property, "VoiceOutgoing") == 0) {
             char* voiceoutgoing;
             dbus_message_iter_get_basic(&value, &voiceoutgoing);
-            ar->data = &voiceoutgoing;
+            ar->data = voiceoutgoing;
             ar->status = OK;
         }
 
@@ -263,18 +542,23 @@ static int call_forwarding_property_changed(DBusConnection* connection,
     if (dbus_set_error_from_message(&err, message) == true) {
         tapi_log_error("%s: %s\n", err.name, err.message);
         dbus_error_free(&err);
+        ar->status = ERROR;
         goto done;
     }
 
     if (dbus_message_iter_init(message, &iter) == false) {
+        ar->status = ERROR;
         goto done;
     }
 
     dbus_message_iter_recurse(&iter, &list);
 
     info = malloc(sizeof(tapi_call_forwarding_info));
-    if (info == NULL)
+    if (info == NULL) {
+        tapi_log_error("no memory ... \n");
+        ar->status = ERROR;
         goto done;
+    }
 
     while (dbus_message_iter_get_arg_type(&list) == DBUS_TYPE_DICT_ENTRY) {
         DBusMessageIter entry, value;
@@ -331,10 +615,12 @@ static int ussd_state_changed(DBusConnection* connection,
     if (dbus_set_error_from_message(&err, message) == true) {
         tapi_log_error("%s: %s\n", err.name, err.message);
         dbus_error_free(&err);
+        ar->status = ERROR;
         goto done;
     }
 
     if (dbus_message_iter_init(message, &iter) == false) {
+        ar->status = ERROR;
         goto done;
     }
 
@@ -403,6 +689,8 @@ static int ussd_notification_received(DBusConnection* connection,
         dbus_message_iter_get_basic(&iter, &notification_message);
         ar->data = notification_message;
         ar->status = OK;
+    } else {
+        ar->status = ERROR;
     }
 
     cb(ar);
@@ -434,6 +722,8 @@ static int ussd_request_received(DBusConnection* connection,
         dbus_message_iter_get_basic(&iter, &request_message);
         ar->data = request_message;
         ar->status = OK;
+    } else {
+        ar->status = ERROR;
     }
 
     cb(ar);
@@ -443,6 +733,50 @@ static int ussd_request_received(DBusConnection* connection,
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
+
+int tapi_ss_initiate_service(tapi_context context, int slot_id, int event_id,
+    char* command, tapi_async_function p_handle)
+{
+    dbus_context* ctx = context;
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
+    GDBusProxy* proxy;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || command == NULL) {
+        return -EINVAL;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SS];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    handler = malloc(sizeof(tapi_async_handler));
+    if (handler == NULL)
+        return -ENOMEM;
+
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        free(handler);
+        return -ENOMEM;
+    }
+    handler->result = ar;
+
+    ar->arg1 = slot_id;
+    ar->data = command;
+    ar->msg_id = event_id;
+    handler->cb_function = p_handle;
+
+    if (!g_dbus_proxy_method_call(proxy, "Initiate", ss_initiate_param_append,
+            ss_initiate_complete, handler, user_data_free)) {
+        tapi_log_error("failed to initiate service \n");
+        user_data_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
+}
 
 // Call Barring
 int tapi_ss_request_call_barring(tapi_context context, int slot_id, int event_id,
@@ -457,7 +791,8 @@ int tapi_ss_request_call_barring(tapi_context context, int slot_id, int event_id
     int len;
     char* key;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
+        || facility == NULL || pin2 == NULL) {
         return -EINVAL;
     }
 
@@ -522,7 +857,7 @@ int tapi_ss_query_call_barring_info(tapi_context context, int slot_id, const cha
     DBusMessageIter iter;
     GDBusProxy* proxy;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || service_type == NULL) {
         return -EINVAL;
     }
 
@@ -549,7 +884,8 @@ int tapi_ss_change_call_barring_password(tapi_context context, int slot_id, int 
     tapi_async_result* ar;
     GDBusProxy* proxy;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
+        || old_passwd == NULL || new_passwd == NULL) {
         return -EINVAL;
     }
 
@@ -586,8 +922,9 @@ int tapi_ss_change_call_barring_password(tapi_context context, int slot_id, int 
     ar->data = param;
 
     if (!g_dbus_proxy_method_call(proxy, "ChangePassword", cb_change_passwd_append,
-            NULL, handler, user_data_free)) {
-        user_data_free(handler);
+            method_call_complete, handler, change_passwd_data_free)) {
+        tapi_log_error("failed to change callbarring passward \n");
+        change_passwd_data_free(handler);
         return -EINVAL;
     }
 
@@ -602,7 +939,7 @@ int tapi_ss_disable_all_call_barrings(tapi_context context, int slot_id, int eve
     tapi_async_result* ar;
     GDBusProxy* proxy;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || passwd == NULL) {
         return -EINVAL;
     }
 
@@ -629,7 +966,8 @@ int tapi_ss_disable_all_call_barrings(tapi_context context, int slot_id, int eve
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy, "DisableAll", disable_all_cb_param_append,
-            NULL, handler, user_data_free)) {
+            method_call_complete, handler, user_data_free)) {
+        tapi_log_error("failed to disable all callbarring \n");
         user_data_free(handler);
         return -EINVAL;
     }
@@ -645,7 +983,7 @@ int tapi_ss_disable_all_incoming(tapi_context context, int slot_id,
     tapi_async_result* ar;
     GDBusProxy* proxy;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || passwd == NULL) {
         return -EINVAL;
     }
 
@@ -672,7 +1010,8 @@ int tapi_ss_disable_all_incoming(tapi_context context, int slot_id,
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy, "DisableAllIncoming",
-            disable_all_incoming_param_append, NULL, handler, user_data_free)) {
+            disable_all_incoming_param_append, method_call_complete, handler, user_data_free)) {
+        tapi_log_error("failed to disable all incoming \n");
         user_data_free(handler);
         return -EINVAL;
     }
@@ -688,7 +1027,7 @@ int tapi_ss_disable_all_outgoing(tapi_context context, int slot_id,
     tapi_async_result* ar;
     GDBusProxy* proxy;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || passwd == NULL) {
         return -EINVAL;
     }
 
@@ -715,7 +1054,8 @@ int tapi_ss_disable_all_outgoing(tapi_context context, int slot_id,
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy, "DisableAllOutgoing",
-            disable_all_outgoing_param_append, NULL, handler, user_data_free)) {
+            disable_all_outgoing_param_append, method_call_complete, handler, user_data_free)) {
+        tapi_log_error("failed to disable all outgoing \n");
         user_data_free(handler);
         return -EINVAL;
     }
@@ -733,7 +1073,8 @@ int tapi_ss_request_call_forwarding(tapi_context context, int slot_id, int event
     GDBusProxy* proxy;
     int value_type;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
+        || cf_type == NULL || value == NULL) {
         return -EINVAL;
     }
 
@@ -754,7 +1095,6 @@ int tapi_ss_request_call_forwarding(tapi_context context, int slot_id, int event
     }
 
     handler->result = ar;
-
     ar->arg1 = slot_id;
     ar->msg_id = event_id;
     handler->cb_function = p_handle;
@@ -782,7 +1122,7 @@ int tapi_ss_query_call_forwarding_info(tapi_context context, int slot_id,
     DBusMessageIter iter;
     GDBusProxy* proxy;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || service_type == NULL) {
         return -EINVAL;
     }
 
@@ -808,7 +1148,7 @@ int tapi_ss_disable_call_forwarding(tapi_context context, int slot_id, int event
     tapi_async_result* ar;
     GDBusProxy* proxy;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || cf_type == NULL) {
         return -EINVAL;
     }
 
@@ -835,7 +1175,8 @@ int tapi_ss_disable_call_forwarding(tapi_context context, int slot_id, int event
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy, "DisableAll",
-            disable_cf_param_append, NULL, handler, user_data_free)) {
+            disable_cf_param_append, method_call_complete, handler, user_data_free)) {
+        tapi_log_error("failed to disable all callforwarding \n");
         user_data_free(handler);
         return -EINVAL;
     }
@@ -868,6 +1209,50 @@ int tapi_get_ussd_state(tapi_context context, int slot_id, tapi_ussd_state* out)
     return -EINVAL;
 }
 
+int tapi_ss_send_ussd(tapi_context context, int slot_id, int event_id, char* reply,
+    tapi_async_function p_handle)
+{
+    dbus_context* ctx = context;
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
+    GDBusProxy* proxy;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || reply == NULL) {
+        return -EINVAL;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SS];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    handler = malloc(sizeof(tapi_async_handler));
+    if (handler == NULL)
+        return -ENOMEM;
+
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        free(handler);
+        return -ENOMEM;
+    }
+
+    handler->result = ar;
+    ar->arg1 = slot_id;
+    ar->msg_id = event_id;
+    ar->data = reply;
+    handler->cb_function = p_handle;
+
+    if (!g_dbus_proxy_method_call(proxy, "Respond", send_ussd_param_append,
+            ss_send_ussd_cb, handler, user_data_free)) {
+        tapi_log_error("failed to send ussd \n");
+        user_data_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
+}
+
 int tapi_ss_cancel_ussd(tapi_context context, int slot_id, int event_id,
     tapi_async_function p_handle)
 {
@@ -895,14 +1280,15 @@ int tapi_ss_cancel_ussd(tapi_context context, int slot_id, int event_id,
         free(handler);
         return -ENOMEM;
     }
-    handler->result = ar;
 
+    handler->result = ar;
     ar->arg1 = slot_id;
     ar->msg_id = event_id;
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy, "Cancel", NULL,
-            NULL, handler, user_data_free)) {
+            method_call_complete, handler, user_data_free)) {
+        tapi_log_error("failed to cancel ussd \n");
         user_data_free(handler);
         return -EINVAL;
     }
@@ -919,7 +1305,8 @@ int tapi_ss_request_call_wating(tapi_context context, int slot_id, int event_id,
     tapi_async_result* ar;
     GDBusProxy* proxy;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
+        || state == NULL) {
         return -EINVAL;
     }
 
@@ -938,8 +1325,8 @@ int tapi_ss_request_call_wating(tapi_context context, int slot_id, int event_id,
         free(handler);
         return -ENOMEM;
     }
-    handler->result = ar;
 
+    handler->result = ar;
     ar->arg1 = slot_id;
     ar->msg_id = event_id;
     handler->cb_function = p_handle;
