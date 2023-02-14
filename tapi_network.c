@@ -18,13 +18,9 @@
  * Included Files
  ****************************************************************************/
 
-#include <dbus/dbus.h>
-#include <errno.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
-#include "tapi.h"
 #include "tapi_internal.h"
 #include "tapi_network.h"
 
@@ -32,7 +28,7 @@
  * Private Functions
  ****************************************************************************/
 
-static void parse_nitz(char* str, tapi_network_time* info)
+static void parse_nitz(const char* str, tapi_network_time* info)
 {
     int index;
     int* p;
@@ -57,100 +53,88 @@ static void parse_nitz(char* str, tapi_network_time* info)
         free(orig);
 }
 
-static void fill_registration_info(const char* prop, DBusMessageIter* iter, tapi_registration_info* registration_info)
+static void fill_registration_info(const char* prop, DBusMessageIter* iter,
+    tapi_registration_info* registration_info)
 {
+    const char* value_str;
+    int value_int;
+
     if (strcmp(prop, "Status") == 0) {
-        char* status;
-        dbus_message_iter_get_basic(iter, &status);
-        tapi_log_info("tapi_network_get_registration_info -> status %s\n", status);
-        registration_info->reg_state = tapi_registration_status_from_string(status);
+        dbus_message_iter_get_basic(iter, &value_str);
+        registration_info->reg_state = tapi_registration_status_from_string(value_str);
     } else if (strcmp(prop, "Mode") == 0) {
-        char* mode;
-        dbus_message_iter_get_basic(iter, &mode);
-        tapi_log_info("tapi_network_get_registration_info -> mode %s\n", mode);
-        registration_info->selection_mode = tapi_registration_mode_from_string(mode);
+        dbus_message_iter_get_basic(iter, &value_str);
+        registration_info->selection_mode = tapi_registration_mode_from_string(value_str);
     } else if (strcmp(prop, "Technology") == 0) {
-        char* technology;
-        dbus_message_iter_get_basic(iter, &technology);
-        tapi_log_info("tapi_network_get_registration_info -> technology %s\n", technology);
-        memset(registration_info->technology, 0, sizeof(registration_info->technology));
-        sprintf(registration_info->technology, "%s", technology);
+        dbus_message_iter_get_basic(iter, &value_str);
+
+        if (strlen(value_str) <= MAX_NETWORK_INFO_LENGTH)
+            strcpy(registration_info->technology, value_str);
     } else if (strcmp(prop, "Name") == 0) {
-        char* display_name;
-        dbus_message_iter_get_basic(iter, &display_name);
-        tapi_log_info("tapi_network_get_registration_info -> display_name %s\n", display_name);
-        memset(registration_info->operator_name, 0, sizeof(registration_info->operator_name));
-        sprintf(registration_info->operator_name, "%s", display_name);
+        dbus_message_iter_get_basic(iter, &value_str);
+
+        if (strlen(value_str) <= MAX_OPERATOR_NAME_LENGTH)
+            strcpy(registration_info->operator_name, value_str);
     } else if (strcmp(prop, "MobileCountryCode") == 0) {
-        char* mcc;
-        dbus_message_iter_get_basic(iter, &mcc);
-        tapi_log_info("tapi_network_get_registration_info -> mcc %s\n", mcc);
-        memset(registration_info->mcc, 0, sizeof(registration_info->mcc));
-        sprintf(registration_info->mcc, "%s", mcc);
+        dbus_message_iter_get_basic(iter, &value_str);
+
+        if (strlen(value_str) <= MAX_MCC_LENGTH)
+            strcpy(registration_info->mcc, value_str);
     } else if (strcmp(prop, "MobileNetworkCode") == 0) {
-        char* mnc;
-        dbus_message_iter_get_basic(iter, &mnc);
-        tapi_log_info("tapi_network_get_registration_info -> mnc %s\n", mnc);
-        memset(registration_info->mnc, 0, sizeof(registration_info->mnc));
-        sprintf(registration_info->mnc, "%s", mnc);
+        dbus_message_iter_get_basic(iter, &value_str);
+
+        if (strlen(value_str) <= MAX_MNC_LENGTH)
+            strcpy(registration_info->mnc, value_str);
     } else if (strcmp(prop, "BaseStation") == 0) {
-        char* station;
-        dbus_message_iter_get_basic(iter, &station);
-        tapi_log_info("tapi_network_get_registration_info -> station %s\n", station);
-        memset(registration_info->station, 0, sizeof(registration_info->station));
-        sprintf(registration_info->station, "%s", station);
+        dbus_message_iter_get_basic(iter, &value_str);
+
+        if (strlen(value_str) <= MAX_NETWORK_INFO_LENGTH)
+            strcpy(registration_info->station, value_str);
     } else if (strcmp(prop, "CellId") == 0) {
-        u_int32_t cell_id;
-        dbus_message_iter_get_basic(iter, &cell_id);
-        tapi_log_info("tapi_network_get_registration_info -> cell_id %d\n", cell_id);
-        registration_info->cell_id = cell_id;
+        dbus_message_iter_get_basic(iter, &value_int);
+        registration_info->cell_id = value_int;
     } else if (strcmp(prop, "LocationAreaCode") == 0) {
-        u_int16_t lac;
-        dbus_message_iter_get_basic(iter, &lac);
-        tapi_log_info("tapi_network_get_registration_info -> lac %d\n", lac);
-        registration_info->lac = lac;
+        dbus_message_iter_get_basic(iter, &value_int);
+        registration_info->lac = value_int;
     } else if (strcmp(prop, "NITZ") == 0) {
-        char* str;
         tapi_network_time nitz_time;
-        dbus_message_iter_get_basic(iter, &str);
-        tapi_log_info("tapi_network_get_registration_info -> nitz_time %s\n", str);
-        parse_nitz(str, &nitz_time);
+        dbus_message_iter_get_basic(iter, &value_str);
+        parse_nitz(value_str, &nitz_time);
         registration_info->nitz_time = nitz_time;
     }
 }
 
-static void fill_cell_identity(const char* prop, DBusMessageIter* iter, tapi_cell_identity* identity)
+static void fill_cell_identity(const char* prop, DBusMessageIter* iter,
+    tapi_cell_identity* identity)
 {
+    const char* value_str;
+    int value_int;
+
     if (strcmp(prop, "MobileCountryCode") == 0) {
-        const char* value;
-        dbus_message_iter_get_basic(iter, &value);
-        memset(identity->mcc_str, 0, sizeof(identity->mcc_str));
-        sprintf(identity->mcc_str, "%s", value);
+        dbus_message_iter_get_basic(iter, &value_str);
+
+        if (strlen(value_str) <= MAX_MCC_LENGTH)
+            strcpy(identity->mcc_str, value_str);
     } else if (strcmp(prop, "MobileNetworkCode") == 0) {
-        const char* value;
-        dbus_message_iter_get_basic(iter, &value);
-        memset(identity->mnc_str, 0, sizeof(identity->mnc_str));
-        sprintf(identity->mnc_str, "%s", value);
+        dbus_message_iter_get_basic(iter, &value_str);
+
+        if (strlen(value_str) <= MAX_MNC_LENGTH)
+            strcpy(identity->mnc_str, value_str);
     } else if (strcmp(prop, "LocationAreaCode") == 0) {
-        int value;
-        dbus_message_iter_get_basic(iter, &value);
-        identity->lac = value;
+        dbus_message_iter_get_basic(iter, &value_int);
+        identity->lac = value_int;
     } else if (strcmp(prop, "CellId") == 0) {
-        u_int32_t value;
-        dbus_message_iter_get_basic(iter, &value);
-        identity->ci = value;
+        dbus_message_iter_get_basic(iter, &value_int);
+        identity->ci = value_int;
     } else if (strcmp(prop, "EARFCN") == 0) {
-        u_int16_t value;
-        dbus_message_iter_get_basic(iter, &value);
-        identity->earfcn = value;
+        dbus_message_iter_get_basic(iter, &value_int);
+        identity->earfcn = value_int;
     } else if (strcmp(prop, "PhysicalCellId") == 0) {
-        u_int16_t value;
-        dbus_message_iter_get_basic(iter, &value);
-        identity->pci = value;
+        dbus_message_iter_get_basic(iter, &value_int);
+        identity->pci = value_int;
     } else if (strcmp(prop, "TrackingAreaCode") == 0) {
-        u_int16_t value;
-        dbus_message_iter_get_basic(iter, &value);
-        identity->tac = value;
+        dbus_message_iter_get_basic(iter, &value_int);
+        identity->tac = value_int;
     }
 }
 
@@ -181,22 +165,21 @@ static void update_network_operator(const char* prop, DBusMessageIter* iter, tap
         return;
 
     dbus_message_iter_get_basic(iter, &value);
-    tapi_log_info("update_network_operator value : %s", value);
 
     if (strcmp(prop, "Name") == 0) {
-        memset(operator->name, 0, sizeof(operator->name));
-        sprintf(operator->name, "%s", value);
+        if (strlen(value) <= MAX_NETWORK_INFO_LENGTH)
+            strcpy(operator->name, value);
     } else if (strcmp(prop, "Status") == 0) {
         operator->status = tapi_operator_status_from_string(value);
     } else if (strcmp(prop, "MobileCountryCode") == 0) {
-        memset(operator->mcc, 0, sizeof(operator->mcc));
-        sprintf(operator->mcc, "%s", value);
+        if (strlen(value) <= MAX_MCC_LENGTH)
+            strcpy(operator->mcc, value);
     } else if (strcmp(prop, "MobileNetworkCode") == 0) {
-        memset(operator->mnc, 0, sizeof(operator->mnc));
-        sprintf(operator->mnc, "%s", value);
+        if (strlen(value) <= MAX_MNC_LENGTH)
+            strcpy(operator->mnc, value);
     } else if (strcmp(prop, "Technologies") == 0) {
-        memset(operator->technology, 0, sizeof(operator->technology));
-        sprintf(operator->technology, "%s", value);
+        if (strlen(value) <= MAX_NETWORK_INFO_LENGTH)
+            strcpy(operator->technology, value);
     }
 }
 
@@ -262,7 +245,6 @@ static void fill_operator_list(DBusMessageIter* iter, tapi_operator_info* operat
 
         dbus_message_iter_recurse(iter, &entry);
         dbus_message_iter_get_basic(&entry, &key);
-        tapi_log_info("operator_scan_complete operator key : %s", key);
 
         dbus_message_iter_next(&entry);
         dbus_message_iter_recurse(&entry, &value);
@@ -279,7 +261,7 @@ static int network_state_changed(DBusConnection* connection,
     DBusMessageIter args, list;
     tapi_async_result* ar;
     tapi_async_function cb;
-    tapi_registration_info* registration_info;
+    tapi_registration_info* registration_info = NULL;
     const char* sender;
 
     if (handler == NULL)
@@ -293,27 +275,25 @@ static int network_state_changed(DBusConnection* connection,
     if (cb == NULL)
         return false;
 
-    if (!dbus_message_is_signal(message, OFONO_NETWORK_REGISTRATION_INTERFACE, "PropertyChanged")
-        || ar->msg_id != MSG_NETWORK_STATE_CHANGE_IND) {
+    if (ar->msg_id != MSG_NETWORK_STATE_CHANGE_IND) {
         return false;
     }
 
     sender = dbus_message_get_sender(message);
     if (sender == NULL)
-        return false;
+        goto done;
 
     if (!dbus_message_iter_init(message, &args))
-        return false;
+        goto done;
 
     if (dbus_message_iter_get_arg_type(&args) != DBUS_TYPE_ARRAY)
-        return false;
+        goto done;
 
     dbus_message_iter_recurse(&args, &list);
 
     registration_info = malloc(sizeof(tapi_registration_info));
-
     if (registration_info == NULL)
-        return false;
+        goto done;
 
     while (dbus_message_iter_get_arg_type(&list) == DBUS_TYPE_DICT_ENTRY) {
         DBusMessageIter entry, value;
@@ -330,8 +310,10 @@ static int network_state_changed(DBusConnection* connection,
     }
 
     ar->data = registration_info;
-    cb(ar);
+    ar->status = OK;
 
+done:
+    cb(ar);
     if (registration_info != NULL)
         free(registration_info);
 
@@ -341,7 +323,7 @@ static int network_state_changed(DBusConnection* connection,
 static int cellinfo_list_changed(DBusConnection* connection,
     DBusMessage* message, void* user_data)
 {
-    tapi_cell_identity** cell_info_list;
+    tapi_cell_identity* cell_info_list[MAX_CELL_INFO_LIST_SIZE];
     tapi_async_handler* handler = user_data;
     tapi_cell_identity* cell_identity;
     tapi_async_result* ar;
@@ -361,24 +343,22 @@ static int cellinfo_list_changed(DBusConnection* connection,
     if (cb == NULL)
         return false;
 
-    if (!dbus_message_is_signal(message, OFONO_NETWORK_REGISTRATION_INTERFACE, "PropertyChanged")
-        || ar->msg_id != MSG_CELLINFO_CHANGE_IND) {
+    if (ar->msg_id != MSG_CELLINFO_CHANGE_IND) {
         return false;
     }
 
     sender = dbus_message_get_sender(message);
     if (sender == NULL)
-        return false;
+        goto done;
 
     if (!dbus_message_iter_init(message, &iter))
-        return false;
+        goto done;
 
     if (dbus_message_iter_get_arg_type(&iter) != DBUS_TYPE_ARRAY)
-        return false;
+        goto done;
 
     dbus_message_iter_recurse(&iter, &list);
 
-    cell_info_list = ar->data;
     cell_index = 0;
     while (dbus_message_iter_get_arg_type(&list) == DBUS_TYPE_STRUCT) {
         DBusMessageIter entry, dict;
@@ -402,8 +382,9 @@ static int cellinfo_list_changed(DBusConnection* connection,
 
     ar->arg2 = cell_index; // cell_info count;
     ar->data = cell_info_list;
-    cb(ar);
 
+done:
+    cb(ar);
     while (--cell_index >= 0) {
         free(cell_info_list[cell_index]);
     }
@@ -434,20 +415,19 @@ static int signal_strength_changed(DBusConnection* connection,
     if (cb == NULL)
         return false;
 
-    if (!dbus_message_is_signal(message, OFONO_NETWORK_REGISTRATION_INTERFACE, "PropertyChanged")
-        || ar->msg_id != MSG_SIGNAL_STRENGTH_STATE_CHANGE_IND) {
+    if (ar->msg_id != MSG_SIGNAL_STRENGTH_STATE_CHANGE_IND) {
         return false;
     }
 
     sender = dbus_message_get_sender(message);
     if (sender == NULL)
-        return false;
+        goto done;
 
     if (!dbus_message_iter_init(message, &iter))
-        return false;
+        goto done;
 
     if (dbus_message_iter_get_arg_type(&iter) != DBUS_TYPE_STRING)
-        return false;
+        goto done;
 
     dbus_message_iter_get_basic(&iter, &property);
     dbus_message_iter_next(&iter);
@@ -455,14 +435,16 @@ static int signal_strength_changed(DBusConnection* connection,
     dbus_message_iter_recurse(&iter, &var);
     if (strcmp(property, "Strength") == 0) {
         if (dbus_message_iter_get_arg_type(&var) != DBUS_TYPE_BYTE)
-            return false;
+            goto done;
 
         dbus_message_iter_get_basic(&var, &strength);
     }
 
     ar->arg2 = strength;
-    cb(ar);
+    ar->status = OK;
 
+done:
+    cb(ar);
     return true;
 }
 
@@ -488,32 +470,31 @@ static int nitz_state_changed(DBusConnection* connection,
     if (cb == NULL)
         return false;
 
-    if (!dbus_message_is_signal(message, OFONO_NETWORK_REGISTRATION_INTERFACE, "PropertyChanged")
-        || ar->msg_id != MSG_SIGNAL_STRENGTH_STATE_CHANGE_IND) {
+    if (ar->msg_id != MSG_NITZ_STATE_CHANGE_IND) {
         return false;
     }
 
     sender = dbus_message_get_sender(message);
     if (sender == NULL)
-        return false;
+        goto done;
 
     if (!dbus_message_iter_init(message, &iter))
-        return false;
+        goto done;
 
     if (dbus_message_iter_get_arg_type(&iter) != DBUS_TYPE_STRING)
-        return false;
+        goto done;
 
     dbus_message_iter_get_basic(&iter, &result);
 
     nitz_time = malloc(sizeof(tapi_network_time));
     if (nitz_time == NULL)
-        return false;
+        goto done;
 
     parse_nitz(result, nitz_time);
-
     ar->data = nitz_time;
-    cb(ar);
 
+done:
+    cb(ar);
     if (nitz_time != NULL)
         free(nitz_time);
 
@@ -539,12 +520,6 @@ static void network_register_cb(DBusMessage* message, void* user_data)
     tapi_async_result* ar;
     tapi_async_function cb;
     DBusError err;
-
-    if (dbus_message_get_type(message) == DBUS_MESSAGE_TYPE_ERROR) {
-        const char* dbus_error = dbus_message_get_error_name(message);
-        tapi_log_error("network_register_cb failed: %s", dbus_error);
-        return;
-    }
 
     if (handler == NULL)
         return;
@@ -747,10 +722,11 @@ static void registration_info_query_done(DBusMessage* message, void* user_data)
     ar->status = OK;
 
     dbus_error_init(&err);
-    if (dbus_set_error_from_message(&err, message) == TRUE) {
+    if (dbus_set_error_from_message(&err, message) == true) {
         tapi_log_error("%s: %s\n", err.name, err.message);
         dbus_error_free(&err);
         ar->status = ERROR;
+        goto done;
     }
 
     if (dbus_message_has_signature(message, "a{sv}") == false)
@@ -807,8 +783,6 @@ static void operator_scan_complete(DBusMessage* message, void* user_data)
     if (cb == NULL)
         return;
 
-    ar->status = OK;
-
     dbus_error_init(&err);
     if (dbus_set_error_from_message(&err, message) == true) {
         tapi_log_error("%s: %s\n", err.name, err.message);
@@ -840,9 +814,9 @@ static void operator_scan_complete(DBusMessage* message, void* user_data)
 
         dbus_message_iter_recurse(&list, &entry);
         dbus_message_iter_get_basic(&entry, &path);
-        memset(operator->id, 0, sizeof(operator->id));
-        sprintf(operator->id, "%s", path);
-        tapi_log_info("operator_scan_complete operator path : %s", operator->id);
+
+        if (strlen(path) <= MAX_NETWORK_INFO_LENGTH)
+            strcpy(operator->id, path);
 
         dbus_message_iter_next(&entry);
         dbus_message_iter_recurse(&entry, &dict);
@@ -858,6 +832,7 @@ static void operator_scan_complete(DBusMessage* message, void* user_data)
 
     ar->arg2 = operator_index; // operator count;
     ar->data = operator_list;
+    ar->status = OK;
 
 done:
     cb(ar);
@@ -941,11 +916,17 @@ int tapi_network_select_manual(tapi_context context,
 
     proxy = g_dbus_proxy_new(
         ctx->client, tapi_utils_get_modem_path(slot_id), OFONO_NETWORK_OPERATOR_INTERFACE);
-    g_dbus_proxy_method_call(proxy,
-        "Register", NULL, network_register_cb, handler, user_data_free);
-    g_dbus_proxy_unref(proxy);
+    if (proxy == NULL) {
+        return -EIO;
+    }
 
-    return 0;
+    if (g_dbus_proxy_method_call(proxy,
+            "Register", NULL, network_register_cb, handler, user_data_free)) {
+        g_dbus_proxy_unref(proxy);
+        return OK;
+    }
+
+    return ERROR;
 }
 
 int tapi_network_scan(tapi_context context,
@@ -1078,11 +1059,12 @@ int tapi_network_get_voice_network_type(tapi_context context, int slot_id, tapi_
 
     if (g_dbus_proxy_get_property(proxy, "Technology", &iter)) {
         dbus_message_iter_get_basic(&iter, &result);
+
+        tapi_network_type_from_string(result, out);
+        return OK;
     }
 
-    tapi_network_type_from_string(result, out);
-
-    return 0;
+    return ERROR;
 }
 
 bool tapi_network_is_voice_roaming(tapi_context context, int slot_id)
@@ -1114,7 +1096,6 @@ bool tapi_network_is_voice_roaming(tapi_context context, int slot_id)
     }
 
     tapi_registration_state reg_state = tapi_registration_status_from_string(result);
-
     return (reg_state == NETWORK_REGISTRATION_STATUS_ROAMING);
 }
 
@@ -1136,9 +1117,10 @@ int tapi_network_get_display_name(tapi_context context, int slot_id, char** out)
 
     if (g_dbus_proxy_get_property(proxy, "Name", &iter)) {
         dbus_message_iter_get_basic(&iter, out);
+        return OK;
     }
 
-    return 0;
+    return ERROR;
 }
 
 int tapi_network_get_signalstrength(tapi_context context, int slot_id, tapi_signal_strength* out)
@@ -1160,11 +1142,12 @@ int tapi_network_get_signalstrength(tapi_context context, int slot_id, tapi_sign
 
     if (g_dbus_proxy_get_property(proxy, "Strength", &iter)) {
         dbus_message_iter_get_basic(&iter, &value);
+
+        out->rsrp = value;
+        return OK;
     }
 
-    out->rsrp = value;
-
-    return 0;
+    return ERROR;
 }
 
 int tapi_network_get_registration_info(tapi_context context,
