@@ -53,6 +53,7 @@ enum dbus_proxy_type {
     DBUS_PROXY_RADIO,
     DBUS_PROXY_CALL,
     DBUS_PROXY_SIM,
+    DBUS_PROXY_STK,
     DBUS_PROXY_DATA,
     DBUS_PROXY_SMS,
     DBUS_PROXY_CBS,
