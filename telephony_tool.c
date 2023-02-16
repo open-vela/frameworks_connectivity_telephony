@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <system/readline.h>
 #include <tapi.h>
 #include <unistd.h>
@@ -435,24 +436,24 @@ static int split(char dst[][CONFIG_NSH_LINELEN], char* str, const char* spl)
 
 static void tele_call_async_fun(tapi_async_result* result)
 {
-    printf("tele_call_async_fun : \n");
-    printf("result->msg_id : %d\n", result->msg_id);
-    printf("result->status : %d\n", result->status);
-    printf("result->arg1 : %d\n", result->arg1);
-    printf("result->arg2 : %d\n", result->arg2);
+    syslog(LOG_DEBUG, "%s : \n", __func__);
+    syslog(LOG_DEBUG, "result->msg_id : %d\n", result->msg_id);
+    syslog(LOG_DEBUG, "result->status : %d\n", result->status);
+    syslog(LOG_DEBUG, "result->arg1 : %d\n", result->arg1);
+    syslog(LOG_DEBUG, "result->arg2 : %d\n", result->arg2);
 }
 
 static void tele_call_manager_call_async_fun(tapi_async_result* result)
 {
     tapi_call_info* call_info;
 
-    printf("tele_call_manager_call_async_fun : %d\n", result->status);
+    syslog(LOG_DEBUG, "%s : %d\n", __func__, result->status);
 
     if (result->msg_id == MSG_CALL_ADD_MESSAGE_IND) {
         call_info = (tapi_call_info*)result->data;
-        printf("call added call_path : %s\n", call_info->call_path);
+        syslog(LOG_DEBUG, "call added call_path : %s\n", call_info->call_path);
     } else if (result->msg_id == MSG_CALL_REMOVE_MESSAGE_IND) {
-        printf("call removed call_path : %s\n\n", (char*)result->data);
+        syslog(LOG_DEBUG, "call removed call_path : %s\n", (char*)result->data);
     }
 }
 
@@ -462,14 +463,14 @@ static void tele_call_ecc_list_async_fun(tapi_async_result* result)
     int list_length = result->arg1;
     char** ret = result->data;
 
-    printf("tele_call_ecc_list_async_fun : \n");
-    printf("msg_id : %d\n", result->msg_id);
-    printf("status : %d\n", status);
-    printf("list length: %d\n", list_length);
+    syslog(LOG_DEBUG, "%s : \n", __func__);
+    syslog(LOG_DEBUG, "msg_id : %d\n", result->msg_id);
+    syslog(LOG_DEBUG, "status : %d\n", status);
+    syslog(LOG_DEBUG, "list length: %d\n", list_length);
 
     if (result->status == 0) {
         for (int i = 0; i < list_length; i++) {
-            printf("ecc number : %s \n", ret[i]);
+            syslog(LOG_DEBUG, "ecc number : %s \n", ret[i]);
         }
     }
 }
@@ -484,16 +485,16 @@ static void modem_list_query_complete(tapi_async_result* result)
     int modem_count;
     char** list = result->data;
 
-    printf("%s : \n", __func__);
+    syslog(LOG_DEBUG, "%s : \n", __func__);
     if (list == NULL)
         return;
 
-    printf("result->status : %d\n", result->status);
+    syslog(LOG_DEBUG, "result->status : %d\n", result->status);
     modem_count = result->arg1;
     for (int i = 0; i < modem_count; i++) {
         modem_path = list[i];
         if (modem_path != NULL)
-            printf("modem found with path -> %s \n", modem_path);
+            syslog(LOG_DEBUG, "modem found with path -> %s \n", modem_path);
     }
 }
 
@@ -501,15 +502,15 @@ static void call_list_query_complete(tapi_async_result* result)
 {
     tapi_call_list* pHead = result->data;
 
-    printf("%s : \n", __func__);
+    syslog(LOG_DEBUG, "%s : \n", __func__);
     if (pHead == NULL)
         return;
 
     for (tapi_call_list* p = pHead; p != NULL; p = p->next) {
-        printf("call path : %s\n", p->data->call_path);
+        syslog(LOG_DEBUG, "call path : %s\n", p->data->call_path);
     }
 
-    printf("result->status : %d \n", result->status);
+    syslog(LOG_DEBUG, "result->status : %d \n", result->status);
     tapi_call_free_call_list(pHead);
 }
 
@@ -517,11 +518,11 @@ static void registration_info_query_complete(tapi_async_result* result)
 {
     tapi_registration_info* info = result->data;
 
-    printf("%s : \n", __func__);
+    syslog(LOG_DEBUG, "%s : \n", __func__);
     if (info == NULL)
         return;
 
-    printf("reg_state = %d operator_name = %s mcc = %s mnc = %s \n",
+    syslog(LOG_DEBUG, "reg_state = %d operator_name = %s mcc = %s mnc = %s \n",
         info->reg_state, info->operator_name, info->mcc, info->mnc);
 }
 
@@ -550,7 +551,8 @@ static int telephonytool_cmd_dial(tapi_context context, char* pargs)
     if (hide_callerid == NULL)
         return -EINVAL;
 
-    printf("%s, slot_id: %s number: %s  hide_callerid: %s \n", __func__, slot_id, number, hide_callerid);
+    syslog(LOG_DEBUG, "%s, slot_id: %s number: %s  hide_callerid: %s \n", __func__,
+        slot_id, number, hide_callerid);
     tapi_call_dial(context, atoi(slot_id), number, atoi(hide_callerid));
     return 0;
 }
@@ -572,7 +574,7 @@ static int telephonytool_cmd_answer_call(tapi_context context, char* pargs)
     slot_id = dst[0];
     type = atoi(dst[1]);
 
-    printf("%s, slotId : %s\n", __func__, dst[0]);
+    syslog(LOG_DEBUG, "%s, slotId : %s\n", __func__, dst[0]);
     if (type == 0) {
         tapi_call_answer_call(context, atoi(slot_id), NULL);
     } else if (type == 1) {
@@ -594,7 +596,7 @@ static int telephonytool_cmd_hangup_all(tapi_context context, char* pargs)
     if (slot_id == NULL)
         return -EINVAL;
 
-    printf("%s, slotId : %s\n", __func__, slot_id);
+    syslog(LOG_DEBUG, "%s, slotId : %s\n", __func__, slot_id);
     tapi_call_hangup_all_calls(context, atoi(slot_id));
     return 0;
 }
@@ -606,7 +608,7 @@ static int telephonytool_cmd_hangup_call(tapi_context context, char* pargs)
     int cnt = split(dst, pargs, " ");
 
     slot_id = dst[0];
-    printf("%s, slotId : %s\n", __func__, dst[0]);
+    syslog(LOG_DEBUG, "%s, slotId : %s\n", __func__, dst[0]);
 
     if (cnt == 1) {
         tapi_call_hangup_call(context, atoi(slot_id), NULL);
@@ -627,7 +629,7 @@ static int telephonytool_cmd_swap_call(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = dst[0];
-    printf("%s, slotId : %s\n", __func__, dst[0]);
+    syslog(LOG_DEBUG, "%s, slotId : %s\n", __func__, dst[0]);
 
     if (atoi(dst[1]) == 1) {
         tapi_call_hold_call(context, atoi(slot_id));
@@ -645,7 +647,7 @@ static int telephonytool_cmd_get_call(tapi_context context, char* pargs)
     int cnt = split(dst, pargs, " ");
 
     slot_id = dst[0];
-    printf("%s, slotId : %s\n", __func__, slot_id);
+    syslog(LOG_DEBUG, "%s, slotId : %s\n", __func__, slot_id);
 
     if (cnt == 1) {
         tapi_call_get_all_calls(context, atoi(slot_id), NULL, call_list_query_complete);
@@ -667,17 +669,17 @@ static int telephonytool_cmd_listen_call_property_change(tapi_context context, c
     if (cnt != 1)
         return -EINVAL;
 
-    printf("%s, cnt : %d\n", __func__, cnt);
+    syslog(LOG_DEBUG, "%s, cnt : %d\n", __func__, cnt);
     watch_id = tapi_call_register_managercall_change(context, 0, MSG_CALL_ADD_MESSAGE_IND,
         tele_call_manager_call_async_fun);
-    printf("call add change  watch_id: %d\n", watch_id);
+    syslog(LOG_DEBUG, "call add change  watch_id: %d\n", watch_id);
 
     watch_id = tapi_call_register_managercall_change(context, 0, MSG_CALL_REMOVE_MESSAGE_IND,
         tele_call_manager_call_async_fun);
-    printf("call remove change  watch_id: %d\n", watch_id);
+    syslog(LOG_DEBUG, "call remove change  watch_id: %d\n", watch_id);
 
     watch_id = tapi_call_register_emergencylist_change(context, 0, tele_call_ecc_list_async_fun);
-    printf("ecc list change  watch_id: %d\n", watch_id);
+    syslog(LOG_DEBUG, "ecc list change  watch_id: %d\n", watch_id);
 
     return 0;
 }
@@ -690,7 +692,7 @@ static int telephonytool_cmd_unlisten_call_singal(tapi_context context, char* pa
     if (cnt != 1)
         return -EINVAL;
 
-    printf("%s, cnt : %d\n", __func__, cnt);
+    syslog(LOG_DEBUG, "%s, cnt : %d\n", __func__, cnt);
     tapi_unregister(context, atoi(dst[0]));
 
     return 0;
@@ -706,7 +708,7 @@ static int telephonytool_cmd_transfer_call(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = dst[0];
-    printf("%s, slotId : %s\n", __func__, slot_id);
+    syslog(LOG_DEBUG, "%s, slotId : %s\n", __func__, slot_id);
 
     tapi_call_transfer(context, atoi(slot_id));
     return 0;
@@ -723,7 +725,7 @@ static int telephonytool_cmd_merge_call(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = dst[0];
-    printf("%s, slotId : %s\n", __func__, slot_id);
+    syslog(LOG_DEBUG, "%s, slotId : %s\n", __func__, slot_id);
 
     tapi_call_merge_call(context, atoi(slot_id), out, tele_call_async_fun);
     return 0;
@@ -740,7 +742,7 @@ static int telephonytool_cmd_separate_call(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = dst[0];
-    printf("%s, slotId : %s\n", __func__, slot_id);
+    syslog(LOG_DEBUG, "%s, slotId : %s\n", __func__, slot_id);
 
     tapi_call_separate_call(context, atoi(slot_id), dst[1], out, tele_call_async_fun);
     return 0;
@@ -759,11 +761,11 @@ static int telephonytool_cmd_get_ecc_list(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = dst[0];
-    printf("%s, slotId : %s \n", __func__, slot_id);
+    syslog(LOG_DEBUG, "%s, slotId : %s \n", __func__, slot_id);
 
     size = tapi_call_get_ecc_list(context, atoi(slot_id), out);
     for (i = 0; i < size; i++) {
-        printf("ecc number : %s \n", out[i]);
+        syslog(LOG_DEBUG, "ecc number : %s \n", out[i]);
     }
 
     return 0;
@@ -779,7 +781,7 @@ static int telephonytool_cmd_is_emergency_number(tapi_context context, char* par
         return -EINVAL;
 
     ret = tapi_call_is_emergency_number(context, dst[0]);
-    printf("%s, ret : %d\n", __func__, ret);
+    syslog(LOG_DEBUG, "%s, ret : %d\n", __func__, ret);
 
     return 0;
 }
@@ -814,7 +816,7 @@ static int telephonytool_cmd_modem_register(tapi_context context, char* pargs)
         return -EINVAL;
 
     watch_id = tapi_register(context, atoi(slot_id), atoi(target_state), tele_call_async_fun);
-    printf("start to watch radio event : %d , return watch_id : %d \n",
+    syslog(LOG_DEBUG, "start to watch radio event : %d , return watch_id : %d \n",
         atoi(target_state), watch_id);
 
     return watch_id;
@@ -833,7 +835,8 @@ static int telephonytool_cmd_modem_unregister(tapi_context context, char* pargs)
         return -EINVAL;
 
     ret = tapi_unregister(context, atoi(watch_id));
-    printf("stop to watch radio event : %s , with watch_id : %s with return value : %d \n",
+    syslog(LOG_DEBUG, "stop to watch radio event : %s , with watch_id : \
+        %s with return value : %d \n",
         watch_id, watch_id, ret);
 
     return ret;
@@ -852,7 +855,7 @@ static int telephonytool_cmd_is_feature_supported(tapi_context context, char* pa
         return -EINVAL;
 
     ret = tapi_is_feature_supported(atoi(arg));
-    printf("radio feature type : %d is supported ? %d \n", atoi(arg), ret);
+    syslog(LOG_DEBUG, "radio feature type : %d is supported ? %d \n", atoi(arg), ret);
 
     return ret;
 }
@@ -875,7 +878,7 @@ static int telephonytool_cmd_set_radio_power(tapi_context context, char* pargs)
     if (target_state == NULL)
         return -EINVAL;
 
-    printf("%s, slotId : %s target_state: %s \n", __func__, slot_id, target_state);
+    syslog(LOG_DEBUG, "%s, slotId : %s target_state: %s \n", __func__, slot_id, target_state);
     tapi_set_radio_power(context, atoi(slot_id),
         EVENT_RADIO_STATE_SET_DONE, (bool)atoi(target_state), tele_call_async_fun);
 
@@ -895,7 +898,7 @@ static int telephonytool_cmd_get_radio_power(tapi_context context, char* pargs)
         return -EINVAL;
 
     tapi_get_radio_power(context, atoi(slot_id), &value);
-    printf("%s, slotId : %s value : %d \n", __func__, slot_id, value);
+    syslog(LOG_DEBUG, "%s, slotId : %s value : %d \n", __func__, slot_id, value);
 
     return 0;
 }
@@ -918,7 +921,7 @@ static int telephonytool_cmd_set_rat_mode(tapi_context context, char* pargs)
     if (target_state == NULL)
         return -EINVAL;
 
-    printf("%s, slotId : %s target_state: %s \n", __func__, slot_id, target_state);
+    syslog(LOG_DEBUG, "%s, slotId : %s target_state: %s \n", __func__, slot_id, target_state);
     tapi_set_pref_net_mode(context, atoi(slot_id),
         EVENT_RAT_MODE_SET_DONE, (tapi_pref_net_mode)atoi(target_state), tele_call_async_fun);
 
@@ -938,7 +941,7 @@ static int telephonytool_cmd_get_rat_mode(tapi_context context, char* pargs)
         return -EINVAL;
 
     tapi_get_pref_net_mode(context, atoi(slot_id), &value);
-    printf("%s, slotId : %s value :%d \n", __func__, slot_id, value);
+    syslog(LOG_DEBUG, "%s, slotId : %s value :%d \n", __func__, slot_id, value);
 
     return 0;
 }
@@ -956,7 +959,7 @@ static int telephonytool_cmd_get_imei(tapi_context context, char* pargs)
         return -EINVAL;
 
     tapi_get_imei(context, atoi(slot_id), &imei);
-    printf("%s, slotId : %s imei : %s \n", __func__, slot_id, imei);
+    syslog(LOG_DEBUG, "%s, slotId : %s imei : %s \n", __func__, slot_id, imei);
 
     return 0;
 }
@@ -974,7 +977,7 @@ static int telephonytool_cmd_get_imeisv(tapi_context context, char* pargs)
         return -EINVAL;
 
     tapi_get_imeisv(context, atoi(slot_id), &imeisv);
-    printf("%s, slotId : %s imeisv : %s \n", __func__, slot_id, imeisv);
+    syslog(LOG_DEBUG, "%s, slotId : %s imeisv : %s \n", __func__, slot_id, imeisv);
 
     return 0;
 }
@@ -992,7 +995,7 @@ static int telephonytool_cmd_get_modem_revision(tapi_context context, char* parg
         return -EINVAL;
 
     tapi_get_modem_revision(context, atoi(slot_id), &value);
-    printf("%s, slotId : %s value : %s \n", __func__, slot_id, value);
+    syslog(LOG_DEBUG, "%s, slotId : %s value : %s \n", __func__, slot_id, value);
 
     return 0;
 }
@@ -1010,7 +1013,7 @@ static int telephonytool_cmd_get_modem_manufacturer(tapi_context context, char* 
         return -EINVAL;
 
     tapi_get_modem_manufacturer(context, atoi(slot_id), &value);
-    printf("%s, slotId : %s value : %s \n", __func__, slot_id, value);
+    syslog(LOG_DEBUG, "%s, slotId : %s value : %s \n", __func__, slot_id, value);
 
     return 0;
 }
@@ -1028,7 +1031,7 @@ static int telephonytool_cmd_get_modem_model(tapi_context context, char* pargs)
         return -EINVAL;
 
     tapi_get_modem_model(context, atoi(slot_id), &value);
-    printf("%s, slotId : %s value : %s \n", __func__, slot_id, value);
+    syslog(LOG_DEBUG, "%s, slotId : %s value : %s \n", __func__, slot_id, value);
 
     return 0;
 }
@@ -1046,7 +1049,7 @@ static int telephonytool_cmd_get_phone_state(tapi_context context, char* pargs)
         return -EINVAL;
 
     tapi_get_phone_state(context, atoi(slot_id), &state);
-    printf("%s, slotId : %s state : %d \n", __func__, slot_id, state);
+    syslog(LOG_DEBUG, "%s, slotId : %s state : %d \n", __func__, slot_id, state);
 
     return 0;
 }
@@ -1062,7 +1065,7 @@ static int telephonytool_cmd_reboot_modem(tapi_context context, char* pargs)
     if (slot_id == NULL)
         return -EINVAL;
 
-    printf("%s, slotId : %s  \n", __func__, slot_id);
+    syslog(LOG_DEBUG, "%s, slotId : %s  \n", __func__, slot_id);
     tapi_reboot_modem(context, atoi(slot_id));
 
     return 0;
@@ -1081,7 +1084,7 @@ static int telephonytool_cmd_get_radio_state(tapi_context context, char* pargs)
         return -EINVAL;
 
     tapi_get_radio_state(context, atoi(slot_id), &state);
-    printf("%s, slotId : %s state : %d \n", __func__, slot_id, state);
+    syslog(LOG_DEBUG, "%s, slotId : %s state : %d \n", __func__, slot_id, state);
 
     return 0;
 }
@@ -1099,7 +1102,7 @@ static int telephonytool_cmd_get_line_number(tapi_context context, char* pargs)
         return -EINVAL;
 
     tapi_get_msisdn_number(context, atoi(slot_id), &number);
-    printf("%s, slotId : %s  number : %s \n", __func__, slot_id, number);
+    syslog(LOG_DEBUG, "%s, slotId : %s  number : %s \n", __func__, slot_id, number);
 
     return 0;
 }
@@ -1248,7 +1251,7 @@ static int telephonytool_cmd_get_data_roaming(tapi_context context, char* pargs)
     bool result;
 
     tapi_data_get_roaming_enabled(context, &result);
-    printf("%s : %d \n", __func__, result);
+    syslog(LOG_DEBUG, "%s : %d \n", __func__, result);
 
     return 0;
 }
@@ -1272,7 +1275,7 @@ static int telephonytool_cmd_get_data_enabled(tapi_context context, char* pargs)
     bool result;
 
     tapi_data_get_enabled(context, &result);
-    printf("%s : %d \n", __func__, result);
+    syslog(LOG_DEBUG, "%s : %d \n", __func__, result);
 
     return 0;
 }
@@ -1315,7 +1318,7 @@ static int telephonytool_cmd_get_ps_attached(tapi_context context, char* pargs)
         return -EINVAL;
 
     tapi_data_is_ps_attached(context, atoi(slot_id), &result);
-    printf("%s, slotId : %s result : %d \n", __func__, slot_id, result);
+    syslog(LOG_DEBUG, "%s, slotId : %s result : %d \n", __func__, slot_id, result);
 
     return 0;
 }
@@ -1333,7 +1336,7 @@ static int telephonytool_cmd_get_ps_network_type(tapi_context context, char* par
         return -EINVAL;
 
     tapi_data_get_network_type(context, atoi(slot_id), &result);
-    printf("%s, slotId : %s result : %d \n", __func__, slot_id, result);
+    syslog(LOG_DEBUG, "%s, slotId : %s result : %d \n", __func__, slot_id, result);
 
     return 0;
 }
@@ -1363,7 +1366,7 @@ static int telephonytool_cmd_set_pref_apn(tapi_context context, char* pargs)
     apn->id = target_state;
 
     tapi_data_set_preferred_apn(context, atoi(slot_id), apn);
-    printf("%s, slotId : %s apn : %s \n", __func__, slot_id, target_state);
+    syslog(LOG_DEBUG, "%s, slotId : %s apn : %s \n", __func__, slot_id, target_state);
     free(apn);
 
     return 0;
@@ -1382,7 +1385,7 @@ static int telephonytool_cmd_get_pref_apn(tapi_context context, char* pargs)
         return -EINVAL;
 
     tapi_data_get_preferred_apn(context, atoi(slot_id), &apn);
-    printf("%s, slotId : %s apn : %s \n", __func__, slot_id, apn);
+    syslog(LOG_DEBUG, "%s, slotId : %s apn : %s \n", __func__, slot_id, apn);
 
     return 0;
 }
@@ -1406,7 +1409,7 @@ static int telephonytool_cmd_get_default_data_slot(tapi_context context, char* p
     int result;
 
     tapi_data_get_default_data_slot(context, &result);
-    printf("%s : %d \n", __func__, result);
+    syslog(LOG_DEBUG, "%s : %d \n", __func__, result);
 
     return 0;
 }
@@ -1431,7 +1434,7 @@ static int telephonytool_cmd_data_register(tapi_context context, char* pargs)
         return -EINVAL;
 
     watch_id = tapi_data_register(context, atoi(slot_id), atoi(target_state), tele_call_async_fun);
-    printf("start to watch data event : %d , return watch_id : %d \n",
+    syslog(LOG_DEBUG, "start to watch data event : %d , return watch_id : %d \n",
         atoi(target_state), watch_id);
 
     return watch_id;
@@ -1451,7 +1454,7 @@ static int telephonytool_cmd_has_icc_card(tapi_context context, char* pargs)
 
     tapi_sim_has_icc_card(context, atoi(slot_id), &value);
 
-    printf("%s, slotId : %s value : %d \n", __func__, slot_id, value);
+    syslog(LOG_DEBUG, "%s, slotId : %s value : %d \n", __func__, slot_id, value);
 
     return 0;
 }
@@ -1470,7 +1473,7 @@ static int telephonytool_cmd_get_sim_iccid(tapi_context context, char* pargs)
 
     tapi_sim_get_sim_iccid(context, atoi(slot_id), &iccid);
 
-    printf("%s, slotId : %s iccid : %s \n", __func__, slot_id, iccid);
+    syslog(LOG_DEBUG, "%s, slotId : %s iccid : %s \n", __func__, slot_id, iccid);
 
     return 0;
 }
@@ -1490,7 +1493,7 @@ static int telephonytool_cmd_get_sim_operator(tapi_context context, char* pargs)
     tapi_sim_get_sim_operator(context,
         atoi(slot_id), (MAX_MCC_LENGTH + MAX_MNC_LENGTH + 1), operator);
 
-    printf("%s, slotId : %s operator : %s \n", __func__, slot_id, operator);
+    syslog(LOG_DEBUG, "%s, slotId : %s operator : %s \n", __func__, slot_id, operator);
 
     return 0;
 }
@@ -1509,7 +1512,7 @@ static int telephonytool_cmd_get_sim_operator_name(tapi_context context, char* p
 
     tapi_sim_get_sim_operator_name(context, atoi(slot_id), &spn);
 
-    printf("%s, slotId : %s spn : %s \n", __func__, slot_id, spn);
+    syslog(LOG_DEBUG, "%s, slotId : %s spn : %s \n", __func__, slot_id, spn);
 
     return 0;
 }
@@ -1549,7 +1552,7 @@ static int telephonytool_cmd_change_sim_pin(tapi_context context, char* pargs)
     if (new_pin == NULL)
         return -EINVAL;
 
-    printf("%s, slot_id: %s pin_type: %s old_pin: %s new_pin: %s \n", __func__, slot_id, pin_type, old_pin, new_pin);
+    syslog(LOG_DEBUG, "%s, slot_id: %s pin_type: %s old_pin: %s new_pin: %s \n", __func__, slot_id, pin_type, old_pin, new_pin);
 
     tapi_sim_change_pin(context, atoi(slot_id),
         EVENT_CHANGE_SIM_PIN_DONE, pin_type, old_pin, new_pin, tele_call_async_fun);
@@ -1584,7 +1587,8 @@ static int telephonytool_cmd_enter_sim_pin(tapi_context context, char* pargs)
     if (pin == NULL)
         return -EINVAL;
 
-    printf("%s, slot_id: %s pin_type: %s pin: %s \n", __func__, slot_id, pin_type, pin);
+    syslog(LOG_DEBUG, "%s, slot_id: %s pin_type: %s pin: %s \n", __func__,
+        slot_id, pin_type, pin);
 
     tapi_sim_enter_pin(context, atoi(slot_id),
         EVENT_ENTER_SIM_PIN_DONE, pin_type, pin, tele_call_async_fun);
@@ -1627,7 +1631,8 @@ static int telephonytool_cmd_reset_sim_pin(tapi_context context, char* pargs)
     if (new_pin == NULL)
         return -EINVAL;
 
-    printf("%s, slot_id: %s puk_type: %s puk: %s new_pin: %s \n", __func__, slot_id, puk_type, puk, new_pin);
+    syslog(LOG_DEBUG, "%s, slot_id: %s puk_type: %s puk: %s new_pin: %s \n", __func__,
+        slot_id, puk_type, puk, new_pin);
 
     tapi_sim_reset_pin(context, atoi(slot_id),
         EVENT_RESET_SIM_PIN_DONE, puk_type, puk, new_pin, tele_call_async_fun);
@@ -1662,7 +1667,7 @@ static int telephonytool_cmd_lock_sim_pin(tapi_context context, char* pargs)
     if (pin == NULL)
         return -EINVAL;
 
-    printf("%s, slot_id: %s pin_type: %s pin: %s \n", __func__, slot_id, pin_type, pin);
+    syslog(LOG_DEBUG, "%s, slot_id: %s pin_type: %s pin: %s \n", __func__, slot_id, pin_type, pin);
 
     tapi_sim_lock_pin(context, atoi(slot_id),
         EVENT_LOCK_SIM_PIN_DONE, pin_type, pin, tele_call_async_fun);
@@ -1697,7 +1702,7 @@ static int telephonytool_cmd_unlock_sim_pin(tapi_context context, char* pargs)
     if (pin == NULL)
         return -EINVAL;
 
-    printf("%s, slot_id: %s pin_type: %s pin: %s \n", __func__, slot_id, pin_type, pin);
+    syslog(LOG_DEBUG, "%s, slot_id: %s pin_type: %s pin: %s \n", __func__, slot_id, pin_type, pin);
 
     tapi_sim_unlock_pin(context, atoi(slot_id),
         EVENT_UNLOCK_SIM_PIN_DONE, pin_type, pin, tele_call_async_fun);
@@ -1716,7 +1721,7 @@ static int telephonytool_cmd_listen_sim_state_change(tapi_context context, char*
     if (slot_id == NULL)
         return -EINVAL;
 
-    printf("%s, slotId : %s \n", __func__, slot_id);
+    syslog(LOG_DEBUG, "%s, slotId : %s \n", __func__, slot_id);
 
     tapi_sim_register_sim_state_change(context, atoi(slot_id), tele_call_async_fun);
 
@@ -1734,7 +1739,7 @@ static int telephonytool_cmd_unlisten_sim_state_change(tapi_context context, cha
     if (watch_id == NULL)
         return -EINVAL;
 
-    printf("%s, watch_id : %s \n", __func__, watch_id);
+    syslog(LOG_DEBUG, "%s, watch_id : %s \n", __func__, watch_id);
 
     tapi_sim_unregister_sim_state_change(context, atoi(watch_id));
 
@@ -1769,7 +1774,7 @@ static int telephonytool_tapi_sms_send_message(tapi_context context, char* pargs
     if (text == NULL)
         return -EINVAL;
 
-    printf("%s, slotId : %s  number : %s text: %s \n", __func__, slot_id, to, text);
+    syslog(LOG_DEBUG, "%s, slotId : %s  number : %s text: %s \n", __func__, slot_id, to, text);
     ret = tapi_sms_send_message(context, atoi(slot_id), to, text);
     return ret;
 }
@@ -1802,7 +1807,8 @@ static int telephonytool_tapi_sms_send_data_message(tapi_context context, char* 
     if (text == NULL)
         return -EINVAL;
 
-    printf("%s, slotId : %s  number : %s text: %s port %d \n", __func__, slot_id, to, text, 0);
+    syslog(LOG_DEBUG, "%s, slotId : %s  number : %s text: %s port 0 \n",
+        __func__, slot_id, to, text);
     ret = tapi_sms_send_data_message(context, atoi(slot_id), to, 0, text);
     return ret;
 }
@@ -1820,7 +1826,7 @@ static int telephonytool_tapi_sms_get_service_center_number(tapi_context context
         return -EINVAL;
 
     tapi_sms_get_service_center_address(context, atoi(slot_id), &smsc_addr);
-    printf("%s, slotId : %s  smsc_addr: %s \n", __func__, slot_id, smsc_addr);
+    syslog(LOG_DEBUG, "%s, slotId : %s  smsc_addr: %s \n", __func__, slot_id, smsc_addr);
 
     return 0;
 }
@@ -1843,7 +1849,7 @@ static int telephonytool_tapi_sms_set_service_center_number(tapi_context context
     if (smsc_addr == NULL)
         return -EINVAL;
 
-    printf("%s, slotId : %s smsc_addr: %s \n", __func__, slot_id, smsc_addr);
+    syslog(LOG_DEBUG, "%s, slotId : %s smsc_addr: %s \n", __func__, slot_id, smsc_addr);
     tapi_sms_set_service_center_address(context, atoi(slot_id), smsc_addr);
 
     return 0;
@@ -1857,11 +1863,11 @@ static int telephonytool_tapi_sms_register(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = pargs;
-    printf("telephonytool_tapi_sms_register slotId : %s\n", slot_id);
+    syslog(LOG_DEBUG, "telephonytool_tapi_sms_register slotId : %s\n", slot_id);
     if (slot_id == NULL)
         return -EINVAL;
 
-    printf("%s, slotId : %s \n", __func__, slot_id);
+    syslog(LOG_DEBUG, "%s, slotId : %s \n", __func__, slot_id);
     tapi_sms_register(context, atoi(slot_id), MSG_INCOMING_MESSAGE_IND, tele_sms_async_fun);
 
     return 0;
@@ -1880,7 +1886,7 @@ static int telephonytool_tapi_sms_get_cell_broadcast_power(tapi_context context,
         return -EINVAL;
 
     tapi_sms_get_cell_broadcast_power_on(context, atoi(slot_id), &state);
-    printf("%s, slotId : %s state: %d \n", __func__, slot_id, state);
+    syslog(LOG_DEBUG, "%s, slotId : %s state: %d \n", __func__, slot_id, state);
 
     return 0;
 }
@@ -1903,7 +1909,7 @@ static int telephonytool_tapi_sms_set_cell_broadcast_power(tapi_context context,
     if (state == NULL)
         return -EINVAL;
 
-    printf("%s, slotId : %s state: %s \n", __func__, slot_id, state);
+    syslog(LOG_DEBUG, "%s, slotId : %s state: %s \n", __func__, slot_id, state);
     tapi_sms_set_cell_broadcast_power_on(context, atoi(slot_id), atoi(state));
 
     return 0;
@@ -1922,7 +1928,7 @@ static int telephonytool_tapi_sms_get_cell_broadcast_topics(tapi_context context
         return -EINVAL;
 
     tapi_sms_get_cell_broadcast_topics(context, atoi(slot_id), &cbs_topics);
-    printf("%s, slotId : %s  cbs_topics: %s \n", __func__, slot_id, cbs_topics);
+    syslog(LOG_DEBUG, "%s, slotId : %s  cbs_topics: %s \n", __func__, slot_id, cbs_topics);
 
     return 0;
 }
@@ -1945,7 +1951,7 @@ static int telephonytool_tapi_sms_set_cell_broadcast_topics(tapi_context context
     if (cbs_topics == NULL)
         return -EINVAL;
 
-    printf("%s, slotId : %s cbs_topics: %s \n", __func__, slot_id, cbs_topics);
+    syslog(LOG_DEBUG, "%s, slotId : %s cbs_topics: %s \n", __func__, slot_id, cbs_topics);
     tapi_sms_set_cell_broadcast_topics(context, atoi(slot_id), cbs_topics);
 
     return 0;
@@ -1962,7 +1968,7 @@ static int telephonytool_tapi_cbs_register(tapi_context context, char* pargs)
     if (slot_id == NULL)
         return -EINVAL;
 
-    printf("%s, slotId : %s \n", __func__, slot_id);
+    syslog(LOG_DEBUG, "%s, slotId : %s \n", __func__, slot_id);
     tapi_cbs_register(context, atoi(slot_id), MSG_TAPI_INCOMING_CBS_IND, tele_sms_async_fun);
 
     return 0;
@@ -1996,7 +2002,8 @@ static int telephonytool_tapi_sms_copy_message_to_sim(tapi_context context, char
     if (text == NULL)
         return -EINVAL;
 
-    printf("%s, slotId : %s  number : %s text: %s port %d \n", __func__, slot_id, to, text, 0);
+    syslog(LOG_DEBUG, "%s, slotId : %s  number : %s text: %s port 0 \n", __func__,
+        slot_id, to, text);
     ret = tapi_sms_copy_message_to_sim(context, atoi(slot_id), to, text, "221020081012", 0);
     return ret;
 }
@@ -2020,7 +2027,7 @@ static int telephonytool_tapi_sms_delete_message_from_sim(tapi_context context, 
         return -EINVAL;
 
     tapi_sms_delete_message_from_sim(context, atoi(slot_id), index);
-    printf("%s, slotId : %s index: %s \n", __func__, slot_id, index);
+    syslog(LOG_DEBUG, "%s, slotId : %s index: %s \n", __func__, slot_id, index);
 
     return 0;
 }
@@ -2044,7 +2051,7 @@ static int telephonytool_cmd_network_listen(tapi_context context, char* pargs)
         return -EINVAL;
 
     tapi_network_register(context, atoi(slot_id), atoi(target_state), tele_call_async_fun);
-    printf("%s, slotId : %s value :%s \n", __func__, slot_id, target_state);
+    syslog(LOG_DEBUG, "%s, slotId : %s value :%s \n", __func__, slot_id, target_state);
 
     return 0;
 }
@@ -2063,7 +2070,7 @@ static int telephonytool_cmd_network_select_auto(tapi_context context, char* par
 
     ret = tapi_network_select_auto(context,
         atoi(slot_id), EVENT_REGISTER_AUTO, tele_call_async_fun);
-    printf("%s, slotId : %s value :%d \n", __func__, slot_id, ret);
+    syslog(LOG_DEBUG, "%s, slotId : %s value :%d \n", __func__, slot_id, ret);
 
     return 0;
 }
@@ -2081,7 +2088,7 @@ static int telephonytool_cmd_query_signalstrength(tapi_context context, char* pa
         return -EINVAL;
 
     tapi_network_get_signalstrength(context, atoi(slot_id), &ss);
-    printf("%s, slotId : %s RSRP value :%d \n", __func__, slot_id, ss.rsrp);
+    syslog(LOG_DEBUG, "%s, slotId : %s RSRP value :%d \n", __func__, slot_id, ss.rsrp);
 
     return 0;
 }
@@ -2099,7 +2106,7 @@ static int telephonytool_cmd_get_operator_name(tapi_context context, char* pargs
         return -EINVAL;
 
     tapi_network_get_display_name(context, atoi(slot_id), &operator);
-    printf("%s, slotId : %s value :%s \n", __func__, slot_id, operator);
+    syslog(LOG_DEBUG, "%s, slotId : %s value :%s \n", __func__, slot_id, operator);
 
     return 0;
 }
@@ -2134,7 +2141,7 @@ static int telephonytool_cmd_get_voice_networktype(tapi_context context, char* p
         return -EINVAL;
 
     tapi_network_get_voice_network_type(context, atoi(slot_id), &type);
-    printf("%s, slotId : %s value :%d \n", __func__, slot_id, type);
+    syslog(LOG_DEBUG, "%s, slotId : %s value :%d \n", __func__, slot_id, type);
 
     return 0;
 }
@@ -2153,7 +2160,7 @@ static int telephonytool_cmd_is_voice_roaming(tapi_context context, char* pargs)
 
     value = tapi_network_is_voice_roaming(context, atoi(slot_id));
 
-    printf("%s, slotId : %s value :%d \n", __func__, slot_id, value);
+    syslog(LOG_DEBUG, "%s, slotId : %s value :%d \n", __func__, slot_id, value);
 
     return 0;
 }
@@ -2189,7 +2196,8 @@ static int telephonytool_cmd_get_serving_cellinfo(tapi_context context, char* pa
 
     tapi_network_get_serving_cellinfo(context,
         atoi(slot_id), EVENT_QUERY_SERVING_CELLINFO, celllist, tele_call_async_fun);
-    printf("%s, slotId : %s alpha_long value :%s \n", __func__, slot_id, celllist->alpha_long);
+    syslog(LOG_DEBUG, "%s, slotId : %s alpha_long value :%s \n", __func__,
+        slot_id, celllist->alpha_long);
 
     return 0;
 }
@@ -2222,7 +2230,7 @@ static int telephonytool_cmd_set_call_barring(tapi_context context, char* pargs)
         return -EINVAL;
 
     tapi_ss_request_call_barring(context, atoi(slot_id), EVENT_REQUEST_CALL_BARRING_DONE, fac, pin2, tele_call_async_fun);
-    printf("%s, slot_id : %s fc : %s  pin2 : %s \n", __func__, slot_id, fac, pin2);
+    syslog(LOG_DEBUG, "%s, slot_id : %s fc : %s  pin2 : %s \n", __func__, slot_id, fac, pin2);
 
     return 0;
 }
@@ -2247,7 +2255,7 @@ static int telephonytool_cmd_get_call_barring(tapi_context context, char* pargs)
         return -EINVAL;
 
     tapi_ss_query_call_barring_info(context, atoi(slot_id), key, &cb_info);
-    printf("%s, slotId : %s key : %s cb_info : %s \n", __func__, slot_id, key, cb_info);
+    syslog(LOG_DEBUG, "%s, slotId : %s key : %s cb_info : %s \n", __func__, slot_id, key, cb_info);
 
     return 0;
 }
@@ -2281,7 +2289,8 @@ static int telephonytool_cmd_change_call_barring_passwd(tapi_context context, ch
 
     tapi_ss_change_call_barring_password(context, atoi(slot_id),
         EVENT_CALL_BARRING_PASSWD_CHANGE_DONE, old_passwd, old_passwd, tele_call_async_fun);
-    printf("%s, slotId : %s old_passwd : %s new_passwd : %s \n", __func__, slot_id, old_passwd, new_passwd);
+    syslog(LOG_DEBUG, "%s, slotId : %s old_passwd : %s new_passwd : %s \n", __func__,
+        slot_id, old_passwd, new_passwd);
 
     return 0;
 }
@@ -2306,7 +2315,7 @@ static int telephonytool_cmd_disable_all_call_barrings(tapi_context context, cha
 
     tapi_ss_disable_all_call_barrings(context, atoi(slot_id),
         EVENT_DISABLE_ALL_CALL_BARRINGS_DONE, passwd, tele_call_async_fun);
-    printf("%s, slotId : %s passwd : %s \n", __func__, slot_id, passwd);
+    syslog(LOG_DEBUG, "%s, slotId : %s passwd : %s \n", __func__, slot_id, passwd);
 
     return 0;
 }
@@ -2331,7 +2340,7 @@ static int telephonytool_cmd_disable_all_incoming(tapi_context context, char* pa
 
     tapi_ss_disable_all_incoming(context, atoi(slot_id),
         EVENT_DISABLE_ALL_INCOMING_DONE, passwd, tele_call_async_fun);
-    printf("%s, slotId : %s passwd : %s \n", __func__, slot_id, passwd);
+    syslog(LOG_DEBUG, "%s, slotId : %s passwd : %s \n", __func__, slot_id, passwd);
 
     return 0;
 }
@@ -2356,7 +2365,7 @@ static int telephonytool_cmd_disable_all_outgoing(tapi_context context, char* pa
 
     tapi_ss_disable_all_outgoing(context, atoi(slot_id),
         EVENT_DISABLE_ALL_OUTGOING_DONE, passwd, tele_call_async_fun);
-    printf("%s, slotId : %s passwd : %s \n", __func__, slot_id, passwd);
+    syslog(LOG_DEBUG, "%s, slotId : %s passwd : %s \n", __func__, slot_id, passwd);
 
     return 0;
 }
@@ -2390,7 +2399,8 @@ static int telephonytool_cmd_set_call_forwarding(tapi_context context, char* par
 
     tapi_ss_request_call_forwarding(context, atoi(slot_id),
         EVENT_REQUEST_CALL_FORWARDING_DONE, cf_type, value, tele_call_async_fun);
-    printf("%s, slot_id : %s cf_type : %s  value : %s \n", __func__, slot_id, cf_type, value);
+    syslog(LOG_DEBUG, "%s, slot_id : %s cf_type : %s  value : %s \n", __func__,
+        slot_id, cf_type, value);
 
     return 0;
 }
@@ -2415,7 +2425,7 @@ static int telephonytool_cmd_get_call_forwarding(tapi_context context, char* par
         return -EINVAL;
 
     tapi_ss_query_call_forwarding_info(context, atoi(slot_id), key, &cf_info);
-    printf("%s, slotId : %s key : %s cf_info : %s \n", __func__, slot_id, key, cf_info);
+    syslog(LOG_DEBUG, "%s, slotId : %s key : %s cf_info : %s \n", __func__, slot_id, key, cf_info);
 
     return 0;
 }
@@ -2440,7 +2450,7 @@ static int telephonytool_cmd_disable_call_forwarding(tapi_context context, char*
 
     tapi_ss_disable_call_forwarding(context, atoi(slot_id),
         EVENT_DISABLE_CALL_FORWARDING_DONE, type, tele_call_async_fun);
-    printf("%s, slotId : %s type : %s \n", __func__, slot_id, type);
+    syslog(LOG_DEBUG, "%s, slotId : %s type : %s \n", __func__, slot_id, type);
 
     return 0;
 }
@@ -2458,7 +2468,7 @@ static int telephonytool_cmd_get_ussd_state(tapi_context context, char* pargs)
         return -EINVAL;
 
     tapi_get_ussd_state(context, atoi(slot_id), &ussd_state);
-    printf("%s, slotId : %s ussd_state : %d \n", __func__, slot_id, ussd_state);
+    syslog(LOG_DEBUG, "%s, slotId : %s ussd_state : %d \n", __func__, slot_id, ussd_state);
 
     return 0;
 }
@@ -2497,7 +2507,7 @@ static int telephonytool_cmd_set_call_waiting(tapi_context context, char* pargs)
 
     tapi_ss_request_call_wating(context, atoi(slot_id),
         EVENT_REQUEST_CALL_WAITING_DONE, value, tele_call_async_fun);
-    printf("%s, slot_id : %s value : %s \n", __func__, slot_id, value);
+    syslog(LOG_DEBUG, "%s, slot_id : %s value : %s \n", __func__, slot_id, value);
 
     return 0;
 }
@@ -2515,7 +2525,7 @@ static int telephonytool_cmd_get_call_waiting(tapi_context context, char* pargs)
         return -EINVAL;
 
     tapi_ss_query_call_wating(context, atoi(slot_id), &cw_info);
-    printf("%s, slotId : %s cw_info : %s \n", __func__, slot_id, cw_info);
+    syslog(LOG_DEBUG, "%s, slotId : %s cw_info : %s \n", __func__, slot_id, cw_info);
 
     return 0;
 }
@@ -2533,7 +2543,7 @@ static int telephonytool_cmd_get_clip(tapi_context context, char* pargs)
         return -EINVAL;
 
     tapi_ss_query_calling_line_presentation_info(context, atoi(slot_id), &clip_status);
-    printf("%s, slotId : %s clip_status : %d \n", __func__, slot_id, clip_status);
+    syslog(LOG_DEBUG, "%s, slotId : %s clip_status : %d \n", __func__, slot_id, clip_status);
 
     return 0;
 }
@@ -2551,7 +2561,7 @@ static int telephonytool_cmd_get_clir(tapi_context context, char* pargs)
         return -EINVAL;
 
     tapi_ss_query_calling_line_restriction_info(context, atoi(slot_id), &clir_status);
-    printf("%s, slotId : %s clir_status : %d \n", __func__, slot_id, clir_status);
+    syslog(LOG_DEBUG, "%s, slotId : %s clir_status : %d \n", __func__, slot_id, clir_status);
 
     return 0;
 }
