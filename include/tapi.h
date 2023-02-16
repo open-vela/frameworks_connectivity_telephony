@@ -208,6 +208,7 @@ typedef void* tapi_context;
 #include <tapi_call.h>
 #include <tapi_cbs.h>
 #include <tapi_data.h>
+#include <tapi_ims.h>
 #include <tapi_manager.h>
 #include <tapi_network.h>
 #include <tapi_sim.h>
