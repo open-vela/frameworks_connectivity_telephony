@@ -70,6 +70,7 @@ enum dbus_proxy_type {
 typedef struct {
     char name[MAX_CONTEXT_NAME_LENGTH + 1];
     DBusConnection* connection;
+    DBusMessage* pending;
     GDBusClient* client;
     GDBusProxy* dbus_proxy_manager;
     GDBusProxy* dbus_proxy[CONFIG_ACTIVE_MODEM_COUNT][DBUS_PROXY_MAX_COUNT];
