@@ -197,6 +197,9 @@ static int telephonytool_cmd_get_call_waiting(tapi_context context, char* pargs)
 static int telephonytool_cmd_get_clip(tapi_context context, char* pargs);
 static int telephonytool_cmd_get_clir(tapi_context context, char* pargs);
 
+/** IMS interface*/
+static int telephonytool_cmd_ims_enable(tapi_context context, char* pargs);
+
 /****************************************************************************
  * Private Data
  ****************************************************************************/
@@ -418,6 +421,9 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     { "listen-ss", telephonytool_cmd_ss_register,
         "listen ss event (enter example : listen-ss 0 1 \
         [slot_id][event_id])" },
+    { "ims-enable", telephonytool_cmd_ims_enable,
+        "turn on/off ims (enter example : ims-enable 0 1 \
+        [slot_id][action: 0-disable 1-enable])" },
     { "q", NULL, "Quit (pls enter : q)" },
     { "help", telephonytool_cmd_help,
         "Show this message (pls enter : help)" },
@@ -2707,6 +2713,30 @@ static int telephonytool_cmd_ss_register(tapi_context context, char* pargs)
         return -EINVAL;
 
     return tapi_ss_register(context, atoi(slot_id), atoi(target_state), tele_call_async_fun);
+}
+
+static int telephonytool_cmd_ims_enable(tapi_context context, char* pargs)
+{
+    char dst[2][CONFIG_NSH_LINELEN];
+    int cnt = split_input(dst, 2, pargs, " ");
+    int slot_id, action_type;
+    int ret = -EINVAL;
+
+    if (cnt != 2)
+        return -EINVAL;
+
+    slot_id = atoi(dst[0]);
+    action_type = atoi(dst[1]);
+
+    syslog(LOG_DEBUG, "%s: slot_id: %d, action: %d\n", __func__, slot_id, action_type);
+
+    if (action_type == 0) {
+        ret = tapi_ims_turn_off(context, slot_id);
+    } else if (action_type == 1) {
+        ret = tapi_ims_turn_on(context, slot_id);
+    }
+
+    return ret;
 }
 
 static int telephonytool_cmd_help(tapi_context context, char* pargs)
