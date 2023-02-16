@@ -420,15 +420,19 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
  * Private Function
  ****************************************************************************/
 
-static int split(char dst[][CONFIG_NSH_LINELEN], char* str, const char* spl)
+static int split_input(char dst[][CONFIG_NSH_LINELEN], int size, char* str, const char* spl)
 {
-    int n = 0;
     char* result;
+    char* p_save;
+    int n = 0;
 
-    result = strtok(str, spl);
+    result = strtok_r(str, spl, &p_save);
     while (result != NULL) {
-        strcpy(dst[n++], result);
-        result = strtok(NULL, spl);
+        if (n < size)
+            strcpy(dst[n], result);
+
+        n++;
+        result = strtok_r(NULL, spl, &p_save);
     }
 
     return n;
@@ -567,7 +571,7 @@ static int telephonytool_cmd_answer_call(tapi_context context, char* pargs)
     if (strlen(pargs) == 0)
         return -EINVAL;
 
-    cnt = split(dst, pargs, " ");
+    cnt = split_input(dst, 2, pargs, " ");
     if (cnt != 2)
         return -EINVAL;
 
@@ -604,26 +608,28 @@ static int telephonytool_cmd_hangup_all(tapi_context context, char* pargs)
 static int telephonytool_cmd_hangup_call(tapi_context context, char* pargs)
 {
     char dst[2][CONFIG_NSH_LINELEN];
+    int cnt = split_input(dst, 2, pargs, " ");
+    int ret = -EINVAL;
     char* slot_id;
-    int cnt = split(dst, pargs, " ");
 
     slot_id = dst[0];
     syslog(LOG_DEBUG, "%s, slotId : %s\n", __func__, dst[0]);
 
     if (cnt == 1) {
-        tapi_call_hangup_call(context, atoi(slot_id), NULL);
+        ret = tapi_call_hangup_call(context, atoi(slot_id), NULL);
     } else if (cnt == 2) {
-        tapi_call_hangup_call(context, atoi(slot_id), (char*)dst[1]);
+        ret = tapi_call_hangup_call(context, atoi(slot_id), (char*)dst[1]);
     }
 
-    return 0;
+    return ret;
 }
 
 static int telephonytool_cmd_swap_call(tapi_context context, char* pargs)
 {
     char dst[2][CONFIG_NSH_LINELEN];
+    int cnt = split_input(dst, 2, pargs, " ");
+    int ret = -EINVAL;
     char* slot_id;
-    int cnt = split(dst, pargs, " ");
 
     if (cnt != 2)
         return -EINVAL;
@@ -632,19 +638,22 @@ static int telephonytool_cmd_swap_call(tapi_context context, char* pargs)
     syslog(LOG_DEBUG, "%s, slotId : %s\n", __func__, dst[0]);
 
     if (atoi(dst[1]) == 1) {
-        tapi_call_hold_call(context, atoi(slot_id));
+        ret = tapi_call_hold_call(context, atoi(slot_id));
     } else {
-        tapi_call_unhold_call(context, atoi(slot_id));
+        ret = tapi_call_unhold_call(context, atoi(slot_id));
     }
 
-    return 0;
+    return ret;
 }
 
 static int telephonytool_cmd_get_call(tapi_context context, char* pargs)
 {
     char dst[2][CONFIG_NSH_LINELEN];
     char* slot_id;
-    int cnt = split(dst, pargs, " ");
+    int cnt = split_input(dst, 2, pargs, " ");
+
+    if (cnt != 1 && cnt != 2)
+        return -EINVAL;
 
     slot_id = dst[0];
     syslog(LOG_DEBUG, "%s, slotId : %s\n", __func__, slot_id);
@@ -663,7 +672,7 @@ static int telephonytool_cmd_listen_call_property_change(tapi_context context, c
 {
 
     char dst[2][CONFIG_NSH_LINELEN];
-    int cnt = split(dst, pargs, " ");
+    int cnt = split_input(dst, 2, pargs, " ");
     int watch_id;
 
     if (cnt != 1)
@@ -686,8 +695,8 @@ static int telephonytool_cmd_listen_call_property_change(tapi_context context, c
 
 static int telephonytool_cmd_unlisten_call_singal(tapi_context context, char* pargs)
 {
-    char dst[2][CONFIG_NSH_LINELEN];
-    int cnt = split(dst, pargs, " ");
+    char dst[1][CONFIG_NSH_LINELEN];
+    int cnt = split_input(dst, 1, pargs, " ");
 
     if (cnt != 1)
         return -EINVAL;
@@ -700,9 +709,9 @@ static int telephonytool_cmd_unlisten_call_singal(tapi_context context, char* pa
 
 static int telephonytool_cmd_transfer_call(tapi_context context, char* pargs)
 {
-    char dst[5][CONFIG_NSH_LINELEN];
+    char dst[1][CONFIG_NSH_LINELEN];
+    int cnt = split_input(dst, 1, pargs, " ");
     char* slot_id;
-    int cnt = split(dst, pargs, " ");
 
     if (cnt != 1)
         return -EINVAL;
@@ -716,10 +725,10 @@ static int telephonytool_cmd_transfer_call(tapi_context context, char* pargs)
 
 static int telephonytool_cmd_merge_call(tapi_context context, char* pargs)
 {
-    char dst[5][CONFIG_NSH_LINELEN];
+    char dst[1][CONFIG_NSH_LINELEN];
     char* slot_id;
     char* out[5];
-    int cnt = split(dst, pargs, " ");
+    int cnt = split_input(dst, 1, pargs, " ");
 
     if (cnt != 1)
         return -EINVAL;
@@ -733,10 +742,10 @@ static int telephonytool_cmd_merge_call(tapi_context context, char* pargs)
 
 static int telephonytool_cmd_separate_call(tapi_context context, char* pargs)
 {
-    char dst[5][CONFIG_NSH_LINELEN];
+    char dst[2][CONFIG_NSH_LINELEN];
+    int cnt = split_input(dst, 2, pargs, " ");
     char* out[5];
     char* slot_id;
-    int cnt = split(dst, pargs, " ");
 
     if (cnt != 2)
         return -EINVAL;
@@ -750,11 +759,11 @@ static int telephonytool_cmd_separate_call(tapi_context context, char* pargs)
 
 static int telephonytool_cmd_get_ecc_list(tapi_context context, char* pargs)
 {
-    char dst[5][CONFIG_NSH_LINELEN];
+    char dst[1][CONFIG_NSH_LINELEN];
+    int cnt = split_input(dst, 1, pargs, " ");
     char* out[20];
     char* slot_id;
     int size = 0;
-    int cnt = split(dst, pargs, " ");
     int i;
 
     if (cnt != 1)
@@ -773,8 +782,8 @@ static int telephonytool_cmd_get_ecc_list(tapi_context context, char* pargs)
 
 static int telephonytool_cmd_is_emergency_number(tapi_context context, char* pargs)
 {
-    char dst[5][CONFIG_NSH_LINELEN];
-    int cnt = split(dst, pargs, " ");
+    char dst[1][CONFIG_NSH_LINELEN];
+    int cnt = split_input(dst, 1, pargs, " ");
     int ret;
 
     if (cnt != 1)
