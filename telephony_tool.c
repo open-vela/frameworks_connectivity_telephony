@@ -24,7 +24,6 @@
 
 #include <ctype.h>
 #include <errno.h>
-#include <glib.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -32,6 +31,7 @@
 #include <system/readline.h>
 #include <tapi.h>
 #include <unistd.h>
+#include <uv.h>
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -107,11 +107,6 @@ struct telephonytool_cmd_s {
     const char* cmd; /* The command text */
     telephonytool_cmd_func pfunc; /* Pointer to command handler */
     const char* help; /* The help text */
-};
-
-struct telephony_main_loop {
-    GMainLoop* eventloop;
-    tapi_context context;
 };
 
 /****************************************************************************
@@ -3889,7 +3884,7 @@ static void* read_stdin(pthread_addr_t pvarg)
 {
     int arg_len, len;
     char *cmd, *arg, *buffer;
-    struct telephony_main_loop* main_loop = (void*)pvarg;
+    tapi_context context = (void*)pvarg;
 
     buffer = malloc(CONFIG_NSH_LINELEN);
     if (buffer == NULL) {
@@ -3930,11 +3925,12 @@ static void* read_stdin(pthread_addr_t pvarg)
             break;
 
         arg[arg_len] = '\0';
-        telephonytool_execute(main_loop->context, cmd, arg);
+        telephonytool_execute(context, cmd, arg);
     }
 
     free(buffer);
-    g_main_loop_quit(main_loop->eventloop);
+    tapi_close(context);
+    uv_stop(uv_default_loop());
     return NULL;
 }
 
@@ -4430,8 +4426,8 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[][CONFIG_NSH_LINELEN] = {
 
 int main(int argc, char* argv[])
 {
-    struct telephony_main_loop main_loop;
     struct sched_param param;
+    tapi_context context;
     pthread_attr_t attr;
     pthread_t thread;
     char* dbus_name;
@@ -4446,8 +4442,8 @@ int main(int argc, char* argv[])
     if (argc == 2)
         dbus_name = argv[1];
 
-    main_loop.context = tapi_open(dbus_name);
-    if (main_loop.context == NULL) {
+    context = tapi_open(dbus_name);
+    if (context == NULL) {
         return 0;
     }
 
@@ -4456,16 +4452,14 @@ int main(int argc, char* argv[])
     pthread_attr_setschedparam(&attr, &param);
     pthread_attr_setstacksize(&attr, CONFIG_TELEPHONY_TOOL_STACKSIZE);
 
-    ret = pthread_create(&thread, &attr, read_stdin, &main_loop);
+    ret = pthread_create(&thread, &attr, read_stdin, context);
     if (ret != 0) {
-        goto out;
+        tapi_close(context);
+        return ret;
     }
 
-    main_loop.eventloop = g_main_loop_new(NULL, false);
-    g_main_loop_run(main_loop.eventloop);
-    g_main_loop_unref(main_loop.eventloop);
+    uv_run(uv_default_loop(), UV_RUN_DEFAULT);
+    uv_loop_close(uv_default_loop());
 
-out:
-    tapi_close(main_loop.context);
     return ret;
 }
