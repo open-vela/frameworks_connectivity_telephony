@@ -198,6 +198,7 @@ static int telephonytool_cmd_get_clir(tapi_context context, char* pargs);
 
 /** IMS interface*/
 static int telephonytool_cmd_ims_enable(tapi_context context, char* pargs);
+static int telephonytool_cmd_set_ims_service(tapi_context context, char* pargs);
 
 /****************************************************************************
  * Private Data
@@ -421,6 +422,9 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     { "ims-enable", telephonytool_cmd_ims_enable,
         "turn on/off ims (enter example : ims-enable 0 1 \
         [slot_id][action: 0-disable 1-enable])" },
+    { "ims-cap", telephonytool_cmd_set_ims_service,
+        "set ims service function (enter example : ims-cap 0 1 \
+        [slot_id][cap-value: 1-voice 4-sms 5-voice&sms])" },
     { "q", NULL, "Quit (pls enter : q)" },
     { "help", telephonytool_cmd_help,
         "Show this message (pls enter : help)" },
@@ -2709,6 +2713,23 @@ static int telephonytool_cmd_ims_enable(tapi_context context, char* pargs)
     }
 
     return ret;
+}
+
+static int telephonytool_cmd_set_ims_service(tapi_context context, char* pargs)
+{
+    char dst[2][CONFIG_NSH_LINELEN];
+    int cnt = split_input(dst, 2, pargs, " ");
+    int slot_id, service_type;
+
+    if (cnt != 2)
+        return -EINVAL;
+
+    slot_id = atoi(dst[0]);
+    service_type = atoi(dst[1]);
+
+    syslog(LOG_DEBUG, "%s: slot_id: %d, action: %d\n", __func__, slot_id, service_type);
+
+    return tapi_ims_set_service_status(context, slot_id, service_type);
 }
 
 static int telephonytool_cmd_help(tapi_context context, char* pargs)

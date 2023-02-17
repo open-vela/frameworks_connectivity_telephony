@@ -32,6 +32,12 @@
  * Private Function
  ****************************************************************************/
 
+static void set_ss_param_append(DBusMessageIter* iter, void* user_data)
+{
+    int* param = user_data;
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_INT16, &param);
+}
+
 static int tapi_ims_enable(tapi_context context, int slot_id, int state)
 {
     dbus_context* ctx = context;
@@ -73,4 +79,26 @@ int tapi_ims_turn_on(tapi_context context, int slot_id)
 int tapi_ims_turn_off(tapi_context context, int slot_id)
 {
     return tapi_ims_enable(context, slot_id, IMS_REGISTER_DISABLE);
+}
+
+int tapi_ims_set_service_status(tapi_context context, int slot_id, int capability)
+{
+    dbus_context* ctx = context;
+    GDBusProxy* proxy;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+        return -EINVAL;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_IMS];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    if (!g_dbus_proxy_method_call(proxy, "ServiceStatus", set_ss_param_append,
+            NULL, &capability, NULL))
+        return -EIO;
+
+    return OK;
 }
