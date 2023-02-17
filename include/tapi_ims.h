@@ -28,6 +28,13 @@
 #include "tapi.h"
 
 /****************************************************************************
+ * Pre-processor Definitions
+ ****************************************************************************/
+
+#define VOICE_CAPABLE_FLAG 0x1
+#define SMS_CAPABLE_FLAG 0x4
+
+/****************************************************************************
  * Public Function Prototypes
  ****************************************************************************/
 
@@ -50,6 +57,17 @@ int tapi_ims_turn_on(tapi_context context, int slot_id);
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_ims_turn_off(tapi_context context, int slot_id);
+
+/**
+ * Attempts to set ims service capability
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] capability     ims service capability
+ *                           ex:VOICE_CAPABLE_FLAG 0x1
+ *                              SMS_CAPABLE_FLAG 0x4
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_ims_set_service_status(tapi_context context, int slot_id, int capability);
 
 #ifdef __cplusplus
 }
