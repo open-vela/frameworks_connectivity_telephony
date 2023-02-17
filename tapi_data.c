@@ -28,13 +28,16 @@
  * Private Functions
  ****************************************************************************/
 
-static int data_capability_changed(DBusConnection* connection,
+static int data_property_changed(DBusConnection* connection,
     DBusMessage* message, void* user_data)
 {
     tapi_async_handler* handler = user_data;
     tapi_async_result* ar;
     tapi_async_function cb;
-    DBusMessageIter args;
+    DBusMessageIter iter, var;
+    const char* property;
+    const char* value_str;
+    bool isvalid = false;
 
     if (handler == NULL)
         return false;
@@ -47,14 +50,33 @@ static int data_capability_changed(DBusConnection* connection,
     if (cb == NULL)
         return false;
 
-    if (dbus_message_iter_init(message, &args) == false)
+    if (dbus_message_iter_init(message, &iter) == false)
         goto done;
 
-    ar->status = OK;
-    dbus_message_iter_get_basic(&args, &ar->arg2);
+    dbus_message_iter_get_basic(&iter, &property);
+    dbus_message_iter_next(&iter);
+    dbus_message_iter_recurse(&iter, &var);
+
+    if (strcmp(property, "DataOn") == 0 || strcmp(property, "DataSlot") == 0) {
+        ar->status = OK;
+
+        dbus_message_iter_get_basic(&var, &ar->arg2);
+        isvalid = true;
+    } else if (strcmp(property, "Bearer") == 0) {
+        tapi_network_type type;
+        ar->status = OK;
+
+        dbus_message_iter_get_basic(&var, &value_str);
+        if (tapi_network_type_from_string(value_str, &type)) {
+            ar->arg2 = type;
+        }
+        isvalid = true;
+    }
 
 done:
-    cb(ar);
+    if (isvalid)
+        cb(ar);
+
     return true;
 }
 
@@ -1000,7 +1022,7 @@ int tapi_data_set_default_data_slot(tapi_context context, int slot_id)
     }
 
     return g_dbus_proxy_set_property_basic(proxy,
-        "DefaultDataSlot", DBUS_TYPE_INT32, &slot_id, NULL, NULL, NULL);
+        "DataSlot", DBUS_TYPE_INT32, &slot_id, NULL, NULL, NULL);
 }
 
 int tapi_data_get_default_data_slot(tapi_context context, int* out)
@@ -1015,7 +1037,7 @@ int tapi_data_get_default_data_slot(tapi_context context, int* out)
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property(proxy, "DefaultDataSlot", &iter)) {
+    if (g_dbus_proxy_get_property(proxy, "DataSlot", &iter)) {
         dbus_message_iter_get_basic(&iter, out);
         return OK;
     }
@@ -1059,28 +1081,28 @@ int tapi_data_register(tapi_context context,
 
     switch (msg) {
     case MSG_DATA_ENABLED_CHANGE_IND:
-        watch_id = g_dbus_add_signal_watch(ctx->connection,
-            OFONO_SERVICE, modem_path, OFONO_CONNECTION_MANAGER_INTERFACE,
-            "DataSwitchChanged", data_capability_changed, handler, user_data_free);
-        break;
+    case MSG_DATA_REGISTRATION_STATE_CHANGE_IND:
     case MSG_DATA_NETWORK_TYPE_CHANGE_IND:
         watch_id = g_dbus_add_signal_watch(ctx->connection,
             OFONO_SERVICE, modem_path, OFONO_CONNECTION_MANAGER_INTERFACE,
-            "NetworkTypeChanged", data_capability_changed, handler, user_data_free);
+            "PropertyChanged", data_property_changed, handler, user_data_free);
+        break;
+    case MSG_DEFAULT_DATA_SLOT_CHANGE_IND:
+        watch_id = g_dbus_add_signal_watch(ctx->connection,
+            OFONO_SERVICE, OFONO_MANAGER_PATH, OFONO_MANAGER_INTERFACE,
+            "PropertyChanged", data_property_changed, handler, user_data_free);
         break;
     case MSG_DATA_CONNECTION_STATE_CHANGE_IND:
         watch_id = g_dbus_add_signal_watch(ctx->connection,
             OFONO_SERVICE, modem_path, OFONO_CONNECTION_MANAGER_INTERFACE,
             "DataConnectionChanged", data_connection_state_changed, handler, user_data_free);
         break;
-    case MSG_DEFAULT_DATA_SLOT_CHANGE_IND:
-        watch_id = g_dbus_add_signal_watch(ctx->connection,
-            OFONO_SERVICE, modem_path, OFONO_CONNECTION_MANAGER_INTERFACE,
-            "DdsChanged", data_capability_changed, handler, user_data_free);
-        break;
     default:
         break;
     }
+
+    if (watch_id <= 0)
+        user_data_free(handler);
 
     return watch_id;
 }
