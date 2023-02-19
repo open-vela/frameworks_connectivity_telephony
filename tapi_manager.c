@@ -334,8 +334,13 @@ int tapi_query_modem_list(tapi_context context, int event_id, tapi_async_functio
     handler->result = ar;
     handler->cb_function = p_handle;
 
-    return g_dbus_proxy_method_call(proxy,
-        "GetModems", NULL, modem_list_query_done, handler, user_data_free);
+    if (!g_dbus_proxy_method_call(proxy,
+            "GetModems", NULL, modem_list_query_done, handler, user_data_free)) {
+        user_data_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 bool tapi_is_feature_supported(tapi_feature_type feature)
@@ -392,9 +397,14 @@ int tapi_set_pref_net_mode(tapi_context context,
     ar->data = "TechnologyPreference";
     rat = tapi_pref_network_mode_to_string(mode);
 
-    return g_dbus_proxy_set_property_basic(proxy,
-        "TechnologyPreference", DBUS_TYPE_STRING, &rat,
-        modem_property_set_done, handler, user_data_free);
+    if (!g_dbus_proxy_set_property_basic(proxy,
+            "TechnologyPreference", DBUS_TYPE_STRING, &rat,
+            modem_property_set_done, handler, user_data_free)) {
+        user_data_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_get_pref_net_mode(tapi_context context, int slot_id, tapi_pref_net_mode* out)
@@ -421,7 +431,7 @@ int tapi_get_pref_net_mode(tapi_context context, int slot_id, tapi_pref_net_mode
         return OK;
     }
 
-    return ERROR;
+    return -EINVAL;
 }
 
 int tapi_reboot_modem(tapi_context context, int slot_id)
@@ -444,13 +454,13 @@ int tapi_reboot_modem(tapi_context context, int slot_id)
     state = false;
     if (!g_dbus_proxy_set_property_basic(proxy,
             "Powered", DBUS_TYPE_BOOLEAN, &state, NULL, NULL, NULL))
-        return ERROR;
+        return -EINVAL;
 
     // Power on
     state = true;
     if (!g_dbus_proxy_set_property_basic(proxy,
             "Powered", DBUS_TYPE_BOOLEAN, &state, NULL, NULL, NULL))
-        return ERROR;
+        return -EINVAL;
 
     return OK;
 }
@@ -476,7 +486,7 @@ int tapi_get_imei(tapi_context context, int slot_id, char** out)
         return OK;
     }
 
-    return ERROR;
+    return -EINVAL;
 }
 
 int tapi_get_imeisv(tapi_context context, int slot_id, char** out)
@@ -500,7 +510,7 @@ int tapi_get_imeisv(tapi_context context, int slot_id, char** out)
         return OK;
     }
 
-    return ERROR;
+    return -EINVAL;
 }
 
 int tapi_get_modem_manufacturer(tapi_context context, int slot_id, char** out)
@@ -524,7 +534,7 @@ int tapi_get_modem_manufacturer(tapi_context context, int slot_id, char** out)
         return OK;
     }
 
-    return ERROR;
+    return -EINVAL;
 }
 
 int tapi_get_modem_model(tapi_context context, int slot_id, char** out)
@@ -548,7 +558,7 @@ int tapi_get_modem_model(tapi_context context, int slot_id, char** out)
         return OK;
     }
 
-    return ERROR;
+    return -EINVAL;
 }
 
 int tapi_get_modem_revision(tapi_context context, int slot_id, char** out)
@@ -572,7 +582,7 @@ int tapi_get_modem_revision(tapi_context context, int slot_id, char** out)
         return OK;
     }
 
-    return ERROR;
+    return -EINVAL;
 }
 
 int tapi_get_phone_state(tapi_context context, int slot_id, tapi_phone_state* state)
@@ -596,7 +606,7 @@ int tapi_get_phone_state(tapi_context context, int slot_id, tapi_phone_state* st
         return OK;
     }
 
-    return ERROR;
+    return -EINVAL;
 }
 
 int tapi_set_radio_power(tapi_context context,
@@ -633,9 +643,13 @@ int tapi_set_radio_power(tapi_context context,
     ar->arg1 = slot_id;
     handler->cb_function = p_handle;
 
-    return g_dbus_proxy_set_property_basic(proxy,
-        "Online", DBUS_TYPE_BOOLEAN, &value,
-        modem_property_set_done, handler, user_data_free);
+    if (!g_dbus_proxy_set_property_basic(proxy, "Online", DBUS_TYPE_BOOLEAN,
+            &value, modem_property_set_done, handler, user_data_free)) {
+        user_data_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_get_radio_power(tapi_context context, int slot_id, bool* out)
@@ -662,7 +676,7 @@ int tapi_get_radio_power(tapi_context context, int slot_id, bool* out)
         return OK;
     }
 
-    return ERROR;
+    return -EINVAL;
 }
 
 int tapi_get_radio_state(tapi_context context, int slot_id, tapi_radio_state* out)
@@ -683,7 +697,7 @@ int tapi_get_radio_state(tapi_context context, int slot_id, tapi_radio_state* ou
     }
 
     if (!g_dbus_proxy_get_property(proxy, "RadioState", &iter))
-        return ERROR;
+        return -EINVAL;
 
     dbus_message_iter_get_basic(&iter, &result);
     *out = result;
@@ -721,7 +735,7 @@ int tapi_get_msisdn_number(tapi_context context, int slot_id, char** out)
         return OK;
     }
 
-    return ERROR;
+    return -EINVAL;
 }
 
 int tapi_register(tapi_context context,
@@ -771,6 +785,11 @@ int tapi_register(tapi_context context,
         break;
     default:
         break;
+    }
+
+    if (watch_id == 0) {
+        user_data_free(handler);
+        return -EINVAL;
     }
 
     return watch_id;
