@@ -288,12 +288,18 @@ const char* tapi_apn_context_type_to_string(tapi_apn_context_type type)
         return NULL;
     case APN_CONTEXT_TYPE_INTERNET:
         return "internet";
+    case APN_CONTEXT_TYPE_HIPRI:
+        return "hipri";
+    case APN_CONTEXT_TYPE_SUPL:
+        return "supl";
     case APN_CONTEXT_TYPE_MMS:
         return "mms";
     case APN_CONTEXT_TYPE_WAP:
         return "wap";
     case APN_CONTEXT_TYPE_IMS:
         return "ims";
+    case APN_CONTEXT_TYPE_EMERGENCY:
+        return "emergency";
     }
 
     return NULL;
@@ -306,12 +312,18 @@ tapi_apn_context_type tapi_apn_context_type_from_string(const char* type)
 
     if (strcmp(type, "internet") == 0)
         return APN_CONTEXT_TYPE_INTERNET;
+    else if (strcmp(type, "hipri") == 0)
+        return APN_CONTEXT_TYPE_HIPRI;
+    else if (strcmp(type, "supl") == 0)
+        return APN_CONTEXT_TYPE_SUPL;
     else if (strcmp(type, "mms") == 0)
         return APN_CONTEXT_TYPE_MMS;
     else if (strcmp(type, "wap") == 0)
         return APN_CONTEXT_TYPE_WAP;
     else if (strcmp(type, "ims") == 0)
         return APN_CONTEXT_TYPE_IMS;
+    else if (strcmp(type, "emergency") == 0)
+        return APN_CONTEXT_TYPE_EMERGENCY;
 
     return APN_CONTEXT_TYPE_ANY;
 }
