@@ -263,8 +263,13 @@ int tapi_sms_send_message(tapi_context context, int slot_id,
     message->number = strdup0(number);
     message->text = strdup0(text);
 
-    return g_dbus_proxy_method_call(proxy, "SendMessage",
-        send_message_param_append, NULL, message, message_free);
+    if (!g_dbus_proxy_method_call(proxy, "SendMessage",
+            send_message_param_append, NULL, message, message_free)) {
+        message_free(message);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_sms_send_data_message(tapi_context context, int slot_id,
@@ -296,8 +301,13 @@ int tapi_sms_send_data_message(tapi_context context, int slot_id,
     data_message->data = strdup0(text);
     data_message->port = port;
 
-    return g_dbus_proxy_method_call(proxy, "SendDataMessage",
-        send_data_message_param_append, NULL, data_message, data_message_free);
+    if (!g_dbus_proxy_method_call(proxy, "SendDataMessage",
+            send_data_message_param_append, NULL, data_message, data_message_free)) {
+        data_message_free(data_message);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 bool tapi_sms_set_service_center_address(tapi_context context, int slot_id, char* number)
@@ -319,9 +329,12 @@ bool tapi_sms_set_service_center_address(tapi_context context, int slot_id, char
         return -EIO;
     }
 
-    return g_dbus_proxy_set_property_basic(proxy, "ServiceCenterAddress",
-        DBUS_TYPE_STRING, &number,
-        NULL, NULL, NULL);
+    if (!g_dbus_proxy_set_property_basic(proxy, "ServiceCenterAddress",
+            DBUS_TYPE_STRING, &number, NULL, NULL, NULL)) {
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_sms_get_service_center_address(tapi_context context, int slot_id, char** out)
@@ -376,8 +389,13 @@ int tapi_sms_get_all_messages_from_sim(tapi_context context, int slot_id,
     ar->arg1 = slot_id;
     ar->data = list;
 
-    return g_dbus_proxy_method_call(proxy, "GetAllMessagesFromSim", NULL,
-        message_list_query_complete, user_data, message_event_free);
+    if (!g_dbus_proxy_method_call(proxy, "GetAllMessagesFromSim", NULL,
+            message_list_query_complete, user_data, message_event_free)) {
+        message_event_free(user_data);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_sms_copy_message_to_sim(tapi_context context, int slot_id,
@@ -410,8 +428,13 @@ int tapi_sms_copy_message_to_sim(tapi_context context, int slot_id,
     message_info->sent_time = strdup0(send_time);
     message_info->sms_type = type;
 
-    return g_dbus_proxy_method_call(proxy, "InsertMessageToSim", copy_message_param_append,
-        NULL, message_info, message_info_free);
+    if (!g_dbus_proxy_method_call(proxy, "InsertMessageToSim", copy_message_param_append,
+            NULL, message_info, message_info_free)) {
+        message_info_free(message_info);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_sms_delete_message_from_sim(tapi_context context, int slot_id, char* index)
@@ -433,8 +456,12 @@ int tapi_sms_delete_message_from_sim(tapi_context context, int slot_id, char* in
         return -EIO;
     }
 
-    return g_dbus_proxy_method_call(proxy, "DeleteMessageFromSim",
-        delete_message_param_append, NULL, index, NULL);
+    if (!g_dbus_proxy_method_call(proxy, "DeleteMessageFromSim",
+            delete_message_param_append, NULL, index, NULL)) {
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_sms_register(tapi_context context, int slot_id,
@@ -492,6 +519,11 @@ int tapi_sms_register(tapi_context context, int slot_id,
         break;
     default:
         break;
+    }
+
+    if (watch_id == 0) {
+        message_event_free(user_data);
+        return -EINVAL;
     }
 
     return watch_id;

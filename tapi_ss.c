@@ -506,8 +506,14 @@ int tapi_ss_request_call_barring(tapi_context context, int slot_id, int event_id
     value[0] = tapi_call_barring_info[temp].value;
     value[1] = pin2;
 
-    return g_dbus_proxy_set_property_array(proxy, key, DBUS_TYPE_STRING,
-        value, sizeof(value) / sizeof(char*), ss_set_property_complete, handler, user_data_free);
+    if (!g_dbus_proxy_set_property_array(proxy, key, DBUS_TYPE_STRING,
+            value, sizeof(value) / sizeof(char*), ss_set_property_complete,
+            handler, user_data_free)) {
+        user_data_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_ss_query_call_barring_info(tapi_context context, int slot_id, const char* service_type, char** out)
@@ -531,7 +537,7 @@ int tapi_ss_query_call_barring_info(tapi_context context, int slot_id, const cha
         return OK;
     }
 
-    return ERROR;
+    return -EINVAL;
 }
 
 int tapi_ss_change_call_barring_password(tapi_context context, int slot_id, int event_id,
@@ -579,8 +585,13 @@ int tapi_ss_change_call_barring_password(tapi_context context, int slot_id, int 
     ar->msg_id = event_id;
     ar->data = param;
 
-    return g_dbus_proxy_method_call(proxy, "ChangePassword", cb_change_passwd_append,
-        NULL, handler, user_data_free);
+    if (!g_dbus_proxy_method_call(proxy, "ChangePassword", cb_change_passwd_append,
+            NULL, handler, user_data_free)) {
+        user_data_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_ss_disable_all_call_barrings(tapi_context context, int slot_id, int event_id,
@@ -617,8 +628,13 @@ int tapi_ss_disable_all_call_barrings(tapi_context context, int slot_id, int eve
     ar->data = passwd;
     handler->cb_function = p_handle;
 
-    return g_dbus_proxy_method_call(proxy, "DisableAll", disable_all_cb_param_append,
-        NULL, handler, user_data_free);
+    if (!g_dbus_proxy_method_call(proxy, "DisableAll", disable_all_cb_param_append,
+            NULL, handler, user_data_free)) {
+        user_data_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_ss_disable_all_incoming(tapi_context context, int slot_id,
@@ -655,8 +671,13 @@ int tapi_ss_disable_all_incoming(tapi_context context, int slot_id,
     ar->data = passwd;
     handler->cb_function = p_handle;
 
-    return g_dbus_proxy_method_call(proxy, "DisableAllIncoming",
-        disable_all_incoming_param_append, NULL, handler, user_data_free);
+    if (!g_dbus_proxy_method_call(proxy, "DisableAllIncoming",
+            disable_all_incoming_param_append, NULL, handler, user_data_free)) {
+        user_data_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_ss_disable_all_outgoing(tapi_context context, int slot_id,
@@ -693,8 +714,13 @@ int tapi_ss_disable_all_outgoing(tapi_context context, int slot_id,
     ar->msg_id = event_id;
     handler->cb_function = p_handle;
 
-    return g_dbus_proxy_method_call(proxy, "DisableAllOutgoing",
-        disable_all_outgoing_param_append, NULL, handler, user_data_free);
+    if (!g_dbus_proxy_method_call(proxy, "DisableAllOutgoing",
+            disable_all_outgoing_param_append, NULL, handler, user_data_free)) {
+        user_data_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 // Call Forwarding
@@ -740,8 +766,13 @@ int tapi_ss_request_call_forwarding(tapi_context context, int slot_id, int event
     else
         value_type = DBUS_TYPE_STRING;
 
-    return g_dbus_proxy_set_property_basic(proxy, cf_type, value_type,
-        &value, ss_set_property_complete, handler, user_data_free);
+    if (!g_dbus_proxy_set_property_basic(proxy, cf_type, value_type,
+            &value, ss_set_property_complete, handler, user_data_free)) {
+        user_data_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_ss_query_call_forwarding_info(tapi_context context, int slot_id,
@@ -766,7 +797,7 @@ int tapi_ss_query_call_forwarding_info(tapi_context context, int slot_id,
         return OK;
     }
 
-    return ERROR;
+    return -EINVAL;
 }
 
 int tapi_ss_disable_call_forwarding(tapi_context context, int slot_id, int event_id,
@@ -803,8 +834,13 @@ int tapi_ss_disable_call_forwarding(tapi_context context, int slot_id, int event
     ar->data = cf_type;
     handler->cb_function = p_handle;
 
-    return g_dbus_proxy_method_call(proxy, "DisableAll",
-        disable_cf_param_append, NULL, handler, user_data_free);
+    if (!g_dbus_proxy_method_call(proxy, "DisableAll",
+            disable_cf_param_append, NULL, handler, user_data_free)) {
+        user_data_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 // USSD
@@ -829,7 +865,7 @@ int tapi_get_ussd_state(tapi_context context, int slot_id, tapi_ussd_state* out)
         return OK;
     }
 
-    return ERROR;
+    return -EINVAL;
 }
 
 int tapi_ss_cancel_ussd(tapi_context context, int slot_id, int event_id,
@@ -865,8 +901,13 @@ int tapi_ss_cancel_ussd(tapi_context context, int slot_id, int event_id,
     ar->msg_id = event_id;
     handler->cb_function = p_handle;
 
-    return g_dbus_proxy_method_call(proxy, "Cancel", NULL,
-        NULL, handler, user_data_free);
+    if (!g_dbus_proxy_method_call(proxy, "Cancel", NULL,
+            NULL, handler, user_data_free)) {
+        user_data_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 // Call Waiting
@@ -903,8 +944,13 @@ int tapi_ss_request_call_wating(tapi_context context, int slot_id, int event_id,
     ar->msg_id = event_id;
     handler->cb_function = p_handle;
 
-    return g_dbus_proxy_set_property_basic(proxy, "VoiceCallWaiting", DBUS_TYPE_STRING,
-        &state, ss_set_property_complete, handler, user_data_free);
+    if (!g_dbus_proxy_set_property_basic(proxy, "VoiceCallWaiting", DBUS_TYPE_STRING,
+            &state, ss_set_property_complete, handler, user_data_free)) {
+        user_data_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_ss_query_call_wating(tapi_context context, int slot_id, char** out)
@@ -928,7 +974,7 @@ int tapi_ss_query_call_wating(tapi_context context, int slot_id, char** out)
         return OK;
     }
 
-    return ERROR;
+    return -EINVAL;
 }
 
 // Calling Line Presentation
@@ -954,7 +1000,7 @@ int tapi_ss_query_calling_line_presentation_info(tapi_context context, int slot_
         return OK;
     }
 
-    return ERROR;
+    return -EINVAL;
 }
 
 // Calling Line Restriction
@@ -980,7 +1026,7 @@ int tapi_ss_query_calling_line_restriction_info(tapi_context context, int slot_i
         return OK;
     }
 
-    return ERROR;
+    return -EINVAL;
 }
 
 int tapi_ss_register(tapi_context context,
@@ -1046,6 +1092,11 @@ int tapi_ss_register(tapi_context context,
         break;
     default:
         break;
+    }
+
+    if (watch_id == 0) {
+        user_data_free(handler);
+        return -EINVAL;
     }
 
     return watch_id;
