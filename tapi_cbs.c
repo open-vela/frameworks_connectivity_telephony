@@ -160,9 +160,12 @@ int tapi_sms_set_cell_broadcast_power_on(tapi_context context, int slot_id, bool
         return -EIO;
     }
 
-    return g_dbus_proxy_set_property_basic(proxy, "Powered",
-        DBUS_TYPE_BOOLEAN, &cbs_state,
-        NULL, NULL, NULL);
+    if (!g_dbus_proxy_set_property_basic(proxy, "Powered",
+            DBUS_TYPE_BOOLEAN, &cbs_state, NULL, NULL, NULL)) {
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_sms_get_cell_broadcast_power_on(tapi_context context, int slot_id, bool* state)
@@ -203,9 +206,12 @@ int tapi_sms_set_cell_broadcast_topics(tapi_context context, int slot_id, char* 
         return -EIO;
     }
 
-    return g_dbus_proxy_set_property_basic(proxy, "Topics",
-        DBUS_TYPE_STRING, &topics,
-        NULL, NULL, NULL);
+    if (!g_dbus_proxy_set_property_basic(proxy, "Topics",
+            DBUS_TYPE_STRING, &topics, NULL, NULL, NULL)) {
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_sms_get_cell_broadcast_topics(tapi_context context, int slot_id, char** topics)
@@ -274,6 +280,11 @@ int tapi_cbs_register(tapi_context context, int slot_id, tapi_indication_msg msg
         break;
     default:
         break;
+    }
+
+    if (watch_id == 0) {
+        cbs_event_free(user_data);
+        return -EINVAL;
     }
 
     return watch_id;

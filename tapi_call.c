@@ -215,7 +215,10 @@ static int tapi_swap_call(tapi_context context, int slot_id)
         return -EIO;
     }
 
-    return g_dbus_proxy_method_call(proxy, "SwapCalls", NULL, NULL, NULL, NULL);
+    if (!g_dbus_proxy_method_call(proxy, "SwapCalls", NULL, NULL, NULL, NULL))
+        return -EINVAL;
+
+    return OK;
 }
 
 static int
@@ -645,6 +648,7 @@ static int tapi_register_call_signal(tapi_context context, int slot_id, char* pa
     dbus_context* ctx = context;
     tapi_async_result* ar;
     const char* member;
+    int watch_id;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
@@ -676,8 +680,14 @@ static int tapi_register_call_signal(tapi_context context, int slot_id, char* pa
     handler->cb_function = p_handle;
     handler->result = ar;
 
-    return g_dbus_add_signal_watch(ctx->connection,
+    watch_id = g_dbus_add_signal_watch(ctx->connection,
         OFONO_SERVICE, path, interface, member, function, handler, call_event_free);
+    if (watch_id == 0) {
+        call_event_free(handler);
+        return -EINVAL;
+    }
+
+    return watch_id;
 }
 
 static int tapi_register_manager_call_signal(tapi_context context, int slot_id, char* interface,
@@ -688,6 +698,7 @@ static int tapi_register_manager_call_signal(tapi_context context, int slot_id, 
     tapi_async_result* ar;
     const char* member;
     char* modem_path;
+    int watch_id;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
@@ -720,8 +731,14 @@ static int tapi_register_manager_call_signal(tapi_context context, int slot_id, 
     handler->cb_function = p_handle;
     handler->result = ar;
 
-    return g_dbus_add_signal_watch(ctx->connection,
+    watch_id = g_dbus_add_signal_watch(ctx->connection,
         OFONO_SERVICE, modem_path, interface, member, function, handler, call_event_free);
+    if (watch_id == 0) {
+        call_event_free(handler);
+        return -EINVAL;
+    }
+
+    return watch_id;
 }
 
 /****************************************************************************
@@ -752,7 +769,12 @@ int tapi_call_dial(tapi_context context, int slot_id, char* number, int hide_cal
     snprintf(param->number, sizeof(param->number), "%s", number);
     param->hide_callerid = hide_callerid;
 
-    return g_dbus_proxy_method_call(proxy, "Dial", call_param_append, NULL, param, free);
+    if (!g_dbus_proxy_method_call(proxy, "Dial", call_param_append, NULL, param, free)) {
+        free(param);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_call_hangup_call(tapi_context context, int slot_id, char* call_id)
@@ -777,7 +799,11 @@ int tapi_call_hangup_call(tapi_context context, int slot_id, char* call_id)
         return -ENODEV;
     }
 
-    return g_dbus_proxy_method_call(proxy, "Hangup", NULL, NULL, NULL, NULL);
+    if (!g_dbus_proxy_method_call(proxy, "Hangup", NULL, NULL, NULL, NULL)) {
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_call_release_and_answer(tapi_context context, int slot_id)
@@ -795,7 +821,11 @@ int tapi_call_release_and_answer(tapi_context context, int slot_id)
         return -EIO;
     }
 
-    return g_dbus_proxy_method_call(proxy, "ReleaseAndAnswer", NULL, NULL, NULL, NULL);
+    if (!g_dbus_proxy_method_call(proxy, "ReleaseAndAnswer", NULL, NULL, NULL, NULL)) {
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_call_hold_and_answer(tapi_context context, int slot_id)
@@ -813,7 +843,11 @@ int tapi_call_hold_and_answer(tapi_context context, int slot_id)
         return -EIO;
     }
 
-    return g_dbus_proxy_method_call(proxy, "HoldAndAnswer", NULL, NULL, NULL, NULL);
+    if (!g_dbus_proxy_method_call(proxy, "HoldAndAnswer", NULL, NULL, NULL, NULL)) {
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_call_answer_call(tapi_context context, int slot_id, char* call_id, int call_count)
@@ -893,7 +927,11 @@ int tapi_call_transfer(tapi_context context, int slot_id)
         return -EIO;
     }
 
-    return g_dbus_proxy_method_call(proxy, "Transfer", NULL, NULL, NULL, NULL);
+    if (!g_dbus_proxy_method_call(proxy, "Transfer", NULL, NULL, NULL, NULL)) {
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_call_deflect_call(tapi_context context, int slot_id, char* call_id, char* number)
@@ -918,7 +956,11 @@ int tapi_call_deflect_call(tapi_context context, int slot_id, char* call_id, cha
         return -ENODEV;
     }
 
-    return g_dbus_proxy_method_call(proxy, "Deflect", deflect_param_append, NULL, call_id, NULL);
+    if (!g_dbus_proxy_method_call(proxy, "Deflect", deflect_param_append, NULL, call_id, NULL)) {
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_call_hangup_all_calls(tapi_context context, int slot_id)
@@ -936,7 +978,11 @@ int tapi_call_hangup_all_calls(tapi_context context, int slot_id)
         return -EIO;
     }
 
-    return g_dbus_proxy_method_call(proxy, "HangupAll", NULL, NULL, NULL, NULL);
+    if (!g_dbus_proxy_method_call(proxy, "HangupAll", NULL, NULL, NULL, NULL)) {
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 void tapi_call_tapi_get_call_by_state(tapi_context context, int slot_id,
@@ -984,8 +1030,13 @@ int tapi_call_get_all_calls(tapi_context context, int slot_id,
     handler->cb_function = p_handle;
     handler->result = ar;
 
-    return g_dbus_proxy_method_call(proxy, "GetCalls", NULL,
-        call_list_query_complete, handler, call_event_free);
+    if (!g_dbus_proxy_method_call(proxy, "GetCalls", NULL,
+            call_list_query_complete, handler, call_event_free)) {
+        call_event_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_call_get_call_info(tapi_context context, int slot_id,
@@ -1110,8 +1161,13 @@ int tapi_call_merge_call(tapi_context context,
     handler->result = ar;
     handler->cb_function = p_handle;
 
-    return g_dbus_proxy_method_call(proxy, "CreateMultiparty", NULL,
-        merge_call_complete, handler, call_event_free);
+    if (!g_dbus_proxy_method_call(proxy, "CreateMultiparty", NULL,
+            merge_call_complete, handler, call_event_free)) {
+        call_event_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_call_separate_call(tapi_context context,
@@ -1159,8 +1215,13 @@ int tapi_call_separate_call(tapi_context context,
     handler->cb_function = p_handle;
     handler->result = ar;
 
-    return g_dbus_proxy_method_call(proxy, "PrivateChat",
-        separate_param_append, merge_call_complete, handler, call_event_free);
+    if (!g_dbus_proxy_method_call(proxy, "PrivateChat",
+            separate_param_append, merge_call_complete, handler, call_event_free)) {
+        call_event_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_call_hangup_multiparty(tapi_context context, int slot_id)
@@ -1178,8 +1239,11 @@ int tapi_call_hangup_multiparty(tapi_context context, int slot_id)
         return -EIO;
     }
 
-    return g_dbus_proxy_method_call(proxy, "multiparty_hangup",
-        NULL, NULL, NULL, NULL);
+    if (!g_dbus_proxy_method_call(proxy, "multiparty_hangup", NULL, NULL, NULL, NULL)) {
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_call_send_tones(void* context, int slot_id, char* tones)
@@ -1197,7 +1261,11 @@ int tapi_call_send_tones(void* context, int slot_id, char* tones)
         return -EIO;
     }
 
-    return g_dbus_proxy_method_call(proxy, "SendTones", tone_param_append, NULL, tones, NULL);
+    if (!g_dbus_proxy_method_call(proxy, "SendTones", tone_param_append, NULL, tones, NULL)) {
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_call_get_ecc_list(tapi_context context, int slot_id, char** out)
@@ -1218,7 +1286,7 @@ int tapi_call_get_ecc_list(tapi_context context, int slot_id, char** out)
     }
 
     if (!g_dbus_proxy_get_property(proxy, "EmergencyNumbers", &list)) {
-        return -EIO;
+        return -EINVAL;
     }
 
     if (dbus_message_iter_get_arg_type(&list) == DBUS_TYPE_ARRAY) {

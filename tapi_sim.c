@@ -270,7 +270,7 @@ int tapi_sim_has_icc_card(tapi_context context, int slot_id, bool* out)
         return OK;
     }
 
-    return ERROR;
+    return -EINVAL;
 }
 
 int tapi_sim_get_sim_iccid(tapi_context context, int slot_id, char** out)
@@ -294,7 +294,7 @@ int tapi_sim_get_sim_iccid(tapi_context context, int slot_id, char** out)
         return OK;
     }
 
-    return ERROR;
+    return -EINVAL;
 }
 
 int tapi_sim_get_sim_operator(tapi_context context, int slot_id, int length, char* out)
@@ -362,7 +362,7 @@ int tapi_sim_get_sim_operator_name(tapi_context context, int slot_id, char** out
         return OK;
     }
 
-    return ERROR;
+    return -EINVAL;
 }
 
 int tapi_sim_register_sim_state_change(tapi_context context, int slot_id,
@@ -401,6 +401,10 @@ int tapi_sim_register_sim_state_change(tapi_context context, int slot_id,
     watch_id = g_dbus_add_signal_watch(ctx->connection,
         OFONO_SERVICE, modem_path, OFONO_SIM_MANAGER_INTERFACE,
         "PropertyChanged", sim_state_changed, handler, user_data_free);
+    if (watch_id == 0) {
+        user_data_free(handler);
+        return -EINVAL;
+    }
 
     return watch_id;
 }
@@ -461,8 +465,13 @@ int tapi_sim_change_pin(tapi_context context, int slot_id,
     user_data->cb_function = p_handle;
     user_data->result = ar;
 
-    return g_dbus_proxy_method_call(proxy, "ChangePin",
-        change_pin_param_append, method_call_complete, user_data, user_data_free);
+    if (!g_dbus_proxy_method_call(proxy, "ChangePin",
+            change_pin_param_append, method_call_complete, user_data, user_data_free)) {
+        user_data_free(user_data);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_sim_enter_pin(tapi_context context, int slot_id,
@@ -510,8 +519,13 @@ int tapi_sim_enter_pin(tapi_context context, int slot_id,
     user_data->cb_function = p_handle;
     user_data->result = ar;
 
-    return g_dbus_proxy_method_call(proxy, "EnterPin",
-        enter_pin_param_append, method_call_complete, user_data, user_data_free);
+    if (!g_dbus_proxy_method_call(proxy, "EnterPin",
+            enter_pin_param_append, method_call_complete, user_data, user_data_free)) {
+        user_data_free(user_data);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_sim_reset_pin(tapi_context context, int slot_id,
@@ -560,8 +574,13 @@ int tapi_sim_reset_pin(tapi_context context, int slot_id,
     user_data->cb_function = p_handle;
     user_data->result = ar;
 
-    return g_dbus_proxy_method_call(proxy, "ResetPin",
-        reset_pin_param_append, method_call_complete, user_data, user_data_free);
+    if (!g_dbus_proxy_method_call(proxy, "ResetPin",
+            reset_pin_param_append, method_call_complete, user_data, user_data_free)) {
+        user_data_free(user_data);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_sim_lock_pin(tapi_context context, int slot_id,
@@ -609,8 +628,13 @@ int tapi_sim_lock_pin(tapi_context context, int slot_id,
     user_data->cb_function = p_handle;
     user_data->result = ar;
 
-    return g_dbus_proxy_method_call(proxy, "LockPin",
-        lock_pin_param_append, method_call_complete, user_data, user_data_free);
+    if (!g_dbus_proxy_method_call(proxy, "LockPin",
+            lock_pin_param_append, method_call_complete, user_data, user_data_free)) {
+        user_data_free(user_data);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_sim_unlock_pin(tapi_context context, int slot_id,
@@ -658,6 +682,11 @@ int tapi_sim_unlock_pin(tapi_context context, int slot_id,
     user_data->cb_function = p_handle;
     user_data->result = ar;
 
-    return g_dbus_proxy_method_call(proxy, "UnlockPin",
-        unlock_pin_param_append, method_call_complete, user_data, user_data_free);
+    if (!g_dbus_proxy_method_call(proxy, "UnlockPin",
+            unlock_pin_param_append, method_call_complete, user_data, user_data_free)) {
+        user_data_free(user_data);
+        return -EINVAL;
+    }
+
+    return OK;
 }

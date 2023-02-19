@@ -879,8 +879,13 @@ int tapi_network_select_auto(tapi_context context,
     handler->result = ar;
     handler->cb_function = p_handle;
 
-    return g_dbus_proxy_method_call(proxy,
-        "Register", NULL, network_register_cb, handler, user_data_free);
+    if (!g_dbus_proxy_method_call(proxy,
+            "Register", NULL, network_register_cb, handler, user_data_free)) {
+        user_data_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_network_select_manual(tapi_context context,
@@ -926,7 +931,7 @@ int tapi_network_select_manual(tapi_context context,
         return OK;
     }
 
-    return ERROR;
+    return -EINVAL;
 }
 
 int tapi_network_scan(tapi_context context,
@@ -962,8 +967,13 @@ int tapi_network_scan(tapi_context context,
     handler->result = ar;
     handler->cb_function = p_handle;
 
-    return g_dbus_proxy_method_call(proxy,
-        "Scan", NULL, operator_scan_complete, handler, user_data_free);
+    if (!g_dbus_proxy_method_call(proxy,
+            "Scan", NULL, operator_scan_complete, handler, user_data_free)) {
+        user_data_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_network_get_serving_cellinfo(tapi_context context,
@@ -1000,8 +1010,13 @@ int tapi_network_get_serving_cellinfo(tapi_context context,
     handler->result = ar;
     handler->cb_function = p_handle;
 
-    return g_dbus_proxy_method_call(proxy,
-        "GetServingCellInformation", NULL, cellinfo_request_complete, handler, user_data_free);
+    if (!g_dbus_proxy_method_call(proxy,
+            "GetServingCellInformation", NULL, cellinfo_request_complete, handler, user_data_free)) {
+        user_data_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_network_get_neighbouring_cellinfo(tapi_context context,
@@ -1036,8 +1051,14 @@ int tapi_network_get_neighbouring_cellinfo(tapi_context context,
     handler->result = ar;
     handler->cb_function = p_handle;
 
-    return g_dbus_proxy_method_call(proxy,
-        "GetNeighbouringCellInformation", NULL, neighbouring_cellinfo_request_complete, handler, user_data_free);
+    if (!g_dbus_proxy_method_call(proxy,
+            "GetNeighbouringCellInformation", NULL, neighbouring_cellinfo_request_complete,
+            handler, user_data_free)) {
+        user_data_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_network_get_voice_network_type(tapi_context context, int slot_id, tapi_network_type* out)
@@ -1064,7 +1085,7 @@ int tapi_network_get_voice_network_type(tapi_context context, int slot_id, tapi_
         return OK;
     }
 
-    return ERROR;
+    return -EINVAL;
 }
 
 bool tapi_network_is_voice_roaming(tapi_context context, int slot_id)
@@ -1120,7 +1141,7 @@ int tapi_network_get_display_name(tapi_context context, int slot_id, char** out)
         return OK;
     }
 
-    return ERROR;
+    return -EINVAL;
 }
 
 int tapi_network_get_signalstrength(tapi_context context, int slot_id, tapi_signal_strength* out)
@@ -1147,7 +1168,7 @@ int tapi_network_get_signalstrength(tapi_context context, int slot_id, tapi_sign
         return OK;
     }
 
-    return ERROR;
+    return -EINVAL;
 }
 
 int tapi_network_get_registration_info(tapi_context context,
@@ -1182,8 +1203,13 @@ int tapi_network_get_registration_info(tapi_context context,
     handler->result = ar;
     handler->cb_function = p_handle;
 
-    return g_dbus_proxy_method_call(proxy,
-        "GetProperties", NULL, registration_info_query_done, handler, user_data_free);
+    if (!g_dbus_proxy_method_call(proxy,
+            "GetProperties", NULL, registration_info_query_done, handler, user_data_free)) {
+        user_data_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_network_register(tapi_context context,
@@ -1244,6 +1270,10 @@ int tapi_network_register(tapi_context context,
     watch_id = g_dbus_add_signal_watch(ctx->connection,
         OFONO_SERVICE, modem_path, OFONO_NETWORK_REGISTRATION_INTERFACE,
         "PropertyChanged", callback, handler, user_data_free);
+    if (watch_id == 0) {
+        user_data_free(handler);
+        return -EINVAL;
+    }
 
     return watch_id;
 }
