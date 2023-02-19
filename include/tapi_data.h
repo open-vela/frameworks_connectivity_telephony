@@ -55,9 +55,12 @@ typedef enum {
 typedef enum {
     APN_CONTEXT_TYPE_ANY = 0,
     APN_CONTEXT_TYPE_INTERNET,
+    APN_CONTEXT_TYPE_HIPRI,
+    APN_CONTEXT_TYPE_SUPL,
     APN_CONTEXT_TYPE_MMS,
     APN_CONTEXT_TYPE_WAP,
     APN_CONTEXT_TYPE_IMS,
+    APN_CONTEXT_TYPE_EMERGENCY,
 } tapi_apn_context_type;
 
 typedef enum {
