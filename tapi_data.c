@@ -580,8 +580,13 @@ int tapi_data_load_apn_contexts(tapi_context context,
     handler->result = ar;
     handler->cb_function = p_handle;
 
-    return g_dbus_proxy_method_call(proxy,
-        "GetContexts", NULL, apn_list_loaded, handler, user_data_free);
+    if (!g_dbus_proxy_method_call(proxy,
+            "GetContexts", NULL, apn_list_loaded, handler, user_data_free)) {
+        user_data_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_data_save_apn_context(tapi_context context,
@@ -619,8 +624,13 @@ int tapi_data_save_apn_context(tapi_context context,
     handler->result = ar;
     handler->cb_function = p_handle;
 
-    return g_dbus_proxy_method_call(proxy,
-        "AddContext", apn_context_append, apn_list_changd, handler, user_data_free);
+    if (!g_dbus_proxy_method_call(proxy,
+            "AddContext", apn_context_append, apn_list_changd, handler, user_data_free)) {
+        user_data_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_data_remove_apn_context(tapi_context context,
@@ -658,8 +668,13 @@ int tapi_data_remove_apn_context(tapi_context context,
     handler->result = ar;
     handler->cb_function = p_handle;
 
-    return g_dbus_proxy_method_call(proxy,
-        "RemoveContext", apn_context_remove, apn_list_changd, handler, user_data_free);
+    if (!g_dbus_proxy_method_call(proxy,
+            "RemoveContext", apn_context_remove, apn_list_changd, handler, user_data_free)) {
+        user_data_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_data_reset_apn_contexts(tapi_context context,
@@ -696,8 +711,13 @@ int tapi_data_reset_apn_contexts(tapi_context context,
     handler->result = ar;
     handler->cb_function = p_handle;
 
-    return g_dbus_proxy_method_call(proxy,
-        "ResetContexts", NULL, apn_list_changd, handler, user_data_free);
+    if (!g_dbus_proxy_method_call(proxy,
+            "ResetContexts", NULL, apn_list_changd, handler, user_data_free)) {
+        user_data_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_data_is_ps_attached(tapi_context context, int slot_id, bool* out)
@@ -724,7 +744,7 @@ int tapi_data_is_ps_attached(tapi_context context, int slot_id, bool* out)
         return OK;
     }
 
-    return ERROR;
+    return -EINVAL;
 }
 
 int tapi_data_get_network_type(tapi_context context, int slot_id, tapi_network_type* out)
@@ -751,7 +771,7 @@ int tapi_data_get_network_type(tapi_context context, int slot_id, tapi_network_t
         return OK;
     }
 
-    return ERROR;
+    return -EINVAL;
 }
 
 int tapi_data_is_roaming(tapi_context context, int slot_id, bool* out)
@@ -778,7 +798,7 @@ int tapi_data_is_roaming(tapi_context context, int slot_id, bool* out)
         return OK;
     }
 
-    return ERROR;
+    return -EINVAL;
 }
 
 int tapi_data_request_network(tapi_context context, int slot_id, const char* type)
@@ -796,8 +816,12 @@ int tapi_data_request_network(tapi_context context, int slot_id, const char* typ
         return -EIO;
     }
 
-    return g_dbus_proxy_method_call(proxy,
-        "RequestNetwork", network_operation_append, NULL, (void*)type, NULL);
+    if (!g_dbus_proxy_method_call(proxy,
+            "RequestNetwork", network_operation_append, NULL, (void*)type, NULL)) {
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_data_release_network(tapi_context context, int slot_id, const char* type)
@@ -815,8 +839,12 @@ int tapi_data_release_network(tapi_context context, int slot_id, const char* typ
         return -EIO;
     }
 
-    return g_dbus_proxy_method_call(proxy,
-        "ReleaseNetwork", network_operation_append, NULL, (void*)type, NULL);
+    if (!g_dbus_proxy_method_call(proxy,
+            "ReleaseNetwork", network_operation_append, NULL, (void*)type, NULL)) {
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_data_set_preferred_apn(tapi_context context,
@@ -837,8 +865,12 @@ int tapi_data_set_preferred_apn(tapi_context context,
     }
 
     path = apn->id;
-    return g_dbus_proxy_set_property_basic(proxy,
-        "PreferredApn", DBUS_TYPE_STRING, &path, NULL, NULL, NULL);
+    if (!g_dbus_proxy_set_property_basic(proxy,
+            "PreferredApn", DBUS_TYPE_STRING, &path, NULL, NULL, NULL)) {
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_data_get_preferred_apn(tapi_context context, int slot_id, char** out)
@@ -862,7 +894,7 @@ int tapi_data_get_preferred_apn(tapi_context context, int slot_id, char** out)
         return OK;
     }
 
-    return ERROR;
+    return -EINVAL;
 }
 
 int tapi_data_enable(tapi_context context, bool enabled)
@@ -870,7 +902,7 @@ int tapi_data_enable(tapi_context context, bool enabled)
     dbus_context* ctx = context;
     GDBusProxy* proxy;
     int value;
-    int ret = ERROR;
+    int ret = OK;
 
     if (ctx == NULL) {
         return -EINVAL;
@@ -884,8 +916,10 @@ int tapi_data_enable(tapi_context context, bool enabled)
             return -EIO;
         }
 
-        ret = g_dbus_proxy_set_property_basic(proxy,
-            "DataOn", DBUS_TYPE_BOOLEAN, &value, NULL, NULL, NULL);
+        if (!g_dbus_proxy_set_property_basic(proxy,
+                "DataOn", DBUS_TYPE_BOOLEAN, &value, NULL, NULL, NULL)) {
+            ret = -EINVAL;
+        }
     }
 
     return ret;
@@ -915,7 +949,7 @@ int tapi_data_get_enabled(tapi_context context, bool* out)
         return OK;
     }
 
-    return ERROR;
+    return -EINVAL;
 }
 
 int tapi_data_enable_roaming(tapi_context context, bool enabled)
@@ -923,7 +957,7 @@ int tapi_data_enable_roaming(tapi_context context, bool enabled)
     dbus_context* ctx = context;
     GDBusProxy* proxy;
     int value;
-    int ret = ERROR;
+    int ret = OK;
 
     if (ctx == NULL) {
         return -EINVAL;
@@ -937,8 +971,10 @@ int tapi_data_enable_roaming(tapi_context context, bool enabled)
             return -EIO;
         }
 
-        ret = g_dbus_proxy_set_property_basic(proxy,
-            "DataRoamingOn", DBUS_TYPE_BOOLEAN, &value, NULL, NULL, NULL);
+        if (!g_dbus_proxy_set_property_basic(proxy,
+                "DataRoamingOn", DBUS_TYPE_BOOLEAN, &value, NULL, NULL, NULL)) {
+            ret = -EINVAL;
+        }
     }
 
     return ret;
@@ -968,7 +1004,7 @@ int tapi_data_get_roaming_enabled(tapi_context context, bool* out)
         return OK;
     }
 
-    return ERROR;
+    return -EINVAL;
 }
 
 int tapi_data_get_ip_settings(tapi_context context,
@@ -1006,8 +1042,13 @@ int tapi_data_get_ip_settings(tapi_context context,
     handler->result = ar;
     handler->cb_function = p_handle;
 
-    return g_dbus_proxy_method_call(proxy,
-        "GetContexts", NULL, ip_setting_query_completed, handler, user_data_free);
+    if (!g_dbus_proxy_method_call(proxy,
+            "GetContexts", NULL, ip_setting_query_completed, handler, user_data_free)) {
+        user_data_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_data_set_default_data_slot(tapi_context context, int slot_id)
@@ -1021,8 +1062,12 @@ int tapi_data_set_default_data_slot(tapi_context context, int slot_id)
         return -EIO;
     }
 
-    return g_dbus_proxy_set_property_basic(proxy,
-        "DataSlot", DBUS_TYPE_INT32, &slot_id, NULL, NULL, NULL);
+    if (!g_dbus_proxy_set_property_basic(proxy,
+            "DataSlot", DBUS_TYPE_INT32, &slot_id, NULL, NULL, NULL)) {
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_data_get_default_data_slot(tapi_context context, int* out)
@@ -1042,7 +1087,7 @@ int tapi_data_get_default_data_slot(tapi_context context, int* out)
         return OK;
     }
 
-    return ERROR;
+    return -EINVAL;
 }
 
 int tapi_data_register(tapi_context context,
@@ -1101,8 +1146,10 @@ int tapi_data_register(tapi_context context,
         break;
     }
 
-    if (watch_id <= 0)
+    if (watch_id == 0) {
         user_data_free(handler);
+        return -EINVAL;
+    }
 
     return watch_id;
 }
