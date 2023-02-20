@@ -35,7 +35,7 @@ typedef struct {
 
 typedef struct {
     char* dest_addr;
-    int port;
+    unsigned char port;
     char* data;
 } data_message_param;
 
@@ -43,6 +43,7 @@ typedef struct {
  * Private Function
  ****************************************************************************/
 
+static int decode_message_info(DBusMessageIter* iter, tapi_message_info* message_info);
 static int unsol_sms_message(DBusConnection* connection, DBusMessage* message, void* user_data);
 static void message_list_query_complete(DBusMessage* message, void* user_data);
 
@@ -67,8 +68,8 @@ static void send_data_message_param_append(DBusMessageIter* iter, void* user_dat
     data_message_param* message = user_data;
 
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &message->dest_addr);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_BYTE, &message->port);
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &message->data);
-    dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, "0");
 }
 
 static void copy_message_param_append(DBusMessageIter* iter, void* user_data)
@@ -77,14 +78,14 @@ static void copy_message_param_append(DBusMessageIter* iter, void* user_data)
 
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &message_info->sender);
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &message_info->text);
-    dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &message_info->text);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &message_info->sms_type);
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &message_info->sent_time);
 }
 
 static void delete_message_param_append(DBusMessageIter* iter, void* user_data)
 {
     char* param = user_data;
-    dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &param);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &param);
 }
 
 static void message_free(void* user_data)
@@ -231,8 +232,109 @@ done:
     return true;
 }
 
+static int decode_message_info(DBusMessageIter* iter, tapi_message_info* message_info)
+{
+    DBusMessageIter subArrayIter;
+
+    dbus_message_iter_next(iter);
+    dbus_message_iter_recurse(iter, &subArrayIter);
+
+    while (dbus_message_iter_get_arg_type(&subArrayIter) == DBUS_TYPE_DICT_ENTRY) {
+        DBusMessageIter entry, value;
+        const char* key;
+        char* result;
+        int ret;
+
+        dbus_message_iter_recurse(&subArrayIter, &entry);
+        dbus_message_iter_get_basic(&entry, &key);
+
+        dbus_message_iter_next(&entry);
+        dbus_message_iter_recurse(&entry, &value);
+
+        if (strcmp(key, "Type") == 0) {
+            dbus_message_iter_get_basic(&value, &ret);
+            message_info->sms_type = ret;
+        } else if (strcmp(key, "To") == 0) {
+            dbus_message_iter_get_basic(&value, &result);
+            message_info->sender = strdup0(result);
+        } else if (strcmp(key, "Text") == 0) {
+            dbus_message_iter_get_basic(&value, &result);
+            message_info->text = strdup0(result);
+        } else if (strcmp(key, "Date") == 0) {
+            dbus_message_iter_get_basic(&value, &result);
+            message_info->sent_time = strdup0(result);
+            message_info->local_sent_time = strdup0(result);
+        }
+
+        dbus_message_iter_next(&subArrayIter);
+    }
+
+    return true;
+}
+
 static void message_list_query_complete(DBusMessage* message, void* user_data)
 {
+    tapi_async_handler* handler = user_data;
+    tapi_message_info message_list[MAX_MESSAGE_LIST_COUNT];
+    DBusMessageIter args, list;
+    tapi_async_function cb;
+    tapi_async_result* ar;
+    int message_count = 0;
+    DBusError err;
+
+    if (handler == NULL)
+        return;
+
+    ar = handler->result;
+    if (ar == NULL)
+        return;
+    ar->status = ERROR;
+
+    cb = handler->cb_function;
+    if (cb == NULL)
+        return;
+
+    // start to handle response message.
+    dbus_error_init(&err);
+    if (dbus_set_error_from_message(&err, message) == true) {
+        tapi_log_error("%s: %s\n", err.name, err.message);
+        dbus_error_free(&err);
+        goto done;
+    }
+
+    if (dbus_message_has_signature(message, "a(oa{sv})") == false)
+        goto done;
+
+    if (dbus_message_iter_init(message, &args) == false)
+        goto done;
+
+    dbus_message_iter_recurse(&args, &list);
+
+    while (dbus_message_iter_get_arg_type(&list) == DBUS_TYPE_STRUCT) {
+        DBusMessageIter entry;
+
+        dbus_message_iter_recurse(&list, &entry);
+        if (dbus_message_iter_get_arg_type(&entry) == DBUS_TYPE_OBJECT_PATH) {
+
+            decode_message_info(&entry, message_list + message_count);
+            message_count++;
+        }
+
+        dbus_message_iter_next(&list);
+    }
+
+    ar->arg2 = message_count;
+    ar->status = OK;
+    ar->data = message_list;
+
+done:
+    cb(ar);
+    while (--message_count >= 0) {
+        free(message_list[message_count].sender);
+        free(message_list[message_count].text);
+        free(message_list[message_count].sent_time);
+        free(message_list[message_count].local_sent_time);
+    }
 }
 
 int tapi_sms_send_message(tapi_context context, int slot_id,
@@ -273,7 +375,7 @@ int tapi_sms_send_message(tapi_context context, int slot_id,
 }
 
 int tapi_sms_send_data_message(tapi_context context, int slot_id,
-    char* dest_addr, int port, char text[])
+    char* dest_addr, unsigned char port, char* text)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
@@ -437,7 +539,7 @@ int tapi_sms_copy_message_to_sim(tapi_context context, int slot_id,
     return OK;
 }
 
-int tapi_sms_delete_message_from_sim(tapi_context context, int slot_id, char* index)
+int tapi_sms_delete_message_from_sim(tapi_context context, int slot_id, int index)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
@@ -446,7 +548,7 @@ int tapi_sms_delete_message_from_sim(tapi_context context, int slot_id, char* in
         return -EINVAL;
     }
 
-    if (index == NULL) {
+    if (index < 0) {
         return -EINVAL;
     }
 
@@ -457,7 +559,7 @@ int tapi_sms_delete_message_from_sim(tapi_context context, int slot_id, char* in
     }
 
     if (!g_dbus_proxy_method_call(proxy, "DeleteMessageFromSim",
-            delete_message_param_append, NULL, index, NULL)) {
+            delete_message_param_append, NULL, (void*)index, NULL)) {
         return -EINVAL;
     }
 
