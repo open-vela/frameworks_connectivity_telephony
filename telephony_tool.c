@@ -430,7 +430,8 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     { "ims-listen", telephonytool_cmd_ims_register,
         "listen ims registration(enter example : ims-listen 0 [slot_id]" },
     { "ims-reg", telephonytool_cmd_ims_get_registration,
-        "get ims registration(enter example : ims-reg 0 [slot_id]" },
+        "get ims registration(enter example : ims-reg 0 0 \
+        [slot_id][action:0-ims info 1-ims state 2-volte state]" },
     { "q", NULL, "Quit (pls enter : q)" },
     { "help", telephonytool_cmd_help,
         "Show this message (pls enter : help)" },
@@ -2771,22 +2772,35 @@ static int telephonytool_cmd_ims_register(tapi_context context, char* pargs)
 }
 static int telephonytool_cmd_ims_get_registration(tapi_context context, char* pargs)
 {
-    char dst[1][CONFIG_NSH_LINELEN];
-    int cnt = split_input(dst, 1, pargs, " ");
+    char dst[2][CONFIG_NSH_LINELEN];
+    int cnt = split_input(dst, 2, pargs, " ");
     tapi_ims_registration_info info;
-    int slot_id, ret;
+    int slot_id, ret, action_type;
 
-    if (cnt != 1)
+    if (cnt != 2)
         return -EINVAL;
 
     slot_id = atoi(dst[0]);
+    action_type = atoi(dst[1]);
 
-    syslog(LOG_DEBUG, "%s: slot_id: %d\n", __func__, slot_id);
+    syslog(LOG_DEBUG, "%s: slot_id: %d, acton: %d\n", __func__, slot_id, action_type);
 
-    ret = tapi_ims_get_registration(context, slot_id, &info);
-    if (ret == OK) {
-        syslog(LOG_DEBUG, "%s: ret_info: %d, ext_info: %d\n", __func__,
-            info.reg_info, info.ext_info);
+    if (action_type == 0) {
+        ret = tapi_ims_get_registration(context, slot_id, &info);
+        if (ret == OK) {
+            syslog(LOG_DEBUG, "%s: ret_info: %d, ext_info: %d\n", __func__,
+                info.reg_info, info.ext_info);
+        }
+    } else if (action_type == 1) {
+        ret = tapi_ims_is_registered(context, slot_id);
+        if (ret == OK) {
+            syslog(LOG_DEBUG, "%s: ims_registered: %d\n", __func__, ret);
+        }
+    } else if (action_type == 2) {
+        ret = tapi_ims_is_volte_available(context, slot_id);
+        if (ret == OK) {
+            syslog(LOG_DEBUG, "%s: ims_volte_enabled: %d\n", __func__, ret);
+        }
     }
 
     return ret;

@@ -104,6 +104,22 @@ int tapi_ims_get_registration(tapi_context context, int slot_id,
 int tapi_ims_register_registration_change(tapi_context context, int slot_id,
     tapi_async_function p_handle);
 
+/**
+ * query the ims registration status
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @return true if ims is registered
+ */
+int tapi_ims_is_registered(tapi_context context, int slot_id);
+
+/**
+ * query ims voice capability status
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @return true if ims is registered and voice capability is enbaled
+ */
+int tapi_ims_is_volte_available(tapi_context context, int slot_id);
+
 #ifdef __cplusplus
 }
 #endif
