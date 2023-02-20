@@ -582,6 +582,39 @@ static void tele_ims_async_fun(tapi_async_result* result)
 
 static void tele_sms_async_fun(tapi_async_result* result)
 {
+    tapi_message_info* message_info;
+
+    syslog(LOG_DEBUG, "%s : %d\n", __func__, result->status);
+
+    if (result->msg_id == MSG_INCOMING_MESSAGE_IND) {
+        message_info = (tapi_message_info*)result->data;
+        syslog(LOG_DEBUG, "receive incoming message tele_sms_async_fun msg: %s\n",
+            message_info->text);
+        syslog(LOG_DEBUG, "receive incoming message tele_sms_async_fun to: %s\n",
+            message_info->sender);
+    } else if (result->msg_id == MSG_IMMEDIATE_MESSAGE_IND) {
+        message_info = (tapi_message_info*)result->data;
+        syslog(LOG_DEBUG, "receive immediate message tele_sms_async_fun msg: %s\n",
+            message_info->text);
+        syslog(LOG_DEBUG, "receive immediate message tele_sms_async_fun to: %s\n",
+            message_info->sender);
+    }
+}
+
+static void tele_cbs_async_fun(tapi_async_result* result)
+{
+    syslog(LOG_DEBUG, "%s : %d\n", __func__, result->status);
+
+    if (result->msg_id == MSG_TAPI_INCOMING_CBS_IND) {
+        tapi_cbs_message* cbs_info = (tapi_cbs_message*)result->data;
+        syslog(LOG_DEBUG, "receive incoming cbs tele_cbs_async_fun msg: %s\n",
+            cbs_info->text);
+    } else if (result->msg_id == MSG_TAPI_EMERGENCY_CBS_IND) {
+        tapi_cbs_emergency_message* cbs_emergency_message
+            = (tapi_cbs_emergency_message*)result->data;
+        syslog(LOG_DEBUG, "receive immediate cbs tele_cbs_async_fun msg: %s\n",
+            cbs_emergency_message->text);
+    }
 }
 
 static void modem_list_query_complete(tapi_async_result* result)
@@ -2241,6 +2274,7 @@ static int telephonytool_tapi_sms_register(tapi_context context, char* pargs)
 
     syslog(LOG_DEBUG, "%s, slotId : %s \n", __func__, slot_id);
     tapi_sms_register(context, atoi(slot_id), MSG_INCOMING_MESSAGE_IND, tele_sms_async_fun);
+    tapi_sms_register(context, atoi(slot_id), MSG_IMMEDIATE_MESSAGE_IND, tele_sms_async_fun);
 
     return 0;
 }
@@ -2341,7 +2375,8 @@ static int telephonytool_tapi_cbs_register(tapi_context context, char* pargs)
         return -EINVAL;
 
     syslog(LOG_DEBUG, "%s, slotId : %s \n", __func__, slot_id);
-    tapi_cbs_register(context, atoi(slot_id), MSG_TAPI_INCOMING_CBS_IND, tele_sms_async_fun);
+    tapi_cbs_register(context, atoi(slot_id), MSG_TAPI_INCOMING_CBS_IND, tele_cbs_async_fun);
+    tapi_cbs_register(context, atoi(slot_id), MSG_TAPI_EMERGENCY_CBS_IND, tele_cbs_async_fun);
 
     return 0;
 }
@@ -2398,7 +2433,7 @@ static int telephonytool_tapi_sms_delete_message_from_sim(tapi_context context, 
     if (index == NULL)
         return -EINVAL;
 
-    tapi_sms_delete_message_from_sim(context, atoi(slot_id), index);
+    tapi_sms_delete_message_from_sim(context, atoi(slot_id), atoi(index));
     syslog(LOG_DEBUG, "%s, slotId : %s index: %s \n", __func__, slot_id, index);
 
     return 0;
