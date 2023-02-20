@@ -258,18 +258,6 @@ int tapi_data_enable_roaming(tapi_context context, bool enabled);
 int tapi_data_get_roaming_enabled(tapi_context context, bool* out);
 
 /**
- * Get ip settings per APN type.
- * @param[in] context        Telephony api context.
- * @param[in] slot_id        Slot id of current sim.
- * @param[in] event_id       Async event identifier.
- * @param[in] type           Apn type.
- * @param[in] p_handle       Event callback.
- * @return Zero on success; a negated errno value on failure.
- */
-int tapi_data_get_ip_settings(tapi_context context,
-    int slot_id, int event_id, tapi_apn_context_type type, tapi_async_function p_handle);
-
-/**
  * Set default data slot id.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
