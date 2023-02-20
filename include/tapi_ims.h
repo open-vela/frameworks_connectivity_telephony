@@ -35,6 +35,21 @@
 #define SMS_CAPABLE_FLAG 0x4
 
 /****************************************************************************
+ * Public Types
+ ****************************************************************************/
+
+typedef enum {
+    IMS_REG = 0,
+    VOICE_CAP,
+    SMS_CAP,
+} tapi_ims_prop_type;
+
+typedef struct {
+    int reg_info;
+    int ext_info;
+} tapi_ims_registration_info;
+
+/****************************************************************************
  * Public Function Prototypes
  ****************************************************************************/
 
@@ -68,6 +83,26 @@ int tapi_ims_turn_off(tapi_context context, int slot_id);
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_ims_set_service_status(tapi_context context, int slot_id, int capability);
+
+/**
+ * get ims registration and ims service status
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[out] ims_reg       ims registration and service status
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_ims_get_registration(tapi_context context, int slot_id,
+    tapi_ims_registration_info* ims_reg);
+
+/**
+ * Register ims registration and ims service status callback.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] p_handle       Event callback.
+ * @return Positive value as watch_id on success; a negated errno value on failure.
+ */
+int tapi_ims_register_registration_change(tapi_context context, int slot_id,
+    tapi_async_function p_handle);
 
 #ifdef __cplusplus
 }
