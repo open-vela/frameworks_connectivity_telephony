@@ -273,3 +273,59 @@ int tapi_ims_get_registration(tapi_context context, int slot_id,
 
     return OK;
 }
+
+int tapi_ims_is_registered(tapi_context context, int slot_id)
+{
+    dbus_context* ctx = context;
+    DBusMessageIter iter;
+    GDBusProxy* proxy;
+    unsigned char val;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+        return -EINVAL;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_IMS];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    if (!g_dbus_proxy_get_property(proxy, "Registered", &iter)) {
+        return -EIO;
+    }
+
+    dbus_message_iter_get_basic(&iter, &val);
+
+    return val;
+}
+
+int tapi_ims_is_volte_available(tapi_context context, int slot_id)
+{
+    dbus_context* ctx = context;
+    unsigned char reg, cap;
+    DBusMessageIter iter;
+    GDBusProxy* proxy;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+        return -EINVAL;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_IMS];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    if (!g_dbus_proxy_get_property(proxy, "Registered", &iter))
+        return -EIO;
+
+    dbus_message_iter_get_basic(&iter, &reg);
+
+    if (!g_dbus_proxy_get_property(proxy, "VoiceCapable", &iter))
+        return -EIO;
+
+    dbus_message_iter_get_basic(&iter, &cap);
+
+    return reg && cap;
+}
