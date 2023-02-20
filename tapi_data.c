@@ -28,6 +28,120 @@
  * Private Functions
  ****************************************************************************/
 
+static void parse_ipv4_properties(DBusMessageIter* iter, tapi_apn_context* dc)
+{
+    DBusMessageIter ip_list, ip_entry, ip_value;
+    const char* ip_key;
+    const char* value_str;
+
+    dc->ip_settings->ipv4 = malloc(sizeof(tapi_ipv4_settings));
+    if (dc->ip_settings->ipv4 == NULL)
+        return;
+
+    dbus_message_iter_recurse(iter, &ip_list);
+
+    while (dbus_message_iter_get_arg_type(&ip_list) == DBUS_TYPE_DICT_ENTRY) {
+        DBusMessageIter dns_iter;
+        int dns_index;
+
+        dbus_message_iter_recurse(&ip_list, &ip_entry);
+        dbus_message_iter_get_basic(&ip_entry, &ip_key);
+
+        dbus_message_iter_next(&ip_entry);
+        dbus_message_iter_recurse(&ip_entry, &ip_value);
+
+        if (strcmp(ip_key, "Interface") == 0) {
+            dbus_message_iter_get_basic(&ip_value, &value_str);
+
+            if (strlen(value_str) <= MAX_IP_INTERFACE_NAME_LENGTH)
+                strcpy(dc->ip_settings->ipv4->interface, value_str);
+        } else if (strcmp(ip_key, "Address") == 0) {
+            dbus_message_iter_get_basic(&ip_value, &value_str);
+
+            if (strlen(value_str) <= MAX_IP_STRING_LENGTH)
+                strcpy(dc->ip_settings->ipv4->ip, value_str);
+        } else if (strcmp(ip_key, "Gateway") == 0) {
+            dbus_message_iter_get_basic(&ip_value, &value_str);
+
+            if (strlen(value_str) <= MAX_IP_STRING_LENGTH)
+                strcpy(dc->ip_settings->ipv4->gateway, value_str);
+        } else if (strcmp(ip_key, "DomainNameServers") == 0) {
+            dbus_message_iter_recurse(&ip_value, &dns_iter);
+
+            dns_index = 0;
+            while (dbus_message_iter_get_arg_type(&dns_iter) != DBUS_TYPE_INVALID) {
+                if (dbus_message_iter_get_arg_type(&dns_iter) == DBUS_TYPE_STRING) {
+                    dbus_message_iter_get_basic(&dns_iter, dc->ip_settings->ipv4->dns[dns_index++]);
+
+                    if (dns_index >= MAX_DATA_DNS_COUNT)
+                        break;
+                }
+
+                dbus_message_iter_next(&dns_iter);
+            }
+        }
+
+        dbus_message_iter_next(&ip_list);
+    }
+}
+
+static void parse_ipv6_properties(DBusMessageIter* iter, tapi_apn_context* dc)
+{
+    DBusMessageIter ipv6_list, ipv6_entry, ipv6_value;
+    const char* ipv6_key;
+    const char* value_str;
+
+    dc->ip_settings->ipv6 = malloc(sizeof(tapi_ipv6_settings));
+    if (dc->ip_settings->ipv6 == NULL)
+        return;
+
+    dbus_message_iter_recurse(iter, &ipv6_list);
+
+    while (dbus_message_iter_get_arg_type(&ipv6_list) == DBUS_TYPE_DICT_ENTRY) {
+        DBusMessageIter dns_iter;
+        int dns_index;
+
+        dbus_message_iter_recurse(&ipv6_list, &ipv6_entry);
+        dbus_message_iter_get_basic(&ipv6_entry, &ipv6_key);
+
+        dbus_message_iter_next(&ipv6_entry);
+        dbus_message_iter_recurse(&ipv6_entry, &ipv6_value);
+
+        if (strcmp(ipv6_key, "Interface") == 0) {
+            dbus_message_iter_get_basic(&ipv6_value, &value_str);
+
+            if (strlen(value_str) <= MAX_IP_INTERFACE_NAME_LENGTH)
+                strcpy(dc->ip_settings->ipv6->interface, value_str);
+        } else if (strcmp(ipv6_key, "Address") == 0) {
+            dbus_message_iter_get_basic(&ipv6_value, &value_str);
+
+            if (strlen(value_str) <= MAX_IP_STRING_LENGTH)
+                strcpy(dc->ip_settings->ipv6->ip, value_str);
+        } else if (strcmp(ipv6_key, "Gateway") == 0) {
+            dbus_message_iter_get_basic(&ipv6_value, &value_str);
+
+            if (strlen(value_str) <= MAX_IP_STRING_LENGTH)
+                strcpy(dc->ip_settings->ipv6->gateway, value_str);
+        } else if (strcmp(ipv6_key, "DomainNameServers") == 0) {
+            dbus_message_iter_recurse(&ipv6_value, &dns_iter);
+
+            dns_index = 0;
+            while (dbus_message_iter_get_arg_type(&dns_iter) != DBUS_TYPE_INVALID) {
+                if (dbus_message_iter_get_arg_type(&dns_iter) == DBUS_TYPE_STRING) {
+                    dbus_message_iter_get_basic(&dns_iter, dc->ip_settings->ipv6->dns[dns_index++]);
+
+                    if (dns_index >= MAX_DATA_DNS_COUNT)
+                        break;
+                }
+
+                dbus_message_iter_next(&dns_iter);
+            }
+        }
+
+        dbus_message_iter_next(&ipv6_list);
+    }
+}
+
 static int data_property_changed(DBusConnection* connection,
     DBusMessage* message, void* user_data)
 {
@@ -80,13 +194,14 @@ done:
     return true;
 }
 
-static int data_connection_state_changed(DBusConnection* connection,
+static int data_connection_changed(DBusConnection* connection,
     DBusMessage* message, void* user_data)
 {
     tapi_async_handler* handler = user_data;
     tapi_async_result* ar;
     tapi_async_function cb;
-    DBusMessageIter args;
+    DBusMessageIter args, list;
+    tapi_apn_context* dc;
 
     if (handler == NULL)
         return false;
@@ -99,17 +214,70 @@ static int data_connection_state_changed(DBusConnection* connection,
     if (cb == NULL)
         return false;
 
+    dc = malloc(sizeof(tapi_apn_context));
+    if (dc == NULL)
+        return false;
+
+    dc->ip_settings = malloc(sizeof(tapi_ip_settings));
+    if (dc->ip_settings == NULL) {
+        free(dc);
+        return false;
+    }
+
     if (dbus_message_iter_init(message, &args) == false)
         goto done;
 
-    ar->status = OK;
-    dbus_message_iter_get_basic(&args, &ar->arg2); // APN type
+    dbus_message_iter_get_basic(&args, &dc->id);
 
     dbus_message_iter_next(&args);
-    dbus_message_iter_get_basic(&args, &ar->status); // Data state
+    dbus_message_iter_recurse(&args, &list);
+
+    while (dbus_message_iter_get_arg_type(&list) == DBUS_TYPE_DICT_ENTRY) {
+        DBusMessageIter entry, value;
+        const char* key;
+        const char* value_str;
+        int value_int;
+
+        dbus_message_iter_recurse(&list, &entry);
+        dbus_message_iter_get_basic(&entry, &key);
+
+        dbus_message_iter_next(&entry);
+        dbus_message_iter_recurse(&entry, &value);
+
+        if (strcmp(key, "Type") == 0) {
+            dbus_message_iter_get_basic(&value, &value_str);
+            dc->type = tapi_apn_context_type_from_string(value_str);
+        } else if (strcmp(key, "Active") == 0) {
+            dbus_message_iter_get_basic(&value, &value_int);
+            dc->active = value_int;
+        } else if (strcmp(key, "Settings") == 0) {
+            // parse ipv4 information.
+            parse_ipv4_properties(&value, dc);
+        } else if (strcmp(key, "IPv6.Settings") == 0) {
+            // parse ipv6 information.
+            parse_ipv6_properties(&value, dc);
+        }
+
+        dbus_message_iter_next(&list);
+    }
+
+    ar->status = OK;
+    ar->data = dc;
 
 done:
     cb(ar);
+
+    if (dc != NULL) {
+        if (dc->ip_settings != NULL) {
+            if (dc->ip_settings->ipv4 != NULL)
+                free(dc->ip_settings->ipv4);
+            if (dc->ip_settings->ipv6 != NULL)
+                free(dc->ip_settings->ipv6);
+
+            free(dc->ip_settings);
+        }
+        free(dc);
+    }
     return true;
 }
 
@@ -190,115 +358,6 @@ static void update_apn_contexts(DBusMessageIter* iter, tapi_apn_context* apn)
     }
 }
 
-static void update_ip_settings(DBusMessageIter* iter, const char* type, tapi_ip_settings* ip)
-{
-    DBusMessageIter entry, value;
-    DBusMessageIter ip_entry, ip_value, dns_iter;
-    const char* key;
-    int is_active;
-    char* iter_type;
-    const char* ip_key;
-    const char* value_str;
-    int dns_count;
-
-    while (dbus_message_iter_get_arg_type(iter) == DBUS_TYPE_DICT_ENTRY) {
-        dbus_message_iter_recurse(iter, &entry);
-        dbus_message_iter_get_basic(&entry, &key);
-        dbus_message_iter_next(&entry);
-        dbus_message_iter_recurse(&entry, &value);
-
-        if (strcmp(key, "Active") == 0) {
-            dbus_message_iter_get_basic(&value, &is_active);
-            if (!is_active)
-                break;
-        }
-
-        if (strcmp(key, "Type") == 0) {
-            dbus_message_iter_get_basic(&value, &iter_type);
-            if (strcmp(type, iter_type) != 0)
-                break;
-        }
-
-        if (strcmp(key, "Settings") == 0) {
-            while (dbus_message_iter_get_arg_type(iter) == DBUS_TYPE_DICT_ENTRY) {
-                dbus_message_iter_recurse(iter, &ip_entry);
-                dbus_message_iter_get_basic(&ip_entry, &ip_key);
-
-                dbus_message_iter_next(&ip_entry);
-                dbus_message_iter_recurse(&ip_entry, &ip_value);
-
-                if (strcmp(ip_key, "Interface") == 0) {
-                    dbus_message_iter_get_basic(&ip_value, &value_str);
-
-                    if (strlen(value_str) <= MAX_IP_INTERFACE_NAME_LENGTH)
-                        strcpy(ip->ipv4->interface, value_str);
-                } else if (strcmp(ip_key, "Address") == 0) {
-                    dbus_message_iter_get_basic(&ip_value, &value_str);
-
-                    if (strlen(value_str) <= MAX_IP_STRING_LENGTH)
-                        strcpy(ip->ipv4->ip, value_str);
-                } else if (strcmp(ip_key, "Gateway") == 0) {
-                    dbus_message_iter_get_basic(&ip_value, &value_str);
-
-                    if (strlen(value_str) <= MAX_IP_STRING_LENGTH)
-                        strcpy(ip->ipv4->gateway, value_str);
-                } else if (strcmp(ip_key, "DomainNameServers") == 0) {
-                    dbus_message_iter_next(&ip_value);
-                    dbus_message_iter_recurse(&ip_value, &dns_iter);
-
-                    dns_count = dbus_message_iter_get_element_count(&dns_iter);
-                    if (dns_count <= MAX_DATA_DNS_COUNT)
-                        dbus_message_iter_get_fixed_array(&dns_iter, ip->ipv4->dns, &dns_count);
-                } else if (strcmp(ip_key, "Proxy") == 0) {
-                    dbus_message_iter_get_basic(&ip_value, &value_str);
-
-                    if (strlen(value_str) <= MAX_IP_STRING_LENGTH)
-                        strcpy(ip->ipv4->proxy, value_str);
-                }
-
-                dbus_message_iter_next(iter);
-            }
-        }
-
-        if (strcmp(key, "IPv6.Settings") == 0) {
-            while (dbus_message_iter_get_arg_type(iter) == DBUS_TYPE_DICT_ENTRY) {
-                dbus_message_iter_recurse(iter, &ip_entry);
-                dbus_message_iter_get_basic(&ip_entry, &ip_key);
-
-                dbus_message_iter_next(&ip_entry);
-                dbus_message_iter_recurse(&ip_entry, &ip_value);
-
-                if (strcmp(ip_key, "Interface") == 0) {
-                    dbus_message_iter_get_basic(&ip_value, &value_str);
-
-                    if (strlen(value_str) <= MAX_IP_INTERFACE_NAME_LENGTH)
-                        strcpy(ip->ipv6->interface, value_str);
-                } else if (strcmp(ip_key, "Address") == 0) {
-                    dbus_message_iter_get_basic(&ip_value, &value_str);
-
-                    if (strlen(value_str) <= MAX_IP_STRING_LENGTH)
-                        strcpy(ip->ipv6->ip, value_str);
-                } else if (strcmp(ip_key, "Gateway") == 0) {
-                    dbus_message_iter_get_basic(&ip_value, &value_str);
-
-                    if (strlen(value_str) <= MAX_IP_STRING_LENGTH)
-                        strcpy(ip->ipv6->gateway, value_str);
-                } else if (strcmp(ip_key, "DomainNameServers") == 0) {
-                    dbus_message_iter_next(&ip_value);
-                    dbus_message_iter_recurse(&ip_value, &dns_iter);
-
-                    dns_count = dbus_message_iter_get_element_count(&dns_iter);
-                    if (dns_count <= MAX_DATA_DNS_COUNT)
-                        dbus_message_iter_get_fixed_array(&dns_iter, ip->ipv6->dns, &dns_count);
-                }
-
-                dbus_message_iter_next(iter);
-            }
-        }
-        dbus_message_iter_next(iter);
-    }
-}
-
 static void apn_list_loaded(DBusMessage* message, void* user_data)
 {
     tapi_async_handler* handler = user_data;
@@ -333,19 +392,15 @@ static void apn_list_loaded(DBusMessage* message, void* user_data)
         goto done;
     dbus_message_iter_recurse(&args, &list);
 
-    ar->status = OK;
     index = 0;
     while (dbus_message_iter_get_arg_type(&list) == DBUS_TYPE_STRUCT) {
         DBusMessageIter entry, dict;
-        char* path;
-
         tapi_apn_context* apn = malloc(sizeof(tapi_apn_context));
         if (apn == NULL)
             break;
 
         dbus_message_iter_recurse(&list, &entry);
-        dbus_message_iter_get_basic(&entry, &path);
-        strcpy(apn->id, path);
+        dbus_message_iter_get_basic(&entry, &apn->id);
 
         dbus_message_iter_next(&entry);
         dbus_message_iter_recurse(&entry, &dict);
@@ -356,6 +411,8 @@ static void apn_list_loaded(DBusMessage* message, void* user_data)
         if (index >= MAX_APN_LIST_CAPACITY)
             break;
     }
+
+    ar->status = OK;
     ar->arg2 = index; // apn count;
     ar->data = result;
 
@@ -393,94 +450,6 @@ static void apn_list_changd(DBusMessage* message, void* user_data)
     }
 
     cb(ar);
-}
-
-static void ip_setting_query_completed(DBusMessage* message, void* user_data)
-{
-    tapi_async_handler* handler = user_data;
-    tapi_async_result* ar;
-    tapi_async_function cb;
-    const char* type;
-    DBusMessageIter args, list;
-    DBusError err;
-    tapi_ip_settings* ip_settings = NULL;
-
-    if (handler == NULL)
-        return;
-
-    ar = handler->result;
-    if (ar == NULL)
-        return;
-
-    cb = handler->cb_function;
-    if (cb == NULL)
-        return;
-
-    dbus_error_init(&err);
-    if (dbus_set_error_from_message(&err, message) == true) {
-        tapi_log_error("%s: %s\n", err.name, err.message);
-        dbus_error_free(&err);
-        goto done;
-    }
-
-    if (dbus_message_has_signature(message, "a(oa{sv})") == false)
-        goto done;
-    if (dbus_message_iter_init(message, &args) == false)
-        goto done;
-
-    type = tapi_apn_context_type_to_string(ar->arg2);
-
-    ip_settings = malloc(sizeof(tapi_ip_settings));
-    if (ip_settings == NULL) {
-        goto done;
-    }
-    ip_settings->ipv4 = NULL;
-    ip_settings->ipv6 = NULL;
-
-    ip_settings->ipv4 = malloc(sizeof(tapi_ipv4_settings));
-    if (ip_settings->ipv4 == NULL) {
-        free(ip_settings);
-        ip_settings = NULL;
-        goto done;
-    }
-
-    ip_settings->ipv6 = malloc(sizeof(tapi_ipv6_settings));
-    if (ip_settings->ipv6 == NULL) {
-        free(ip_settings->ipv4);
-        ip_settings->ipv4 = NULL;
-        free(ip_settings);
-        ip_settings = NULL;
-        goto done;
-    }
-
-    dbus_message_iter_recurse(&args, &list);
-    while (dbus_message_iter_get_arg_type(&list) == DBUS_TYPE_STRUCT) {
-        DBusMessageIter entry, dict;
-        const char* path;
-
-        dbus_message_iter_recurse(&list, &entry);
-        dbus_message_iter_get_basic(&entry, &path);
-
-        dbus_message_iter_next(&entry);
-        dbus_message_iter_recurse(&entry, &dict);
-        update_ip_settings(&dict, type, ip_settings);
-
-        dbus_message_iter_next(&list);
-    }
-
-    ar->status = OK;
-    ar->data = ip_settings;
-
-done:
-    cb(ar);
-
-    if (ip_settings != NULL) {
-        if (ip_settings->ipv4 != NULL)
-            free(ip_settings->ipv4);
-        if (ip_settings->ipv6 != NULL)
-            free(ip_settings->ipv6);
-        free(ip_settings);
-    }
 }
 
 static void apn_context_append(DBusMessageIter* iter, void* user_data)
@@ -1007,50 +976,6 @@ int tapi_data_get_roaming_enabled(tapi_context context, bool* out)
     return -EINVAL;
 }
 
-int tapi_data_get_ip_settings(tapi_context context,
-    int slot_id, int event_id, tapi_apn_context_type type, tapi_async_function p_handle)
-{
-    dbus_context* ctx = context;
-    GDBusProxy* proxy;
-    tapi_async_handler* handler;
-    tapi_async_result* ar;
-
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || type <= 0) {
-        return -EINVAL;
-    }
-
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_DATA];
-    if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
-        return -EIO;
-    }
-
-    handler = malloc(sizeof(tapi_async_handler));
-    if (handler == NULL) {
-        return -ENOMEM;
-    }
-
-    ar = malloc(sizeof(tapi_async_result));
-    if (ar == NULL) {
-        free(handler);
-        return -ENOMEM;
-    }
-
-    ar->msg_id = event_id;
-    ar->arg1 = slot_id;
-    ar->arg2 = type;
-    handler->result = ar;
-    handler->cb_function = p_handle;
-
-    if (!g_dbus_proxy_method_call(proxy,
-            "GetContexts", NULL, ip_setting_query_completed, handler, user_data_free)) {
-        user_data_free(handler);
-        return -EINVAL;
-    }
-
-    return OK;
-}
-
 int tapi_data_set_default_data_slot(tapi_context context, int slot_id)
 {
     dbus_context* ctx = context;
@@ -1140,7 +1065,7 @@ int tapi_data_register(tapi_context context,
     case MSG_DATA_CONNECTION_STATE_CHANGE_IND:
         watch_id = g_dbus_add_signal_watch(ctx->connection,
             OFONO_SERVICE, modem_path, OFONO_CONNECTION_MANAGER_INTERFACE,
-            "DataConnectionChanged", data_connection_state_changed, handler, user_data_free);
+            "ContextChanged", data_connection_changed, handler, user_data_free);
         break;
     default:
         break;

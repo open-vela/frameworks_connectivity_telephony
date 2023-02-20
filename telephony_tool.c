@@ -133,7 +133,6 @@ static int telephonytool_cmd_set_data_roaming(tapi_context context, char* pargs)
 static int telephonytool_cmd_get_data_roaming(tapi_context context, char* pargs);
 static int telephonytool_cmd_set_data_enabled(tapi_context context, char* pargs);
 static int telephonytool_cmd_get_data_enabled(tapi_context context, char* pargs);
-static int telephonytool_cmd_get_ip_settings(tapi_context context, char* pargs);
 static int telephonytool_cmd_get_ps_attached(tapi_context context, char* pargs);
 static int telephonytool_cmd_get_ps_network_type(tapi_context context, char* pargs);
 static int telephonytool_cmd_set_pref_apn(tapi_context context, char* pargs);
@@ -296,8 +295,6 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         "set data enabled (enter example : data-set 0 1 [slot_id][state])" },
     { "data-get", telephonytool_cmd_get_data_enabled,
         "get data enabled (enter example : data-get 0 [slot_id])" },
-    { "ip-settings", telephonytool_cmd_get_ip_settings,
-        "get ip-settings (enter example : ip-settings 0 1 [slot_id][apn_type])" },
     { "listen-data", telephonytool_cmd_data_register,
         "listen data event (enter example : listen-data 0 1 [slot_id][event_id])" },
     { "ps-attached", telephonytool_cmd_get_ps_attached,
@@ -1406,31 +1403,6 @@ static int telephonytool_cmd_get_data_enabled(tapi_context context, char* pargs)
     syslog(LOG_DEBUG, "%s : %d \n", __func__, result);
 
     return 0;
-}
-
-static int telephonytool_cmd_get_ip_settings(tapi_context context, char* pargs)
-{
-    char* slot_id;
-    char* target_state;
-    int ret;
-
-    if (!strlen(pargs))
-        return -EINVAL;
-
-    slot_id = strtok_r(pargs, " ", &target_state);
-    if (slot_id == NULL)
-        return -EINVAL;
-
-    while (*target_state == ' ')
-        target_state++;
-
-    if (target_state == NULL)
-        return -EINVAL;
-
-    ret = tapi_data_get_ip_settings(context, atoi(slot_id),
-        EVENT_IP_SETTINGS_QUERY_DONE, atoi(target_state), tele_call_async_fun);
-
-    return ret;
 }
 
 static int telephonytool_cmd_get_ps_attached(tapi_context context, char* pargs)
