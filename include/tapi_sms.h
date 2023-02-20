@@ -33,6 +33,7 @@
 
 #define MAX_TIME_LENGTH 32
 #define MAX_TEXT_LENGTH 480
+#define MAX_MESSAGE_LIST_COUNT 200
 
 /****************************************************************************
  * Public Types
@@ -78,8 +79,8 @@ int tapi_sms_send_message(tapi_context context, int slot_id, char* number, char*
  * @param[in] text           send data text.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_sms_send_data_message(tapi_context context, int slot_id, char* dest_addr, int port,
-    char text[]);
+int tapi_sms_send_data_message(tapi_context context, int slot_id, char* dest_addr,
+    unsigned char port, char* text);
 
 /**
  * set service center number.
@@ -128,7 +129,7 @@ int tapi_sms_copy_message_to_sim(tapi_context context, int slot_id,
  * @param[in] index          message index.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_sms_delete_message_from_sim(tapi_context context, int slot_id, char* index);
+int tapi_sms_delete_message_from_sim(tapi_context context, int slot_id, int index);
 
 /**
  * register incoming message event.
