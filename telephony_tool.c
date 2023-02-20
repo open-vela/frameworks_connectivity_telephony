@@ -199,6 +199,8 @@ static int telephonytool_cmd_get_clir(tapi_context context, char* pargs);
 /** IMS interface*/
 static int telephonytool_cmd_ims_enable(tapi_context context, char* pargs);
 static int telephonytool_cmd_set_ims_service(tapi_context context, char* pargs);
+static int telephonytool_cmd_ims_register(tapi_context context, char* pargs);
+static int telephonytool_cmd_ims_get_registration(tapi_context context, char* pargs);
 
 /****************************************************************************
  * Private Data
@@ -425,6 +427,10 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     { "ims-cap", telephonytool_cmd_set_ims_service,
         "set ims service function (enter example : ims-cap 0 1 \
         [slot_id][cap-value: 1-voice 4-sms 5-voice&sms])" },
+    { "ims-listen", telephonytool_cmd_ims_register,
+        "listen ims registration(enter example : ims-listen 0 [slot_id]" },
+    { "ims-reg", telephonytool_cmd_ims_get_registration,
+        "get ims registration(enter example : ims-reg 0 [slot_id]" },
     { "q", NULL, "Quit (pls enter : q)" },
     { "help", telephonytool_cmd_help,
         "Show this message (pls enter : help)" },
@@ -513,6 +519,21 @@ static void tele_call_ecc_list_async_fun(tapi_async_result* result)
         for (int i = 0; i < list_length; i++) {
             syslog(LOG_DEBUG, "ecc number : %s \n", ret[i]);
         }
+    }
+}
+
+static void tele_ims_async_fun(tapi_async_result* result)
+{
+    int status = result->status;
+    tapi_ims_registration_info* info;
+
+    syslog(LOG_DEBUG, "%s : \n", __func__);
+    syslog(LOG_DEBUG, "msg_id : %d\n", result->msg_id);
+
+    if (status == OK) {
+        info = result->data;
+        syslog(LOG_DEBUG, "%s: ret_info: %d, ext_info: %d\n", __func__,
+            info->reg_info, info->ext_info);
     }
 }
 
@@ -2730,6 +2751,45 @@ static int telephonytool_cmd_set_ims_service(tapi_context context, char* pargs)
     syslog(LOG_DEBUG, "%s: slot_id: %d, action: %d\n", __func__, slot_id, service_type);
 
     return tapi_ims_set_service_status(context, slot_id, service_type);
+}
+
+static int telephonytool_cmd_ims_register(tapi_context context, char* pargs)
+{
+    char dst[1][CONFIG_NSH_LINELEN];
+    int cnt = split_input(dst, 1, pargs, " ");
+    int watch_id, slot_id;
+
+    if (cnt != 1)
+        return -EINVAL;
+
+    slot_id = atoi(dst[0]);
+
+    watch_id = tapi_ims_register_registration_change(context, slot_id, tele_ims_async_fun);
+    syslog(LOG_DEBUG, "%s: slot_id: %d, watch_id: %d\n", __func__, slot_id, watch_id);
+
+    return watch_id;
+}
+static int telephonytool_cmd_ims_get_registration(tapi_context context, char* pargs)
+{
+    char dst[1][CONFIG_NSH_LINELEN];
+    int cnt = split_input(dst, 1, pargs, " ");
+    tapi_ims_registration_info info;
+    int slot_id, ret;
+
+    if (cnt != 1)
+        return -EINVAL;
+
+    slot_id = atoi(dst[0]);
+
+    syslog(LOG_DEBUG, "%s: slot_id: %d\n", __func__, slot_id);
+
+    ret = tapi_ims_get_registration(context, slot_id, &info);
+    if (ret == OK) {
+        syslog(LOG_DEBUG, "%s: ret_info: %d, ext_info: %d\n", __func__,
+            info.reg_info, info.ext_info);
+    }
+
+    return ret;
 }
 
 static int telephonytool_cmd_help(tapi_context context, char* pargs)

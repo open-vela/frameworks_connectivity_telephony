@@ -18,6 +18,9 @@
  * Included Files
  ****************************************************************************/
 
+#include <stdlib.h>
+#include <string.h>
+
 #include "tapi_ims.h"
 #include "tapi_internal.h"
 
@@ -31,6 +34,28 @@
 /****************************************************************************
  * Private Function
  ****************************************************************************/
+
+static void ims_data_free(void* user_data)
+{
+    tapi_async_handler* handler = user_data;
+    tapi_async_result* ar;
+
+    if (handler != NULL) {
+        ar = handler->result;
+        if (ar != NULL)
+            free(ar);
+
+        free(handler);
+    }
+}
+
+static int tapi_ims_bitmask(int bit_mask, int bit_field, bool enabled)
+{
+    if (enabled)
+        return bit_mask | bit_field;
+    else
+        return bit_mask & ~bit_field;
+}
 
 static void set_ss_param_append(DBusMessageIter* iter, void* user_data)
 {
@@ -67,6 +92,64 @@ static int tapi_ims_enable(tapi_context context, int slot_id, int state)
     return OK;
 }
 
+static int ims_registration_changed(DBusConnection* connection, DBusMessage* message,
+    void* user_data)
+{
+    tapi_async_handler* handler = user_data;
+    DBusMessageIter iter, value_iter;
+    tapi_async_function cb;
+    tapi_async_result* ar;
+    handler = user_data;
+    unsigned char val;
+    int msg_id;
+    char* key;
+
+    if (handler == NULL)
+        return -EINVAL;
+
+    ar = handler->result;
+    if (ar == NULL)
+        return -EINVAL;
+
+    cb = handler->cb_function;
+    if (cb == NULL)
+        return -EINVAL;
+
+    msg_id = handler->result->msg_id;
+    if (dbus_message_is_signal(message, OFONO_VOICECALL_MANAGER_INTERFACE,
+            "PropertyChanged")
+        && msg_id == MSG_IMS_REGISTRATION_MESSAGE_IND) {
+
+        if (dbus_message_iter_init(message, &iter) == FALSE) {
+            handler->result->status = FALSE;
+            goto done;
+        }
+
+        dbus_message_iter_get_basic(&iter, &key);
+        dbus_message_iter_next(&iter);
+
+        handler->result->status = ERROR;
+
+        dbus_message_iter_recurse(&iter, &value_iter);
+        dbus_message_iter_get_basic(&value_iter, &val);
+
+        if (strcmp("Registered", key) == 0)
+            ar->arg1 = IMS_REG;
+        else if (strcmp("VoiceCapable", key) == 0)
+            ar->arg1 = VOICE_CAP;
+        else if (strcmp("SmsCapable", key) == 0)
+            ar->arg1 = SMS_CAP;
+
+        ar->arg2 = val;
+        ar->status = OK;
+
+        cb(ar);
+    }
+
+done:
+    return OK;
+}
+
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
@@ -99,6 +182,94 @@ int tapi_ims_set_service_status(tapi_context context, int slot_id, int capabilit
     if (!g_dbus_proxy_method_call(proxy, "ServiceStatus", set_ss_param_append,
             NULL, &capability, NULL))
         return -EIO;
+
+    return OK;
+}
+
+int tapi_ims_register_registration_change(tapi_context context, int slot_id, tapi_async_function p_handle)
+{
+    tapi_async_handler* handler;
+    dbus_context* ctx = context;
+    tapi_async_result* ar;
+    const char* path;
+    int watch_id;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+        return -EINVAL;
+    }
+
+    path = tapi_utils_get_modem_path(slot_id);
+    if (path == NULL) {
+        tapi_log_error("no available modem ...\n");
+        return -EIO;
+    }
+
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        return -ENOMEM;
+    }
+
+    handler = malloc(sizeof(tapi_async_handler));
+    if (handler == NULL) {
+        free(ar);
+        return -ENOMEM;
+    }
+
+    handler->cb_function = p_handle;
+    handler->result = ar;
+
+    ar->msg_id = MSG_IMS_REGISTRATION_MESSAGE_IND;
+    ar->arg1 = slot_id;
+
+    watch_id = g_dbus_add_signal_watch(ctx->connection,
+        OFONO_SERVICE, path, OFONO_IMS_INTERFACE, "PropertyChanged",
+        ims_registration_changed, handler, ims_data_free);
+
+    if (watch_id == 0) {
+        ims_data_free(handler);
+    }
+
+    return watch_id;
+}
+
+int tapi_ims_get_registration(tapi_context context, int slot_id,
+    tapi_ims_registration_info* ims_reg)
+{
+    dbus_context* ctx = context;
+    DBusMessageIter iter;
+    GDBusProxy* proxy;
+    unsigned char val;
+    int cap_value = 0;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || ims_reg == NULL) {
+        return -EINVAL;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_IMS];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    if (!g_dbus_proxy_get_property(proxy, "Registered", &iter))
+        return -EIO;
+
+    dbus_message_iter_get_basic(&iter, &val);
+    ims_reg->reg_info = val;
+
+    if (!g_dbus_proxy_get_property(proxy, "VoiceCapable", &iter))
+        return -EIO;
+
+    dbus_message_iter_get_basic(&iter, &val);
+    cap_value = tapi_ims_bitmask(cap_value, VOICE_CAPABLE_FLAG, val);
+
+    if (!g_dbus_proxy_get_property(proxy, "SmsCapable", &iter))
+        return -EIO;
+
+    dbus_message_iter_get_basic(&iter, &val);
+    cap_value = tapi_ims_bitmask(cap_value, SMS_CAPABLE_FLAG, val);
+
+    ims_reg->ext_info = cap_value;
 
     return OK;
 }

@@ -201,6 +201,9 @@ typedef enum {
     MSG_USSD_NOTIFICATION_RECEIVED_IND,
     MSG_USSD_REQUEST_RECEIVED_IND,
     MSG_USSD_PROPERTY_CHANGE_IND,
+
+    // IMS Indication Message
+    MSG_IMS_REGISTRATION_MESSAGE_IND
 } tapi_indication_msg;
 
 typedef void* tapi_context;
