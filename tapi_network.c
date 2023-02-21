@@ -262,7 +262,6 @@ static int network_state_changed(DBusConnection* connection,
     tapi_async_result* ar;
     tapi_async_function cb;
     tapi_registration_info* registration_info = NULL;
-    const char* sender;
 
     if (handler == NULL)
         return false;
@@ -278,10 +277,6 @@ static int network_state_changed(DBusConnection* connection,
     if (ar->msg_id != MSG_NETWORK_STATE_CHANGE_IND) {
         return false;
     }
-
-    sender = dbus_message_get_sender(message);
-    if (sender == NULL)
-        goto done;
 
     if (!dbus_message_iter_init(message, &args))
         goto done;
@@ -329,7 +324,6 @@ static int cellinfo_list_changed(DBusConnection* connection,
     tapi_async_result* ar;
     tapi_async_function cb;
     DBusMessageIter iter, list;
-    const char* sender;
     int cell_index;
 
     if (handler == NULL)
@@ -346,10 +340,6 @@ static int cellinfo_list_changed(DBusConnection* connection,
     if (ar->msg_id != MSG_CELLINFO_CHANGE_IND) {
         return false;
     }
-
-    sender = dbus_message_get_sender(message);
-    if (sender == NULL)
-        goto done;
 
     if (!dbus_message_iter_init(message, &iter))
         goto done;
@@ -401,7 +391,6 @@ static int signal_strength_changed(DBusConnection* connection,
     DBusMessageIter iter;
     DBusMessageIter var;
     const char* property;
-    const char* sender;
     int32_t strength;
 
     if (handler == NULL)
@@ -418,10 +407,6 @@ static int signal_strength_changed(DBusConnection* connection,
     if (ar->msg_id != MSG_SIGNAL_STRENGTH_STATE_CHANGE_IND) {
         return false;
     }
-
-    sender = dbus_message_get_sender(message);
-    if (sender == NULL)
-        goto done;
 
     if (!dbus_message_iter_init(message, &iter))
         goto done;
@@ -455,7 +440,6 @@ static int nitz_state_changed(DBusConnection* connection,
     tapi_async_result* ar;
     tapi_async_function cb;
     DBusMessageIter iter;
-    const char* sender;
     char result[128];
     tapi_network_time* nitz_time;
 
@@ -473,10 +457,6 @@ static int nitz_state_changed(DBusConnection* connection,
     if (ar->msg_id != MSG_NITZ_STATE_CHANGE_IND) {
         return false;
     }
-
-    sender = dbus_message_get_sender(message);
-    if (sender == NULL)
-        goto done;
 
     if (!dbus_message_iter_init(message, &iter))
         goto done;
@@ -547,6 +527,7 @@ static void network_register_cb(DBusMessage* message, void* user_data)
 static void cellinfo_request_complete(DBusMessage* message, void* user_data)
 {
     tapi_async_handler* handler = user_data;
+    tapi_cell_identity* identity;
     tapi_async_result* ar;
     tapi_async_function cb;
     DBusMessageIter iter, list;
@@ -569,8 +550,6 @@ static void cellinfo_request_complete(DBusMessage* message, void* user_data)
     if (cb == NULL)
         return;
 
-    ar->status = OK;
-
     dbus_error_init(&err);
     if (dbus_set_error_from_message(&err, message) == true) {
         tapi_log_error("%s: %s\n", err.name, err.message);
@@ -589,7 +568,7 @@ static void cellinfo_request_complete(DBusMessage* message, void* user_data)
 
     dbus_message_iter_recurse(&iter, &list);
 
-    tapi_cell_identity* identity = malloc(sizeof(tapi_cell_identity));
+    identity = malloc(sizeof(tapi_cell_identity));
     if (identity == NULL)
         return;
 
@@ -608,6 +587,7 @@ static void cellinfo_request_complete(DBusMessage* message, void* user_data)
         dbus_message_iter_next(&list);
     }
 
+    ar->status = OK;
     ar->data = identity;
 
 done:
@@ -718,8 +698,9 @@ static void registration_info_query_done(DBusMessage* message, void* user_data)
     if (cb == NULL)
         return;
 
-    registration_info = ar->data;
-    ar->status = OK;
+    registration_info = malloc(sizeof(registration_info));
+    if (registration_info == NULL)
+        return;
 
     dbus_error_init(&err);
     if (dbus_set_error_from_message(&err, message) == true) {
@@ -749,10 +730,14 @@ static void registration_info_query_done(DBusMessage* message, void* user_data)
         dbus_message_iter_next(&list);
     }
 
+    ar->status = OK;
     ar->data = registration_info;
 
 done:
     cb(ar);
+
+    if (registration_info != NULL)
+        free(registration_info);
 }
 
 static void operator_scan_complete(DBusMessage* message, void* user_data)
@@ -977,7 +962,7 @@ int tapi_network_scan(tapi_context context,
 }
 
 int tapi_network_get_serving_cellinfo(tapi_context context,
-    int slot_id, int event_id, tapi_cell_identity* cell, tapi_async_function p_handle)
+    int slot_id, int event_id, tapi_async_function p_handle)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
@@ -1006,7 +991,6 @@ int tapi_network_get_serving_cellinfo(tapi_context context,
 
     ar->msg_id = event_id;
     ar->arg1 = slot_id;
-    ar->data = cell;
     handler->result = ar;
     handler->cb_function = p_handle;
 
@@ -1020,7 +1004,7 @@ int tapi_network_get_serving_cellinfo(tapi_context context,
 }
 
 int tapi_network_get_neighbouring_cellinfo(tapi_context context,
-    int slot_id, tapi_async_function p_handle)
+    int slot_id, int event_id, tapi_async_function p_handle)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
@@ -1047,6 +1031,7 @@ int tapi_network_get_neighbouring_cellinfo(tapi_context context,
         return -ENOMEM;
     }
 
+    ar->msg_id = event_id;
     ar->arg1 = slot_id;
     handler->result = ar;
     handler->cb_function = p_handle;
@@ -1172,7 +1157,7 @@ int tapi_network_get_signalstrength(tapi_context context, int slot_id, tapi_sign
 }
 
 int tapi_network_get_registration_info(tapi_context context,
-    int slot_id, tapi_registration_info* out, tapi_async_function p_handle)
+    int slot_id, int event_id, tapi_async_function p_handle)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
@@ -1199,7 +1184,7 @@ int tapi_network_get_registration_info(tapi_context context,
         return -ENOMEM;
     }
 
-    ar->data = out;
+    ar->msg_id = event_id;
     handler->result = ar;
     handler->cb_function = p_handle;
 
