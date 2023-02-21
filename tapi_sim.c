@@ -39,6 +39,12 @@ typedef struct {
     char* new_pin;
 } sim_reset_pin_param;
 
+typedef struct {
+    int session_id;
+    char* pdu;
+    unsigned int len;
+} sim_transmit_apdu_param;
+
 /****************************************************************************
  * Private Function Prototypes
  ****************************************************************************/
@@ -46,12 +52,17 @@ typedef struct {
 static int sim_state_changed(DBusConnection* connection,
     DBusMessage* message, void* user_data);
 static void user_data_free(void* user_data);
+/* This method should be called if the data field needs to be recycled. */
+static void user_data_free2(void* user_data);
 static void change_pin_param_append(DBusMessageIter* iter, void* user_data);
 static void method_call_complete(DBusMessage* message, void* user_data);
 static void enter_pin_param_append(DBusMessageIter* iter, void* user_data);
 static void reset_pin_param_append(DBusMessageIter* iter, void* user_data);
 static void lock_pin_param_append(DBusMessageIter* iter, void* user_data);
 static void unlock_pin_param_append(DBusMessageIter* iter, void* user_data);
+static void open_channel_param_append(DBusMessageIter* iter, void* user_data);
+static void close_channel_param_append(DBusMessageIter* iter, void* user_data);
+static void transmit_apdu_param_append(DBusMessageIter* iter, void* user_data);
 
 /****************************************************************************
  * Private Functions
@@ -92,6 +103,27 @@ static void user_data_free(void* user_data)
     }
 }
 
+/* This method should be called if the data field needs to be recycled. */
+static void user_data_free2(void* user_data)
+{
+    tapi_async_handler* handler = user_data;
+    tapi_async_result* ar;
+    void* data;
+
+    if (handler != NULL) {
+        ar = handler->result;
+        if (ar != NULL) {
+            data = ar->data;
+            if (data != NULL)
+                free(data);
+
+            free(ar);
+        }
+
+        free(handler);
+    }
+}
+
 static void change_pin_param_append(DBusMessageIter* iter, void* user_data)
 {
     tapi_async_handler* param = user_data;
@@ -117,26 +149,17 @@ static void change_pin_param_append(DBusMessageIter* iter, void* user_data)
 
 static void method_call_complete(DBusMessage* message, void* user_data)
 {
-    tapi_async_handler* handler;
+    tapi_async_handler* handler = user_data;
     tapi_async_result* ar;
     tapi_async_function cb;
-    DBusMessageIter iter;
     DBusError err;
 
-    if (dbus_message_get_type(message) == DBUS_MESSAGE_TYPE_ERROR) {
-        const char* dbus_error = dbus_message_get_error_name(message);
-        tapi_log_error("%s error: %s \n", __func__, dbus_error);
-        return;
-    }
-
-    handler = user_data;
     if (handler == NULL)
         return;
 
     ar = handler->result;
     if (ar == NULL)
         return;
-    ar->status = OK;
 
     cb = handler->cb_function;
     if (cb == NULL)
@@ -150,10 +173,81 @@ static void method_call_complete(DBusMessage* message, void* user_data)
         goto done;
     }
 
+    ar->status = OK;
+
+done:
+    cb(ar);
+}
+
+static void open_logical_channel_cb(DBusMessage* message, void* user_data)
+{
+    DBusMessageIter iter;
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
+    tapi_async_function cb;
+    DBusError err;
+
+    handler = user_data;
+    if (handler == NULL)
+        return;
+
+    if ((ar = handler->result) == NULL || (cb = handler->cb_function) == NULL)
+        return;
+
+    dbus_error_init(&err);
+    if (dbus_set_error_from_message(&err, message) == true) {
+        tapi_log_error("%s: %s\n", err.name, err.message);
+        dbus_error_free(&err);
+        ar->status = ERROR;
+        goto done;
+    }
+
     if (dbus_message_iter_init(message, &iter) == false) {
         ar->status = ERROR;
         goto done;
     }
+
+    dbus_message_iter_get_basic(&iter, &ar->arg2); /*session id*/
+
+    ar->status = OK;
+
+done:
+    cb(ar);
+}
+
+static void transmit_apdu_cb(DBusMessage* message, void* user_data)
+{
+    DBusMessageIter iter;
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
+    tapi_async_function cb;
+    DBusError err;
+    char* response;
+
+    handler = user_data;
+    if (handler == NULL)
+        return;
+
+    if ((ar = handler->result) == NULL || (cb = handler->cb_function) == NULL)
+        return;
+
+    dbus_error_init(&err);
+    if (dbus_set_error_from_message(&err, message) == true) {
+        tapi_log_error("%s: %s\n", err.name, err.message);
+        dbus_error_free(&err);
+        ar->status = ERROR;
+        goto done;
+    }
+
+    if (dbus_message_iter_init(message, &iter) == false) {
+        ar->status = ERROR;
+        goto done;
+    }
+
+    dbus_message_iter_get_basic(&iter, &response);
+
+    ar->data = response;
+    ar->status = OK;
 
 done:
     cb(ar);
@@ -240,6 +334,57 @@ static void unlock_pin_param_append(DBusMessageIter* iter, void* user_data)
 
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &pin_type);
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &pin);
+}
+
+static void open_channel_param_append(DBusMessageIter* iter, void* user_data)
+{
+    tapi_async_handler* param = user_data;
+    char* aid;
+
+    if (param == NULL || param->result == NULL) {
+        tapi_log_error("invalid argument!");
+        return;
+    }
+
+    aid = param->result->data;
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &aid);
+}
+
+static void close_channel_param_append(DBusMessageIter* iter, void* user_data)
+{
+    tapi_async_handler* param = user_data;
+    int session_id;
+
+    if (param == NULL || param->result == NULL) {
+        tapi_log_error("invalid argument!");
+        return;
+    }
+
+    session_id = param->result->arg2;
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &session_id);
+}
+
+static void transmit_apdu_param_append(DBusMessageIter* iter, void* user_data)
+{
+    tapi_async_handler* param = user_data;
+    sim_transmit_apdu_param* transmit_apdu_param;
+    int session_id;
+    unsigned int len;
+    char* pdu;
+
+    if (param == NULL || param->result == NULL) {
+        tapi_log_error("invalid argument!");
+        return;
+    }
+
+    transmit_apdu_param = param->result->data;
+    session_id = transmit_apdu_param->session_id;
+    pdu = transmit_apdu_param->pdu;
+    len = transmit_apdu_param->len;
+
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &session_id);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &pdu);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_UINT32, &len);
 }
 
 /****************************************************************************
@@ -466,8 +611,8 @@ int tapi_sim_change_pin(tapi_context context, int slot_id,
     user_data->result = ar;
 
     if (!g_dbus_proxy_method_call(proxy, "ChangePin",
-            change_pin_param_append, method_call_complete, user_data, user_data_free)) {
-        user_data_free(user_data);
+            change_pin_param_append, method_call_complete, user_data, user_data_free2)) {
+        user_data_free2(user_data);
         return -EINVAL;
     }
 
@@ -520,8 +665,8 @@ int tapi_sim_enter_pin(tapi_context context, int slot_id,
     user_data->result = ar;
 
     if (!g_dbus_proxy_method_call(proxy, "EnterPin",
-            enter_pin_param_append, method_call_complete, user_data, user_data_free)) {
-        user_data_free(user_data);
+            enter_pin_param_append, method_call_complete, user_data, user_data_free2)) {
+        user_data_free2(user_data);
         return -EINVAL;
     }
 
@@ -575,8 +720,8 @@ int tapi_sim_reset_pin(tapi_context context, int slot_id,
     user_data->result = ar;
 
     if (!g_dbus_proxy_method_call(proxy, "ResetPin",
-            reset_pin_param_append, method_call_complete, user_data, user_data_free)) {
-        user_data_free(user_data);
+            reset_pin_param_append, method_call_complete, user_data, user_data_free2)) {
+        user_data_free2(user_data);
         return -EINVAL;
     }
 
@@ -629,8 +774,8 @@ int tapi_sim_lock_pin(tapi_context context, int slot_id,
     user_data->result = ar;
 
     if (!g_dbus_proxy_method_call(proxy, "LockPin",
-            lock_pin_param_append, method_call_complete, user_data, user_data_free)) {
-        user_data_free(user_data);
+            lock_pin_param_append, method_call_complete, user_data, user_data_free2)) {
+        user_data_free2(user_data);
         return -EINVAL;
     }
 
@@ -683,8 +828,150 @@ int tapi_sim_unlock_pin(tapi_context context, int slot_id,
     user_data->result = ar;
 
     if (!g_dbus_proxy_method_call(proxy, "UnlockPin",
-            unlock_pin_param_append, method_call_complete, user_data, user_data_free)) {
+            unlock_pin_param_append, method_call_complete, user_data, user_data_free2)) {
+        user_data_free2(user_data);
+        return -EINVAL;
+    }
+
+    return OK;
+}
+
+int tapi_sim_open_logical_channel(tapi_context context, int slot_id,
+    int event_id, char* aid, tapi_async_function p_handle)
+{
+    tapi_async_handler* user_data;
+    dbus_context* ctx = context;
+    tapi_async_result* ar;
+    GDBusProxy* proxy;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
+        || aid == NULL) {
+        return -EINVAL;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        return -ENOMEM;
+    }
+    ar->msg_id = event_id;
+    ar->arg1 = slot_id;
+    ar->data = aid;
+
+    user_data = malloc(sizeof(tapi_async_handler));
+    if (user_data == NULL) {
+        free(ar);
+        return -ENOMEM;
+    }
+    user_data->cb_function = p_handle;
+    user_data->result = ar;
+
+    if (!g_dbus_proxy_method_call(proxy, "OpenLogicalChannel", open_channel_param_append,
+            open_logical_channel_cb, user_data, user_data_free)) {
         user_data_free(user_data);
+        return -EINVAL;
+    }
+
+    return OK;
+}
+
+int tapi_sim_close_logical_channel(tapi_context context, int slot_id,
+    int event_id, int session_id, tapi_async_function p_handle)
+{
+    tapi_async_handler* user_data;
+    dbus_context* ctx = context;
+    tapi_async_result* ar;
+    GDBusProxy* proxy;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+        return -EINVAL;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        return -ENOMEM;
+    }
+    ar->msg_id = event_id;
+    ar->arg1 = slot_id;
+    ar->arg2 = session_id;
+
+    user_data = malloc(sizeof(tapi_async_handler));
+    if (user_data == NULL) {
+        free(ar);
+        return -ENOMEM;
+    }
+    user_data->cb_function = p_handle;
+    user_data->result = ar;
+
+    if (!g_dbus_proxy_method_call(proxy, "CloseLogicalChannel", close_channel_param_append,
+            method_call_complete, user_data, user_data_free)) {
+        user_data_free(user_data);
+        return -EINVAL;
+    }
+
+    return OK;
+}
+
+int tapi_sim_transmit_apdu_logical_channel(tapi_context context, int slot_id,
+    int event_id, int session_id, char* pdu, unsigned int len, tapi_async_function p_handle)
+{
+    sim_transmit_apdu_param* transmit_apdu_param;
+    tapi_async_handler* user_data;
+    dbus_context* ctx = context;
+    tapi_async_result* ar;
+    GDBusProxy* proxy;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
+        || pdu == NULL) {
+        return -EINVAL;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    transmit_apdu_param = malloc(sizeof(sim_transmit_apdu_param));
+    if (transmit_apdu_param == NULL) {
+        return -ENOMEM;
+    }
+    transmit_apdu_param->session_id = session_id;
+    transmit_apdu_param->pdu = pdu;
+    transmit_apdu_param->len = len;
+
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        free(transmit_apdu_param);
+        return -ENOMEM;
+    }
+    ar->msg_id = event_id;
+    ar->arg1 = slot_id;
+    ar->data = transmit_apdu_param;
+
+    user_data = malloc(sizeof(tapi_async_handler));
+    if (user_data == NULL) {
+        free(transmit_apdu_param);
+        free(ar);
+        return -ENOMEM;
+    }
+    user_data->cb_function = p_handle;
+    user_data->result = ar;
+
+    if (!g_dbus_proxy_method_call(proxy, "TransmitApduLogicalChannel",
+            transmit_apdu_param_append, transmit_apdu_cb, user_data, user_data_free2)) {
+        user_data_free2(user_data);
         return -EINVAL;
     }
 

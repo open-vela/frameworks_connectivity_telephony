@@ -164,6 +164,45 @@ int tapi_sim_lock_pin(tapi_context context, int slot_id,
 int tapi_sim_unlock_pin(tapi_context context, int slot_id,
     int event_id, char* pin_type, char* pin, tapi_async_function p_handle);
 
+/**
+ * Open a new logical channel and select the given application.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] event_id       Async event identifier.
+ * @param[in] aid            Aid value.
+ * @param[in] p_handle       Event callback.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_sim_open_logical_channel(tapi_context context, int slot_id,
+    int event_id, char* aid, tapi_async_function p_handle);
+
+/**
+ * Close a previously opened logical channel given by
+ * the logical channel's session id.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] event_id       Async event identifier.
+ * @param[in] session_id     The logical channel's session id.
+ * @param[in] p_handle       Event callback.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_sim_close_logical_channel(tapi_context context, int slot_id,
+    int event_id, int session_id, tapi_async_function p_handle);
+
+/**
+ * Transmit an APDU to the ICC card over a previously opened logical channel.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] event_id       Async event identifier.
+ * @param[in] sessionid      The logical channel's session id.
+ * @param[in] pdu            Package Data Units.
+ * @param[in] len            The length of pdu.
+ * @param[in] p_handle       Event callback.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_sim_transmit_apdu_logical_channel(tapi_context context, int slot_id,
+    int event_id, int session_id, char* pdu, unsigned int len, tapi_async_function p_handle);
+
 #ifdef __cplusplus
 }
 #endif
