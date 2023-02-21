@@ -62,6 +62,10 @@ static void get_dbus_proxy(dbus_context* ctx)
             ctx->dbus_proxy[i][j] = g_dbus_proxy_new(
                 ctx->client, tapi_utils_get_modem_path(i), dbus_proxy_server[j]);
         }
+
+        for (int k = 0; k < MAX_VOICE_CALL_PROXY_COUNT; k++) {
+            ctx->dbus_voice_call_proxy[i][k] = NULL;
+        }
     }
 }
 

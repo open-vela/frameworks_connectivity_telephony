@@ -62,7 +62,7 @@ static int tapi_call_signal_ecc_list_change(DBusMessage* message, tapi_async_han
 
 static int call_strcpy(char* dst, const char* src, int dst_size)
 {
-    if (dst == NULL || src == NULL || strlen(src) <= dst_size) {
+    if (dst == NULL || src == NULL || strlen(src) > dst_size) {
         return -EINVAL;
     }
 
