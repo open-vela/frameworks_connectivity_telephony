@@ -265,7 +265,7 @@ void tapi_call_tapi_get_call_by_state(tapi_context context, int slot_id,
  * @param[in] slot_id        Slot id of current sim.
  * @param[in] msg            Call state change event.
  * @param[in] p_handle       Event callback.
- * @return Zero on success; a negated errno value on failure.
+ * @return Positive value as watch_id on success; a negated errno value on failure.
  */
 int tapi_call_register_managercall_change(tapi_context context, int slot_id,
     tapi_indication_msg msg, tapi_async_function p_handle);
@@ -277,7 +277,7 @@ int tapi_call_register_managercall_change(tapi_context context, int slot_id,
  * @param[in] msg            Call info change event.
  * @param[in] call_id        Call id of current call.
  * @param[in] p_handle       Event callback.
- * @return Zero on success; a negated errno value on failure.
+ * @return Positive value as watch_id on success; a negated errno value on failure.
  */
 int tapi_call_register_call_info_change(tapi_context context, int slot_id, char* call_id,
     tapi_indication_msg msg, tapi_async_function p_handle);
