@@ -155,22 +155,22 @@ int tapi_network_scan(tapi_context context,
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[in] event_id       Async event identifier.
- * @param[in] cell           cell information returned from modem.
  * @param[in] p_handle       Event callback.
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_network_get_serving_cellinfo(tapi_context context,
-    int slot_id, int event_id, tapi_cell_identity* cell, tapi_async_function p_handle);
+    int slot_id, int event_id, tapi_async_function p_handle);
 
 /**
  * Get Neighborhood Information.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
+ * @param[in] event_id       Async event identifier.
  * @param[in] p_handle       Event callback.
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_network_get_neighbouring_cellinfo(tapi_context context,
-    int slot_id, tapi_async_function p_handle);
+    int slot_id, int event_id, tapi_async_function p_handle);
 
 /**
  * Get CS domain network type.
@@ -211,12 +211,12 @@ int tapi_network_get_signalstrength(tapi_context context, int slot_id, tapi_sign
  * Get current registration status infomation.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
- * @param[out] out           registration status infomation returned from modem.
+ * @param[in] event_id       Async event identifier.
  * @param[in] p_handle       Event callback.
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_network_get_registration_info(tapi_context context,
-    int slot_id, tapi_registration_info* out, tapi_async_function p_handle);
+    int slot_id, int event_id, tapi_async_function p_handle);
 
 /**
  * Register network event callback.

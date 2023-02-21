@@ -57,16 +57,17 @@
 #define EVENT_REGISTER_AUTO 0x0F
 #define EVENT_REGISTER_MANUAL 0x10
 #define EVENT_QUERY_SERVING_CELLINFO 0x11
+#define EVENT_QUERY_REGISTRATION_INFO 0x12
 
-#define EVENT_REQUEST_CALL_BARRING_DONE 0x12
-#define EVENT_CALL_BARRING_PASSWD_CHANGE_DONE 0x13
-#define EVENT_DISABLE_ALL_CALL_BARRINGS_DONE 0x14
-#define EVENT_DISABLE_ALL_INCOMING_DONE 0x15
-#define EVENT_DISABLE_ALL_OUTGOING_DONE 0x16
-#define EVENT_REQUEST_CALL_FORWARDING_DONE 0x17
-#define EVENT_DISABLE_CALL_FORWARDING_DONE 0x18
-#define EVENT_CANCEL_USSD_DONE 0x19
-#define EVENT_REQUEST_CALL_WAITING_DONE 0x1A
+#define EVENT_REQUEST_CALL_BARRING_DONE 0x13
+#define EVENT_CALL_BARRING_PASSWD_CHANGE_DONE 0x14
+#define EVENT_DISABLE_ALL_CALL_BARRINGS_DONE 0x15
+#define EVENT_DISABLE_ALL_INCOMING_DONE 0x16
+#define EVENT_DISABLE_ALL_OUTGOING_DONE 0x17
+#define EVENT_REQUEST_CALL_FORWARDING_DONE 0x18
+#define EVENT_DISABLE_CALL_FORWARDING_DONE 0x19
+#define EVENT_CANCEL_USSD_DONE 0x1A
+#define EVENT_REQUEST_CALL_WAITING_DONE 0x1B
 
 /****************************************************************************
  * Public Type Declarations
@@ -2240,7 +2241,6 @@ static int telephonytool_cmd_get_operator_name(tapi_context context, char* pargs
 static int telephonytool_cmd_get_net_registration_info(tapi_context context, char* pargs)
 {
     char* slot_id;
-    tapi_registration_info* registration_info = malloc(sizeof(tapi_registration_info));
 
     if (strlen(pargs) == 0)
         return -EINVAL;
@@ -2249,7 +2249,8 @@ static int telephonytool_cmd_get_net_registration_info(tapi_context context, cha
     if (slot_id == NULL)
         return -EINVAL;
 
-    tapi_network_get_registration_info(context, atoi(slot_id), registration_info, registration_info_query_complete);
+    tapi_network_get_registration_info(context, atoi(slot_id),
+        EVENT_QUERY_REGISTRATION_INFO, registration_info_query_complete);
 
     return 0;
 }
@@ -2309,9 +2310,6 @@ static int telephonytool_cmd_network_scan(tapi_context context, char* pargs)
 static int telephonytool_cmd_get_serving_cellinfo(tapi_context context, char* pargs)
 {
     char* slot_id;
-    tapi_cell_identity* celllist = NULL;
-
-    return 0;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
@@ -2321,9 +2319,7 @@ static int telephonytool_cmd_get_serving_cellinfo(tapi_context context, char* pa
         return -EINVAL;
 
     tapi_network_get_serving_cellinfo(context,
-        atoi(slot_id), EVENT_QUERY_SERVING_CELLINFO, celllist, tele_call_async_fun);
-    syslog(LOG_DEBUG, "%s, slotId : %s alpha_long value :%s \n", __func__,
-        slot_id, celllist->alpha_long);
+        atoi(slot_id), EVENT_QUERY_SERVING_CELLINFO, tele_call_async_fun);
 
     return 0;
 }
