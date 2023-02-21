@@ -226,7 +226,7 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     { "dial", telephonytool_cmd_dial,
         "Dial (enter example : dial 0 10086 0 [slot_id][number][hide_call_id, 0:show 1:hide])" },
     { "answer", telephonytool_cmd_answer_call,
-        "Answer (enter example : answer 0 0 [slot_id][action:0-answer 1-realse&answer])" },
+        "Answer (enter example : answer 0 0 [slot_id][action:0-answer 1-realse&answer][call_id])" },
     { "swap", telephonytool_cmd_swap_call,
         "call Swap (enter example : swap 0 1 [slot_id][action:1-hold 0-unhold])" },
     { "call-manager-listen", telephonytool_cmd_listen_call_manager_change,
@@ -238,7 +238,7 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         call-proxy [slot_id] [action:0-new 1-release] [call_id]" },
     { "call-info-listen", telephonytool_cmd_listen_call_info_change,
         "call info event callback (enter example : \
-        call-info-listen [slot_id] [call_event] [call_id]" },
+        call-info-listen [slot_id][call_id]" },
     { "hangup-all", telephonytool_cmd_hangup_all,
         "hangup all call (enter example : hangup-all 0 [slot_id])" },
     { "hangup", telephonytool_cmd_hangup_call,
