@@ -290,6 +290,30 @@ int tapi_ss_query_calling_line_restriction_info(tapi_context context, int slot_i
     tapi_clir_status* out);
 
 /**
+ * Sets the ICC fdn enabled or disabled.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] event_id       Async event identifier.
+ * @param[in] enable         Fdn enabled or disabled.
+ * @param[in] passwd         Pin2.
+ * @param[in] p_handle       Event callback.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_ss_enable_fdn(tapi_context context, int slot_id, int event_id,
+    bool enable, char* passwd, tapi_async_function p_handle);
+
+/**
+ * Queries the status of Fixed Dialing Numbers(FDN) lock state.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] event_id       Async event identifier.
+ * @param[in] p_handle       Event callback.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_ss_query_fdn(tapi_context context, int slot_id, int event_id,
+    tapi_async_function p_handle);
+
+/**
  * Registers SS event callback.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.

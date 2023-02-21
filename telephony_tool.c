@@ -70,6 +70,8 @@
 #define EVENT_REQUEST_CALL_WAITING_DONE 0x1B
 #define EVENT_SEND_USSD_DONE 0x1C
 #define EVENT_INITIATE_SERVICE_DONE 0x1D
+#define EVENT_ENABLE_FDN_DONE 0x1E
+#define EVENT_QUERY_FDN_DONE 0x1F
 
 /****************************************************************************
  * Public Type Declarations
@@ -200,6 +202,8 @@ static int telephonytool_cmd_set_call_waiting(tapi_context context, char* pargs)
 static int telephonytool_cmd_get_call_waiting(tapi_context context, char* pargs);
 static int telephonytool_cmd_get_clip(tapi_context context, char* pargs);
 static int telephonytool_cmd_get_clir(tapi_context context, char* pargs);
+static int telephonytool_cmd_enable_fdn(tapi_context context, char* pargs);
+static int telephonytool_cmd_query_fdn(tapi_context context, char* pargs);
 
 /** IMS interface*/
 static int telephonytool_cmd_ims_enable(tapi_context context, char* pargs);
@@ -428,6 +432,11 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         "get clip (enter example : get-clip 0 [slot_id])" },
     { "get-clir", telephonytool_cmd_get_clir,
         "get clir (enter example : get-clir 0 [slot_id])" },
+    { "enable-fdn", telephonytool_cmd_enable_fdn,
+        "enable fdn (enter example : enable-fdn 0 1 123456 \
+        [slot_id][enable 1 or disable 0][pin2])" },
+    { "query-fdn", telephonytool_cmd_query_fdn,
+        "query fdn (enter example : query-fdn 0 [slot_id])" },
     { "listen-ss", telephonytool_cmd_ss_register,
         "listen ss event (enter example : listen-ss 0 1 \
         [slot_id][event_id])" },
@@ -2745,6 +2754,55 @@ static int telephonytool_cmd_get_clir(tapi_context context, char* pargs)
     syslog(LOG_DEBUG, "%s, slotId : %s clir_status : %d \n", __func__, slot_id, clir_status);
 
     return 0;
+}
+
+static int telephonytool_cmd_enable_fdn(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* enable_fdn;
+    char* passwd;
+    char* temp;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &temp);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*temp == ' ')
+        temp++;
+
+    enable_fdn = strtok_r(temp, " ", &passwd);
+    if (enable_fdn == NULL)
+        return -EINVAL;
+
+    while (*passwd == ' ')
+        passwd++;
+
+    if (passwd == NULL)
+        return -EINVAL;
+
+    tapi_ss_enable_fdn(context, atoi(slot_id), EVENT_ENABLE_FDN_DONE,
+        (bool)atoi(enable_fdn), passwd, tele_call_async_fun);
+    syslog(LOG_DEBUG, "%s, slotId : %s enable_fdn : %s passwd : %s \n",
+        __func__, slot_id, enable_fdn, passwd);
+
+    return 0;
+}
+
+static int telephonytool_cmd_query_fdn(tapi_context context, char* pargs)
+{
+    char* slot_id;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", NULL);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    return tapi_ss_query_fdn(context, atoi(slot_id), EVENT_QUERY_FDN_DONE, tele_call_async_fun);
 }
 
 static int telephonytool_cmd_ss_register(tapi_context context, char* pargs)
