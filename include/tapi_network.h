@@ -72,6 +72,7 @@ typedef struct {
     tapi_roaming_type roaming_type;
     u_int32_t cell_id;
     u_int16_t lac;
+    u_int16_t denial_reason;
 } tapi_registration_info;
 
 typedef struct {
@@ -169,7 +170,7 @@ int tapi_network_get_serving_cellinfo(tapi_context context,
  * @param[in] p_handle       Event callback.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_network_get_neighbouring_cellinfo(tapi_context context,
+int tapi_network_get_neighbouring_cellinfos(tapi_context context,
     int slot_id, int event_id, tapi_async_function p_handle);
 
 /**
