@@ -101,6 +101,9 @@ static void fill_registration_info(const char* prop, DBusMessageIter* iter,
         dbus_message_iter_get_basic(iter, &value_str);
         parse_nitz(value_str, &nitz_time);
         registration_info->nitz_time = nitz_time;
+    } else if (strcmp(prop, "DenialReason") == 0) {
+        dbus_message_iter_get_basic(iter, &value_int);
+        registration_info->denial_reason = value_int;
     }
 }
 
@@ -183,24 +186,6 @@ static void update_network_operator(const char* prop, DBusMessageIter* iter, tap
     }
 }
 
-static void fill_neighbouring_cell_list(DBusMessageIter* iter, tapi_cell_identity* cell)
-{
-    while (dbus_message_iter_get_arg_type(iter) == DBUS_TYPE_DICT_ENTRY) {
-        DBusMessageIter entry, value;
-        const char* key;
-
-        dbus_message_iter_recurse(iter, &entry);
-        dbus_message_iter_get_basic(&entry, &key);
-
-        dbus_message_iter_next(&entry);
-        dbus_message_iter_recurse(&entry, &value);
-
-        fill_cell_identity(key, &value, cell);
-
-        dbus_message_iter_next(iter);
-    }
-}
-
 static void fill_cell_identity_list(DBusMessageIter* iter, tapi_cell_identity* cell)
 {
     while (dbus_message_iter_get_arg_type(iter) == DBUS_TYPE_DICT_ENTRY) {
@@ -258,37 +243,37 @@ static int network_state_changed(DBusConnection* connection,
     DBusMessage* message, void* user_data)
 {
     tapi_async_handler* handler = user_data;
-    DBusMessageIter args, list;
+    DBusMessageIter iter, list;
     tapi_async_result* ar;
     tapi_async_function cb;
-    tapi_registration_info* registration_info = NULL;
+    tapi_registration_info* registration_info;
 
     if (handler == NULL)
-        return false;
+        return 0;
 
     ar = handler->result;
     if (ar == NULL)
-        return false;
+        return 0;
 
     cb = handler->cb_function;
     if (cb == NULL)
-        return false;
+        return 0;
 
     if (ar->msg_id != MSG_NETWORK_STATE_CHANGE_IND) {
-        return false;
+        return 0;
     }
 
-    if (!dbus_message_iter_init(message, &args))
-        goto done;
+    if (dbus_message_iter_init(message, &iter) == false)
+        return 0;
 
-    if (dbus_message_iter_get_arg_type(&args) != DBUS_TYPE_ARRAY)
-        goto done;
+    if (dbus_message_iter_get_arg_type(&iter) != DBUS_TYPE_ARRAY)
+        return 0;
 
-    dbus_message_iter_recurse(&args, &list);
+    dbus_message_iter_recurse(&iter, &list);
 
     registration_info = malloc(sizeof(tapi_registration_info));
     if (registration_info == NULL)
-        goto done;
+        return 0;
 
     while (dbus_message_iter_get_arg_type(&list) == DBUS_TYPE_DICT_ENTRY) {
         DBusMessageIter entry, value;
@@ -304,15 +289,14 @@ static int network_state_changed(DBusConnection* connection,
         dbus_message_iter_next(&list);
     }
 
-    ar->data = registration_info;
     ar->status = OK;
-
-done:
+    ar->data = registration_info;
     cb(ar);
+
     if (registration_info != NULL)
         free(registration_info);
 
-    return true;
+    return 1;
 }
 
 static int cellinfo_list_changed(DBusConnection* connection,
@@ -327,25 +311,25 @@ static int cellinfo_list_changed(DBusConnection* connection,
     int cell_index;
 
     if (handler == NULL)
-        return false;
+        return 0;
 
     ar = handler->result;
     if (ar == NULL)
-        return false;
+        return 0;
 
     cb = handler->cb_function;
     if (cb == NULL)
-        return false;
+        return 0;
 
     if (ar->msg_id != MSG_CELLINFO_CHANGE_IND) {
-        return false;
+        return 0;
     }
 
-    if (!dbus_message_iter_init(message, &iter))
-        goto done;
+    if (dbus_message_iter_init(message, &iter) == false)
+        return 0;
 
     if (dbus_message_iter_get_arg_type(&iter) != DBUS_TYPE_ARRAY)
-        goto done;
+        return 0;
 
     dbus_message_iter_recurse(&iter, &list);
 
@@ -372,14 +356,13 @@ static int cellinfo_list_changed(DBusConnection* connection,
 
     ar->arg2 = cell_index; // cell_info count;
     ar->data = cell_info_list;
-
-done:
     cb(ar);
+
     while (--cell_index >= 0) {
         free(cell_info_list[cell_index]);
     }
 
-    return true;
+    return 1;
 }
 
 static int signal_strength_changed(DBusConnection* connection,
@@ -388,49 +371,40 @@ static int signal_strength_changed(DBusConnection* connection,
     tapi_async_handler* handler = user_data;
     tapi_async_result* ar;
     tapi_async_function cb;
-    DBusMessageIter iter;
-    DBusMessageIter var;
+    DBusMessageIter iter, var;
     const char* property;
     int32_t strength;
 
     if (handler == NULL)
-        return false;
+        return 0;
 
     ar = handler->result;
     if (ar == NULL)
-        return false;
+        return 0;
 
     cb = handler->cb_function;
     if (cb == NULL)
-        return false;
+        return 0;
 
     if (ar->msg_id != MSG_SIGNAL_STRENGTH_STATE_CHANGE_IND) {
-        return false;
+        return 0;
     }
 
-    if (!dbus_message_iter_init(message, &iter))
-        goto done;
-
-    if (dbus_message_iter_get_arg_type(&iter) != DBUS_TYPE_STRING)
-        goto done;
+    if (dbus_message_iter_init(message, &iter) == false)
+        return 0;
 
     dbus_message_iter_get_basic(&iter, &property);
     dbus_message_iter_next(&iter);
 
     dbus_message_iter_recurse(&iter, &var);
     if (strcmp(property, "Strength") == 0) {
-        if (dbus_message_iter_get_arg_type(&var) != DBUS_TYPE_BYTE)
-            goto done;
-
         dbus_message_iter_get_basic(&var, &strength);
+        ar->status = OK;
+        ar->arg2 = strength;
+        cb(ar);
     }
 
-    ar->arg2 = strength;
-    ar->status = OK;
-
-done:
-    cb(ar);
-    return true;
+    return 1;
 }
 
 static int nitz_state_changed(DBusConnection* connection,
@@ -439,46 +413,49 @@ static int nitz_state_changed(DBusConnection* connection,
     tapi_async_handler* handler = user_data;
     tapi_async_result* ar;
     tapi_async_function cb;
-    DBusMessageIter iter;
-    char result[128];
+    DBusMessageIter iter, var;
     tapi_network_time* nitz_time;
+    const char* property;
+    char* result;
 
     if (handler == NULL)
-        return false;
+        return 0;
 
     ar = handler->result;
     if (ar == NULL)
-        return false;
+        return 0;
 
     cb = handler->cb_function;
     if (cb == NULL)
-        return false;
+        return 0;
 
     if (ar->msg_id != MSG_NITZ_STATE_CHANGE_IND) {
-        return false;
+        return 0;
     }
 
-    if (!dbus_message_iter_init(message, &iter))
-        goto done;
+    if (dbus_message_iter_init(message, &iter) == false)
+        return 0;
 
-    if (dbus_message_iter_get_arg_type(&iter) != DBUS_TYPE_STRING)
-        goto done;
+    dbus_message_iter_get_basic(&iter, &property);
+    dbus_message_iter_next(&iter);
 
-    dbus_message_iter_get_basic(&iter, &result);
+    dbus_message_iter_recurse(&iter, &var);
+    if (strcmp(property, "NITZ") == 0) {
+        dbus_message_iter_get_basic(&var, &result);
+        nitz_time = malloc(sizeof(tapi_network_time));
+        if (nitz_time == NULL)
+            return 0;
+        parse_nitz(result, nitz_time);
 
-    nitz_time = malloc(sizeof(tapi_network_time));
-    if (nitz_time == NULL)
-        goto done;
+        ar->status = OK;
+        ar->data = nitz_time;
+        cb(ar);
 
-    parse_nitz(result, nitz_time);
-    ar->data = nitz_time;
+        if (nitz_time != NULL)
+            free(nitz_time);
+    }
 
-done:
-    cb(ar);
-    if (nitz_time != NULL)
-        free(nitz_time);
-
-    return true;
+    return 1;
 }
 
 static void user_data_free(void* user_data)
@@ -658,7 +635,7 @@ static void neighbouring_cellinfo_request_complete(DBusMessage* message, void* u
         dbus_message_iter_recurse(&list, &entry);
         dbus_message_iter_recurse(&entry, &dict);
 
-        fill_neighbouring_cell_list(&dict, cell_identity);
+        fill_cell_identity_list(&dict, cell_identity);
 
         neighbouring_cell_list[cell_index++] = cell_identity;
         if (cell_index >= MAX_CELL_INFO_LIST_SIZE)
@@ -698,7 +675,7 @@ static void registration_info_query_done(DBusMessage* message, void* user_data)
     if (cb == NULL)
         return;
 
-    registration_info = malloc(sizeof(registration_info));
+    registration_info = malloc(sizeof(tapi_registration_info));
     if (registration_info == NULL)
         return;
 
@@ -1003,7 +980,7 @@ int tapi_network_get_serving_cellinfo(tapi_context context,
     return OK;
 }
 
-int tapi_network_get_neighbouring_cellinfo(tapi_context context,
+int tapi_network_get_neighbouring_cellinfos(tapi_context context,
     int slot_id, int event_id, tapi_async_function p_handle)
 {
     dbus_context* ctx = context;
@@ -1203,11 +1180,11 @@ int tapi_network_register(tapi_context context,
     dbus_context* ctx = context;
     tapi_async_handler* handler;
     tapi_async_result* ar;
-    GDBusSignalFunction callback;
     char* modem_path;
     int watch_id;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
+        || msg < MSG_NETWORK_STATE_CHANGE_IND || msg > MSG_NITZ_STATE_CHANGE_IND) {
         return -EINVAL;
     }
 
@@ -1221,40 +1198,41 @@ int tapi_network_register(tapi_context context,
     if (handler == NULL)
         return -ENOMEM;
 
+    handler->cb_function = p_handle;
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
         free(handler);
         return -ENOMEM;
     }
-
+    handler->result = ar;
     ar->msg_id = msg;
     ar->arg1 = slot_id;
-    handler->result = ar;
-    handler->cb_function = p_handle;
 
     switch (msg) {
     case MSG_NETWORK_STATE_CHANGE_IND:
-        callback = network_state_changed;
+        watch_id = g_dbus_add_signal_watch(ctx->connection,
+            OFONO_SERVICE, modem_path, OFONO_NETWORK_REGISTRATION_INTERFACE,
+            "PropertyChanged", network_state_changed, handler, user_data_free);
         break;
     case MSG_CELLINFO_CHANGE_IND:
-        callback = cellinfo_list_changed;
+        watch_id = g_dbus_add_signal_watch(ctx->connection,
+            OFONO_SERVICE, modem_path, OFONO_NETMON_INTERFACE,
+            "CellInfoPropertyChanged", cellinfo_list_changed, handler, user_data_free);
         break;
     case MSG_SIGNAL_STRENGTH_STATE_CHANGE_IND:
-        callback = signal_strength_changed;
+        watch_id = g_dbus_add_signal_watch(ctx->connection,
+            OFONO_SERVICE, modem_path, OFONO_NETWORK_REGISTRATION_INTERFACE,
+            "PropertyChanged", signal_strength_changed, handler, user_data_free);
         break;
     case MSG_NITZ_STATE_CHANGE_IND:
-        callback = nitz_state_changed;
+        watch_id = g_dbus_add_signal_watch(ctx->connection,
+            OFONO_SERVICE, modem_path, OFONO_NETWORK_REGISTRATION_INTERFACE,
+            "PropertyChanged", nitz_state_changed, handler, user_data_free);
         break;
     default:
         break;
     }
 
-    if (callback == NULL)
-        return -EINVAL;
-
-    watch_id = g_dbus_add_signal_watch(ctx->connection,
-        OFONO_SERVICE, modem_path, OFONO_NETWORK_REGISTRATION_INTERFACE,
-        "PropertyChanged", callback, handler, user_data_free);
     if (watch_id == 0) {
         user_data_free(handler);
         return -EINVAL;

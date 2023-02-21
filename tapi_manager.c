@@ -131,8 +131,6 @@ static void modem_list_query_done(DBusMessage* message, void* user_data)
     if (cb == NULL)
         return;
 
-    ar->status = OK;
-
     dbus_error_init(&err);
     if (dbus_set_error_from_message(&err, message) == true) {
         tapi_log_error("%s: %s\n", err.name, err.message);
@@ -156,6 +154,7 @@ static void modem_list_query_done(DBusMessage* message, void* user_data)
             break;
         dbus_message_iter_next(&list);
     }
+    ar->status = OK;
     ar->arg1 = index; // modem count;
     ar->data = result;
 
