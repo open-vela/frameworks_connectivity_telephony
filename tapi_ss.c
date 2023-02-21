@@ -124,6 +124,19 @@ static void send_ussd_param_append(DBusMessageIter* iter, void* user_data)
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &send_ussd_param);
 }
 
+static void enable_fdn_param_append(DBusMessageIter* iter, void* user_data)
+{
+    tapi_async_handler* param;
+    char* passwd;
+
+    param = user_data;
+    if (param == NULL || param->result == NULL)
+        return;
+
+    passwd = param->result->data;
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &passwd);
+}
+
 static void fill_call_forwarding(const char* prop,
     DBusMessageIter* iter, tapi_call_forwarding_info* cf)
 {
@@ -405,6 +418,42 @@ static void ss_send_ussd_cb(DBusMessage* message, void* user_data)
     dbus_message_iter_get_basic(&value, &response);
 
     ar->data = response;
+    ar->status = OK;
+
+done:
+    cb(ar);
+}
+
+static void query_fdn_cb(DBusMessage* message, void* user_data)
+{
+    DBusMessageIter iter;
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
+    tapi_async_function cb;
+    DBusError err;
+
+    handler = user_data;
+    if (handler == NULL)
+        return;
+
+    if ((ar = handler->result) == NULL || (cb = handler->cb_function) == NULL)
+        return;
+
+    dbus_error_init(&err);
+    if (dbus_set_error_from_message(&err, message) == true) {
+        tapi_log_error("%s: %s\n", err.name, err.message);
+        dbus_error_free(&err);
+        ar->status = ERROR;
+        goto done;
+    }
+
+    if (dbus_message_iter_init(message, &iter) == false) {
+        ar->status = ERROR;
+        goto done;
+    }
+
+    dbus_message_iter_get_basic(&iter, &ar->arg2);
+
     ar->status = OK;
 
 done:
@@ -1414,6 +1463,93 @@ int tapi_ss_query_calling_line_restriction_info(tapi_context context, int slot_i
     }
 
     return -EINVAL;
+}
+
+int tapi_ss_enable_fdn(tapi_context context, int slot_id, int event_id,
+    bool enable, char* passwd, tapi_async_function p_handle)
+{
+    dbus_context* ctx = context;
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
+    GDBusProxy* proxy;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || passwd == NULL) {
+        return -EINVAL;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    handler = malloc(sizeof(tapi_async_handler));
+    if (handler == NULL)
+        return -ENOMEM;
+
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        free(handler);
+        return -ENOMEM;
+    }
+
+    handler->result = ar;
+    ar->arg1 = slot_id;
+    ar->msg_id = event_id;
+    ar->data = passwd;
+    handler->cb_function = p_handle;
+
+    if (!g_dbus_proxy_method_call(proxy, enable ? "EnableFdn" : "DisableFdn",
+            enable_fdn_param_append, method_call_complete, handler, user_data_free)) {
+        tapi_log_error("failed to enable fdn \n");
+        user_data_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
+}
+
+int tapi_ss_query_fdn(tapi_context context, int slot_id, int event_id,
+    tapi_async_function p_handle)
+{
+    dbus_context* ctx = context;
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
+    GDBusProxy* proxy;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+        return -EINVAL;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    handler = malloc(sizeof(tapi_async_handler));
+    if (handler == NULL)
+        return -ENOMEM;
+
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        free(handler);
+        return -ENOMEM;
+    }
+
+    handler->result = ar;
+    ar->arg1 = slot_id;
+    ar->msg_id = event_id;
+    handler->cb_function = p_handle;
+
+    if (!g_dbus_proxy_method_call(proxy, "QueryFdn", NULL,
+            query_fdn_cb, handler, user_data_free)) {
+        tapi_log_error("failed to query fdn \n");
+        user_data_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_ss_register(tapi_context context,
