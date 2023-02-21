@@ -56,22 +56,23 @@
 #define EVENT_NETWORK_SCAN 0x0E
 #define EVENT_REGISTER_AUTO 0x0F
 #define EVENT_REGISTER_MANUAL 0x10
-#define EVENT_QUERY_SERVING_CELLINFO 0x11
-#define EVENT_QUERY_REGISTRATION_INFO 0x12
+#define EVENT_QUERY_REGISTRATION_INFO 0x11
+#define EVENT_QUERY_SERVING_CELLINFO 0x12
+#define EVENT_QUERY_NEIGHBOURING_CELLINFOS 0x13
 
-#define EVENT_REQUEST_CALL_BARRING_DONE 0x13
-#define EVENT_CALL_BARRING_PASSWD_CHANGE_DONE 0x14
-#define EVENT_DISABLE_ALL_CALL_BARRINGS_DONE 0x15
-#define EVENT_DISABLE_ALL_INCOMING_DONE 0x16
-#define EVENT_DISABLE_ALL_OUTGOING_DONE 0x17
-#define EVENT_REQUEST_CALL_FORWARDING_DONE 0x18
-#define EVENT_DISABLE_CALL_FORWARDING_DONE 0x19
-#define EVENT_CANCEL_USSD_DONE 0x1A
-#define EVENT_REQUEST_CALL_WAITING_DONE 0x1B
-#define EVENT_SEND_USSD_DONE 0x1C
-#define EVENT_INITIATE_SERVICE_DONE 0x1D
-#define EVENT_ENABLE_FDN_DONE 0x1E
-#define EVENT_QUERY_FDN_DONE 0x1F
+#define EVENT_REQUEST_CALL_BARRING_DONE 0x14
+#define EVENT_CALL_BARRING_PASSWD_CHANGE_DONE 0x15
+#define EVENT_DISABLE_ALL_CALL_BARRINGS_DONE 0x16
+#define EVENT_DISABLE_ALL_INCOMING_DONE 0x17
+#define EVENT_DISABLE_ALL_OUTGOING_DONE 0x18
+#define EVENT_REQUEST_CALL_FORWARDING_DONE 0x19
+#define EVENT_DISABLE_CALL_FORWARDING_DONE 0x1A
+#define EVENT_CANCEL_USSD_DONE 0x1B
+#define EVENT_REQUEST_CALL_WAITING_DONE 0x1C
+#define EVENT_SEND_USSD_DONE 0x1D
+#define EVENT_INITIATE_SERVICE_DONE 0x1E
+#define EVENT_ENABLE_FDN_DONE 0x1F
+#define EVENT_QUERY_FDN_DONE 0x20
 
 /****************************************************************************
  * Public Type Declarations
@@ -175,7 +176,9 @@ static int telephonytool_tapi_cbs_register(tapi_context context, char* pargs);
 
 /** Network interface*/
 static int telephonytool_cmd_network_listen(tapi_context context, char* pargs);
+static int telephonytool_cmd_network_unlisten(tapi_context context, char* pargs);
 static int telephonytool_cmd_network_select_auto(tapi_context context, char* pargs);
+static int telephonytool_cmd_network_select_manual(tapi_context context, char* pargs);
 static int telephonytool_cmd_query_signalstrength(tapi_context context, char* pargs);
 static int telephonytool_cmd_get_operator_name(tapi_context context, char* pargs);
 static int telephonytool_cmd_get_net_registration_info(tapi_context context, char* pargs);
@@ -183,6 +186,7 @@ static int telephonytool_cmd_get_voice_networktype(tapi_context context, char* p
 static int telephonytool_cmd_is_voice_roaming(tapi_context context, char* pargs);
 static int telephonytool_cmd_network_scan(tapi_context context, char* pargs);
 static int telephonytool_cmd_get_serving_cellinfo(tapi_context context, char* pargs);
+static int telephonytool_cmd_get_neighbouring_cellInfos(tapi_context context, char* pargs);
 
 /** SS interface*/
 static int telephonytool_cmd_ss_register(tapi_context context, char* pargs);
@@ -373,9 +377,13 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     { "delete-sms-from-sim", telephonytool_tapi_sms_delete_message_from_sim,
         "send message (enter example : delete-sms-from-sim 0 1)" },
     { "listen-network", telephonytool_cmd_network_listen,
-        "listen-network (enter example : listen-network 0 14 [slot_id][event_id])" },
+        "listen-network (enter example : listen-network 0 13 [slot_id][event_id])" },
+    { "unlisten-network", telephonytool_cmd_network_unlisten,
+        "unlisten-network (enter example : unlisten-network 0 [slot_id])" },
     { "register-auto", telephonytool_cmd_network_select_auto,
         "register auto (enter example : register-auto 0 [slot_id])" },
+    { "register-manual", telephonytool_cmd_network_select_manual,
+        "register manual (enter example : register-manual 0 [slot_id])" },
     { "signalstrength", telephonytool_cmd_query_signalstrength,
         "signalstrength (enter example : signalstrength 0 [slot_id])" },
     { "operator-name", telephonytool_cmd_get_operator_name,
@@ -390,6 +398,8 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         "network-scan  (enter example : network-scan 0 [slot_id])" },
     { "serving-cellinfo", telephonytool_cmd_get_serving_cellinfo,
         "get serving cellinfo  (enter example : serving-cellinfo 0)" },
+    { "neighbouring-cellInfos", telephonytool_cmd_get_neighbouring_cellInfos,
+        "get neighbouring cellInfos  (enter example : neighbouring-cellInfos 0)" },
     { "set-callbarring", telephonytool_cmd_set_call_barring,
         "set callbarring (enter example : set-callbarring 0 AI 1234 \
         [slot_id][facility][pin2])" },
@@ -622,16 +632,51 @@ static void call_list_query_complete(tapi_async_result* result)
     }
 }
 
-static void registration_info_query_complete(tapi_async_result* result)
+static void network_event_callback(tapi_async_result* result)
 {
-    tapi_registration_info* info = result->data;
+    tapi_operator_info** operator_list;
+    tapi_operator_info* operator_info;
+    tapi_registration_info* info;
+    int msg, index;
 
-    syslog(LOG_DEBUG, "%s : \n", __func__);
-    if (info == NULL)
-        return;
+    msg = result->msg_id;
 
-    syslog(LOG_DEBUG, "reg_state = %d operator_name = %s mcc = %s mnc = %s \n",
-        info->reg_state, info->operator_name, info->mcc, info->mnc);
+    switch (msg) {
+    case EVENT_NETWORK_SCAN:
+        index = result->arg2;
+        operator_list = result->data;
+
+        while (--index >= 0) {
+            operator_info = *operator_list++;
+            syslog(LOG_DEBUG, "id : %s, name : %s, status : %d, mcc : %s, mnc : %s \n",
+                operator_info->id, operator_info->name, operator_info->status,
+                operator_info->mcc, operator_info->mnc);
+        }
+        break;
+    case EVENT_REGISTER_AUTO:
+        syslog(LOG_DEBUG, "register auto status : %d \n", result->status);
+        break;
+    case EVENT_REGISTER_MANUAL:
+        // TODO
+        break;
+    case EVENT_QUERY_REGISTRATION_INFO:
+        info = result->data;
+        syslog(LOG_DEBUG, "%s : \n", __func__);
+        if (info == NULL)
+            return;
+
+        syslog(LOG_DEBUG, "reg_state = %d operator_name = %s mcc = %s mnc = %s \n",
+            info->reg_state, info->operator_name, info->mcc, info->mnc);
+        break;
+    case EVENT_QUERY_SERVING_CELLINFO:
+        // TODO
+        break;
+    case EVENT_QUERY_NEIGHBOURING_CELLINFOS:
+        // TODO
+        break;
+    default:
+        break;
+    }
 }
 
 static int telephonytool_cmd_dial(tapi_context context, char* pargs)
@@ -2230,6 +2275,26 @@ static int telephonytool_cmd_network_listen(tapi_context context, char* pargs)
     return 0;
 }
 
+static int telephonytool_cmd_network_unlisten(tapi_context context, char* pargs)
+{
+    char* watch_id;
+    int ret;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    watch_id = strtok_r(pargs, " ", NULL);
+    if (watch_id == NULL)
+        return -EINVAL;
+
+    ret = tapi_network_unregister(context, atoi(watch_id));
+    syslog(LOG_DEBUG, "stop to watch network event : %s , with watch_id : \
+        %s with return value : %d \n",
+        watch_id, watch_id, ret);
+
+    return ret;
+}
+
 static int telephonytool_cmd_network_select_auto(tapi_context context, char* pargs)
 {
     char* slot_id;
@@ -2243,8 +2308,18 @@ static int telephonytool_cmd_network_select_auto(tapi_context context, char* par
         return -EINVAL;
 
     ret = tapi_network_select_auto(context,
-        atoi(slot_id), EVENT_REGISTER_AUTO, tele_call_async_fun);
+        atoi(slot_id), EVENT_REGISTER_AUTO, network_event_callback);
     syslog(LOG_DEBUG, "%s, slotId : %s value :%d \n", __func__, slot_id, ret);
+
+    return 0;
+}
+
+static int telephonytool_cmd_network_select_manual(tapi_context context, char* pargs)
+{
+    // TODO
+    // tapi_network_select_manual(context,
+    //     atoi(slot_id), EVENT_REGISTER_MANUAL, operator, network_event_callback);
+    syslog(LOG_DEBUG, "%s, currently does not support verification \n", __func__);
 
     return 0;
 }
@@ -2297,7 +2372,7 @@ static int telephonytool_cmd_get_net_registration_info(tapi_context context, cha
         return -EINVAL;
 
     tapi_network_get_registration_info(context, atoi(slot_id),
-        EVENT_QUERY_REGISTRATION_INFO, registration_info_query_complete);
+        EVENT_QUERY_REGISTRATION_INFO, network_event_callback);
 
     return 0;
 }
@@ -2351,7 +2426,7 @@ static int telephonytool_cmd_network_scan(tapi_context context, char* pargs)
         return -EINVAL;
 
     return tapi_network_scan(context,
-        atoi(slot_id), EVENT_NETWORK_SCAN, tele_call_async_fun);
+        atoi(slot_id), EVENT_NETWORK_SCAN, network_event_callback);
 }
 
 static int telephonytool_cmd_get_serving_cellinfo(tapi_context context, char* pargs)
@@ -2366,7 +2441,17 @@ static int telephonytool_cmd_get_serving_cellinfo(tapi_context context, char* pa
         return -EINVAL;
 
     tapi_network_get_serving_cellinfo(context,
-        atoi(slot_id), EVENT_QUERY_SERVING_CELLINFO, tele_call_async_fun);
+        atoi(slot_id), EVENT_QUERY_SERVING_CELLINFO, network_event_callback);
+
+    return 0;
+}
+
+static int telephonytool_cmd_get_neighbouring_cellInfos(tapi_context context, char* pargs)
+{
+    // TODO
+    // tapi_network_get_neighbouring_cellInfos(context,
+    //     atoi(slot_id), EVENT_QUERY_NEIGHBOURING_CELLINFOS, network_event_callback);
+    syslog(LOG_DEBUG, "%s, currently does not support verification \n", __func__);
 
     return 0;
 }
