@@ -42,6 +42,7 @@
 #define MAX_CALL_INCOMING_LINE_LENGTH 100
 #define MAX_CALL_START_TIME_LENGTH 100
 #define MAX_CALL_INFO_LENGTH 100
+#define MAX_CALL_LIST_COUNT 10
 
 /****************************************************************************
  * Public Types
@@ -92,11 +93,6 @@ typedef struct {
     unsigned char icon;
     bool is_emergency_number;
 } tapi_call_info;
-
-typedef struct call_list {
-    tapi_call_info* data;
-    struct call_list* next;
-} tapi_call_list;
 
 typedef struct {
     char call_id[MAX_CALL_ID_LENGTH + 1];
@@ -203,21 +199,20 @@ int tapi_call_deflect_call(tapi_context context, int slot_id, char* call_id, cha
  * Merge multiple calls into one conference call.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
- * @param[out] out           Call path list in conference session.
  * @param[in] p_handle       Event callback.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_call_merge_call(tapi_context context, int slot_id, char** out, tapi_async_function p_handle);
+int tapi_call_merge_call(tapi_context context, int slot_id, tapi_async_function p_handle);
 
 /**
  * Separate one call from one conference session.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
- * @param[out] out           Call path list in conference session.
  * @param[in] p_handle       Event callback.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_call_separate_call(tapi_context context, int slot_id, char* call_id, char** out, tapi_async_function p_handle);
+int tapi_call_separate_call(tapi_context context, int slot_id, char* call_id,
+    tapi_async_function p_handle);
 
 /**
  * Hangup one conference session.
@@ -243,14 +238,14 @@ int tapi_call_send_tones(void* context, int slot_id, char* tones);
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_call_get_all_calls(tapi_context context, int slot_id,
-    tapi_call_list* list, tapi_async_function p_handle);
+    tapi_async_function p_handle);
 
 /**
  * Get all calls.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[in] call_id        Call id of current call.
- * @param[out] info          Call info of queryed
+ * @param[out] info          Call info of queryed.
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_call_get_call_info(tapi_context context, int slot_id,
@@ -261,11 +256,13 @@ int tapi_call_get_call_info(tapi_context context, int slot_id,
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[in] state          Call state.
- * @param[in] call_list      Ongoing call list.
- * @param[out] info          Pointer or NULL if no any call is existing.
+ * @param[in] call_list      All calls of current sim.
+ * @param[in] size           Count of call list.
+ * @param[out] out_list      Call list of matched call state.
+ * @return Positive value as matched size on success; a negated errno value on failure.
  */
-void tapi_call_tapi_get_call_by_state(tapi_context context, int slot_id,
-    int state, tapi_call_list* call_list, tapi_call_info* info);
+int tapi_call_get_call_by_state(tapi_context context, int slot_id,
+    int state, tapi_call_info* call_list, int size, tapi_call_info* out_list);
 
 /**
  * Register call state change event
@@ -333,12 +330,6 @@ bool tapi_call_is_emergency_number(tapi_context context, char* number);
  * @return Positive value as watch_id on success; a negated errno value on failure.
  */
 int tapi_call_register_emergencylist_change(tapi_context context, int slot_id, tapi_async_function p_handle);
-
-/**
- * Recycle call list.
- * @param[in] head        Call list pointer.
- */
-void tapi_call_free_call_list(tapi_call_list* head);
 
 #ifdef __cplusplus
 }

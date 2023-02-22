@@ -40,11 +40,6 @@ typedef struct {
     int hide_callerid;
 } call_param;
 
-typedef struct {
-    char path[MAX_CALL_ID_LENGTH + 1];
-    void* out;
-} conference_param;
-
 /****************************************************************************
  * Private Function Prototypes
  ****************************************************************************/
@@ -182,21 +177,22 @@ static void call_param_append(DBusMessageIter* iter, void* user_data)
 static void deflect_param_append(DBusMessageIter* iter, void* user_data)
 {
     char* param = user_data;
+
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &param);
 }
 
 static void separate_param_append(DBusMessageIter* iter, void* user_data)
 {
     tapi_async_handler* param = user_data;
-    conference_param* conf_param = param->result->data;
+    char* path = param->result->data;
 
-    char* path = conf_param->path;
     dbus_message_iter_append_basic(iter, DBUS_TYPE_OBJECT_PATH, &path);
 }
 
 static void tone_param_append(DBusMessageIter* iter, void* user_data)
 {
     char* param = user_data;
+
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &param);
 }
 
@@ -318,14 +314,13 @@ static int call_property_changed(DBusConnection* connection, DBusMessage* messag
 
 static void merge_call_complete(DBusMessage* message, void* user_data)
 {
+    char* call_path_list[MAX_CONFERENCE_PARTICIPANT_COUNT];
     tapi_async_handler* handler = user_data;
-    conference_param* conf_param;
     DBusMessageIter iter, list;
     tapi_async_function cb;
     tapi_async_result* ar;
-    char** call_path_list;
     DBusError err;
-    int index;
+    int index = 0;
 
     if (handler == NULL)
         return;
@@ -357,20 +352,17 @@ static void merge_call_complete(DBusMessage* message, void* user_data)
     }
 
     dbus_message_iter_recurse(&iter, &list);
-    index = 0;
-    conf_param = ar->data;
-    call_path_list = (char**)conf_param->out;
     while (dbus_message_iter_get_arg_type(&list) == DBUS_TYPE_OBJECT_PATH) {
-        dbus_message_iter_get_basic(&list, &call_path_list[index++]); // object path
+        dbus_message_iter_get_basic(&list, &call_path_list[index++]);
         if (index >= MAX_CONFERENCE_PARTICIPANT_COUNT)
             break;
 
         dbus_message_iter_next(&list);
     }
 
-    free(conf_param);
+    ar->data = call_path_list;
     ar->status = OK;
-    ar->arg2 = index; //call count after merge success
+    ar->arg2 = index;
 
 done:
     cb(ar);
@@ -378,11 +370,12 @@ done:
 
 static void call_list_query_complete(DBusMessage* message, void* user_data)
 {
+    tapi_call_info call_list[MAX_CALL_LIST_COUNT];
     tapi_async_handler* handler = user_data;
-    tapi_call_list* call_list_head;
     DBusMessageIter args, list;
     tapi_async_function cb;
     tapi_async_result* ar;
+    int call_count = 0;
     DBusError err;
 
     if (handler == NULL)
@@ -413,26 +406,22 @@ static void call_list_query_complete(DBusMessage* message, void* user_data)
 
     dbus_message_iter_recurse(&args, &list);
 
-    //create call list
-    call_list_head = NULL;
     while (dbus_message_iter_get_arg_type(&list) == DBUS_TYPE_STRUCT) {
         DBusMessageIter entry;
 
         dbus_message_iter_recurse(&list, &entry);
         if (dbus_message_iter_get_arg_type(&entry) == DBUS_TYPE_OBJECT_PATH) {
-            tapi_call_info* voicecall = malloc(sizeof(tapi_call_info));
-            if (voicecall == NULL)
-                goto done;
 
-            decode_voice_call_info(&entry, voicecall);
-            call_list_head = tapi_add_call_to_list(call_list_head, voicecall);
+            decode_voice_call_info(&entry, call_list + call_count);
+            call_count++;
         }
 
         dbus_message_iter_next(&list);
     }
 
+    ar->arg2 = call_count;
     ar->status = OK;
-    ar->data = call_list_head;
+    ar->data = call_list;
 
 done:
     cb(ar);
@@ -440,38 +429,32 @@ done:
 
 static int tapi_call_signal_call_added(DBusMessage* message, tapi_async_handler* handler)
 {
+    tapi_call_info voicecall;
     tapi_async_result* ar;
     tapi_async_function cb;
     DBusMessageIter iter;
-    int ret = false;
 
     if (handler == NULL)
-        return false;
+        return -EINVAL;
 
     ar = handler->result;
     if (ar == NULL)
-        return false;
+        return -EINVAL;
 
     cb = handler->cb_function;
     if (cb == NULL)
-        return false;
+        return -EINVAL;
 
     if (tapi_is_call_signal_message(message, &iter, DBUS_TYPE_OBJECT_PATH)) {
-        tapi_call_info* voicecall = malloc(sizeof(tapi_call_info));
-        if (voicecall == NULL)
-            return false;
 
-        if (decode_voice_call_info(&iter, voicecall)) {
-            ar->data = voicecall;
+        if (decode_voice_call_info(&iter, &voicecall)) {
+            ar->data = &voicecall;
             ar->status = OK;
             cb(ar);
         }
-
-        ret = true;
-        dbus_free(voicecall);
     }
 
-    return ret;
+    return OK;
 }
 
 static int tapi_call_signal_normal(DBusMessage* message, tapi_async_handler* handler, int msg_type)
@@ -556,6 +539,8 @@ static int decode_voice_call_info(DBusMessageIter* iter, tapi_call_info* call_in
 {
     DBusMessageIter subArrayIter;
     char* property;
+
+    memset(call_info, 0, sizeof(tapi_call_info));
 
     dbus_message_iter_get_basic(iter, &property);
     if (call_strcpy(call_info->call_id, property, MAX_CALL_ID_LENGTH) != 0) {
@@ -911,20 +896,29 @@ int tapi_call_hangup_all_calls(tapi_context context, int slot_id)
     return manage_call_proxy_method(context, slot_id, "HangupAll");
 }
 
-void tapi_call_tapi_get_call_by_state(tapi_context context, int slot_id,
-    int state, tapi_call_list* call_list, tapi_call_info* info)
+int tapi_call_get_call_by_state(tapi_context context, int slot_id,
+    int state, tapi_call_info* call_list, int size, tapi_call_info* info)
 {
     dbus_context* ctx = context;
+    int index = 0;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || !call_list || !info) {
-        return;
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
+        || call_list == NULL || info == NULL) {
+        return -EINVAL;
     }
 
-    tapi_get_call_by_state(call_list, state, info);
+    for (int i = 0; i < size; i++) {
+        if (call_list[i].state == state) {
+            memcpy(info + index, call_list + i, sizeof(tapi_call_info));
+            index++;
+        }
+    }
+
+    return index;
 }
 
 int tapi_call_get_all_calls(tapi_context context, int slot_id,
-    tapi_call_list* list, tapi_async_function p_handle)
+    tapi_async_function p_handle)
 {
     dbus_context* ctx = context;
     tapi_async_handler* handler;
@@ -946,13 +940,13 @@ int tapi_call_get_all_calls(tapi_context context, int slot_id,
         return -ENOMEM;
     }
     ar->arg1 = slot_id;
-    ar->data = list;
 
     handler = malloc(sizeof(tapi_async_handler));
     if (handler == NULL) {
         free(ar);
         return -ENOMEM;
     }
+
     handler->cb_function = p_handle;
     handler->result = ar;
 
@@ -1045,9 +1039,8 @@ int tapi_call_get_call_info(tapi_context context, int slot_id,
 }
 
 int tapi_call_merge_call(tapi_context context,
-    int slot_id, char** out, tapi_async_function p_handle)
+    int slot_id, tapi_async_function p_handle)
 {
-    conference_param* conf_param;
     dbus_context* ctx = context;
     tapi_async_handler* handler;
     tapi_async_result* ar;
@@ -1063,24 +1056,16 @@ int tapi_call_merge_call(tapi_context context,
         return -EIO;
     }
 
-    conf_param = malloc(sizeof(conference_param));
-    if (conf_param == NULL) {
-        return -ENOMEM;
-    }
-    conf_param->out = out;
-
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
-        free(conf_param);
         return -ENOMEM;
     }
+
     ar->msg_id = MSG_CALL_MERGE_IND;
     ar->arg1 = slot_id;
-    ar->data = conf_param;
 
     handler = malloc(sizeof(tapi_async_handler));
     if (handler == NULL) {
-        free(conf_param);
         free(ar);
         return -ENOMEM;
     }
@@ -1097,9 +1082,8 @@ int tapi_call_merge_call(tapi_context context,
 }
 
 int tapi_call_separate_call(tapi_context context,
-    int slot_id, char* call_id, char** out, tapi_async_function p_handle)
+    int slot_id, char* call_id, tapi_async_function p_handle)
 {
-    conference_param* conf_param;
     dbus_context* ctx = context;
     tapi_async_handler* handler;
     tapi_async_result* ar;
@@ -1115,26 +1099,16 @@ int tapi_call_separate_call(tapi_context context,
         return -EIO;
     }
 
-    conf_param = malloc(sizeof(conference_param));
-    if (conf_param == NULL) {
-        return -ENOMEM;
-    }
-
-    snprintf(conf_param->path, sizeof(conf_param->path), "%s", call_id);
-    conf_param->out = out;
-
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
-        free(conf_param);
         return -ENOMEM;
     }
     ar->msg_id = MSG_CALL_SEPERATE_IND;
     ar->arg1 = slot_id;
-    ar->data = conf_param;
+    ar->data = call_id;
 
     handler = malloc(sizeof(tapi_async_handler));
     if (handler == NULL) {
-        free(conf_param);
         free(ar);
         return -ENOMEM;
     }
@@ -1282,9 +1256,4 @@ int tapi_call_register_emergencylist_change(tapi_context context, int slot_id,
     return tapi_register_manager_call_signal(context, slot_id,
         OFONO_VOICECALL_MANAGER_INTERFACE, MSG_ECC_LIST_CHANGE_IND,
         p_handle, call_manager_property_changed);
-}
-
-void tapi_call_free_call_list(tapi_call_list* head)
-{
-    tapi_free_call_list(head);
 }
