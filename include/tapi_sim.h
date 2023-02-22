@@ -203,6 +203,19 @@ int tapi_sim_close_logical_channel(tapi_context context, int slot_id,
 int tapi_sim_transmit_apdu_logical_channel(tapi_context context, int slot_id,
     int event_id, int session_id, char* pdu, unsigned int len, tapi_async_function p_handle);
 
+/**
+ * Transmit an APDU to the ICC card over the basic channel.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] event_id       Async event identifier.
+ * @param[in] pdu            Package Data Units.
+ * @param[in] len            The length of pdu.
+ * @param[in] p_handle       Event callback.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_sim_transmit_apdu_basic_channel(tapi_context context, int slot_id,
+    int event_id, char* pdu, unsigned int len, tapi_async_function p_handle);
+
 #ifdef __cplusplus
 }
 #endif
