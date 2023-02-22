@@ -387,6 +387,26 @@ static void transmit_apdu_param_append(DBusMessageIter* iter, void* user_data)
     dbus_message_iter_append_basic(iter, DBUS_TYPE_UINT32, &len);
 }
 
+static void transmit_apdu_basic_channel_param_append(DBusMessageIter* iter, void* user_data)
+{
+    tapi_async_handler* param = user_data;
+    sim_transmit_apdu_param* transmit_apdu_param;
+    unsigned int len;
+    char* pdu;
+
+    if (param == NULL || param->result == NULL) {
+        tapi_log_error("invalid argument!");
+        return;
+    }
+
+    transmit_apdu_param = param->result->data;
+    pdu = transmit_apdu_param->pdu;
+    len = transmit_apdu_param->len;
+
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &pdu);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_UINT32, &len);
+}
+
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
@@ -971,6 +991,59 @@ int tapi_sim_transmit_apdu_logical_channel(tapi_context context, int slot_id,
 
     if (!g_dbus_proxy_method_call(proxy, "TransmitApduLogicalChannel",
             transmit_apdu_param_append, transmit_apdu_cb, user_data, user_data_free2)) {
+        user_data_free2(user_data);
+        return -EINVAL;
+    }
+
+    return OK;
+}
+
+int tapi_sim_transmit_apdu_basic_channel(tapi_context context, int slot_id,
+    int event_id, char* pdu, unsigned int len, tapi_async_function p_handle)
+{
+    sim_transmit_apdu_param* transmit_apdu_param;
+    tapi_async_handler* user_data;
+    dbus_context* ctx = context;
+    tapi_async_result* ar;
+    GDBusProxy* proxy;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || pdu == NULL) {
+        return -EINVAL;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    transmit_apdu_param = malloc(sizeof(sim_transmit_apdu_param));
+    if (transmit_apdu_param == NULL) {
+        return -ENOMEM;
+    }
+    transmit_apdu_param->pdu = pdu;
+    transmit_apdu_param->len = len;
+
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        free(transmit_apdu_param);
+        return -ENOMEM;
+    }
+    ar->msg_id = event_id;
+    ar->arg1 = slot_id;
+    ar->data = transmit_apdu_param;
+
+    user_data = malloc(sizeof(tapi_async_handler));
+    if (user_data == NULL) {
+        free(transmit_apdu_param);
+        free(ar);
+        return -ENOMEM;
+    }
+    user_data->cb_function = p_handle;
+    user_data->result = ar;
+
+    if (!g_dbus_proxy_method_call(proxy, "TransmitApduBasicChannel",
+            transmit_apdu_basic_channel_param_append, transmit_apdu_cb, user_data, user_data_free2)) {
         user_data_free2(user_data);
         return -EINVAL;
     }
