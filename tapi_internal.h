@@ -42,7 +42,7 @@
 #define tapi_log_debug(format, ...) syslog(LOG_DEBUG, format, ##__VA_ARGS__)
 
 #define MAX_CONTEXT_NAME_LENGTH 256
-#define MAX_VOICE_CALL_PROXY_COUNT 20
+#define MAX_VOICE_CALL_PROXY_COUNT 10
 
 /****************************************************************************
  * Public Types
@@ -110,10 +110,6 @@ char* tapi_utils_get_modem_path(int slot_id);
 enum tapi_call_status tapi_call_string_to_status(const char* str_status);
 enum tapi_call_disconnect_reason tapi_call_disconnected_reason_from_string(const char* str_status);
 bool tapi_is_call_signal_message(DBusMessage* message, DBusMessageIter* iter, int msg_type);
-tapi_call_list* tapi_add_call_to_list(tapi_call_list* head, tapi_call_info* new_val);
-void tapi_free_call_list(tapi_call_list* head);
-unsigned int tapi_get_call_count(tapi_call_list* First);
-int tapi_get_call_by_state(tapi_call_list* pfirst, int state, tapi_call_info* val);
 const char* tapi_get_call_signal_member(tapi_indication_msg msg);
 
 #ifdef __cplusplus

@@ -489,6 +489,16 @@ static void tele_call_async_fun(tapi_async_result* result)
     syslog(LOG_DEBUG, "result->status : %d\n", result->status);
     syslog(LOG_DEBUG, "result->arg1 : %d\n", result->arg1);
     syslog(LOG_DEBUG, "result->arg2 : %d\n", result->arg2);
+
+    if (result->msg_id == MSG_CALL_MERGE_IND || result->msg_id == MSG_CALL_SEPERATE_IND) {
+        char** ret = result->data;
+
+        syslog(LOG_DEBUG, "conference size : %d\n", result->arg2);
+
+        for (int i = 0; i < result->arg2; i++) {
+            syslog(LOG_DEBUG, "conference call id : %s\n", ret[i]);
+        }
+    }
 }
 
 static void tele_call_manager_call_async_fun(tapi_async_result* result)
@@ -585,18 +595,31 @@ static void modem_list_query_complete(tapi_async_result* result)
 
 static void call_list_query_complete(tapi_async_result* result)
 {
-    tapi_call_list* pHead = result->data;
+    tapi_call_info* call_info;
 
     syslog(LOG_DEBUG, "%s : \n", __func__);
-    if (pHead == NULL)
+    if (result->status != OK)
         return;
 
-    for (tapi_call_list* p = pHead; p != NULL; p = p->next) {
-        syslog(LOG_DEBUG, "call path : %s\n", p->data->call_id);
-    }
+    syslog(LOG_DEBUG, "call count: %d \n\n", result->arg2);
 
-    syslog(LOG_DEBUG, "result->status : %d \n", result->status);
-    tapi_call_free_call_list(pHead);
+    call_info = result->data;
+
+    for (int i = 0; i < result->arg2; i++) {
+
+        syslog(LOG_DEBUG, "call id: %s \n", call_info[i].call_id);
+        syslog(LOG_DEBUG, "call state: %d \n", call_info[i].state);
+        syslog(LOG_DEBUG, "call LineIdentification: %s \n", call_info[i].lineIdentification);
+        syslog(LOG_DEBUG, "call IncomingLine: %s \n", call_info[i].incoming_line);
+        syslog(LOG_DEBUG, "call Name: %s \n", call_info[i].name);
+        syslog(LOG_DEBUG, "call StartTime: %s \n", call_info[i].start_time);
+        syslog(LOG_DEBUG, "call Multiparty: %d \n", call_info[i].multiparty);
+        syslog(LOG_DEBUG, "call RemoteHeld: %d \n", call_info[i].remote_held);
+        syslog(LOG_DEBUG, "call RemoteMultiparty: %d \n", call_info[i].remote_multiparty);
+        syslog(LOG_DEBUG, "call Information: %s \n", call_info[i].info);
+        syslog(LOG_DEBUG, "call Icon: %d \n", call_info[i].icon);
+        syslog(LOG_DEBUG, "call Emergency: %d \n\n", call_info[i].is_emergency_number);
+    }
 }
 
 static void registration_info_query_complete(tapi_async_result* result)
@@ -638,8 +661,7 @@ static int telephonytool_cmd_dial(tapi_context context, char* pargs)
 
     syslog(LOG_DEBUG, "%s, slot_id: %s number: %s  hide_callerid: %s \n", __func__,
         slot_id, number, hide_callerid);
-    tapi_call_dial(context, atoi(slot_id), number, atoi(hide_callerid));
-    return 0;
+    return tapi_call_dial(context, atoi(slot_id), number, atoi(hide_callerid));
 }
 
 static int telephonytool_cmd_answer_call(tapi_context context, char* pargs)
@@ -686,27 +708,22 @@ static int telephonytool_cmd_hangup_all(tapi_context context, char* pargs)
         return -EINVAL;
 
     syslog(LOG_DEBUG, "%s, slotId : %s\n", __func__, slot_id);
-    tapi_call_hangup_all_calls(context, atoi(slot_id));
-    return 0;
+    return tapi_call_hangup_all_calls(context, atoi(slot_id));
 }
 
 static int telephonytool_cmd_hangup_call(tapi_context context, char* pargs)
 {
     char dst[2][CONFIG_NSH_LINELEN];
     int cnt = split_input(dst, 2, pargs, " ");
-    int ret = -EINVAL;
     char* slot_id;
+
+    if (cnt != 2)
+        return -EINVAL;
 
     slot_id = dst[0];
     syslog(LOG_DEBUG, "%s, slotId : %s\n", __func__, dst[0]);
 
-    if (cnt == 1) {
-        ret = tapi_call_hangup_call(context, atoi(slot_id), NULL);
-    } else if (cnt == 2) {
-        ret = tapi_call_hangup_call(context, atoi(slot_id), (char*)dst[1]);
-    }
-
-    return ret;
+    return tapi_call_hangup_call(context, atoi(slot_id), (char*)dst[1]);
 }
 
 static int telephonytool_cmd_release_and_swap(tapi_context context, char* pargs)
@@ -758,7 +775,7 @@ static int telephonytool_cmd_get_call(tapi_context context, char* pargs)
 
     if (cnt == 1) {
         slot_id = atoi(dst[0]);
-        ret = tapi_call_get_all_calls(context, slot_id, NULL, call_list_query_complete);
+        ret = tapi_call_get_all_calls(context, slot_id, call_list_query_complete);
     } else if (cnt == 2) {
         slot_id = atoi(dst[0]);
         call_id = dst[1];
@@ -897,15 +914,13 @@ static int telephonytool_cmd_transfer_call(tapi_context context, char* pargs)
     slot_id = dst[0];
     syslog(LOG_DEBUG, "%s, slotId : %s\n", __func__, slot_id);
 
-    tapi_call_transfer(context, atoi(slot_id));
-    return 0;
+    return tapi_call_transfer(context, atoi(slot_id));
 }
 
 static int telephonytool_cmd_merge_call(tapi_context context, char* pargs)
 {
     char dst[1][CONFIG_NSH_LINELEN];
     char* slot_id;
-    char* out[5];
     int cnt = split_input(dst, 1, pargs, " ");
 
     if (cnt != 1)
@@ -914,15 +929,13 @@ static int telephonytool_cmd_merge_call(tapi_context context, char* pargs)
     slot_id = dst[0];
     syslog(LOG_DEBUG, "%s, slotId : %s\n", __func__, slot_id);
 
-    tapi_call_merge_call(context, atoi(slot_id), out, tele_call_async_fun);
-    return 0;
+    return tapi_call_merge_call(context, atoi(slot_id), tele_call_async_fun);
 }
 
 static int telephonytool_cmd_separate_call(tapi_context context, char* pargs)
 {
     char dst[2][CONFIG_NSH_LINELEN];
     int cnt = split_input(dst, 2, pargs, " ");
-    char* out[5];
     char* slot_id;
 
     if (cnt != 2)
@@ -931,8 +944,7 @@ static int telephonytool_cmd_separate_call(tapi_context context, char* pargs)
     slot_id = dst[0];
     syslog(LOG_DEBUG, "%s, slotId : %s\n", __func__, slot_id);
 
-    tapi_call_separate_call(context, atoi(slot_id), dst[1], out, tele_call_async_fun);
-    return 0;
+    return tapi_call_separate_call(context, atoi(slot_id), dst[1], tele_call_async_fun);
 }
 
 static int telephonytool_cmd_get_ecc_list(tapi_context context, char* pargs)
@@ -955,7 +967,7 @@ static int telephonytool_cmd_get_ecc_list(tapi_context context, char* pargs)
         syslog(LOG_DEBUG, "ecc number : %s \n", out[i]);
     }
 
-    return 0;
+    return size;
 }
 
 static int telephonytool_cmd_is_emergency_number(tapi_context context, char* pargs)
