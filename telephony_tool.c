@@ -113,6 +113,7 @@ static int telephonytool_cmd_get_line_number(tapi_context context, char* pargs);
 static int telephonytool_cmd_dial(tapi_context context, char* pargs);
 static int telephonytool_cmd_hangup_all(tapi_context context, char* pargs);
 static int telephonytool_cmd_hangup_call(tapi_context context, char* pargs);
+static int telephonytool_cmd_release_and_swap(tapi_context context, char* pargs);
 static int telephonytool_cmd_answer_call(tapi_context context, char* pargs);
 static int telephonytool_cmd_swap_call(tapi_context context, char* pargs);
 static int telephonytool_cmd_listen_call_manager_change(tapi_context context, char* pargs);
@@ -251,6 +252,8 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         "hangup all call (enter example : hangup-all 0 [slot_id])" },
     { "hangup", telephonytool_cmd_hangup_call,
         "hangup (enter example : hangup 0 [call_id] /phonesim/voicecall01)" },
+    { "release-swap", telephonytool_cmd_release_and_swap,
+        "release and swap (enter example : release-swap 0 [slot_id])" },
     { "get-call", telephonytool_cmd_get_call,
         "get call list/call info (enter example : get-call 0 \
         [slot_id][call_id])" },
@@ -704,6 +707,20 @@ static int telephonytool_cmd_hangup_call(tapi_context context, char* pargs)
     }
 
     return ret;
+}
+
+static int telephonytool_cmd_release_and_swap(tapi_context context, char* pargs)
+{
+    char dst[1][CONFIG_NSH_LINELEN];
+    int cnt = split_input(dst, 1, pargs, " ");
+    char* slot_id;
+
+    if (cnt != 1)
+        return -EINVAL;
+
+    slot_id = dst[0];
+    syslog(LOG_DEBUG, "%s, slotId : %s\n", __func__, dst[0]);
+    return tapi_call_release_and_swap(context, atoi(slot_id));
 }
 
 static int telephonytool_cmd_swap_call(tapi_context context, char* pargs)
