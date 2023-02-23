@@ -550,7 +550,7 @@ static void tele_call_info_call_async_fun(tapi_async_result* result)
 static void tele_call_ecc_list_async_fun(tapi_async_result* result)
 {
     int status = result->status;
-    int list_length = result->arg1;
+    int list_length = result->arg2;
     char** ret = result->data;
 
     syslog(LOG_DEBUG, "%s : \n", __func__);
