@@ -158,6 +158,14 @@ int tapi_call_answer_call(tapi_context context, int slot_id, char* call_id, int 
 int tapi_call_release_and_answer(tapi_context context, int slot_id);
 
 /**
+ * Hangup one active call and active hold call.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_call_release_and_swap(tapi_context context, int slot_id);
+
+/**
  * Hold one active call as background call.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.

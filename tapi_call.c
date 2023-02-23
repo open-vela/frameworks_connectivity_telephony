@@ -200,27 +200,6 @@ static void tone_param_append(DBusMessageIter* iter, void* user_data)
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &param);
 }
 
-static int tapi_swap_call(tapi_context context, int slot_id)
-{
-    dbus_context* ctx = context;
-    GDBusProxy* proxy;
-
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
-        return -EINVAL;
-    }
-
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
-    if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
-        return -EIO;
-    }
-
-    if (!g_dbus_proxy_method_call(proxy, "SwapCalls", NULL, NULL, NULL, NULL))
-        return -EINVAL;
-
-    return OK;
-}
-
 static int
 call_manager_property_changed(DBusConnection* connection, DBusMessage* message,
     void* user_data)
@@ -741,6 +720,28 @@ static int tapi_register_manager_call_signal(tapi_context context, int slot_id, 
     return watch_id;
 }
 
+static int manage_call_proxy_method(tapi_context context, int slot_id, const char* member)
+{
+    dbus_context* ctx = context;
+    GDBusProxy* proxy;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || member == NULL) {
+        return -EINVAL;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    if (!g_dbus_proxy_method_call(proxy, member, NULL, NULL, NULL, NULL)) {
+        return -EINVAL;
+    }
+
+    return OK;
+}
+
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
@@ -806,48 +807,19 @@ int tapi_call_hangup_call(tapi_context context, int slot_id, char* call_id)
     return OK;
 }
 
+int tapi_call_release_and_swap(tapi_context context, int slot_id)
+{
+    return manage_call_proxy_method(context, slot_id, "ReleaseAndSwap");
+}
+
 int tapi_call_release_and_answer(tapi_context context, int slot_id)
 {
-    dbus_context* ctx = context;
-    GDBusProxy* proxy;
-
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
-        return -EINVAL;
-    }
-
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
-    if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
-        return -EIO;
-    }
-
-    if (!g_dbus_proxy_method_call(proxy, "ReleaseAndAnswer", NULL, NULL, NULL, NULL)) {
-        return -EINVAL;
-    }
-
-    return OK;
+    return manage_call_proxy_method(context, slot_id, "ReleaseAndAnswer");
 }
 
 int tapi_call_hold_and_answer(tapi_context context, int slot_id)
 {
-    dbus_context* ctx = context;
-    GDBusProxy* proxy;
-
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
-        return -EINVAL;
-    }
-
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
-    if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
-        return -EIO;
-    }
-
-    if (!g_dbus_proxy_method_call(proxy, "HoldAndAnswer", NULL, NULL, NULL, NULL)) {
-        return -EINVAL;
-    }
-
-    return OK;
+    return manage_call_proxy_method(context, slot_id, "HoldAndAnswer");
 }
 
 int tapi_call_answer_call(tapi_context context, int slot_id, char* call_id, int call_count)
@@ -892,46 +864,17 @@ int tapi_call_answer_call(tapi_context context, int slot_id, char* call_id, int 
 
 int tapi_call_hold_call(tapi_context context, int slot_id)
 {
-    dbus_context* ctx = context;
-
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
-        return -EINVAL;
-    }
-
-    return tapi_swap_call(context, slot_id);
+    return manage_call_proxy_method(context, slot_id, "SwapCalls");
 }
 
 int tapi_call_unhold_call(tapi_context context, int slot_id)
 {
-    dbus_context* ctx = context;
-
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
-        return -EINVAL;
-    }
-
-    return tapi_swap_call(context, slot_id);
+    return manage_call_proxy_method(context, slot_id, "SwapCalls");
 }
 
 int tapi_call_transfer(tapi_context context, int slot_id)
 {
-    dbus_context* ctx = context;
-    GDBusProxy* proxy;
-
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
-        return -EINVAL;
-    }
-
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
-    if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
-        return -EIO;
-    }
-
-    if (!g_dbus_proxy_method_call(proxy, "Transfer", NULL, NULL, NULL, NULL)) {
-        return -EINVAL;
-    }
-
-    return OK;
+    return manage_call_proxy_method(context, slot_id, "Transfer");
 }
 
 int tapi_call_deflect_call(tapi_context context, int slot_id, char* call_id, char* number)
@@ -965,24 +908,7 @@ int tapi_call_deflect_call(tapi_context context, int slot_id, char* call_id, cha
 
 int tapi_call_hangup_all_calls(tapi_context context, int slot_id)
 {
-    dbus_context* ctx = context;
-    GDBusProxy* proxy;
-
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
-        return -EINVAL;
-    }
-
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
-    if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
-        return -EIO;
-    }
-
-    if (!g_dbus_proxy_method_call(proxy, "HangupAll", NULL, NULL, NULL, NULL)) {
-        return -EINVAL;
-    }
-
-    return OK;
+    return manage_call_proxy_method(context, slot_id, "HangupAll");
 }
 
 void tapi_call_tapi_get_call_by_state(tapi_context context, int slot_id,
@@ -1226,24 +1152,7 @@ int tapi_call_separate_call(tapi_context context,
 
 int tapi_call_hangup_multiparty(tapi_context context, int slot_id)
 {
-    dbus_context* ctx = context;
-    GDBusProxy* proxy;
-
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
-        return -EINVAL;
-    }
-
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
-    if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
-        return -EIO;
-    }
-
-    if (!g_dbus_proxy_method_call(proxy, "multiparty_hangup", NULL, NULL, NULL, NULL)) {
-        return -EINVAL;
-    }
-
-    return OK;
+    return manage_call_proxy_method(context, slot_id, "multiparty_hangup");
 }
 
 int tapi_call_send_tones(void* context, int slot_id, char* tones)
