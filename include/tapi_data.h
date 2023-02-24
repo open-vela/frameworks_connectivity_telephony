@@ -81,6 +81,7 @@ typedef struct {
     char gateway[MAX_IP_STRING_LENGTH + 1];
     char* dns[MAX_DATA_DNS_COUNT + 1];
     char proxy[MAX_IP_STRING_LENGTH + 1];
+    char pcscf[MAX_IP_STRING_LENGTH + 1];
 } tapi_ipv4_settings;
 
 typedef struct {
@@ -88,11 +89,13 @@ typedef struct {
     char ip[MAX_IP_STRING_LENGTH + 1];
     char gateway[MAX_IP_STRING_LENGTH + 1];
     char* dns[MAX_DATA_DNS_COUNT + 1];
+    char pcscf[MAX_IP_STRING_LENGTH + 1];
 } tapi_ipv6_settings;
 
 typedef struct {
     tapi_ipv4_settings* ipv4;
     tapi_ipv6_settings* ipv6;
+    unsigned int mtu;
 } tapi_ip_settings;
 
 typedef struct {
