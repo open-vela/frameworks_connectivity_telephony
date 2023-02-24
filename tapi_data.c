@@ -79,6 +79,11 @@ static void parse_ipv4_properties(DBusMessageIter* iter, tapi_apn_context* dc)
 
                 dbus_message_iter_next(&dns_iter);
             }
+        } else if (strcmp(ip_key, "Pcscf") == 0) {
+            dbus_message_iter_get_basic(&ip_value, &value_str);
+
+            if (strlen(value_str) <= MAX_IP_STRING_LENGTH)
+                strcpy(dc->ip_settings->ipv4->pcscf, value_str);
         }
 
         dbus_message_iter_next(&ip_list);
@@ -136,6 +141,11 @@ static void parse_ipv6_properties(DBusMessageIter* iter, tapi_apn_context* dc)
 
                 dbus_message_iter_next(&dns_iter);
             }
+        } else if (strcmp(ipv6_key, "Pcscf") == 0) {
+            dbus_message_iter_get_basic(&ipv6_value, &value_str);
+
+            if (strlen(value_str) <= MAX_IP_STRING_LENGTH)
+                strcpy(dc->ip_settings->ipv6->pcscf, value_str);
         }
 
         dbus_message_iter_next(&ipv6_list);
@@ -250,6 +260,9 @@ static int data_connection_changed(DBusConnection* connection,
         } else if (strcmp(key, "Active") == 0) {
             dbus_message_iter_get_basic(&value, &value_int);
             dc->active = value_int;
+        } else if (strcmp(key, "Mtu") == 0) {
+            dbus_message_iter_get_basic(&value, &value_int);
+            dc->ip_settings->mtu = value_int;
         } else if (strcmp(key, "Settings") == 0) {
             // parse ipv4 information.
             parse_ipv4_properties(&value, dc);
