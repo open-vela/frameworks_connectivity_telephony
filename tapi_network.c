@@ -53,6 +53,34 @@ static void parse_nitz(const char* str, tapi_network_time* info)
         free(orig);
 }
 
+static void register_param_append(DBusMessageIter* iter, void* user_data)
+{
+    tapi_async_handler* handler = user_data;
+    tapi_async_result* ar;
+    tapi_operator_info* network_info;
+    char *mcc, *mnc, *tech;
+
+    if (handler == NULL || handler->result == NULL) {
+        tapi_log_error("invalid network register argument !!");
+        return;
+    }
+
+    ar = handler->result;
+    network_info = ar->data;
+
+    mcc = strdup(network_info->mcc);
+    mnc = strdup(network_info->mnc);
+    tech = strdup(network_info->technology);
+
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &mcc);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &mnc);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &tech);
+
+    free(mcc);
+    free(mnc);
+    free(tech);
+}
+
 static void fill_registration_info(const char* prop, DBusMessageIter* iter,
     tapi_registration_info* registration_info)
 {
@@ -138,6 +166,12 @@ static void fill_cell_identity(const char* prop, DBusMessageIter* iter,
     } else if (strcmp(prop, "TrackingAreaCode") == 0) {
         dbus_message_iter_get_basic(iter, &value_int);
         identity->tac = value_int;
+    } else if (strcmp(prop, "Registered") == 0) {
+        dbus_message_iter_get_basic(iter, &value_int);
+        identity->registered = value_int;
+    } else if (strcmp(prop, "Technology") == 0) {
+        dbus_message_iter_get_basic(iter, &value_str);
+        identity->type = cell_type_from_tech_name(value_str);
     }
 }
 
@@ -243,10 +277,10 @@ static int network_state_changed(DBusConnection* connection,
     DBusMessage* message, void* user_data)
 {
     tapi_async_handler* handler = user_data;
-    DBusMessageIter iter, list;
+    DBusMessageIter iter;
     tapi_async_result* ar;
     tapi_async_function cb;
-    tapi_registration_info* registration_info;
+    const char* property;
 
     if (handler == NULL)
         return 0;
@@ -266,35 +300,16 @@ static int network_state_changed(DBusConnection* connection,
     if (dbus_message_iter_init(message, &iter) == false)
         return 0;
 
-    if (dbus_message_iter_get_arg_type(&iter) != DBUS_TYPE_ARRAY)
-        return 0;
-
-    dbus_message_iter_recurse(&iter, &list);
-
-    registration_info = malloc(sizeof(tapi_registration_info));
-    if (registration_info == NULL)
-        return 0;
-
-    while (dbus_message_iter_get_arg_type(&list) == DBUS_TYPE_DICT_ENTRY) {
-        DBusMessageIter entry, value;
-        const char* name;
-
-        dbus_message_iter_recurse(&list, &entry);
-        dbus_message_iter_get_basic(&entry, &name);
-        dbus_message_iter_next(&entry);
-
-        dbus_message_iter_recurse(&entry, &value);
-        fill_registration_info(name, &value, registration_info);
-
-        dbus_message_iter_next(&list);
+    dbus_message_iter_get_basic(&iter, &property);
+    if (strcmp(property, "Mode") == 0 || strcmp(property, "Name") == 0
+        || strcmp(property, "Status") == 0 || strcmp(property, "LocationAreaCode") == 0
+        || strcmp(property, "CellId") == 0 || strcmp(property, "DenialReason") == 0
+        || strcmp(property, "Technology") == 0 || strcmp(property, "BaseStation") == 0
+        || strcmp(property, "MobileCountryCode") == 0
+        || strcmp(property, "MobileNetworkCode") == 0) {
+        ar->status = OK;
+        cb(ar);
     }
-
-    ar->status = OK;
-    ar->data = registration_info;
-    cb(ar);
-
-    if (registration_info != NULL)
-        free(registration_info);
 
     return 1;
 }
@@ -308,6 +323,7 @@ static int cellinfo_list_changed(DBusConnection* connection,
     tapi_async_result* ar;
     tapi_async_function cb;
     DBusMessageIter iter, list;
+    const char* property;
     int cell_index;
 
     if (handler == NULL)
@@ -330,6 +346,11 @@ static int cellinfo_list_changed(DBusConnection* connection,
 
     if (dbus_message_iter_get_arg_type(&iter) != DBUS_TYPE_ARRAY)
         return 0;
+
+    dbus_message_iter_get_basic(&iter, &property);
+    if (strcmp(property, "CellList") != 0) {
+        return 0;
+    }
 
     dbus_message_iter_recurse(&iter, &list);
 
@@ -501,82 +522,9 @@ static void network_register_cb(DBusMessage* message, void* user_data)
     cb(ar);
 }
 
-static void cellinfo_request_complete(DBusMessage* message, void* user_data)
+static void cell_list_request_complete(DBusMessage* message, void* user_data)
 {
-    tapi_async_handler* handler = user_data;
-    tapi_cell_identity* identity;
-    tapi_async_result* ar;
-    tapi_async_function cb;
-    DBusMessageIter iter, list;
-    DBusError err;
-
-    if (dbus_message_get_type(message) == DBUS_MESSAGE_TYPE_ERROR) {
-        const char* dbus_error = dbus_message_get_error_name(message);
-        tapi_log_error("cellinfo_request_complete failed: %s", dbus_error);
-        return;
-    }
-
-    if (handler == NULL)
-        return;
-
-    ar = handler->result;
-    if (ar == NULL)
-        return;
-
-    cb = handler->cb_function;
-    if (cb == NULL)
-        return;
-
-    dbus_error_init(&err);
-    if (dbus_set_error_from_message(&err, message) == true) {
-        tapi_log_error("%s: %s\n", err.name, err.message);
-        dbus_error_free(&err);
-        ar->status = ERROR;
-        goto done;
-    }
-    if (dbus_message_has_signature(message, "a{sv}") == false) {
-        ar->status = ERROR;
-        goto done;
-    }
-    if (dbus_message_iter_init(message, &iter) == false) {
-        ar->status = ERROR;
-        goto done;
-    }
-
-    dbus_message_iter_recurse(&iter, &list);
-
-    identity = malloc(sizeof(tapi_cell_identity));
-    if (identity == NULL)
-        return;
-
-    while (dbus_message_iter_get_arg_type(&list) == DBUS_TYPE_DICT_ENTRY) {
-        DBusMessageIter entry, value;
-        const char* key;
-
-        dbus_message_iter_recurse(&list, &entry);
-        dbus_message_iter_get_basic(&entry, &key);
-
-        dbus_message_iter_next(&entry);
-        dbus_message_iter_recurse(&entry, &value);
-
-        fill_cell_identity(key, &value, identity);
-        fill_signal_strength(key, &value, &(identity->signal_strength));
-        dbus_message_iter_next(&list);
-    }
-
-    ar->status = OK;
-    ar->data = identity;
-
-done:
-    cb(ar);
-
-    if (identity != NULL)
-        free(identity);
-}
-
-static void neighbouring_cellinfo_request_complete(DBusMessage* message, void* user_data)
-{
-    tapi_cell_identity* neighbouring_cell_list[MAX_CELL_INFO_LIST_SIZE];
+    tapi_cell_identity* cell_list[MAX_CELL_INFO_LIST_SIZE];
     tapi_async_handler* handler = user_data;
     tapi_cell_identity* cell_identity;
     tapi_async_result* ar;
@@ -587,7 +535,7 @@ static void neighbouring_cellinfo_request_complete(DBusMessage* message, void* u
 
     if (dbus_message_get_type(message) == DBUS_MESSAGE_TYPE_ERROR) {
         const char* dbus_error = dbus_message_get_error_name(message);
-        tapi_log_error("neighbouring_cellinfo_request_complete failed: %s", dbus_error);
+        tapi_log_error("cell_list_request_complete failed: %s", dbus_error);
         return;
     }
 
@@ -637,21 +585,21 @@ static void neighbouring_cellinfo_request_complete(DBusMessage* message, void* u
 
         fill_cell_identity_list(&dict, cell_identity);
 
-        neighbouring_cell_list[cell_index++] = cell_identity;
+        cell_list[cell_index++] = cell_identity;
         if (cell_index >= MAX_CELL_INFO_LIST_SIZE)
             break;
 
         dbus_message_iter_next(&list);
     }
 
-    ar->arg2 = cell_index; // neighbouring_cell count;
-    ar->data = neighbouring_cell_list;
+    ar->arg2 = cell_index; // cell count;
+    ar->data = cell_list;
 
 done:
     cb(ar);
 
     while (--cell_index >= 0) {
-        free(neighbouring_cell_list[cell_index]);
+        free(cell_list[cell_index]);
     }
 }
 
@@ -851,21 +799,22 @@ int tapi_network_select_auto(tapi_context context,
 }
 
 int tapi_network_select_manual(tapi_context context,
-    int slot_id, int event_id, tapi_operator_info operator, tapi_async_function p_handle)
+    int slot_id, int event_id, tapi_operator_info* network, tapi_async_function p_handle)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
     tapi_async_handler* handler;
     tapi_async_result* ar;
-    char* path;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || network == NULL) {
         return -EINVAL;
     }
 
-    path = operator.extra;
-    if (path == NULL)
-        return -EINVAL;
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_NETREG];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
 
     handler = malloc(sizeof(tapi_async_handler));
     if (handler == NULL)
@@ -878,19 +827,14 @@ int tapi_network_select_manual(tapi_context context,
     }
 
     ar->arg1 = slot_id;
+    ar->data = network;
     handler->result = ar;
     handler->cb_function = p_handle;
 
-    proxy = g_dbus_proxy_new(
-        ctx->client, tapi_utils_get_modem_path(slot_id), OFONO_NETWORK_OPERATOR_INTERFACE);
-    if (proxy == NULL) {
-        return -EIO;
-    }
-
-    if (g_dbus_proxy_method_call(proxy,
-            "Register", NULL, network_register_cb, handler, user_data_free)) {
-        g_dbus_proxy_unref(proxy);
-        return OK;
+    if (!g_dbus_proxy_method_call(proxy, "RegisterManual",
+            register_param_append, network_register_cb, handler, user_data_free)) {
+        user_data_free(handler);
+        return -EINVAL;
     }
 
     return -EINVAL;
@@ -938,7 +882,7 @@ int tapi_network_scan(tapi_context context,
     return OK;
 }
 
-int tapi_network_get_serving_cellinfo(tapi_context context,
+int tapi_network_get_serving_cellinfos(tapi_context context,
     int slot_id, int event_id, tapi_async_function p_handle)
 {
     dbus_context* ctx = context;
@@ -971,8 +915,8 @@ int tapi_network_get_serving_cellinfo(tapi_context context,
     handler->result = ar;
     handler->cb_function = p_handle;
 
-    if (!g_dbus_proxy_method_call(proxy,
-            "GetServingCellInformation", NULL, cellinfo_request_complete, handler, user_data_free)) {
+    if (!g_dbus_proxy_method_call(proxy, "GetServingCellInformation", NULL,
+            cell_list_request_complete, handler, user_data_free)) {
         user_data_free(handler);
         return -EINVAL;
     }
@@ -1014,7 +958,7 @@ int tapi_network_get_neighbouring_cellinfos(tapi_context context,
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy,
-            "GetNeighbouringCellInformation", NULL, neighbouring_cellinfo_request_complete,
+            "GetNeighbouringCellInformation", NULL, cell_list_request_complete,
             handler, user_data_free)) {
         user_data_free(handler);
         return -EINVAL;
@@ -1217,7 +1161,7 @@ int tapi_network_register(tapi_context context,
     case MSG_CELLINFO_CHANGE_IND:
         watch_id = g_dbus_add_signal_watch(ctx->connection,
             OFONO_SERVICE, modem_path, OFONO_NETMON_INTERFACE,
-            "CellInfoPropertyChanged", cellinfo_list_changed, handler, user_data_free);
+            "PropertyChanged", cellinfo_list_changed, handler, user_data_free);
         break;
     case MSG_SIGNAL_STRENGTH_STATE_CHANGE_IND:
         watch_id = g_dbus_add_signal_watch(ctx->connection,

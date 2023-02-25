@@ -111,6 +111,8 @@ bool tapi_apn_proto_from_string(const char* str, tapi_data_proto* proto);
 char* tapi_utils_get_modem_path(int slot_id);
 enum tapi_call_status tapi_call_string_to_status(const char* str_status);
 enum tapi_call_disconnect_reason tapi_call_disconnected_reason_from_string(const char* str_status);
+const char* cell_type_to_tech_name(tapi_cell_type type);
+tapi_cell_type cell_type_from_tech_name(const char* name);
 bool tapi_is_call_signal_message(DBusMessage* message, DBusMessageIter* iter, int msg_type);
 const char* tapi_get_call_signal_member(tapi_indication_msg msg);
 

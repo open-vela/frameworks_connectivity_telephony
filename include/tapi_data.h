@@ -280,6 +280,18 @@ int tapi_data_set_default_data_slot(tapi_context context, int slot_id);
 int tapi_data_get_default_data_slot(tapi_context context, int* out);
 
 /**
+ * Set data allow in given slot id.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] event_id       Async event identifier.
+ * @param[in] allowed        Data allowed status in given slot.
+ * @param[in] p_handle       Event callback.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_data_set_data_allow(tapi_context context, int slot_id,
+    int event_id, bool allowed, tapi_async_function p_handle);
+
+/**
  * Register data event callback.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
