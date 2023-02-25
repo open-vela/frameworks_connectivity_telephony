@@ -390,6 +390,42 @@ bool tapi_apn_proto_from_string(const char* str, tapi_data_proto* proto)
     return false;
 }
 
+const char* cell_type_to_tech_name(tapi_cell_type type)
+{
+    switch (type) {
+    case TYPE_NONE:
+        return NULL;
+    case TYPE_GSM:
+        return "gsm";
+    case TYPE_UMTS:
+        return "umts";
+    case TYPE_LTE:
+        return "lte";
+    case TYPE_NR:
+        return "nr";
+    }
+
+    return NULL;
+}
+
+tapi_cell_type cell_type_from_tech_name(const char* name)
+{
+    if (name == NULL)
+        return TYPE_NONE;
+
+    if (strcmp(name, "gsm") == 0) {
+        return TYPE_GSM;
+    } else if (strcmp(name, "umts") == 0) {
+        return TYPE_UMTS;
+    } else if (strcmp(name, "lte") == 0) {
+        return TYPE_LTE;
+    } else if (strcmp(name, "nr") == 0) {
+        return TYPE_NR;
+    }
+
+    return TYPE_NONE;
+}
+
 bool tapi_is_call_signal_message(DBusMessage* message, DBusMessageIter* iter, int msg_type)
 {
     bool ret = false;
