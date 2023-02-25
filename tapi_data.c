@@ -28,6 +28,33 @@
  * Private Functions
  ****************************************************************************/
 
+static void data_property_set_done(const DBusError* error, void* user_data)
+{
+    tapi_async_handler* handler = user_data;
+    tapi_async_result* ar;
+    tapi_async_function cb;
+
+    if (handler == NULL)
+        return;
+
+    ar = handler->result;
+    if (ar == NULL)
+        return;
+
+    cb = handler->cb_function;
+    if (cb == NULL)
+        return;
+
+    if (dbus_error_is_set(error)) {
+        tapi_log_error("%s: %s\n", error->name, error->message);
+        ar->status = ERROR;
+    } else {
+        ar->status = OK;
+    }
+
+    cb(ar);
+}
+
 static void parse_ipv4_properties(DBusMessageIter* iter, tapi_apn_context* dc)
 {
     DBusMessageIter ip_list, ip_entry, ip_value;
@@ -194,6 +221,9 @@ static int data_property_changed(DBusConnection* connection,
         if (tapi_network_type_from_string(value_str, &type)) {
             ar->arg2 = type;
         }
+        isvalid = true;
+    } else if (strcmp(property, "Status") == 0) {
+        dbus_message_iter_get_basic(&var, &ar->arg2);
         isvalid = true;
     }
 
@@ -1026,6 +1056,48 @@ int tapi_data_get_default_data_slot(tapi_context context, int* out)
     }
 
     return -EINVAL;
+}
+
+int tapi_data_set_data_allow(tapi_context context, int slot_id,
+    int event_id, bool allowed, tapi_async_function p_handle)
+{
+    dbus_context* ctx = context;
+    GDBusProxy* proxy;
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
+    int value = allowed;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+        return -EINVAL;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_DATA];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    handler = malloc(sizeof(tapi_async_handler));
+    if (handler == NULL)
+        return -ENOMEM;
+
+    handler->cb_function = p_handle;
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        free(handler);
+        return -ENOMEM;
+    }
+    handler->result = ar;
+    ar->msg_id = event_id;
+    ar->arg1 = slot_id;
+
+    if (!g_dbus_proxy_set_property_basic(proxy, "DataAllowed", DBUS_TYPE_BOOLEAN, &value,
+            data_property_set_done, handler, user_data_free)) {
+        user_data_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_data_register(tapi_context context,

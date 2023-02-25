@@ -40,11 +40,10 @@
  ****************************************************************************/
 
 typedef enum {
+    TYPE_NONE = -1,
     TYPE_GSM = 0,
-    TYPE_CDMA,
+    TYPE_UMTS,
     TYPE_LTE,
-    TYPE_WCDMA,
-    TYPE_TDSCDMA,
     TYPE_NR,
 } tapi_cell_type;
 
@@ -102,6 +101,7 @@ typedef struct {
     int bandwidth;
     int bands[MAX_NETWORK_INFO_LENGTH + 1];
     tapi_cell_type type;
+    bool registered;
     char mcc_str[MAX_MCC_LENGTH + 1];
     char mnc_str[MAX_MCC_LENGTH + 1];
     char alpha_long[MAX_NETWORK_INFO_LENGTH + 1];
@@ -133,12 +133,12 @@ int tapi_network_select_auto(tapi_context context,
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[in] event_id       Async event identifier.
- * @param[in] operator       Operator Information returned from modem
+ * @param[in] network        Operator Information returned from modem
  * @param[in] p_handle       Event callback.
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_network_select_manual(tapi_context context,
-    int slot_id, int event_id, tapi_operator_info operator, tapi_async_function p_handle);
+    int slot_id, int event_id, tapi_operator_info* network, tapi_async_function p_handle);
 
 /**
  * Manual network scan.
@@ -159,7 +159,7 @@ int tapi_network_scan(tapi_context context,
  * @param[in] p_handle       Event callback.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_network_get_serving_cellinfo(tapi_context context,
+int tapi_network_get_serving_cellinfos(tapi_context context,
     int slot_id, int event_id, tapi_async_function p_handle);
 
 /**
