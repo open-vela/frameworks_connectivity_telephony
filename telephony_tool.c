@@ -522,6 +522,8 @@ static void tele_call_manager_call_async_fun(tapi_async_result* result)
         syslog(LOG_DEBUG, "call added call_path : %s\n", call_info->call_id);
     } else if (result->msg_id == MSG_CALL_REMOVE_MESSAGE_IND) {
         syslog(LOG_DEBUG, "call removed call_path : %s\n", (char*)result->data);
+    } else if (result->msg_id == MSG_CALL_RING_BACK_TONE_IND) {
+        syslog(LOG_DEBUG, "ring back tone status : %d\n", result->arg2);
     }
 }
 
@@ -1061,6 +1063,10 @@ static int telephonytool_cmd_listen_call_manager_change(tapi_context context, ch
     watch_id = tapi_call_register_emergencylist_change(context, slot_id,
         tele_call_ecc_list_async_fun);
     syslog(LOG_DEBUG, "retister ecc list change, return watch id: %d\n", watch_id);
+
+    watch_id = tapi_call_register_ring_back_tone_change(context, slot_id,
+        tele_call_manager_call_async_fun);
+    syslog(LOG_DEBUG, "retister ring back tone change, return watch id: %d\n", watch_id);
 
     return watch_id;
 }
