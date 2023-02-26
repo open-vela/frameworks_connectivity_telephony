@@ -331,6 +331,16 @@ bool tapi_call_is_emergency_number(tapi_context context, char* number);
  */
 int tapi_call_register_emergencylist_change(tapi_context context, int slot_id, tapi_async_function p_handle);
 
+/**
+ * Register ring back tone change callback.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] p_handle       Event callback.
+ * @return Positive value as watch_id on success; a negated errno value on failure.
+ */
+int tapi_call_register_ring_back_tone_change(tapi_context context, int slot_id,
+    tapi_async_function p_handle);
+
 #ifdef __cplusplus
 }
 #endif

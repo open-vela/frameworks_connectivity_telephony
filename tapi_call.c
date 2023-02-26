@@ -196,6 +196,34 @@ static void tone_param_append(DBusMessageIter* iter, void* user_data)
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &param);
 }
 
+static int ring_back_tone_change(DBusMessage* message, tapi_async_handler* handler)
+{
+    tapi_async_result* ar;
+    tapi_async_function cb;
+    DBusMessageIter iter;
+
+    if (handler == NULL)
+        return -EINVAL;
+
+    ar = handler->result;
+    if (ar == NULL)
+        return -EINVAL;
+
+    cb = handler->cb_function;
+    if (cb == NULL)
+        return -EINVAL;
+
+    if (tapi_is_call_signal_message(message, &iter, DBUS_TYPE_INT32) == false)
+        return -EINVAL;
+
+    dbus_message_iter_get_basic(&iter, &ar->arg2);
+
+    ar->status = OK;
+    cb(ar);
+
+    return OK;
+}
+
 static int
 call_manager_property_changed(DBusConnection* connection, DBusMessage* message,
     void* user_data)
@@ -232,6 +260,10 @@ call_manager_property_changed(DBusConnection* connection, DBusMessage* message,
                    "PropertyChanged")
         && msg_id == MSG_ECC_LIST_CHANGE_IND) {
         return tapi_call_signal_ecc_list_change(message, handler);
+    } else if (dbus_message_is_signal(message, OFONO_VOICECALL_MANAGER_INTERFACE,
+                   "RingBackTone")
+        && msg_id == MSG_CALL_RING_BACK_TONE_IND) {
+        return ring_back_tone_change(message, handler);
     }
 
     return true;
@@ -1255,5 +1287,17 @@ int tapi_call_register_emergencylist_change(tapi_context context, int slot_id,
 
     return tapi_register_manager_call_signal(context, slot_id,
         OFONO_VOICECALL_MANAGER_INTERFACE, MSG_ECC_LIST_CHANGE_IND,
+        p_handle, call_manager_property_changed);
+}
+
+int tapi_call_register_ring_back_tone_change(tapi_context context, int slot_id,
+    tapi_async_function p_handle)
+{
+    if (context == NULL || !tapi_is_valid_slotid(slot_id)) {
+        return -EINVAL;
+    }
+
+    return tapi_register_manager_call_signal(context, slot_id,
+        OFONO_VOICECALL_MANAGER_INTERFACE, MSG_CALL_RING_BACK_TONE_IND,
         p_handle, call_manager_property_changed);
 }
