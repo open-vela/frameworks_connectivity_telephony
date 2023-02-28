@@ -611,6 +611,7 @@ static void registration_info_query_done(DBusMessage* message, void* user_data)
     DBusMessageIter args, list;
     DBusError err;
     tapi_registration_info* registration_info;
+    tapi_context ctx;
 
     if (handler == NULL)
         return;
@@ -653,6 +654,31 @@ static void registration_info_query_done(DBusMessage* message, void* user_data)
         fill_registration_info(name, &value, registration_info);
 
         dbus_message_iter_next(&list);
+    }
+
+    // set roaming type.
+    registration_info->roaming_type = NETWORK_ROAMING_UNKNOWN;
+    if (registration_info->reg_state == NETWORK_REGISTRATION_STATUS_ROAMING) {
+        char sim_numeric[MAX_MCC_LENGTH + MAX_MNC_LENGTH + 1];
+        char sim_mcc[MAX_MCC_LENGTH + 1];
+
+        ctx = ar->data;
+        if (ctx != NULL) {
+            tapi_sim_get_sim_operator(ctx, ar->arg1,
+                MAX_MCC_LENGTH + MAX_MNC_LENGTH + 1, sim_numeric);
+
+            if (strlen(sim_numeric) > 0) {
+                strncpy(sim_mcc, sim_numeric, MAX_MCC_LENGTH);
+                sim_mcc[MAX_MCC_LENGTH] = '\0';
+
+                if (strcmp(sim_mcc, registration_info->mcc) == 0) {
+                    // same country
+                    registration_info->roaming_type = NETWORK_ROAMING_DOMESTIC;
+                } else {
+                    registration_info->roaming_type = NETWORK_ROAMING_INTERNATIONAL;
+                }
+            }
+        }
     }
 
     ar->status = OK;
@@ -1106,6 +1132,8 @@ int tapi_network_get_registration_info(tapi_context context,
     }
 
     ar->msg_id = event_id;
+    ar->arg1 = slot_id;
+    ar->data = context;
     handler->result = ar;
     handler->cb_function = p_handle;
 
