@@ -212,6 +212,8 @@ const char* tapi_get_call_signal_member(tapi_indication_msg msg)
         return "DisconnectReason";
     case MSG_ECC_LIST_CHANGE_IND:
         return "PropertyChanged";
+    case MSG_CALL_RING_BACK_TONE_IND:
+        return "RingBackTone";
     }
 
     return NULL;

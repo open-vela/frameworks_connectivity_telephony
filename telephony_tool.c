@@ -1063,6 +1063,8 @@ static int telephonytool_cmd_listen_call_manager_change(tapi_context context, ch
     watch_id = tapi_call_register_emergencylist_change(context, slot_id,
         tele_call_ecc_list_async_fun);
     syslog(LOG_DEBUG, "retister ecc list change, return watch id: %d\n", watch_id);
+    if (watch_id < 0)
+        return watch_id;
 
     watch_id = tapi_call_register_ring_back_tone_change(context, slot_id,
         tele_call_manager_call_async_fun);
