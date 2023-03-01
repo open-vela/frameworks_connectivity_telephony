@@ -203,25 +203,24 @@ static int ring_back_tone_change(DBusMessage* message, tapi_async_handler* handl
     DBusMessageIter iter;
 
     if (handler == NULL)
-        return -EINVAL;
+        return false;
 
     ar = handler->result;
     if (ar == NULL)
-        return -EINVAL;
+        return false;
 
     cb = handler->cb_function;
     if (cb == NULL)
-        return -EINVAL;
+        return false;
 
-    if (tapi_is_call_signal_message(message, &iter, DBUS_TYPE_INT32) == false)
-        return -EINVAL;
+    if (tapi_is_call_signal_message(message, &iter, DBUS_TYPE_INT32)) {
+        dbus_message_iter_get_basic(&iter, &ar->arg2);
 
-    dbus_message_iter_get_basic(&iter, &ar->arg2);
+        ar->status = OK;
+        cb(ar);
+    }
 
-    ar->status = OK;
-    cb(ar);
-
-    return OK;
+    return true;
 }
 
 static int
@@ -467,15 +466,15 @@ static int tapi_call_signal_call_added(DBusMessage* message, tapi_async_handler*
     DBusMessageIter iter;
 
     if (handler == NULL)
-        return -EINVAL;
+        return false;
 
     ar = handler->result;
     if (ar == NULL)
-        return -EINVAL;
+        return false;
 
     cb = handler->cb_function;
     if (cb == NULL)
-        return -EINVAL;
+        return false;
 
     if (tapi_is_call_signal_message(message, &iter, DBUS_TYPE_OBJECT_PATH)) {
 
@@ -486,7 +485,7 @@ static int tapi_call_signal_call_added(DBusMessage* message, tapi_async_handler*
         }
     }
 
-    return OK;
+    return true;
 }
 
 static int tapi_call_signal_normal(DBusMessage* message, tapi_async_handler* handler, int msg_type)
