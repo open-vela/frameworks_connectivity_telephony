@@ -86,389 +86,13 @@ struct telephonytool_cmd_s {
 };
 
 /****************************************************************************
- * Private Function Prototypes
+ * Private Declarations
  ****************************************************************************/
 
+static struct telephonytool_cmd_s g_telephonytool_cmds[];
 static int telephonytool_cmd_help(tapi_context context, char* pargs);
-
-/** Radio interface*/
-static int telephonytool_cmd_query_modem_list(tapi_context context, char* pargs);
-static int telephonytool_cmd_modem_register(tapi_context context, char* pargs);
-static int telephonytool_cmd_modem_unregister(tapi_context context, char* pargs);
-static int telephonytool_cmd_is_feature_supported(tapi_context context, char* pargs);
-static int telephonytool_cmd_set_radio_power(tapi_context context, char* pargs);
-static int telephonytool_cmd_get_radio_power(tapi_context context, char* pargs);
-static int telephonytool_cmd_set_rat_mode(tapi_context context, char* pargs);
-static int telephonytool_cmd_get_rat_mode(tapi_context context, char* pargs);
-static int telephonytool_cmd_get_imei(tapi_context context, char* pargs);
-static int telephonytool_cmd_get_imeisv(tapi_context context, char* pargs);
-static int telephonytool_cmd_get_phone_state(tapi_context context, char* pargs);
-static int telephonytool_cmd_reboot_modem(tapi_context context, char* pargs);
-static int telephonytool_cmd_get_radio_state(tapi_context context, char* pargs);
-static int telephonytool_cmd_get_modem_manufacturer(tapi_context context, char* pargs);
-static int telephonytool_cmd_get_modem_model(tapi_context context, char* pargs);
-static int telephonytool_cmd_get_modem_revision(tapi_context context, char* pargs);
-static int telephonytool_cmd_get_line_number(tapi_context context, char* pargs);
-
-/** Call interface*/
-static int telephonytool_cmd_dial(tapi_context context, char* pargs);
-static int telephonytool_cmd_hangup_all(tapi_context context, char* pargs);
-static int telephonytool_cmd_hangup_call(tapi_context context, char* pargs);
-static int telephonytool_cmd_release_and_swap(tapi_context context, char* pargs);
-static int telephonytool_cmd_answer_call(tapi_context context, char* pargs);
-static int telephonytool_cmd_swap_call(tapi_context context, char* pargs);
-static int telephonytool_cmd_listen_call_manager_change(tapi_context context, char* pargs);
-static int telephonytool_cmd_unlisten_call_singal(tapi_context context, char* pargs);
-static int telephonytool_cmd_call_proxy(tapi_context context, char* pargs);
-static int telephonytool_cmd_listen_call_info_change(tapi_context context, char* pargs);
-static int telephonytool_cmd_get_call(tapi_context context, char* pargs);
-static int telephonytool_cmd_transfer_call(tapi_context context, char* pargs);
-static int telephonytool_cmd_merge_call(tapi_context context, char* pargs);
-static int telephonytool_cmd_separate_call(tapi_context context, char* pargs);
-static int telephonytool_cmd_get_ecc_list(tapi_context context, char* pargs);
-static int telephonytool_cmd_is_emergency_number(tapi_context context, char* pargs);
-
-/** Data interface*/
-static int telephonytool_cmd_data_register(tapi_context context, char* pargs);
-static int telephonytool_cmd_load_apns(tapi_context context, char* pargs);
-static int telephonytool_cmd_save_apn(tapi_context context, char* pargs);
-static int telephonytool_cmd_remove_apn(tapi_context context, char* pargs);
-static int telephonytool_cmd_reset_apn(tapi_context context, char* pargs);
-static int telephonytool_cmd_request_network(tapi_context context, char* pargs);
-static int telephonytool_cmd_release_network(tapi_context context, char* pargs);
-static int telephonytool_cmd_set_data_roaming(tapi_context context, char* pargs);
-static int telephonytool_cmd_get_data_roaming(tapi_context context, char* pargs);
-static int telephonytool_cmd_set_data_enabled(tapi_context context, char* pargs);
-static int telephonytool_cmd_get_data_enabled(tapi_context context, char* pargs);
-static int telephonytool_cmd_get_ps_attached(tapi_context context, char* pargs);
-static int telephonytool_cmd_get_ps_network_type(tapi_context context, char* pargs);
-static int telephonytool_cmd_set_pref_apn(tapi_context context, char* pargs);
-static int telephonytool_cmd_get_pref_apn(tapi_context context, char* pargs);
-static int telephonytool_cmd_set_default_data_slot(tapi_context context, char* pargs);
-static int telephonytool_cmd_get_default_data_slot(tapi_context context, char* pargs);
-
-/** Sim interface*/
-static int telephonytool_cmd_has_icc_card(tapi_context context, char* pargs);
-static int telephonytool_cmd_get_sim_iccid(tapi_context context, char* pargs);
-static int telephonytool_cmd_get_sim_operator(tapi_context context, char* pargs);
-static int telephonytool_cmd_get_sim_operator_name(tapi_context context, char* pargs);
-static int telephonytool_cmd_change_sim_pin(tapi_context context, char* pargs);
-static int telephonytool_cmd_enter_sim_pin(tapi_context context, char* pargs);
-static int telephonytool_cmd_reset_sim_pin(tapi_context context, char* pargs);
-static int telephonytool_cmd_lock_sim_pin(tapi_context context, char* pargs);
-static int telephonytool_cmd_unlock_sim_pin(tapi_context context, char* pargs);
-static int telephonytool_cmd_listen_sim_state_change(tapi_context context, char* pargs);
-static int telephonytool_cmd_unlisten_sim_state_change(tapi_context context, char* pargs);
-
-/** Sms interface*/
-static int telephonytool_tapi_sms_send_message(tapi_context context, char* pargs);
-static int telephonytool_tapi_sms_send_data_message(tapi_context context, char* pargs);
-static int telephonytool_tapi_sms_get_service_center_number(tapi_context context, char* pargs);
-static int telephonytool_tapi_sms_set_service_center_number(tapi_context context, char* pargs);
-static int telephonytool_tapi_sms_register(tapi_context context, char* pargs);
-static int telephonytool_tapi_sms_copy_message_to_sim(tapi_context context, char* pargs);
-static int telephonytool_tapi_sms_delete_message_from_sim(tapi_context context, char* pargs);
-static int telephonytool_tapi_sms_get_cell_broadcast_power(tapi_context context, char* pargs);
-static int telephonytool_tapi_sms_set_cell_broadcast_power(tapi_context context, char* pargs);
-static int telephonytool_tapi_sms_get_cell_broadcast_topics(tapi_context context, char* pargs);
-static int telephonytool_tapi_sms_set_cell_broadcast_topics(tapi_context context, char* pargs);
-static int telephonytool_tapi_cbs_register(tapi_context context, char* pargs);
-
-/** Network interface*/
-static int telephonytool_cmd_network_listen(tapi_context context, char* pargs);
-static int telephonytool_cmd_network_unlisten(tapi_context context, char* pargs);
-static int telephonytool_cmd_network_select_auto(tapi_context context, char* pargs);
-static int telephonytool_cmd_network_select_manual(tapi_context context, char* pargs);
-static int telephonytool_cmd_query_signalstrength(tapi_context context, char* pargs);
-static int telephonytool_cmd_get_operator_name(tapi_context context, char* pargs);
-static int telephonytool_cmd_get_net_registration_info(tapi_context context, char* pargs);
-static int telephonytool_cmd_get_voice_networktype(tapi_context context, char* pargs);
-static int telephonytool_cmd_is_voice_roaming(tapi_context context, char* pargs);
-static int telephonytool_cmd_network_scan(tapi_context context, char* pargs);
-static int telephonytool_cmd_get_serving_cellinfos(tapi_context context, char* pargs);
-static int telephonytool_cmd_get_neighbouring_cellInfos(tapi_context context, char* pargs);
-
-/** SS interface*/
-static int telephonytool_cmd_ss_register(tapi_context context, char* pargs);
-static int telephonytool_cmd_set_call_barring(tapi_context context, char* pargs);
-static int telephonytool_cmd_get_call_barring(tapi_context context, char* pargs);
-static int telephonytool_cmd_change_call_barring_passwd(tapi_context context, char* pargs);
-static int telephonytool_cmd_disable_all_call_barrings(tapi_context context, char* pargs);
-static int telephonytool_cmd_disable_all_incoming(tapi_context context, char* pargs);
-static int telephonytool_cmd_disable_all_outgoing(tapi_context context, char* pargs);
-static int telephonytool_cmd_set_call_forwarding(tapi_context context, char* pargs);
-static int telephonytool_cmd_get_call_forwarding(tapi_context context, char* pargs);
-static int telephonytool_cmd_disable_call_forwarding(tapi_context context, char* pargs);
-static int telephonytool_cmd_initiate_ss_service(tapi_context context, char* pargs);
-static int telephonytool_cmd_get_ussd_state(tapi_context context, char* pargs);
-static int telephonytool_cmd_send_ussd(tapi_context context, char* pargs);
-static int telephonytool_cmd_cancel_ussd(tapi_context context, char* pargs);
-static int telephonytool_cmd_set_call_waiting(tapi_context context, char* pargs);
-static int telephonytool_cmd_get_call_waiting(tapi_context context, char* pargs);
-static int telephonytool_cmd_get_clip(tapi_context context, char* pargs);
-static int telephonytool_cmd_get_clir(tapi_context context, char* pargs);
-static int telephonytool_cmd_enable_fdn(tapi_context context, char* pargs);
-static int telephonytool_cmd_query_fdn(tapi_context context, char* pargs);
-
-/** IMS interface*/
-static int telephonytool_cmd_ims_enable(tapi_context context, char* pargs);
-static int telephonytool_cmd_set_ims_service(tapi_context context, char* pargs);
-static int telephonytool_cmd_ims_register(tapi_context context, char* pargs);
-static int telephonytool_cmd_ims_get_registration(tapi_context context, char* pargs);
-
-/****************************************************************************
- * Private Data
- ****************************************************************************/
-
-static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
-    { "list-modem", telephonytool_cmd_query_modem_list,
-        "list available modem list (enter example : list-modem" },
-    { "listen-modem", telephonytool_cmd_modem_register,
-        "modem event callback (enter example : listen-modem 0 0 \
-        [slot_id][event_id, 0:radio_state_change 1:call_added 2:call_removed])" },
-    { "unlisten-modem", telephonytool_cmd_modem_unregister,
-        "modem event callback (enter example : unlisten-modem 0 \
-        [watch_id, one uint value returned from \"listen\"])" },
-    { "radio-capability", telephonytool_cmd_is_feature_supported,
-        "modem event callback (enter example : radio-capability 0 \
-        [feature_type, 0: voice 1: data 2: sms 3: ims])" },
-    { "radio-set", telephonytool_cmd_set_radio_power,
-        "set radio power (enter example : radio-set 0 1 [slot_id][state, 0:radio off 1:radio on])" },
-    { "radio-get", telephonytool_cmd_get_radio_power,
-        "get radio power (enter example : radio-get 0 [slot_id])" },
-    { "dial", telephonytool_cmd_dial,
-        "Dial (enter example : dial 0 10086 0 [slot_id][number][hide_call_id, 0:show 1:hide])" },
-    { "answer", telephonytool_cmd_answer_call,
-        "Answer (enter example : answer 0 0 [slot_id][action:0-answer 1-realse&answer][call_id])" },
-    { "swap", telephonytool_cmd_swap_call,
-        "call Swap (enter example : swap 0 1 [slot_id][action:1-hold 0-unhold])" },
-    { "call-manager-listen", telephonytool_cmd_listen_call_manager_change,
-        "call manger event callback (enter example : call-listen 0" },
-    { "call-unlisten", telephonytool_cmd_unlisten_call_singal,
-        "call unlisten event callback (enter example : call-unlisten [watch_id]" },
-    { "call-proxy", telephonytool_cmd_call_proxy,
-        "new/release call proxy (enter example : \
-        call-proxy [slot_id] [action:0-new 1-release] [call_id]" },
-    { "call-info-listen", telephonytool_cmd_listen_call_info_change,
-        "call info event callback (enter example : \
-        call-info-listen [slot_id][call_id]" },
-    { "hangup-all", telephonytool_cmd_hangup_all,
-        "hangup all call (enter example : hangup-all 0 [slot_id])" },
-    { "hangup", telephonytool_cmd_hangup_call,
-        "hangup (enter example : hangup 0 [call_id] /phonesim/voicecall01)" },
-    { "release-swap", telephonytool_cmd_release_and_swap,
-        "release and swap (enter example : release-swap 0 [slot_id])" },
-    { "get-call", telephonytool_cmd_get_call,
-        "get call list/call info (enter example : get-call 0 \
-        [slot_id][call_id])" },
-    { "transfer", telephonytool_cmd_transfer_call,
-        "call transfer  (enter example : transfer 0 [slot_id])" },
-    { "merge", telephonytool_cmd_merge_call,
-        "call merge  (enter example : merge 0 [slot_id])" },
-    { "separate", telephonytool_cmd_separate_call,
-        "call separate  (enter example : separate 0 [slot_id][call_id: /phonesim/voicecall01])" },
-    { "get-ecclist", telephonytool_cmd_get_ecc_list,
-        "get ecc list  (enter example : get-ecclist 0 [slot_id])" },
-    { "is-ecc", telephonytool_cmd_is_emergency_number,
-        "is emergency number  (enter example : is-ecc 110 [number])" },
-    { "rat-set", telephonytool_cmd_set_rat_mode,
-        "set rat mode (enter example : rat-set 0 9 \
-        [slot_id][mode: 0-any 1-gsm_only 2-wcdma_only 3-umts 9-lte_gsm_wcdma 12-lte_wcdma 14-lte_only])" },
-    { "rat-get", telephonytool_cmd_get_rat_mode,
-        "get rat mode (enter example : rat-get 0 [slot_id])" },
-    { "imei-get", telephonytool_cmd_get_imei,
-        "get imei (enter example : imei-get 0 [slot_id])" },
-    { "imeisv-get", telephonytool_cmd_get_imeisv,
-        "get imeisv (enter example : imeisv-get 0 [slot_id])" },
-    { "phone-state", telephonytool_cmd_get_phone_state,
-        "get phone state (enter example : phone-state 0 [slot_id])" },
-    { "modem-reboot", telephonytool_cmd_reboot_modem,
-        "reboot modem (enter example : modem-reboot 0 [slot_id])" },
-    { "radio-state", telephonytool_cmd_get_radio_state,
-        "get radio state (enter example : radio-state 0 [slot_id])" },
-    { "modem_manufacturer", telephonytool_cmd_get_modem_manufacturer,
-        "get modem manufacturer (enter example : modem_manufacturer 0 [slot_id])" },
-    { "modem_model", telephonytool_cmd_get_modem_model,
-        "get modem_model (enter example : modem_model 0 [slot_id])" },
-    { "modem_revision", telephonytool_cmd_get_modem_revision,
-        "get modem_revision (enter example : modem_revision 0 [slot_id])" },
-    { "line-number", telephonytool_cmd_get_line_number,
-        "query line number (enter example : line-number 0 [slot_id])" },
-    { "load-apns", telephonytool_cmd_load_apns,
-        "load apn settings (enter example : load-apns 0 [slot_id])" },
-    { "save-apn", telephonytool_cmd_save_apn,
-        "save apn (enter example : save-apn 0 1 [slot_id][apn_type])" },
-    { "remove-apn", telephonytool_cmd_remove_apn,
-        "remove apn (enter example : remove-apn 0 1 [slot_id][id])" },
-    { "reset-apn", telephonytool_cmd_reset_apn,
-        "reset apn (enter example : reset-apn 0 [slot_id])" },
-    { "request-network", telephonytool_cmd_request_network,
-        "request network (enter example : request-network 0 internet [slot_id][apn_type_string])" },
-    { "release-network", telephonytool_cmd_release_network,
-        "release network (enter example : release-network 0 internet [slot_id][apn_type_string])" },
-    { "data-roaming-set", telephonytool_cmd_set_data_roaming,
-        "set data roaming (enter example : data-roaming-set 0 1 [slot_id][state])" },
-    { "data-roaming-get", telephonytool_cmd_get_data_roaming,
-        "get data roaming (enter example : data-roaming-get 0 [slot_id])" },
-    { "data-set", telephonytool_cmd_set_data_enabled,
-        "set data enabled (enter example : data-set 0 1 [slot_id][state])" },
-    { "data-get", telephonytool_cmd_get_data_enabled,
-        "get data enabled (enter example : data-get 0 [slot_id])" },
-    { "listen-data", telephonytool_cmd_data_register,
-        "listen data event (enter example : listen-data 0 1 [slot_id][event_id])" },
-    { "ps-attached", telephonytool_cmd_get_ps_attached,
-        "checki if ps attached (enter example : ps-attached 0 [slot_id])" },
-    { "ps-network", telephonytool_cmd_get_ps_network_type,
-        "get ps network type (enter example : ps-network 0 [slot_id])" },
-    { "pref-apn-set", telephonytool_cmd_set_pref_apn,
-        "set preferred apn (enter example : pref-apn-set[slot_id][apn_id])" },
-    { "pref-apn-get", telephonytool_cmd_get_pref_apn,
-        "get preferred apn (enter example : pref-apn-get[slot_id][apn_id])" },
-    { "dds-set", telephonytool_cmd_set_default_data_slot,
-        "set default data slot (enter example : dds-set 0 [slot_id])" },
-    { "dds-get", telephonytool_cmd_get_default_data_slot,
-        "get default data slot (enter example : dds-get)" },
-    { "has-icc", telephonytool_cmd_has_icc_card,
-        "has icc card (enter example : has-icc 0 [slot_id])" },
-    { "iccid", telephonytool_cmd_get_sim_iccid,
-        "get sim iccid (enter example : iccid 0 [slot_id])" },
-    { "operator", telephonytool_cmd_get_sim_operator,
-        "get sim operator (mcc+mnc) : operator 0 [slot_id])" },
-    { "operator-name", telephonytool_cmd_get_sim_operator_name,
-        "get sim operator name (enter example : operator-name 0 [slot_id])" },
-    { "change-pin", telephonytool_cmd_change_sim_pin,
-        "change old pin to new pin (enter example : \
-        change-pin 0 pin 1234 2345 [slot_id][pin_type, pin or pin2][old_pin][new_pin])" },
-    { "enter-pin", telephonytool_cmd_enter_sim_pin,
-        "enter pin to verify (enter example : enter-pin 0 pin 1234 [slot_id][pin_type, pin or pin2][pin])" },
-    { "reset-pin", telephonytool_cmd_reset_sim_pin,
-        "using puk reset pin (enter example : \
-        reset-pin 0 puk 12345678 2345 [slot_id][puk_type, puk or puk2][puk][new_pin])" },
-    { "lock-pin", telephonytool_cmd_lock_sim_pin,
-        "active sim lock (enter example : lock-pin 0 pin 1234 [slot_id][pin_type, pin or pin2][pin])" },
-    { "unlock-pin", telephonytool_cmd_unlock_sim_pin,
-        "deactive sim lock (enter example : unlock-pin 0 pin 1234 [slot_id][pin_type, pin or pin2][pin])" },
-    { "listen-sim", telephonytool_cmd_listen_sim_state_change,
-        "register sim state change (enter example : listen-sim 0 [slot_id])" },
-    { "unlisten-sim", telephonytool_cmd_unlisten_sim_state_change,
-        "unregister sim state change (enter example : unlisten-sim 0 [slot_id])" },
-    { "send-sms", telephonytool_tapi_sms_send_message,
-        "send message (enter example : send-sms 0 10086 hello)" },
-    { "send-data-sms", telephonytool_tapi_sms_send_data_message,
-        "send message (enter example : send-data-sms 0 10086 hello)" },
-    { "get-service-center-number", telephonytool_tapi_sms_get_service_center_number,
-        "get service center number ? (enter example : get-service-center-number 0)" },
-    { "set-service-center-number", telephonytool_tapi_sms_set_service_center_number,
-        "set service center number ? (enter example : set-service-center-number 0 10086)" },
-    { "register-incoming-sms", telephonytool_tapi_sms_register,
-        "get incoming sms ? (enter example : register-incoming-sms 0)" },
-    { "get-cell-broadcast-power", telephonytool_tapi_sms_get_cell_broadcast_power,
-        "get cell broadcast power ? (enter example : get-cell-broadcast-power 0)" },
-    { "set-cell-broadcast-power", telephonytool_tapi_sms_set_cell_broadcast_power,
-        "set service center number ? (enter example : set-cell-broadcast-power 0 1)" },
-    { "get-cell-broadcast-topics", telephonytool_tapi_sms_get_cell_broadcast_topics,
-        "get cell broadcast topics ? (enter example : get-cell-broadcast-topics 0)" },
-    { "set-cell-broadcast-topics", telephonytool_tapi_sms_set_cell_broadcast_topics,
-        "set cell broadcast topics ? (enter example : set-cell-broadcast-topics 0 1)" },
-    { "register-incoming-cbs", telephonytool_tapi_cbs_register,
-        "get incoming cbs ? (enter example : register-incoming-cbs 0)" },
-    { "copy-sms-to-sim", telephonytool_tapi_sms_copy_message_to_sim,
-        "send message (enter example : copy-sms-to-sim 0 10086 hello)" },
-    { "delete-sms-from-sim", telephonytool_tapi_sms_delete_message_from_sim,
-        "send message (enter example : delete-sms-from-sim 0 1)" },
-    { "listen-network", telephonytool_cmd_network_listen,
-        "listen-network (enter example : listen-network 0 13 [slot_id][event_id])" },
-    { "unlisten-network", telephonytool_cmd_network_unlisten,
-        "unlisten-network (enter example : unlisten-network 0 [slot_id])" },
-    { "register-auto", telephonytool_cmd_network_select_auto,
-        "register auto (enter example : register-auto 0 [slot_id])" },
-    { "register-manual", telephonytool_cmd_network_select_manual,
-        "register manual (enter example : register-manual 0 [slot_id])" },
-    { "signalstrength", telephonytool_cmd_query_signalstrength,
-        "signalstrength (enter example : signalstrength 0 [slot_id])" },
-    { "operator-name", telephonytool_cmd_get_operator_name,
-        "operator-name (enter example : operator-name 0 [slot_id])" },
-    { "registration-info", telephonytool_cmd_get_net_registration_info,
-        "query registration-info (enter example : registration-info 0 [slot_id])" },
-    { "cs-network", telephonytool_cmd_get_voice_networktype,
-        "query cs network type (enter example : cs-network 0 [slot_id])" },
-    { "voice-roaming", telephonytool_cmd_is_voice_roaming,
-        "judge voice roaming  (enter example : voice-roaming 0 [slot_id])" },
-    { "network-scan", telephonytool_cmd_network_scan,
-        "network-scan  (enter example : network-scan 0 [slot_id])" },
-    { "serving-cellinfo", telephonytool_cmd_get_serving_cellinfos,
-        "get serving cellinfo  (enter example : serving-cellinfo 0)" },
-    { "neighbouring-cellInfos", telephonytool_cmd_get_neighbouring_cellInfos,
-        "get neighbouring cellInfos  (enter example : neighbouring-cellInfos 0)" },
-    { "set-callbarring", telephonytool_cmd_set_call_barring,
-        "set callbarring (enter example : set-callbarring 0 AI 1234 \
-        [slot_id][facility][pin2])" },
-    { "get-callbarring", telephonytool_cmd_get_call_barring,
-        "get callbarring (enter example : get-callbarring 0 VoiceIncoming \
-        [slot_id][call barring key])" },
-    { "change-callbarring-passwd", telephonytool_cmd_change_call_barring_passwd,
-        "change callbarring passwd (enter example : change-callbarring-passwd 0 1234 2345 \
-        [slot_id][old passwd][new passwd])" },
-    { "disable-all-callbarrings", telephonytool_cmd_disable_all_call_barrings,
-        "disable all callbarrings (enter example : disable-all-callbarrings 0 2345 \
-        [slot_id][passwd])" },
-    { "disable-all-incoming", telephonytool_cmd_disable_all_incoming,
-        "disable all incoming (enter example : disable-all-incoming 0 2345 \
-        [slot_id][passwd])" },
-    { "disable-all-outgoing", telephonytool_cmd_disable_all_outgoing,
-        "disable all outgoing (enter example : disable-all-outgoing 0 2345 \
-        [slot_id][passwd])" },
-    { "set-callforwarding", telephonytool_cmd_set_call_forwarding,
-        "set callforwarding (enter example : set-callforwarding 0 VoiceUnconditional 10086 \
-        [slot_id][call forwarding type][value])" },
-    { "get-callforwarding", telephonytool_cmd_get_call_forwarding,
-        "get callforwarding (enter example : get-callforwarding 0 VoiceUnconditional \
-        [slot_id][call forwarding type])" },
-    { "disable-callforwarding", telephonytool_cmd_disable_call_forwarding,
-        "disable callforwarding (enter example : disable-callforwarding 0 all \
-        [slot_id][type])" },
-    { "initiate-ss", telephonytool_cmd_initiate_ss_service,
-        "initiate supplementary service (enter example : initiate-ss 0 *#06# \
-        [slot_id][supplementary service code])" },
-    { "get-ussd-state", telephonytool_cmd_get_ussd_state,
-        "get ussd state (enter example : get-ussd-state 0 [slot_id])" },
-    { "send-ussd", telephonytool_cmd_send_ussd,
-        "send ussd (enter example : send-ussd 0 OK [slot_id][response message])" },
-    { "cancel-ussd", telephonytool_cmd_cancel_ussd,
-        "cancel ussd (enter example : cancel-ussd 0 [slot_id])" },
-    { "set-callwaiting", telephonytool_cmd_set_call_waiting,
-        "set callwaiting (enter example : set-callwaiting 0 enabled \
-        [slot_id][call waiting value])" },
-    { "get-callwaiting", telephonytool_cmd_get_call_waiting,
-        "get callwaiting (enter example : get-callwaiting 0 [slot_id])" },
-    { "get-clip", telephonytool_cmd_get_clip,
-        "get clip (enter example : get-clip 0 [slot_id])" },
-    { "get-clir", telephonytool_cmd_get_clir,
-        "get clir (enter example : get-clir 0 [slot_id])" },
-    { "enable-fdn", telephonytool_cmd_enable_fdn,
-        "enable fdn (enter example : enable-fdn 0 1 123456 \
-        [slot_id][enable 1 or disable 0][pin2])" },
-    { "query-fdn", telephonytool_cmd_query_fdn,
-        "query fdn (enter example : query-fdn 0 [slot_id])" },
-    { "listen-ss", telephonytool_cmd_ss_register,
-        "listen ss event (enter example : listen-ss 0 1 \
-        [slot_id][event_id])" },
-    { "ims-enable", telephonytool_cmd_ims_enable,
-        "turn on/off ims (enter example : ims-enable 0 1 \
-        [slot_id][action: 0-disable 1-enable])" },
-    { "ims-cap", telephonytool_cmd_set_ims_service,
-        "set ims service function (enter example : ims-cap 0 1 \
-        [slot_id][cap-value: 1-voice 4-sms 5-voice&sms])" },
-    { "ims-listen", telephonytool_cmd_ims_register,
-        "listen ims registration(enter example : ims-listen 0 [slot_id]" },
-    { "ims-reg", telephonytool_cmd_ims_get_registration,
-        "get ims registration(enter example : ims-reg 0 0 \
-        [slot_id][action:0-ims info 1-ims state 2-volte state]" },
-    { "q", NULL, "Quit (pls enter : q)" },
-    { "help", telephonytool_cmd_help,
-        "Show this message (pls enter : help)" },
-    { 0 },
-};
+static void telephonytool_execute(tapi_context context, char* cmd, char* arg);
+static void* read_stdin(pthread_addr_t pvarg);
 
 /****************************************************************************
  * Private Function
@@ -1825,6 +1449,28 @@ static int telephonytool_cmd_get_default_data_slot(tapi_context context, char* p
     syslog(LOG_DEBUG, "%s : %d \n", __func__, result);
 
     return 0;
+}
+
+static int telephonytool_cmd_set_data_allow(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* target_state;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &target_state);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*target_state == ' ')
+        target_state++;
+
+    if (target_state == NULL)
+        return -EINVAL;
+
+    return tapi_data_set_data_allow(context, atoi(slot_id),
+        EVENT_DATA_ALLOWED_DONE, atoi(target_state), data_event_response);
 }
 
 static int telephonytool_cmd_data_register(tapi_context context, char* pargs)
@@ -3294,16 +2940,14 @@ static void telephonytool_execute(tapi_context context, char* cmd, char* arg)
 
     for (i = 0; g_telephonytool_cmds[i].cmd; i++) {
         if (strcmp(cmd, g_telephonytool_cmds[i].cmd) == 0) {
-            int ret = g_telephonytool_cmds[i].pfunc(context, arg);
-            if (ret < 0)
-                printf("cmd:%s input parameter:%s invalid, res:%d\n", cmd, arg, ret);
+            if (g_telephonytool_cmds[i].pfunc(context, arg) < 0)
+                printf("cmd:%s input parameter:%s invalid \n", cmd, arg);
 
-            break;
+            return;
         }
     }
 
-    if (i == sizeof(g_telephonytool_cmds) / sizeof(g_telephonytool_cmds[0]) - 1)
-        printf("Unknown cmd: \'%s\'. Type 'help' for more infomation.\n", cmd);
+    printf("Unknown cmd: \'%s\'. Type 'help' for more infomation.\n", cmd);
 }
 
 static void* read_stdin(pthread_addr_t pvarg)
@@ -3357,6 +3001,388 @@ static void* read_stdin(pthread_addr_t pvarg)
     free(buffer);
     return NULL;
 }
+
+/****************************************************************************
+ * Private Data
+ ****************************************************************************/
+
+static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
+
+    /* Radio Command */
+    { "list-modem",
+        telephonytool_cmd_query_modem_list,
+        "list available modem list (enter example : list-modem" },
+    { "listen-modem", telephonytool_cmd_modem_register,
+        "modem event callback (enter example : listen-modem 0 0 \
+        [slot_id][event_id, 0:radio_state_change 1:call_added 2:call_removed])" },
+    { "unlisten-modem",
+        telephonytool_cmd_modem_unregister,
+        "modem event callback (enter example : unlisten-modem 0 \
+        [watch_id, one uint value returned from \"listen\"])" },
+    { "get-radio-cap",
+        telephonytool_cmd_is_feature_supported,
+        "query modem capability (enter example : get-radio-cap 0 \
+        [feature_type, 0: voice 1: data 2: sms 3: ims])" },
+    { "set-radio-power",
+        telephonytool_cmd_set_radio_power,
+        "set radio power (enter example : set-radio-power 0 1 \
+        [slot_id][state, 0:radio off 1:radio on])" },
+    { "get-radio-power",
+        telephonytool_cmd_get_radio_power,
+        "get radio power (enter example : get-radio-power 0 [slot_id])" },
+    { "set-rat-mode",
+        telephonytool_cmd_set_rat_mode,
+        "set rat mode (enter example : set-rat-set 0 9 [slot_id] \
+        [mode: 0-any 1-gsm_only 2-wcdma_only 3-umts 9-lte_gsm_wcdma 12-lte_wcdma 14-lte_only])" },
+    { "get-rat-mode",
+        telephonytool_cmd_get_rat_mode,
+        "get rat mode (enter example : get-rat-mode 0 [slot_id])" },
+    { "get-imei",
+        telephonytool_cmd_get_imei,
+        "get imei (enter example : get-imei 0 [slot_id])" },
+    { "get-imeisv",
+        telephonytool_cmd_get_imeisv,
+        "get imeisv (enter example : get-imeisv 0 [slot_id])" },
+    { "get-phone-state",
+        telephonytool_cmd_get_phone_state,
+        "get phone state (enter example : get-phone-state 0 [slot_id])" },
+    { "reboot-modem",
+        telephonytool_cmd_reboot_modem,
+        "reboot modem (enter example : reboot-modem 0 [slot_id])" },
+    { "get-radio-state",
+        telephonytool_cmd_get_radio_state,
+        "get radio state (enter example : get-radio-state 0 [slot_id])" },
+    { "get-modem-manufacturer",
+        telephonytool_cmd_get_modem_manufacturer,
+        "get modem manufacturer (enter example : get-modem-manufacturer 0 [slot_id])" },
+    { "get-modem-model",
+        telephonytool_cmd_get_modem_model,
+        "get modem_model (enter example : get-modem-model 0 [slot_id])" },
+    { "get-modem-revision",
+        telephonytool_cmd_get_modem_revision,
+        "get modem_revision (enter example : get-modem-revision 0 [slot_id])" },
+    { "get-msisdn",
+        telephonytool_cmd_get_line_number,
+        "query line number (enter example : get-msisdn 0 [slot_id])" },
+
+    /* Call Command */
+    { "dial",
+        telephonytool_cmd_dial,
+        "Dial (enter example : dial 0 10086 0 [slot_id][number][hide_call_id, 0:show 1:hide])" },
+    { "answer",
+        telephonytool_cmd_answer_call,
+        "Answer (enter example : answer 0 0 [slot_id][action:0-answer 1-realse&answer][call_id])" },
+    { "swap",
+        telephonytool_cmd_swap_call,
+        "call Swap (enter example : swap 0 1 [slot_id][action:1-hold 0-unhold])" },
+    { "listen-call",
+        telephonytool_cmd_listen_call_manager_change,
+        "call manger event callback (enter example : listen-call 0" },
+    { "unlisten-call",
+        telephonytool_cmd_unlisten_call_singal,
+        "call unlisten event callback (enter example : unlisten-call [watch_id]" },
+    { "call-proxy",
+        telephonytool_cmd_call_proxy,
+        "new/release call proxy (enter example : \
+        call-proxy [slot_id] [action:0-new 1-release] [call_id]" },
+    { "listen-call-info",
+        telephonytool_cmd_listen_call_info_change,
+        "call info event callback (enter example : \
+        listen-call-info [slot_id][call_id]" },
+    { "hangup-all",
+        telephonytool_cmd_hangup_all,
+        "hangup all call (enter example : hangup-all 0 [slot_id])" },
+    { "hangup",
+        telephonytool_cmd_hangup_call,
+        "hangup (enter example : hangup 0 [call_id] /phonesim/voicecall01)" },
+    { "release-swap",
+        telephonytool_cmd_release_and_swap,
+        "release and swap (enter example : release-swap 0 [slot_id])" },
+    { "get-call",
+        telephonytool_cmd_get_call,
+        "get call list/call info (enter example : get-call 0 \
+        [slot_id][call_id])" },
+    { "transfer",
+        telephonytool_cmd_transfer_call,
+        "call transfer  (enter example : transfer 0 [slot_id])" },
+    { "merge",
+        telephonytool_cmd_merge_call,
+        "call merge  (enter example : merge 0 [slot_id])" },
+    { "separate",
+        telephonytool_cmd_separate_call,
+        "call separate  (enter example : separate 0 [slot_id][call_id: /phonesim/voicecall01])" },
+    { "get-ecclist",
+        telephonytool_cmd_get_ecc_list,
+        "get ecc list  (enter example : get-ecclist 0 [slot_id])" },
+    { "is-ecc",
+        telephonytool_cmd_is_emergency_number,
+        "is emergency number  (enter example : is-ecc 110 [number])" },
+
+    /* Data Command */
+    { "load-apns",
+        telephonytool_cmd_load_apns,
+        "load apn settings (enter example : load-apns 0 [slot_id])" },
+    { "save-apn",
+        telephonytool_cmd_save_apn,
+        "save apn (enter example : save-apn 0 1 [slot_id][apn_type])" },
+    { "remove-apn",
+        telephonytool_cmd_remove_apn,
+        "remove apn (enter example : remove-apn 0 1 [slot_id][id])" },
+    { "reset-apn",
+        telephonytool_cmd_reset_apn,
+        "reset apn (enter example : reset-apn 0 [slot_id])" },
+    { "request-network",
+        telephonytool_cmd_request_network,
+        "request network (enter example : request-network 0 internet [slot_id][apn_type_string])" },
+    { "release-network",
+        telephonytool_cmd_release_network,
+        "release network (enter example : release-network 0 internet [slot_id][apn_type_string])" },
+    { "set-data-roaming",
+        telephonytool_cmd_set_data_roaming,
+        "set data roaming (enter example : set-data-roaming 0 1 [slot_id][state])" },
+    { "get-data-roaming",
+        telephonytool_cmd_get_data_roaming,
+        "get data roaming (enter example : get-data-roaming 0 [slot_id])" },
+    { "set-data-on",
+        telephonytool_cmd_set_data_enabled,
+        "set data enabled (enter example : set-data-on 0 1 [slot_id][state])" },
+    { "is-data-on",
+        telephonytool_cmd_get_data_enabled,
+        "get data enabled (enter example : is-data-on 0 [slot_id])" },
+    { "listen-data",
+        telephonytool_cmd_data_register,
+        "listen data event (enter example : listen-data 0 1 [slot_id][event_id])" },
+    { "is-ps-attached",
+        telephonytool_cmd_get_ps_attached,
+        "checki if ps attached (enter example : is-ps-attached 0 [slot_id])" },
+    { "get-ps-nwtype",
+        telephonytool_cmd_get_ps_network_type,
+        "get ps network type (enter example : get-ps-nwtype 0 [slot_id])" },
+    { "set-pref-apn",
+        telephonytool_cmd_set_pref_apn,
+        "set preferred apn (enter example : set-pref-apn[slot_id][apn_id])" },
+    { "get-pref-apn",
+        telephonytool_cmd_get_pref_apn,
+        "get preferred apn (enter example : get-pref-apn[slot_id][apn_id])" },
+    { "set-data-slot",
+        telephonytool_cmd_set_default_data_slot,
+        "set default data slot (enter example : set-data-slot 0 [slot_id])" },
+    { "get-data-slot",
+        telephonytool_cmd_get_default_data_slot,
+        "get default data slot (enter example : get-data-slot)" },
+    { "set-data-allow",
+        telephonytool_cmd_set_data_allow,
+        "allow data in specific slot for multsim devices (enter example : set-data-allow 0 1)" },
+
+    /* SIM Command */
+    { "has-icc",
+        telephonytool_cmd_has_icc_card,
+        "has icc card (enter example : has-icc 0 [slot_id])" },
+    { "get-iccid",
+        telephonytool_cmd_get_sim_iccid,
+        "get sim iccid (enter example : get-iccid 0 [slot_id])" },
+    { "get-sim-operator",
+        telephonytool_cmd_get_sim_operator,
+        "get sim operator (mcc+mnc) : get-sim-operator 0 [slot_id])" },
+    { "get-sim-operator-name",
+        telephonytool_cmd_get_sim_operator_name,
+        "get sim operator name (enter example : get-sim-operator-name 0 [slot_id])" },
+    { "change-pin",
+        telephonytool_cmd_change_sim_pin,
+        "change old pin to new pin (enter example : \
+        change-pin 0 pin 1234 2345 [slot_id][pin_type, pin or pin2][old_pin][new_pin])" },
+    { "enter-pin",
+        telephonytool_cmd_enter_sim_pin,
+        "enter pin to verify (enter example : \
+        enter-pin 0 pin 1234 [slot_id][pin_type, pin or pin2][pin])" },
+    { "reset-pin",
+        telephonytool_cmd_reset_sim_pin,
+        "using puk reset pin (enter example : \
+        reset-pin 0 puk 12345678 2345 [slot_id][puk_type, puk or puk2][puk][new_pin])" },
+    { "lock-pin",
+        telephonytool_cmd_lock_sim_pin,
+        "active sim lock (enter example : \
+        lock-pin 0 pin 1234 [slot_id][pin_type, pin or pin2][pin])" },
+    { "unlock-pin",
+        telephonytool_cmd_unlock_sim_pin,
+        "deactive sim lock (enter example : \
+        unlock-pin 0 pin 1234 [slot_id][pin_type, pin or pin2][pin])" },
+    { "listen-sim",
+        telephonytool_cmd_listen_sim_state_change,
+        "register sim state change (enter example : listen-sim 0 [slot_id])" },
+    { "unlisten-sim",
+        telephonytool_cmd_unlisten_sim_state_change,
+        "unregister sim state change (enter example : unlisten-sim 0 [slot_id])" },
+
+    /* Sms & Cbs Command */
+    { "send-sms",
+        telephonytool_tapi_sms_send_message,
+        "send message (enter example : send-sms 0 10086 hello)" },
+    { "send-data-sms",
+        telephonytool_tapi_sms_send_data_message,
+        "send message (enter example : send-data-sms 0 10086 hello)" },
+    { "get-service-center-number",
+        telephonytool_tapi_sms_get_service_center_number,
+        "get service center number ? (enter example : get-service-center-number 0)" },
+    { "set-service-center-number",
+        telephonytool_tapi_sms_set_service_center_number,
+        "set service center number ? (enter example : set-service-center-number 0 10086)" },
+    { "register-incoming-sms",
+        telephonytool_tapi_sms_register,
+        "get incoming sms ? (enter example : register-incoming-sms 0)" },
+    { "get-cell-broadcast-power",
+        telephonytool_tapi_sms_get_cell_broadcast_power,
+        "get cell broadcast power ? (enter example : get-cell-broadcast-power 0)" },
+    { "set-cell-broadcast-power",
+        telephonytool_tapi_sms_set_cell_broadcast_power,
+        "set service center number ? (enter example : set-cell-broadcast-power 0 1)" },
+    { "get-cell-broadcast-topics",
+        telephonytool_tapi_sms_get_cell_broadcast_topics,
+        "get cell broadcast topics ? (enter example : get-cell-broadcast-topics 0)" },
+    { "set-cell-broadcast-topics",
+        telephonytool_tapi_sms_set_cell_broadcast_topics,
+        "set cell broadcast topics ? (enter example : set-cell-broadcast-topics 0 1)" },
+    { "register-incoming-cbs",
+        telephonytool_tapi_cbs_register,
+        "get incoming cbs ? (enter example : register-incoming-cbs 0)" },
+    { "copy-sms-to-sim",
+        telephonytool_tapi_sms_copy_message_to_sim,
+        "send message (enter example : copy-sms-to-sim 0 10086 hello)" },
+    { "delete-sms-from-sim",
+        telephonytool_tapi_sms_delete_message_from_sim,
+        "send message (enter example : delete-sms-from-sim 0 1)" },
+
+    /* Network Command */
+    { "listen-network",
+        telephonytool_cmd_network_listen,
+        "listen-network (enter example : listen-network 0 13 [slot_id][event_id])" },
+    { "unlisten-network",
+        telephonytool_cmd_network_unlisten,
+        "unlisten-network (enter example : unlisten-network 0 [slot_id])" },
+    { "register-auto",
+        telephonytool_cmd_network_select_auto,
+        "register auto (enter example : register-auto 0 [slot_id])" },
+    { "register-manual",
+        telephonytool_cmd_network_select_manual,
+        "register manual (enter example : register-manual 0 [slot_id])" },
+    { "get-signalstrength",
+        telephonytool_cmd_query_signalstrength,
+        "signalstrength (enter example : get-signalstrength 0 [slot_id])" },
+    { "get-display-name",
+        telephonytool_cmd_get_operator_name,
+        "operator-name (enter example : get-display-name 0 [slot_id])" },
+    { "get-registration-info",
+        telephonytool_cmd_get_net_registration_info,
+        "query registration-info (enter example : get-registration-info 0 [slot_id])" },
+    { "get-voice-nwtype",
+        telephonytool_cmd_get_voice_networktype,
+        "query cs network type (enter example : get-voice-nwtype 0 [slot_id])" },
+    { "get-voice-roaming",
+        telephonytool_cmd_is_voice_roaming,
+        "judge voice roaming  (enter example : get-voice-roaming 0 [slot_id])" },
+    { "scan-network",
+        telephonytool_cmd_network_scan,
+        "network-scan  (enter example : scan-network 0 [slot_id])" },
+    { "get-serving-cellinfo",
+        telephonytool_cmd_get_serving_cellinfos,
+        "get serving cellinfo  (enter example : get-serving-cellinfo 0)" },
+    { "get-neighbouring-cellInfos",
+        telephonytool_cmd_get_neighbouring_cellInfos,
+        "get neighbouring cellInfos  (enter example : get-neighbouring-cellInfos 0)" },
+
+    /* Ss Command */
+    { "set-callbarring",
+        telephonytool_cmd_set_call_barring,
+        "set callbarring (enter example : set-callbarring 0 AI 1234 \
+        [slot_id][facility][pin2])" },
+    { "get-callbarring",
+        telephonytool_cmd_get_call_barring,
+        "get callbarring (enter example : get-callbarring 0 VoiceIncoming \
+        [slot_id][call barring key])" },
+    { "change-callbarring-passwd",
+        telephonytool_cmd_change_call_barring_passwd,
+        "change callbarring passwd (enter example : change-callbarring-passwd 0 1234 2345 \
+        [slot_id][old passwd][new passwd])" },
+    { "disable-all-callbarrings",
+        telephonytool_cmd_disable_all_call_barrings,
+        "disable all callbarrings (enter example : disable-all-callbarrings 0 2345 \
+        [slot_id][passwd])" },
+    { "disable-all-incoming",
+        telephonytool_cmd_disable_all_incoming,
+        "disable all incoming (enter example : disable-all-incoming 0 2345 \
+        [slot_id][passwd])" },
+    { "disable-all-outgoing",
+        telephonytool_cmd_disable_all_outgoing,
+        "disable all outgoing (enter example : disable-all-outgoing 0 2345 \
+        [slot_id][passwd])" },
+    { "set-callforwarding",
+        telephonytool_cmd_set_call_forwarding,
+        "set callforwarding (enter example : set-callforwarding 0 VoiceUnconditional 10086 \
+        [slot_id][call forwarding type][value])" },
+    { "get-callforwarding",
+        telephonytool_cmd_get_call_forwarding,
+        "get callforwarding (enter example : get-callforwarding 0 VoiceUnconditional \
+        [slot_id][call forwarding type])" },
+    { "disable-callforwarding",
+        telephonytool_cmd_disable_call_forwarding,
+        "disable callforwarding (enter example : disable-callforwarding 0 all \
+        [slot_id][type])" },
+    { "initiate-ss",
+        telephonytool_cmd_initiate_ss_service,
+        "initiate supplementary service (enter example : initiate-ss 0 *#06# \
+        [slot_id][supplementary service code])" },
+    { "get-ussd-state",
+        telephonytool_cmd_get_ussd_state,
+        "get ussd state (enter example : get-ussd-state 0 [slot_id])" },
+    { "send-ussd",
+        telephonytool_cmd_send_ussd,
+        "send ussd (enter example : send-ussd 0 OK [slot_id][response message])" },
+    { "cancel-ussd",
+        telephonytool_cmd_cancel_ussd,
+        "cancel ussd (enter example : cancel-ussd 0 [slot_id])" },
+    { "set-callwaiting",
+        telephonytool_cmd_set_call_waiting,
+        "set callwaiting (enter example : set-callwaiting 0 enabled \
+        [slot_id][call waiting value])" },
+    { "get-callwaiting",
+        telephonytool_cmd_get_call_waiting,
+        "get callwaiting (enter example : get-callwaiting 0 [slot_id])" },
+    { "get-clip",
+        telephonytool_cmd_get_clip,
+        "get clip (enter example : get-clip 0 [slot_id])" },
+    { "get-clir",
+        telephonytool_cmd_get_clir,
+        "get clir (enter example : get-clir 0 [slot_id])" },
+    { "enable-fdn",
+        telephonytool_cmd_enable_fdn,
+        "enable fdn (enter example : enable-fdn 0 1 123456 \
+        [slot_id][enable 1 or disable 0][pin2])" },
+    { "query-fdn",
+        telephonytool_cmd_query_fdn,
+        "query fdn (enter example : query-fdn 0 [slot_id])" },
+    { "listen-ss",
+        telephonytool_cmd_ss_register,
+        "listen ss event (enter example : listen-ss 0 1 \
+        [slot_id][event_id])" },
+
+    /* IMS Command */
+    { "enable-ims", telephonytool_cmd_ims_enable,
+        "turn on/off ims (enter example : enable-ims 0 1 \
+        [slot_id][action: 0-disable 1-enable])" },
+    { "set-ims-cap", telephonytool_cmd_set_ims_service,
+        "set ims service function (enter example : set-ims-cap 0 1 \
+        [slot_id][cap-value: 1-voice 4-sms 5-voice&sms])" },
+    { "listen-ims", telephonytool_cmd_ims_register,
+        "listen ims registration(enter example : listen-ims 0 [slot_id]" },
+    { "get-ims-registration", telephonytool_cmd_ims_get_registration,
+        "get ims registration(enter example : get-ims-registration 0 0 \
+        [slot_id][action:0-ims info 1-ims state 2-volte state]" },
+
+    { "q", NULL, "Quit (pls enter : q)" },
+    { "help", telephonytool_cmd_help,
+        "Show this message (pls enter : help)" },
+    { 0 },
+};
 
 /****************************************************************************
  * Public Functions
