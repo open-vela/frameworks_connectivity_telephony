@@ -39,6 +39,7 @@
 #define MAX_OPERATOR_NAME_LENGTH 63
 #define MAX_CALL_ID_LENGTH 100
 #define MAX_TX_TIME_ARRAY_LEN 5
+#define MAX_OEM_RIL_RESP_STRINGS_LENTH 20
 
 #ifndef CONFIG_ACTIVE_MODEM_COUNT
 #define CONFIG_ACTIVE_MODEM_COUNT 1
@@ -159,6 +160,7 @@ typedef enum {
     // Generic Indication Message
     MSG_RADIO_STATE_CHANGE_IND = 0,
     MSG_PHONE_STATE_CHANGE_IND,
+    MSG_OEM_HOOK_RAW_IND,
 
     // Call Indication Message
     MSG_CALL_ADD_MESSAGE_IND,
