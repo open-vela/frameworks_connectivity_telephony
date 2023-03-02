@@ -751,7 +751,7 @@ static int manage_call_proxy_method(tapi_context context, int slot_id, const cha
         return -EIO;
     }
 
-    if (!g_dbus_proxy_method_call(proxy, member, NULL, NULL, NULL, NULL)) {
+    if (!g_dbus_proxy_method_call(proxy, member, NULL, no_operate_callback, NULL, NULL)) {
         return -EINVAL;
     }
 
@@ -786,7 +786,8 @@ int tapi_call_dial(tapi_context context, int slot_id, char* number, int hide_cal
     snprintf(param->number, sizeof(param->number), "%s", number);
     param->hide_callerid = hide_callerid;
 
-    if (!g_dbus_proxy_method_call(proxy, "Dial", call_param_append, NULL, param, free)) {
+    if (!g_dbus_proxy_method_call(proxy, "Dial", call_param_append,
+            no_operate_callback, param, free)) {
         free(param);
         return -EINVAL;
     }
@@ -816,7 +817,7 @@ int tapi_call_hangup_call(tapi_context context, int slot_id, char* call_id)
         return -ENODEV;
     }
 
-    if (!g_dbus_proxy_method_call(proxy, "Hangup", NULL, NULL, NULL, NULL)) {
+    if (!g_dbus_proxy_method_call(proxy, "Hangup", NULL, no_operate_callback, NULL, NULL)) {
         return -EINVAL;
     }
 
@@ -865,7 +866,7 @@ int tapi_call_answer_call(tapi_context context, int slot_id, char* call_id, int 
             return -ENODEV;
         }
 
-        g_dbus_proxy_method_call(proxy, "Answer", NULL, NULL, NULL, NULL);
+        g_dbus_proxy_method_call(proxy, "Answer", NULL, no_operate_callback, NULL, NULL);
         error = OK;
     } else if (call_count == 2) {
         error = tapi_call_hold_and_answer(context, slot_id);
@@ -915,7 +916,8 @@ int tapi_call_deflect_call(tapi_context context, int slot_id, char* call_id, cha
         return -ENODEV;
     }
 
-    if (!g_dbus_proxy_method_call(proxy, "Deflect", deflect_param_append, NULL, call_id, NULL)) {
+    if (!g_dbus_proxy_method_call(proxy, "Deflect", deflect_param_append,
+            no_operate_callback, call_id, NULL)) {
         return -EINVAL;
     }
 
@@ -1175,7 +1177,8 @@ int tapi_call_send_tones(void* context, int slot_id, char* tones)
         return -EIO;
     }
 
-    if (!g_dbus_proxy_method_call(proxy, "SendTones", tone_param_append, NULL, tones, NULL)) {
+    if (!g_dbus_proxy_method_call(proxy, "SendTones", tone_param_append,
+            no_operate_callback, tones, NULL)) {
         return -EINVAL;
     }
 

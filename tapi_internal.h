@@ -95,7 +95,7 @@ static inline bool tapi_is_valid_slotid(int slot_id)
 {
     return (slot_id >= 0 && slot_id < CONFIG_ACTIVE_MODEM_COUNT);
 }
-
+void no_operate_callback(DBusMessage* message, void* user_data);
 const char* tapi_pref_network_mode_to_string(tapi_pref_net_mode mode);
 bool tapi_pref_network_mode_from_string(const char* str, tapi_pref_net_mode* mode);
 bool tapi_network_type_from_string(const char* str, tapi_network_type* type);

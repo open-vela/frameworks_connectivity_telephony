@@ -26,6 +26,10 @@
  * Public Functions
  ****************************************************************************/
 
+void no_operate_callback(DBusMessage* message, void* user_data)
+{
+}
+
 const char* tapi_pref_network_mode_to_string(tapi_pref_net_mode mode)
 {
     switch (mode) {
