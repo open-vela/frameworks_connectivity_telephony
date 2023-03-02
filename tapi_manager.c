@@ -24,6 +24,15 @@
 #include "tapi_manager.h"
 
 /****************************************************************************
+ * Private Type Declarations
+ ****************************************************************************/
+
+typedef struct {
+    int length;
+    void* oem_req;
+} oem_ril_request_data;
+
+/****************************************************************************
  * Private Functions
  ****************************************************************************/
 
@@ -293,6 +302,39 @@ done:
     return true;
 }
 
+static int process_oem_hook_raw_indication(DBusConnection* connection,
+    DBusMessage* message, void* user_data)
+{
+    tapi_async_handler* handler = user_data;
+    DBusMessageIter iter, array;
+    tapi_async_result* ar;
+    tapi_async_function cb;
+    unsigned char* response;
+    int num;
+
+    if (handler == NULL)
+        return false;
+
+    if ((ar = handler->result) == NULL || (cb = handler->cb_function) == NULL)
+        return false;
+
+    if (dbus_message_iter_init(message, &iter) == false) {
+        ar->status = ERROR;
+        goto done;
+    }
+
+    dbus_message_iter_recurse(&iter, &array);
+    dbus_message_iter_get_fixed_array(&array, &response, &num);
+
+    ar->data = response;
+    ar->arg2 = num;
+    ar->status = OK;
+
+done:
+    cb(ar);
+    return true;
+}
+
 static void user_data_free(void* user_data)
 {
     tapi_async_handler* handler = user_data;
@@ -304,6 +346,163 @@ static void user_data_free(void* user_data)
             free(ar);
         free(handler);
     }
+}
+
+static void oem_ril_req_data_free(void* user_data)
+{
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
+
+    handler = user_data;
+    if (handler) {
+        ar = handler->result;
+        if (ar) {
+            if (ar->data)
+                free(ar->data);
+            free(ar);
+        }
+
+        free(handler);
+    }
+}
+
+static void oem_ril_request_raw_param_append(DBusMessageIter* iter, void* user_data)
+{
+    oem_ril_request_data* oem_ril_req_raw_param;
+    tapi_async_handler* param;
+    DBusMessageIter array;
+    unsigned char* oem_req;
+    int i;
+
+    param = user_data;
+    if (param == NULL || param->result == NULL)
+        return;
+
+    oem_ril_req_raw_param = param->result->data;
+    oem_req = (unsigned char*)oem_ril_req_raw_param->oem_req;
+
+    dbus_message_iter_open_container(iter, DBUS_TYPE_ARRAY, DBUS_TYPE_BYTE_AS_STRING, &array);
+
+    for (i = 0; i < oem_ril_req_raw_param->length; i++) {
+        dbus_message_iter_append_basic(&array, DBUS_TYPE_BYTE, &oem_req[i]);
+    }
+
+    dbus_message_iter_close_container(iter, &array);
+}
+
+static void oem_ril_request_raw_cb(DBusMessage* message, void* user_data)
+{
+    DBusMessageIter iter, array;
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
+    tapi_async_function cb;
+    DBusError err;
+    unsigned char* response;
+    int num;
+
+    handler = user_data;
+    if (handler == NULL)
+        return;
+
+    if ((ar = handler->result) == NULL || (cb = handler->cb_function) == NULL)
+        return;
+
+    dbus_error_init(&err);
+    if (dbus_set_error_from_message(&err, message) == true) {
+        tapi_log_error("%s: %s\n", err.name, err.message);
+        dbus_error_free(&err);
+        ar->status = ERROR;
+        goto done;
+    }
+
+    if (dbus_message_iter_init(message, &iter) == false) {
+        ar->status = ERROR;
+        goto done;
+    }
+
+    dbus_message_iter_recurse(&iter, &array);
+    dbus_message_iter_get_fixed_array(&array, &response, &num);
+
+    ar->data = response;
+    ar->arg2 = num;
+    ar->status = OK;
+
+done:
+    cb(ar);
+}
+
+static void oem_ril_request_strings_param_append(DBusMessageIter* iter, void* user_data)
+{
+    oem_ril_request_data* oem_ril_req_strings_param;
+    tapi_async_handler* param;
+    DBusMessageIter array;
+    char** oem_req;
+    int i;
+
+    param = user_data;
+    if (param == NULL || param->result == NULL)
+        return;
+
+    oem_ril_req_strings_param = param->result->data;
+    oem_req = (char**)oem_ril_req_strings_param->oem_req;
+
+    dbus_message_iter_open_container(iter, DBUS_TYPE_ARRAY, DBUS_TYPE_STRING_AS_STRING, &array);
+
+    for (i = 0; i < oem_ril_req_strings_param->length; i++) {
+        dbus_message_iter_append_basic(&array, DBUS_TYPE_STRING, &oem_req[i]);
+    }
+
+    dbus_message_iter_close_container(iter, &array);
+}
+
+static void oem_ril_request_strings_cb(DBusMessage* message, void* user_data)
+{
+    char* response[MAX_OEM_RIL_RESP_STRINGS_LENTH];
+    DBusMessageIter iter, array;
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
+    tapi_async_function cb;
+    DBusError err;
+    int num;
+
+    handler = user_data;
+    if (handler == NULL)
+        return;
+
+    if ((ar = handler->result) == NULL || (cb = handler->cb_function) == NULL)
+        return;
+
+    dbus_error_init(&err);
+    if (dbus_set_error_from_message(&err, message) == true) {
+        tapi_log_error("%s: %s\n", err.name, err.message);
+        dbus_error_free(&err);
+        ar->status = ERROR;
+        goto done;
+    }
+
+    if (dbus_message_iter_init(message, &iter) == false) {
+        ar->status = ERROR;
+        goto done;
+    }
+
+    num = 0;
+    dbus_message_iter_recurse(&iter, &array);
+    while (dbus_message_iter_get_arg_type(&array) == DBUS_TYPE_STRING) {
+        if (num == MAX_OEM_RIL_RESP_STRINGS_LENTH) {
+            ar->status = ERROR;
+            goto done;
+        }
+
+        dbus_message_iter_get_basic(&array, &response[num++]);
+        dbus_message_iter_next(&array);
+    }
+
+    ar->data = response;
+    ar->arg2 = num;
+    ar->status = OK;
+
+done:
+    cb(ar);
 }
 
 /****************************************************************************
@@ -850,6 +1049,114 @@ int tapi_get_modem_activity_info(tapi_context context, int slot_id,
     return OK;
 }
 
+int tapi_invoke_oem_ril_request_raw(tapi_context context, int slot_id, int event_id,
+    unsigned char oem_req[], int length, tapi_async_function p_handle)
+{
+    oem_ril_request_data* oem_ril_req;
+    dbus_context* ctx = context;
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
+    GDBusProxy* proxy;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
+        || oem_req == NULL || length <= 0) {
+        return -EINVAL;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    handler = malloc(sizeof(tapi_async_handler));
+    if (handler == NULL)
+        return -ENOMEM;
+
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        free(handler);
+        return -ENOMEM;
+    }
+    handler->result = ar;
+
+    oem_ril_req = malloc(sizeof(oem_ril_request_data));
+    if (oem_ril_req == NULL) {
+        free(handler);
+        free(ar);
+        return -ENOMEM;
+    }
+    oem_ril_req->length = length;
+    oem_ril_req->oem_req = oem_req;
+
+    ar->arg1 = slot_id;
+    ar->msg_id = event_id;
+    ar->data = oem_ril_req;
+    handler->cb_function = p_handle;
+
+    if (!g_dbus_proxy_method_call(proxy, "OemRequestRaw", oem_ril_request_raw_param_append,
+            oem_ril_request_raw_cb, handler, oem_ril_req_data_free)) {
+        oem_ril_req_data_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
+}
+
+int tapi_invoke_oem_ril_request_strings(tapi_context context, int slot_id, int event_id,
+    char* oem_req[], int length, tapi_async_function p_handle)
+{
+    oem_ril_request_data* oem_ril_req_param;
+    dbus_context* ctx = context;
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
+    GDBusProxy* proxy;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
+        || oem_req == NULL || length <= 0) {
+        return -EINVAL;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    handler = malloc(sizeof(tapi_async_handler));
+    if (handler == NULL)
+        return -ENOMEM;
+
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        free(handler);
+        return -ENOMEM;
+    }
+    handler->result = ar;
+
+    oem_ril_req_param = malloc(sizeof(oem_ril_request_data));
+    if (oem_ril_req_param == NULL) {
+        free(handler);
+        free(ar);
+        return -ENOMEM;
+    }
+    oem_ril_req_param->length = length;
+    oem_ril_req_param->oem_req = oem_req;
+
+    ar->arg1 = slot_id;
+    ar->msg_id = event_id;
+    ar->data = oem_ril_req_param;
+    handler->cb_function = p_handle;
+
+    if (!g_dbus_proxy_method_call(proxy, "OemRequestStrings", oem_ril_request_strings_param_append,
+            oem_ril_request_strings_cb, handler, oem_ril_req_data_free)) {
+        oem_ril_req_data_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
+}
+
 int tapi_register(tapi_context context,
     int slot_id, tapi_indication_msg msg, tapi_async_function p_handle)
 {
@@ -894,6 +1201,11 @@ int tapi_register(tapi_context context,
         watch_id = g_dbus_add_signal_watch(ctx->connection,
             OFONO_SERVICE, modem_path, OFONO_VOICECALL_MANAGER_INTERFACE,
             "PhoneStatusChanged", phone_state_changed, handler, user_data_free);
+        break;
+    case MSG_OEM_HOOK_RAW_IND:
+        watch_id = g_dbus_add_signal_watch(ctx->connection,
+            OFONO_SERVICE, modem_path, OFONO_MODEM_INTERFACE,
+            "OemHookIndication", process_oem_hook_raw_indication, handler, user_data_free);
         break;
     default:
         break;

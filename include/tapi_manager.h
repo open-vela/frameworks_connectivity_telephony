@@ -48,7 +48,7 @@ extern "C" {
 
 /**
  * Init telephony library.
- * @param[in] client_name        Calling context name. 
+ * @param[in] client_name        Calling context name.
  * Must contain one dot character at least. For example, miot.app
  * @return Pointer to created context or NULL on failure.
  */
@@ -211,6 +211,32 @@ int tapi_get_msisdn_number(tapi_context context, int slot_id, char** out);
  */
 int tapi_get_modem_activity_info(tapi_context context, int slot_id,
     int event_id, tapi_async_function p_handle);
+
+/**
+ * Returns RIL responses to raw oem request.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] event_id       Async event identifier.
+ * @param[in] oem_req        Oem RIL request data.
+ * @param[in] length         The length of oem RIL request data.
+ * @param[in] p_handle       Event callback.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_invoke_oem_ril_request_raw(tapi_context context, int slot_id, int event_id,
+    unsigned char oem_req[], int length, tapi_async_function p_handle);
+
+/**
+ * Returns RIL responses to strings oem request.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] event_id       Async event identifier.
+ * @param[in] oem_req        Oem RIL request data.
+ * @param[in] length         The length of oem RIL request data.
+ * @param[in] p_handle       Event callback.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_invoke_oem_ril_request_strings(tapi_context context, int slot_id, int event_id,
+    char* oem_req[], int length, tapi_async_function p_handle);
 
 /**
  * Register radio event callback.
