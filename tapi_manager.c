@@ -162,6 +162,71 @@ done:
     cb(ar);
 }
 
+static void modem_activity_info_query_done(DBusMessage* message, void* user_data)
+{
+    tapi_async_handler* handler = user_data;
+    tapi_async_result* ar;
+    tapi_async_function cb;
+    DBusMessageIter iter, array;
+    DBusError err;
+    modem_activity_info* info;
+    int activity_info[MAX_TX_TIME_ARRAY_LEN + 3];
+    int length;
+
+    if (handler == NULL)
+        return;
+
+    ar = handler->result;
+    if (ar == NULL)
+        return;
+
+    cb = handler->cb_function;
+    if (cb == NULL)
+        return;
+
+    info = malloc(sizeof(modem_activity_info));
+    if (info == NULL) {
+        return;
+    }
+
+    dbus_error_init(&err);
+    if (dbus_set_error_from_message(&err, message) == true) {
+        tapi_log_error("%s: %s\n", err.name, err.message);
+        dbus_error_free(&err);
+        ar->status = ERROR;
+        goto done;
+    }
+
+    if (dbus_message_iter_init(message, &iter) == false) {
+        ar->status = ERROR;
+        goto done;
+    }
+
+    dbus_message_iter_recurse(&iter, &array);
+    dbus_message_iter_get_fixed_array(&array, &activity_info, &length);
+
+    if (length != MAX_TX_TIME_ARRAY_LEN + 3) {
+        goto done;
+    }
+
+    info->sleep_time = activity_info[0];
+    info->idle_time = activity_info[1];
+
+    for (int i = 0; i < MAX_TX_TIME_ARRAY_LEN; i++) {
+        info->tx_time[i] = activity_info[i + 2];
+    }
+
+    info->rx_time = activity_info[7];
+
+    ar->status = OK;
+    ar->data = info;
+
+done:
+    cb(ar);
+    if (info != NULL)
+        free(info);
+}
+
 static int radio_state_changed(DBusConnection* connection,
     DBusMessage* message, void* user_data)
 {
@@ -740,6 +805,49 @@ int tapi_get_msisdn_number(tapi_context context, int slot_id, char** out)
     }
 
     return -EINVAL;
+}
+
+int tapi_get_modem_activity_info(tapi_context context, int slot_id,
+    int event_id, tapi_async_function p_handle)
+{
+    dbus_context* ctx = context;
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
+    GDBusProxy* proxy;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+        return -EINVAL;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    handler = malloc(sizeof(tapi_async_handler));
+    if (handler == NULL)
+        return -ENOMEM;
+
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        free(handler);
+        return -ENOMEM;
+    }
+    handler->result = ar;
+
+    ar->msg_id = event_id;
+    ar->arg1 = slot_id;
+    handler->result = ar;
+    handler->cb_function = p_handle;
+
+    if (!g_dbus_proxy_method_call(proxy, "GetModemActivityInfo", NULL,
+            modem_activity_info_query_done, handler, user_data_free)) {
+        user_data_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_register(tapi_context context,

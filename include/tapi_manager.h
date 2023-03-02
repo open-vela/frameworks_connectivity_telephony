@@ -28,6 +28,17 @@
 #include "tapi.h"
 
 /****************************************************************************
+ * Public Types
+ ****************************************************************************/
+
+typedef struct {
+    int sleep_time;
+    int idle_time;
+    int tx_time[MAX_TX_TIME_ARRAY_LEN];
+    int rx_time;
+} modem_activity_info;
+
+/****************************************************************************
  * Public Function Prototypes
  ****************************************************************************/
 
@@ -189,6 +200,17 @@ int tapi_get_phone_state(tapi_context context, int slot_id, tapi_phone_state* st
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_get_msisdn_number(tapi_context context, int slot_id, char** out);
+
+/**
+ * get modem activity info.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] event_id       Async event identifier.
+ * @param[in] p_handle       Event callback.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_get_modem_activity_info(tapi_context context, int slot_id,
+    int event_id, tapi_async_function p_handle);
 
 /**
  * Register radio event callback.
