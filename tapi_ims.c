@@ -86,7 +86,7 @@ static int tapi_ims_enable(tapi_context context, int slot_id, int state)
     else
         return -EINVAL;
 
-    if (!g_dbus_proxy_method_call(proxy, member, NULL, NULL, NULL, NULL))
+    if (!g_dbus_proxy_method_call(proxy, member, NULL, no_operate_callback, NULL, NULL))
         return -EIO;
 
     return OK;
@@ -180,7 +180,7 @@ int tapi_ims_set_service_status(tapi_context context, int slot_id, int capabilit
     }
 
     if (!g_dbus_proxy_method_call(proxy, "ServiceStatus", set_ss_param_append,
-            NULL, &capability, NULL))
+            no_operate_callback, &capability, NULL))
         return -EIO;
 
     return OK;
