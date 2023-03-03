@@ -87,6 +87,11 @@ struct telephonytool_cmd_s {
     const char* help; /* The help text */
 };
 
+struct telephony_main_loop {
+    GMainLoop* eventloop;
+    tapi_context context;
+};
+
 /****************************************************************************
  * Private Declarations
  ****************************************************************************/
@@ -2990,7 +2995,7 @@ static void* read_stdin(pthread_addr_t pvarg)
 {
     int arg_len, len;
     char *cmd, *arg, *buffer;
-    tapi_context context = (void*)pvarg;
+    struct telephony_main_loop* main_loop = (void*)pvarg;
 
     buffer = malloc(CONFIG_NSH_LINELEN);
     if (buffer == NULL) {
@@ -3031,10 +3036,11 @@ static void* read_stdin(pthread_addr_t pvarg)
             break;
 
         arg[arg_len] = '\0';
-        telephonytool_execute(context, cmd, arg);
+        telephonytool_execute(main_loop->context, cmd, arg);
     }
 
     free(buffer);
+    g_main_loop_quit(main_loop->eventloop);
     return NULL;
 }
 
@@ -3435,15 +3441,14 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
 
 int main(int argc, char* argv[])
 {
+    struct telephony_main_loop main_loop;
     struct sched_param param;
-    GMainLoop* event_loop;
-    tapi_context context;
     pthread_attr_t attr;
     pthread_t thread;
     int ret;
 
-    context = tapi_open("vale.telephony.tool");
-    if (context == NULL) {
+    main_loop.context = tapi_open("vale.telephony.tool");
+    if (main_loop.context == NULL) {
         return 0;
     }
 
@@ -3452,16 +3457,16 @@ int main(int argc, char* argv[])
     pthread_attr_setschedparam(&attr, &param);
     pthread_attr_setstacksize(&attr, CONFIG_TELEPHONY_TOOL_STACKSIZE);
 
-    ret = pthread_create(&thread, &attr, read_stdin, context);
+    ret = pthread_create(&thread, &attr, read_stdin, &main_loop);
     if (ret != 0) {
         goto out;
     }
 
-    event_loop = g_main_loop_new(NULL, false);
-    g_main_loop_run(event_loop);
-    g_main_loop_unref(event_loop);
+    main_loop.eventloop = g_main_loop_new(NULL, false);
+    g_main_loop_run(main_loop.eventloop);
+    g_main_loop_unref(main_loop.eventloop);
 
 out:
-    tapi_close(context);
+    tapi_close(main_loop.context);
     return ret;
 }
