@@ -143,9 +143,22 @@ static void tele_call_manager_call_async_fun(tapi_async_result* result)
 
     if (result->msg_id == MSG_CALL_ADD_MESSAGE_IND) {
         call_info = (tapi_call_info*)result->data;
-        syslog(LOG_DEBUG, "call added call_path : %s\n", call_info->call_id);
+
+        syslog(LOG_DEBUG, "call added call_id : %s\n", call_info->call_id);
+        syslog(LOG_DEBUG, "call state: %d \n", call_info->state);
+        syslog(LOG_DEBUG, "call LineIdentification: %s \n", call_info->lineIdentification);
+        syslog(LOG_DEBUG, "call IncomingLine: %s \n", call_info->incoming_line);
+        syslog(LOG_DEBUG, "call Name: %s \n", call_info->name);
+        syslog(LOG_DEBUG, "call StartTime: %s \n", call_info->start_time);
+        syslog(LOG_DEBUG, "call Multiparty: %d \n", call_info->multiparty);
+        syslog(LOG_DEBUG, "call RemoteHeld: %d \n", call_info->remote_held);
+        syslog(LOG_DEBUG, "call RemoteMultiparty: %d \n", call_info->remote_multiparty);
+        syslog(LOG_DEBUG, "call Information: %s \n", call_info->info);
+        syslog(LOG_DEBUG, "call Icon: %d \n", call_info->icon);
+        syslog(LOG_DEBUG, "call Emergency: %d \n\n", call_info->is_emergency_number);
+
     } else if (result->msg_id == MSG_CALL_REMOVE_MESSAGE_IND) {
-        syslog(LOG_DEBUG, "call removed call_path : %s\n", (char*)result->data);
+        syslog(LOG_DEBUG, "call removed call_id : %s\n", (char*)result->data);
     } else if (result->msg_id == MSG_CALL_RING_BACK_TONE_IND) {
         syslog(LOG_DEBUG, "ring back tone status : %d\n", result->arg2);
     }
