@@ -161,6 +161,7 @@ typedef enum {
     MSG_RADIO_STATE_CHANGE_IND = 0,
     MSG_PHONE_STATE_CHANGE_IND,
     MSG_OEM_HOOK_RAW_IND,
+    MSG_MODEM_RESTART_IND,
 
     // Call Indication Message
     MSG_CALL_ADD_MESSAGE_IND,

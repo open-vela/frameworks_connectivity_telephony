@@ -240,6 +240,29 @@ int tapi_invoke_oem_ril_request_strings(tapi_context context, int slot_id, int e
     char* oem_req[], int length, tapi_async_function p_handle);
 
 /**
+ * enable or disable modem.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] event_id       Async event identifier.
+ * @param[in] enable         Indicate whether to enable modem.
+ * @param[in] p_handle       Event callback.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_enable_modem(tapi_context context, int slot_id,
+    int event_id, bool enable, tapi_async_function p_handle);
+
+/**
+ * get modem status.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] event_id       Async event identifier.
+ * @param[in] p_handle       Event callback.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_get_modem_status(tapi_context context, int slot_id,
+    int event_id, tapi_async_function p_handle);
+
+/**
  * Register radio event callback.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.

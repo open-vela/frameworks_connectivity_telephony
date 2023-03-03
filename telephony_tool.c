@@ -40,39 +40,42 @@
 #define EVENT_MODEM_LIST_QUERY_DONE 0x01
 #define EVENT_RADIO_STATE_SET_DONE 0x02
 #define EVENT_RAT_MODE_SET_DONE 0x03
+#define EVENT_MODEM_ACTIVITY_INFO_QUERY_DONE 0x04
+#define EVENT_MODEM_ENABLE_DONE 0x05
+#define EVENT_MODEM_STATUS_QUERY_DONE 0x06
 
-#define EVENT_APN_LOADED_DONE 0x04
-#define EVENT_APN_SAVE_DONE 0x05
-#define EVENT_APN_REMOVAL_DONE 0x06
-#define EVENT_APN_RESTORE_DONE 0x07
-#define EVENT_DATA_ALLOWED_DONE 0x08
+#define EVENT_APN_LOADED_DONE 0x07
+#define EVENT_APN_SAVE_DONE 0x08
+#define EVENT_APN_REMOVAL_DONE 0x09
+#define EVENT_APN_RESTORE_DONE 0x0A
+#define EVENT_DATA_ALLOWED_DONE 0x0B
 
-#define EVENT_CHANGE_SIM_PIN_DONE 0x09
-#define EVENT_ENTER_SIM_PIN_DONE 0x0A
-#define EVENT_RESET_SIM_PIN_DONE 0x0B
-#define EVENT_LOCK_SIM_PIN_DONE 0x0C
-#define EVENT_UNLOCK_SIM_PIN_DONE 0x0D
+#define EVENT_CHANGE_SIM_PIN_DONE 0x0C
+#define EVENT_ENTER_SIM_PIN_DONE 0x0D
+#define EVENT_RESET_SIM_PIN_DONE 0x0E
+#define EVENT_LOCK_SIM_PIN_DONE 0x0F
+#define EVENT_UNLOCK_SIM_PIN_DONE 0x10
 
-#define EVENT_NETWORK_SCAN_DONE 0x0E
-#define EVENT_REGISTER_AUTO_DONE 0x0F
-#define EVENT_REGISTER_MANUAL_DONE 0x10
-#define EVENT_QUERY_REGISTRATION_INFO_DONE 0x11
-#define EVENT_QUERY_SERVING_CELL_DONE 0x12
-#define EVENT_QUERY_NEIGHBOURING_CELL_DONE 0x13
+#define EVENT_NETWORK_SCAN_DONE 0x11
+#define EVENT_REGISTER_AUTO_DONE 0x12
+#define EVENT_REGISTER_MANUAL_DONE 0x13
+#define EVENT_QUERY_REGISTRATION_INFO_DONE 0x14
+#define EVENT_QUERY_SERVING_CELL_DONE 0x15
+#define EVENT_QUERY_NEIGHBOURING_CELL_DONE 0x16
 
-#define EVENT_REQUEST_CALL_BARRING_DONE 0x14
-#define EVENT_CALL_BARRING_PASSWD_CHANGE_DONE 0x15
-#define EVENT_DISABLE_ALL_CALL_BARRINGS_DONE 0x16
-#define EVENT_DISABLE_ALL_INCOMING_DONE 0x17
-#define EVENT_DISABLE_ALL_OUTGOING_DONE 0x18
-#define EVENT_REQUEST_CALL_FORWARDING_DONE 0x19
-#define EVENT_DISABLE_CALL_FORWARDING_DONE 0x1A
-#define EVENT_CANCEL_USSD_DONE 0x1B
-#define EVENT_REQUEST_CALL_WAITING_DONE 0x1C
-#define EVENT_SEND_USSD_DONE 0x1D
-#define EVENT_INITIATE_SERVICE_DONE 0x1E
-#define EVENT_ENABLE_FDN_DONE 0x1F
-#define EVENT_QUERY_FDN_DONE 0x20
+#define EVENT_REQUEST_CALL_BARRING_DONE 0x17
+#define EVENT_CALL_BARRING_PASSWD_CHANGE_DONE 0x18
+#define EVENT_DISABLE_ALL_CALL_BARRINGS_DONE 0x19
+#define EVENT_DISABLE_ALL_INCOMING_DONE 0x1A
+#define EVENT_DISABLE_ALL_OUTGOING_DONE 0x1B
+#define EVENT_REQUEST_CALL_FORWARDING_DONE 0x1C
+#define EVENT_DISABLE_CALL_FORWARDING_DONE 0x1D
+#define EVENT_CANCEL_USSD_DONE 0x1E
+#define EVENT_REQUEST_CALL_WAITING_DONE 0x1F
+#define EVENT_SEND_USSD_DONE 0x20
+#define EVENT_INITIATE_SERVICE_DONE 0x21
+#define EVENT_ENABLE_FDN_DONE 0x22
+#define EVENT_QUERY_FDN_DONE 0x23
 
 #define EVENT_LOAD_ADN_ENTRIES_DONE 0x21
 
@@ -325,6 +328,9 @@ static void radio_signal_change(tapi_async_result* result)
         break;
     case MSG_PHONE_STATE_CHANGE_IND:
         syslog(LOG_DEBUG, "phone state changed to %d in slot[%d] \n", param, slot_id);
+        break;
+    case MSG_MODEM_RESTART_IND:
+        syslog(LOG_DEBUG, "modem restart in slot[%d] \n", slot_id);
         break;
     default:
         break;
@@ -1190,6 +1196,67 @@ static int telephonytool_cmd_get_line_number(tapi_context context, char* pargs)
 
     tapi_get_msisdn_number(context, atoi(slot_id), &number);
     syslog(LOG_DEBUG, "%s, slotId : %s  number : %s \n", __func__, slot_id, number);
+
+    return 0;
+}
+
+static int telephonytool_cmd_get_modem_activity_info(tapi_context context, char* pargs)
+{
+    char* slot_id;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", NULL);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    syslog(LOG_DEBUG, "%s, slotId : %s  \n", __func__, slot_id);
+    tapi_get_modem_activity_info(context, atoi(slot_id),
+        EVENT_MODEM_ACTIVITY_INFO_QUERY_DONE, tele_call_async_fun);
+
+    return 0;
+}
+
+static int telephonytool_cmd_enable_modem(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* target_state;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &target_state);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*target_state == ' ')
+        target_state++;
+
+    if (target_state == NULL)
+        return -EINVAL;
+
+    syslog(LOG_DEBUG, "%s, slotId : %s target_state: %s \n", __func__, slot_id, target_state);
+    tapi_enable_modem(context, atoi(slot_id),
+        EVENT_MODEM_ENABLE_DONE, (bool)atoi(target_state), tele_call_async_fun);
+
+    return 0;
+}
+
+static int telephonytool_cmd_get_modem_status(tapi_context context, char* pargs)
+{
+    char* slot_id;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", NULL);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    syslog(LOG_DEBUG, "%s, slotId : %s  \n", __func__, slot_id);
+    tapi_get_modem_status(context, atoi(slot_id),
+        EVENT_MODEM_STATUS_QUERY_DONE, tele_call_async_fun);
 
     return 0;
 }
@@ -3106,6 +3173,16 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     { "get-msisdn",
         telephonytool_cmd_get_line_number,
         "query line number (enter example : get-msisdn 0 [slot_id])" },
+    { "get-modem-activity-info",
+        telephonytool_cmd_get_modem_activity_info,
+        "query modem activity info (enter example : get-modem-activity-info 0 [slot_id])" },
+    { "enable-modem",
+        telephonytool_cmd_enable_modem,
+        "enable modem (enter example : enable-modem 0 1 \
+        [slot_id][state, 0:disable modem 1:enable modem])" },
+    { "get-modem-status",
+        telephonytool_cmd_get_modem_status,
+        "get modem status (enter example : get-modem-status 0 [slot_id])" },
 
     /* Call Command */
     { "dial",
