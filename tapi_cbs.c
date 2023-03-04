@@ -243,7 +243,7 @@ int tapi_cbs_register(tapi_context context, int slot_id, tapi_indication_msg msg
     int watch_id;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
-        || msg < MSG_TAPI_INCOMING_CBS_IND || msg > MSG_TAPI_EMERGENCY_CBS_IND) {
+        || msg < MSG_INCOMING_CBS_IND || msg > MSG_EMERGENCY_CBS_IND) {
         return -EINVAL;
     }
 
@@ -273,7 +273,7 @@ int tapi_cbs_register(tapi_context context, int slot_id, tapi_indication_msg msg
             OFONO_CELL_BROADCAST_INTERFACE, "IncomingBroadcast",
             unsol_cbs_message, user_data, cbs_event_free);
         break;
-    case MSG_TAPI_EMERGENCY_CBS_IND:
+    case MSG_EMERGENCY_CBS_IND:
         watch_id = g_dbus_add_signal_watch(ctx->connection, OFONO_SERVICE, path,
             OFONO_CELL_BROADCAST_INTERFACE, "EmergencyBroadcast",
             unsol_cbs_message, user_data, cbs_event_free);

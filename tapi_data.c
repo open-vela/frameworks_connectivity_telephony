@@ -786,7 +786,7 @@ int tapi_data_get_network_type(tapi_context context, int slot_id, tapi_network_t
     return -EINVAL;
 }
 
-int tapi_data_is_roaming(tapi_context context, int slot_id, bool* out)
+int tapi_data_is_data_roaming(tapi_context context, int slot_id, bool* out)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;

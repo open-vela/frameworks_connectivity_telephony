@@ -702,11 +702,11 @@ int tapi_get_pref_net_mode(tapi_context context, int slot_id, tapi_pref_net_mode
     return -EINVAL;
 }
 
-int tapi_reboot_modem(tapi_context context, int slot_id)
+int tapi_send_modem_power(tapi_context context, int slot_id, bool state)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    int state;
+    int value = state;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
@@ -718,16 +718,8 @@ int tapi_reboot_modem(tapi_context context, int slot_id)
         return -EIO;
     }
 
-    // Power Off
-    state = false;
     if (!g_dbus_proxy_set_property_basic(proxy,
-            "Powered", DBUS_TYPE_BOOLEAN, &state, NULL, NULL, NULL))
-        return -EINVAL;
-
-    // Power on
-    state = true;
-    if (!g_dbus_proxy_set_property_basic(proxy,
-            "Powered", DBUS_TYPE_BOOLEAN, &state, NULL, NULL, NULL))
+            "Powered", DBUS_TYPE_BOOLEAN, &value, NULL, NULL, NULL))
         return -EINVAL;
 
     return OK;

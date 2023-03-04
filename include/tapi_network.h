@@ -186,9 +186,10 @@ int tapi_network_get_voice_network_type(tapi_context context, int slot_id, tapi_
  * Determine whether the CS domain is roaming.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
+ * @param[out] out           Return value.
  * @return Zero on success; a negated errno value on failure.
  */
-bool tapi_network_is_voice_roaming(tapi_context context, int slot_id);
+int tapi_network_is_voice_roaming(tapi_context context, int slot_id, bool* out);
 
 /**
  * Get the display name of current registered operator.
