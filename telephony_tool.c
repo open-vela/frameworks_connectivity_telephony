@@ -244,11 +244,11 @@ static void tele_cbs_async_fun(tapi_async_result* result)
 {
     syslog(LOG_DEBUG, "%s : %d\n", __func__, result->status);
 
-    if (result->msg_id == MSG_TAPI_INCOMING_CBS_IND) {
+    if (result->msg_id == MSG_INCOMING_CBS_IND) {
         tapi_cbs_message* cbs_info = (tapi_cbs_message*)result->data;
         syslog(LOG_DEBUG, "receive incoming cbs tele_cbs_async_fun msg: %s\n",
             cbs_info->text);
-    } else if (result->msg_id == MSG_TAPI_EMERGENCY_CBS_IND) {
+    } else if (result->msg_id == MSG_EMERGENCY_CBS_IND) {
         tapi_cbs_emergency_message* cbs_emergency_message
             = (tapi_cbs_emergency_message*)result->data;
         syslog(LOG_DEBUG, "receive immediate cbs tele_cbs_async_fun msg: %s\n",
@@ -1127,21 +1127,26 @@ static int telephonytool_cmd_get_phone_state(tapi_context context, char* pargs)
     return 0;
 }
 
-static int telephonytool_cmd_reboot_modem(tapi_context context, char* pargs)
+static int telephonytool_cmd_send_modem_power(tapi_context context, char* pargs)
 {
     char* slot_id;
+    char* target_state;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
 
-    slot_id = strtok_r(pargs, " ", NULL);
+    slot_id = strtok_r(pargs, " ", &target_state);
     if (slot_id == NULL)
         return -EINVAL;
 
-    syslog(LOG_DEBUG, "%s, slotId : %s  \n", __func__, slot_id);
-    tapi_reboot_modem(context, atoi(slot_id));
+    while (*target_state == ' ')
+        target_state++;
 
-    return 0;
+    if (target_state == NULL)
+        return -EINVAL;
+
+    syslog(LOG_DEBUG, "%s, slotId : %s target_state: %s \n", __func__, slot_id, target_state);
+    return tapi_send_modem_power(context, atoi(slot_id), atoi(target_state));
 }
 
 static int telephonytool_cmd_get_radio_state(tapi_context context, char* pargs)
@@ -2042,8 +2047,8 @@ static int telephonytool_tapi_cbs_register(tapi_context context, char* pargs)
         return -EINVAL;
 
     syslog(LOG_DEBUG, "%s, slotId : %s \n", __func__, slot_id);
-    tapi_cbs_register(context, atoi(slot_id), MSG_TAPI_INCOMING_CBS_IND, tele_cbs_async_fun);
-    tapi_cbs_register(context, atoi(slot_id), MSG_TAPI_EMERGENCY_CBS_IND, tele_cbs_async_fun);
+    tapi_cbs_register(context, atoi(slot_id), MSG_INCOMING_CBS_IND, tele_cbs_async_fun);
+    tapi_cbs_register(context, atoi(slot_id), MSG_EMERGENCY_CBS_IND, tele_cbs_async_fun);
 
     return 0;
 }
@@ -2298,7 +2303,7 @@ static int telephonytool_cmd_get_voice_networktype(tapi_context context, char* p
 
 static int telephonytool_cmd_is_voice_roaming(tapi_context context, char* pargs)
 {
-    int value;
+    bool value;
     char* slot_id;
 
     if (strlen(pargs) == 0)
@@ -2308,8 +2313,7 @@ static int telephonytool_cmd_is_voice_roaming(tapi_context context, char* pargs)
     if (slot_id == NULL)
         return -EINVAL;
 
-    value = tapi_network_is_voice_roaming(context, atoi(slot_id));
-
+    tapi_network_is_voice_roaming(context, atoi(slot_id), &value);
     syslog(LOG_DEBUG, "%s, slotId : %s value :%d \n", __func__, slot_id, value);
 
     return 0;
@@ -3059,9 +3063,9 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     { "get-phone-state",
         telephonytool_cmd_get_phone_state,
         "get phone state (enter example : get-phone-state 0 [slot_id])" },
-    { "reboot-modem",
-        telephonytool_cmd_reboot_modem,
-        "reboot modem (enter example : reboot-modem 0 [slot_id])" },
+    { "send-modem-power",
+        telephonytool_cmd_send_modem_power,
+        "Power on or off modem (enter example : send-modem-power 0 1 [slot_id][on])" },
     { "get-radio-state",
         telephonytool_cmd_get_radio_state,
         "get radio state (enter example : get-radio-state 0 [slot_id])" },
@@ -3379,15 +3383,19 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         [slot_id][event_id])" },
 
     /* IMS Command */
-    { "enable-ims", telephonytool_cmd_ims_enable,
+    { "enable-ims",
+        telephonytool_cmd_ims_enable,
         "turn on/off ims (enter example : enable-ims 0 1 \
         [slot_id][action: 0-disable 1-enable])" },
-    { "set-ims-cap", telephonytool_cmd_set_ims_service,
+    { "set-ims-cap",
+        telephonytool_cmd_set_ims_service,
         "set ims service function (enter example : set-ims-cap 0 1 \
         [slot_id][cap-value: 1-voice 4-sms 5-voice&sms])" },
-    { "listen-ims", telephonytool_cmd_ims_register,
+    { "listen-ims",
+        telephonytool_cmd_ims_register,
         "listen ims registration(enter example : listen-ims 0 [slot_id]" },
-    { "get-ims-registration", telephonytool_cmd_ims_get_registration,
+    { "get-ims-registration",
+        telephonytool_cmd_ims_get_registration,
         "get ims registration(enter example : get-ims-registration 0 0 \
         [slot_id][action:0-ims info 1-ims state 2-volte state]" },
 
