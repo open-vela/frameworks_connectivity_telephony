@@ -1020,13 +1020,13 @@ int tapi_network_get_voice_network_type(tapi_context context, int slot_id, tapi_
     return -EINVAL;
 }
 
-bool tapi_network_is_voice_roaming(tapi_context context, int slot_id)
+int tapi_network_is_voice_roaming(tapi_context context, int slot_id, bool* out)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
     DBusMessageIter iter;
-    char* modem_path;
     char* result;
+    tapi_registration_state reg_state;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
@@ -1038,18 +1038,15 @@ bool tapi_network_is_voice_roaming(tapi_context context, int slot_id)
         return -EIO;
     }
 
-    modem_path = tapi_utils_get_modem_path(slot_id);
-    if (modem_path == NULL) {
-        tapi_log_error("no available modem ...\n");
-        return false;
+    if (!g_dbus_proxy_get_property(proxy, "Status", &iter)) {
+        return -EINVAL;
     }
 
-    if (g_dbus_proxy_get_property(proxy, "Status", &iter)) {
-        dbus_message_iter_get_basic(&iter, &result);
-    }
+    dbus_message_iter_get_basic(&iter, &result);
+    reg_state = tapi_registration_status_from_string(result);
+    *out = (reg_state == NETWORK_REGISTRATION_STATUS_ROAMING);
 
-    tapi_registration_state reg_state = tapi_registration_status_from_string(result);
-    return (reg_state == NETWORK_REGISTRATION_STATUS_ROAMING);
+    return OK;
 }
 
 int tapi_network_get_display_name(tapi_context context, int slot_id, char** out)

@@ -193,7 +193,7 @@ int tapi_data_get_network_type(tapi_context context, int slot_id, tapi_network_t
  * @param[out] out           Return value.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_data_is_roaming(tapi_context context, int slot_id, bool* out);
+int tapi_data_is_data_roaming(tapi_context context, int slot_id, bool* out);
 
 /**
  * Request network per APN type.
