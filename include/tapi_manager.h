@@ -131,12 +131,13 @@ int tapi_get_pref_net_mode(tapi_context context, int slot_id, tapi_pref_net_mode
 int tapi_get_radio_state(tapi_context context, int slot_id, tapi_radio_state* out);
 
 /**
- * Reboot modem.
+ * Power on or off modem.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
+ * @param[in] state          Power state.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_reboot_modem(tapi_context context, int slot_id);
+int tapi_send_modem_power(tapi_context context, int slot_id, bool state);
 
 /**
  * Get device imei.
