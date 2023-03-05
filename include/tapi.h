@@ -237,6 +237,7 @@ typedef void* tapi_context;
 #include <tapi_ims.h>
 #include <tapi_manager.h>
 #include <tapi_network.h>
+#include <tapi_phonebook.h>
 #include <tapi_sim.h>
 #include <tapi_sms.h>
 #include <tapi_ss.h>

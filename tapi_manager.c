@@ -62,6 +62,7 @@ static void get_dbus_proxy(dbus_context* ctx)
         OFONO_SUPPLEMENTARY_SERVICES_INTERFACE,
         OFONO_CALL_SETTINGS_INTERFACE,
         OFONO_IMS_INTERFACE,
+        OFONO_PHONEBOOK_INTERFACE,
     };
 
     ctx->dbus_proxy_manager = g_dbus_proxy_new(
