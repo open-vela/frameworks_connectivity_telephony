@@ -64,6 +64,7 @@ enum dbus_proxy_type {
     DBUS_PROXY_SS,
     DBUS_PROXY_CALL_SETTING,
     DBUS_PROXY_IMS,
+    DBUS_PROXY_PHONEBOOK,
     DBUS_PROXY_MAX_COUNT,
 };
 
