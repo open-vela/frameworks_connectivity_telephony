@@ -85,6 +85,10 @@
 #define EVENT_QUERY_FDN_DONE 0x2A
 
 #define EVENT_LOAD_ADN_ENTRIES_DONE 0x2B
+#define EVENT_LOAD_FDN_ENTRIES_DONE 0x2C
+#define EVENT_INSERT_FDN_ENTRIES_DONE 0x2D
+#define EVENT_UPDATE_FDN_ENTRIES_DONE 0x2E
+#define EVENT_DELETE_FDN_ENTRIES_DONE 0x2F
 
 /****************************************************************************
  * Public Type Declarations
@@ -149,8 +153,6 @@ static void tele_call_async_fun(tapi_async_result* result)
         for (int i = 0; i < result->arg2; i++) {
             syslog(LOG_DEBUG, "conference call id : %s\n", ret[i]);
         }
-    } else if (result->msg_id == EVENT_LOAD_ADN_ENTRIES_DONE) {
-        syslog(LOG_DEBUG, "adn entries : %s\n", (char*)result->data);
     } else if (result->msg_id == EVENT_OEM_RIL_REQUEST_RAW_DONE) {
         unsigned char* response = result->data;
 
@@ -337,6 +339,36 @@ static void tele_sim_async_fun(tapi_async_result* result)
                             sim_lock->retry_count[i]);
                     }
                 }
+            }
+        }
+    }
+}
+
+static void tele_phonebook_async_fun(tapi_async_result* result)
+{
+    fdn_entry* entries;
+    int i;
+
+    syslog(LOG_DEBUG, "%s : \n", __func__);
+    syslog(LOG_DEBUG, "result->msg_id : %d\n", result->msg_id);
+    syslog(LOG_DEBUG, "result->status : %d\n", result->status);
+    syslog(LOG_DEBUG, "result->arg1 : %d\n", result->arg1);
+    syslog(LOG_DEBUG, "result->arg2 : %d\n", result->arg2);
+
+    if (result->msg_id == EVENT_LOAD_ADN_ENTRIES_DONE) {
+        syslog(LOG_DEBUG, "adn entries : %s\n", (char*)result->data);
+    } else if (result->msg_id == EVENT_LOAD_FDN_ENTRIES_DONE) {
+        entries = result->data;
+        if (entries != NULL) {
+            for (i = 0; i < result->arg2; ++i) {
+                syslog(LOG_DEBUG, "response fdn entry index : %d\n",
+                    entries->fdn_idx);
+                syslog(LOG_DEBUG, "response fdn entry name : %s\n",
+                    entries->tag);
+                syslog(LOG_DEBUG, "response fdn entry number : %s\n",
+                    entries->number);
+
+                entries++;
             }
         }
     }
@@ -3575,7 +3607,100 @@ static int telephonytool_cmd_load_adn_entries(tapi_context context, char* pargs)
         return -EINVAL;
 
     return tapi_phonebook_load_adn_entries(context, atoi(slot_id),
-        EVENT_LOAD_ADN_ENTRIES_DONE, tele_call_async_fun);
+        EVENT_LOAD_ADN_ENTRIES_DONE, tele_phonebook_async_fun);
+}
+
+static int telephonytool_cmd_load_fdn_entries(tapi_context context, char* pargs)
+{
+    char* slot_id;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", NULL);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    return tapi_phonebook_load_fdn_entries(context, atoi(slot_id),
+        EVENT_LOAD_FDN_ENTRIES_DONE, tele_phonebook_async_fun);
+}
+
+static int telephonytool_cmd_insert_fdn_entry(tapi_context context, char* pargs)
+{
+    char dst[4][CONFIG_NSH_LINELEN];
+    char* slot_id;
+    char* name;
+    char* number;
+    char* pin2;
+    int cnt;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    cnt = split_input(dst, 4, pargs, " ");
+    if (cnt != 4)
+        return -EINVAL;
+
+    slot_id = dst[0];
+    name = dst[1];
+    number = dst[2];
+    pin2 = dst[3];
+
+    return tapi_phonebook_insert_fdn_entry(context,
+        atoi(slot_id), EVENT_INSERT_FDN_ENTRIES_DONE,
+        name, number, pin2, tele_phonebook_async_fun);
+}
+
+static int telephonytool_cmd_update_fdn_entry(tapi_context context, char* pargs)
+{
+    char dst[5][CONFIG_NSH_LINELEN];
+    char* slot_id;
+    char* new_name;
+    char* new_number;
+    char* pin2;
+    char* fdn_idx;
+    int cnt;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    cnt = split_input(dst, 5, pargs, " ");
+    if (cnt != 5)
+        return -EINVAL;
+
+    slot_id = dst[0];
+    fdn_idx = dst[1];
+    new_name = dst[2];
+    new_number = dst[3];
+    pin2 = dst[4];
+
+    return tapi_phonebook_update_fdn_entry(context,
+        atoi(slot_id), EVENT_UPDATE_FDN_ENTRIES_DONE,
+        atoi(fdn_idx), new_name, new_number, pin2, tele_phonebook_async_fun);
+}
+
+static int telephonytool_cmd_delete_fdn_entry(tapi_context context, char* pargs)
+{
+    char dst[3][CONFIG_NSH_LINELEN];
+    char* slot_id;
+    char* fdn_idx;
+    char* pin2;
+    int cnt;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    cnt = split_input(dst, 3, pargs, " ");
+    if (cnt != 3)
+        return -EINVAL;
+
+    slot_id = dst[0];
+    fdn_idx = dst[1];
+    pin2 = dst[2];
+
+    return tapi_phonebook_delete_fdn_entry(context,
+        atoi(slot_id), EVENT_DELETE_FDN_ENTRIES_DONE,
+        atoi(fdn_idx), pin2, tele_phonebook_async_fun);
 }
 
 static void telephonytool_menu(void)
@@ -3592,7 +3717,7 @@ static void telephonytool_menu(void)
     printf("***** 9: Phonebook TAPI Instruction   *****\n");
     printf("***** 10: Quit                        *****\n");
     printf("***** 11: Help                        *****\n");
-    printf("Please enter your choice: \n");
+    printf("Please enter your choice: (1~11) \n");
 }
 
 static void telephonytool_handle_choice(int num)
@@ -3613,8 +3738,9 @@ static int telephonytool_cmd_help(tapi_context context, char* pargs)
     scanf("%d", &num);
     printf("\n");
     fflush(stdin);
-    if (num <= 0 || num > 12) {
+    if (num < 1 || num > 11) {
         printf("Invalid input!\n");
+        getchar();
         return 0;
     } else {
         telephonytool_handle_choice(num);
@@ -4143,8 +4269,23 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[][CONFIG_NSH_LINELEN] = {
 
     /* PhoneBook Command */
     { { "load-adn",
-        telephonytool_cmd_load_adn_entries,
-        "load adn entries (enter example : load-adn 0 [slot_id])" } },
+          telephonytool_cmd_load_adn_entries,
+          "load adn entries (enter example : load-adn 0 [slot_id])" },
+        { "load-fdn",
+            telephonytool_cmd_load_fdn_entries,
+            "load fdn entries (enter example : load-fdn 0 [slot_id])" },
+        { "insert-fdn",
+            telephonytool_cmd_insert_fdn_entry,
+            "insert fdn entry (enter example : insert-fdn 0 cmcc 10086 1234"
+            "[slot_id][name][number][pin2])" },
+        { "update-fdn",
+            telephonytool_cmd_update_fdn_entry,
+            "update fdn entry (enter example : update-fdn 0 1 cmcc 1008601 1234"
+            "[slot_id][fdn_idx][new_name][new_number][pin2])" },
+        { "delete-fdn",
+            telephonytool_cmd_delete_fdn_entry,
+            "delete fdn entry (enter example : delete-fdn 0 1 1234"
+            "[slot_id][fdn_idx][pin2])" } },
 
     { { "q", NULL, "Quit (pls enter : q)" } },
     { { "help", telephonytool_cmd_help,
@@ -4164,7 +4305,7 @@ int main(int argc, char* argv[])
     pthread_t thread;
     int ret;
 
-    main_loop.context = tapi_open("vale.telephony.tool");
+    main_loop.context = tapi_open("vela.telephony.tool");
     if (main_loop.context == NULL) {
         return 0;
     }
