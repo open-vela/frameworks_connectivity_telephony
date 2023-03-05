@@ -74,6 +74,8 @@
 #define EVENT_ENABLE_FDN_DONE 0x1F
 #define EVENT_QUERY_FDN_DONE 0x20
 
+#define EVENT_LOAD_ADN_ENTRIES_DONE 0x21
+
 /****************************************************************************
  * Public Type Declarations
  ****************************************************************************/
@@ -132,6 +134,8 @@ static void tele_call_async_fun(tapi_async_result* result)
         for (int i = 0; i < result->arg2; i++) {
             syslog(LOG_DEBUG, "conference call id : %s\n", ret[i]);
         }
+    } else if (result->msg_id == EVENT_LOAD_ADN_ENTRIES_DONE) {
+        syslog(LOG_DEBUG, "adn entries : %s\n", (char*)result->data);
     }
 }
 
@@ -2941,6 +2945,21 @@ static int telephonytool_cmd_ims_get_registration(tapi_context context, char* pa
     return ret;
 }
 
+static int telephonytool_cmd_load_adn_entries(tapi_context context, char* pargs)
+{
+    char* slot_id;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", NULL);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    return tapi_phonebook_load_adn_entries(context, atoi(slot_id),
+        EVENT_LOAD_ADN_ENTRIES_DONE, tele_call_async_fun);
+}
+
 static int telephonytool_cmd_help(tapi_context context, char* pargs)
 {
     int i;
@@ -3398,6 +3417,11 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         telephonytool_cmd_ims_get_registration,
         "get ims registration(enter example : get-ims-registration 0 0 \
         [slot_id][action:0-ims info 1-ims state 2-volte state]" },
+
+    /* PhoneBook Command */
+    { "load-adn",
+        telephonytool_cmd_load_adn_entries,
+        "load adn entries (enter example : load-adn 0 [slot_id])" },
 
     { "q", NULL, "Quit (pls enter : q)" },
     { "help", telephonytool_cmd_help,
