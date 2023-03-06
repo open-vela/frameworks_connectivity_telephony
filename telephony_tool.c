@@ -43,41 +43,47 @@
 #define EVENT_MODEM_ACTIVITY_INFO_QUERY_DONE 0x04
 #define EVENT_MODEM_ENABLE_DONE 0x05
 #define EVENT_MODEM_STATUS_QUERY_DONE 0x06
+#define EVENT_OEM_RIL_REQUEST_RAW_DONE 0x07
+#define EVENT_OEM_RIL_REQUEST_STRINGS_DONE 0x08
 
-#define EVENT_APN_LOADED_DONE 0x07
-#define EVENT_APN_SAVE_DONE 0x08
-#define EVENT_APN_REMOVAL_DONE 0x09
-#define EVENT_APN_RESTORE_DONE 0x0A
-#define EVENT_DATA_ALLOWED_DONE 0x0B
+#define EVENT_APN_LOADED_DONE 0x09
+#define EVENT_APN_SAVE_DONE 0x0A
+#define EVENT_APN_REMOVAL_DONE 0x0B
+#define EVENT_APN_RESTORE_DONE 0x0C
+#define EVENT_DATA_ALLOWED_DONE 0x0D
 
-#define EVENT_CHANGE_SIM_PIN_DONE 0x0C
-#define EVENT_ENTER_SIM_PIN_DONE 0x0D
-#define EVENT_RESET_SIM_PIN_DONE 0x0E
-#define EVENT_LOCK_SIM_PIN_DONE 0x0F
-#define EVENT_UNLOCK_SIM_PIN_DONE 0x10
+#define EVENT_CHANGE_SIM_PIN_DONE 0x0E
+#define EVENT_ENTER_SIM_PIN_DONE 0x0F
+#define EVENT_RESET_SIM_PIN_DONE 0x10
+#define EVENT_LOCK_SIM_PIN_DONE 0x11
+#define EVENT_UNLOCK_SIM_PIN_DONE 0x12
+#define EVENT_OPEN_LOGICAL_CHANNEL_DONE 0x13
+#define EVENT_CLOSE_LOGICAL_CHANNEL_DONE 0x14
+#define EVENT_TRANSMIT_APDU_LOGICAL_CHANNEL_DONE 0x15
+#define EVENT_TRANSMIT_APDU_BASIC_CHANNEL_DONE 0x16
 
-#define EVENT_NETWORK_SCAN_DONE 0x11
-#define EVENT_REGISTER_AUTO_DONE 0x12
-#define EVENT_REGISTER_MANUAL_DONE 0x13
-#define EVENT_QUERY_REGISTRATION_INFO_DONE 0x14
-#define EVENT_QUERY_SERVING_CELL_DONE 0x15
-#define EVENT_QUERY_NEIGHBOURING_CELL_DONE 0x16
+#define EVENT_NETWORK_SCAN_DONE 0x17
+#define EVENT_REGISTER_AUTO_DONE 0x18
+#define EVENT_REGISTER_MANUAL_DONE 0x19
+#define EVENT_QUERY_REGISTRATION_INFO_DONE 0x1A
+#define EVENT_QUERY_SERVING_CELL_DONE 0x1B
+#define EVENT_QUERY_NEIGHBOURING_CELL_DONE 0x1C
 
-#define EVENT_REQUEST_CALL_BARRING_DONE 0x17
-#define EVENT_CALL_BARRING_PASSWD_CHANGE_DONE 0x18
-#define EVENT_DISABLE_ALL_CALL_BARRINGS_DONE 0x19
-#define EVENT_DISABLE_ALL_INCOMING_DONE 0x1A
-#define EVENT_DISABLE_ALL_OUTGOING_DONE 0x1B
-#define EVENT_REQUEST_CALL_FORWARDING_DONE 0x1C
-#define EVENT_DISABLE_CALL_FORWARDING_DONE 0x1D
-#define EVENT_CANCEL_USSD_DONE 0x1E
-#define EVENT_REQUEST_CALL_WAITING_DONE 0x1F
-#define EVENT_SEND_USSD_DONE 0x20
-#define EVENT_INITIATE_SERVICE_DONE 0x21
-#define EVENT_ENABLE_FDN_DONE 0x22
-#define EVENT_QUERY_FDN_DONE 0x23
+#define EVENT_REQUEST_CALL_BARRING_DONE 0x1D
+#define EVENT_CALL_BARRING_PASSWD_CHANGE_DONE 0x1E
+#define EVENT_DISABLE_ALL_CALL_BARRINGS_DONE 0x1F
+#define EVENT_DISABLE_ALL_INCOMING_DONE 0x20
+#define EVENT_DISABLE_ALL_OUTGOING_DONE 0x21
+#define EVENT_REQUEST_CALL_FORWARDING_DONE 0x22
+#define EVENT_DISABLE_CALL_FORWARDING_DONE 0x23
+#define EVENT_CANCEL_USSD_DONE 0x24
+#define EVENT_REQUEST_CALL_WAITING_DONE 0x25
+#define EVENT_SEND_USSD_DONE 0x26
+#define EVENT_INITIATE_SERVICE_DONE 0x27
+#define EVENT_ENABLE_FDN_DONE 0x28
+#define EVENT_QUERY_FDN_DONE 0x29
 
-#define EVENT_LOAD_ADN_ENTRIES_DONE 0x21
+#define EVENT_LOAD_ADN_ENTRIES_DONE 0x2A
 
 /****************************************************************************
  * Public Type Declarations
@@ -144,6 +150,20 @@ static void tele_call_async_fun(tapi_async_result* result)
         }
     } else if (result->msg_id == EVENT_LOAD_ADN_ENTRIES_DONE) {
         syslog(LOG_DEBUG, "adn entries : %s\n", (char*)result->data);
+    } else if (result->msg_id == EVENT_OEM_RIL_REQUEST_RAW_DONE) {
+        unsigned char* response = result->data;
+
+        syslog(LOG_DEBUG, "response raw data length : %d\n", result->arg2);
+        for (int i = 0; i < result->arg2; i++) {
+            syslog(LOG_DEBUG, "response raw data : %x\n", response[i]);
+        }
+    } else if (result->msg_id == EVENT_OEM_RIL_REQUEST_STRINGS_DONE) {
+        char** response = result->data;
+
+        syslog(LOG_DEBUG, "response strings data length : %d\n", result->arg2);
+        for (int i = 0; i < result->arg2; i++) {
+            syslog(LOG_DEBUG, "response strings data : %s\n", response[i]);
+        }
     }
 }
 
@@ -268,6 +288,20 @@ static void tele_cbs_async_fun(tapi_async_result* result)
     }
 }
 
+static void tele_sim_async_fun(tapi_async_result* result)
+{
+    syslog(LOG_DEBUG, "%s : \n", __func__);
+    syslog(LOG_DEBUG, "result->msg_id : %d\n", result->msg_id);
+    syslog(LOG_DEBUG, "result->status : %d\n", result->status);
+    syslog(LOG_DEBUG, "result->arg1 : %d\n", result->arg1);
+    syslog(LOG_DEBUG, "result->arg2 : %d\n", result->arg2);
+
+    if (result->msg_id == EVENT_TRANSMIT_APDU_LOGICAL_CHANNEL_DONE
+        || result->msg_id == EVENT_TRANSMIT_APDU_BASIC_CHANNEL_DONE) {
+        syslog(LOG_DEBUG, "apdu data : %s \n", (char*)result->data);
+    }
+}
+
 static void modem_list_query_complete(tapi_async_result* result)
 {
     char* modem_path;
@@ -332,6 +366,8 @@ static void radio_signal_change(tapi_async_result* result)
     case MSG_MODEM_RESTART_IND:
         syslog(LOG_DEBUG, "modem restart in slot[%d] \n", slot_id);
         break;
+    case MSG_OEM_HOOK_RAW_IND:
+        syslog(LOG_DEBUG, "oem hook raw in slot[%d] \n", slot_id);
     default:
         break;
     }
@@ -1261,6 +1297,85 @@ static int telephonytool_cmd_get_modem_status(tapi_context context, char* pargs)
     return 0;
 }
 
+static int telephonytool_cmd_oem_ril_req_raw(tapi_context context, char* pargs)
+{
+    unsigned char* oem_req;
+    char* slot_id;
+    char* length;
+    char* temp;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &temp);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*temp == ' ')
+        temp++;
+
+    oem_req = (unsigned char*)strtok_r(temp, " ", &length);
+    if (oem_req == NULL)
+        return -EINVAL;
+
+    while (*length == ' ')
+        length++;
+
+    if (length == NULL)
+        return -EINVAL;
+
+    tapi_invoke_oem_ril_request_raw(context, atoi(slot_id),
+        EVENT_OEM_RIL_REQUEST_RAW_DONE, oem_req, atoi(length), tele_call_async_fun);
+    syslog(LOG_DEBUG, "%s, slot_id: %s oem_req: %s length: %s \n", __func__,
+        slot_id, oem_req, length);
+
+    return 0;
+}
+
+static int telephonytool_cmd_oem_ril_req_strings(tapi_context context, char* pargs)
+{
+    char* oem_req[MAX_OEM_RIL_RESP_STRINGS_LENTH];
+    char* ptr = NULL;
+    char* req_data;
+    char* slot_id;
+    char* length;
+    char* temp;
+    int i;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &temp);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*temp == ' ')
+        temp++;
+
+    req_data = strtok_r(temp, " ", &length);
+    if (req_data == NULL)
+        return -EINVAL;
+
+    while (*length == ' ')
+        length++;
+
+    if (length == NULL)
+        return -EINVAL;
+
+    for (i = 0; i < atoi(length); i++) {
+        oem_req[i] = strtok_r(req_data, ",", &ptr);
+        syslog(LOG_DEBUG, "oem request data : %s ", oem_req[i]);
+        req_data = ptr;
+        ptr = NULL;
+    }
+
+    tapi_invoke_oem_ril_request_strings(context, atoi(slot_id),
+        EVENT_OEM_RIL_REQUEST_STRINGS_DONE, oem_req, atoi(length), tele_call_async_fun);
+    syslog(LOG_DEBUG, "%s, slot_id: %s length: %s \n", __func__, slot_id, length);
+
+    return 0;
+}
+
 static int telephonytool_cmd_load_apns(tapi_context context, char* pargs)
 {
     char* slot_id;
@@ -1859,6 +1974,136 @@ static int telephonytool_cmd_unlock_sim_pin(tapi_context context, char* pargs)
 
     tapi_sim_unlock_pin(context, atoi(slot_id),
         EVENT_UNLOCK_SIM_PIN_DONE, pin_type, pin, tele_call_async_fun);
+
+    return 0;
+}
+
+static int telephonytool_cmd_open_logical_channel(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* aid;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &aid);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*aid == ' ')
+        aid++;
+
+    if (aid == NULL)
+        return -EINVAL;
+
+    tapi_sim_open_logical_channel(context, atoi(slot_id),
+        EVENT_OPEN_LOGICAL_CHANNEL_DONE, aid, tele_call_async_fun);
+    syslog(LOG_DEBUG, "%s, slot_id: %s aid: %s \n", __func__, slot_id, aid);
+
+    return 0;
+}
+
+static int telephonytool_cmd_close_logical_channel(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* sessionid;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &sessionid);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*sessionid == ' ')
+        sessionid++;
+
+    if (sessionid == NULL)
+        return -EINVAL;
+
+    tapi_sim_close_logical_channel(context, atoi(slot_id),
+        EVENT_CLOSE_LOGICAL_CHANNEL_DONE, atoi(sessionid), tele_call_async_fun);
+    syslog(LOG_DEBUG, "%s, slot_id: %s aid: %s \n", __func__, slot_id, sessionid);
+
+    return 0;
+}
+
+static int telephonytool_cmd_transmit_apdu_logical_channel(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* sessionid;
+    char* pdu;
+    char* len;
+    char* temp;
+    char* temp1;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &temp);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*temp == ' ')
+        temp++;
+
+    sessionid = strtok_r(temp, " ", &temp1);
+    if (sessionid == NULL)
+        return -EINVAL;
+
+    while (*temp1 == ' ')
+        temp1++;
+
+    pdu = strtok_r(temp1, " ", &len);
+    if (pdu == NULL)
+        return -EINVAL;
+
+    while (*len == ' ')
+        len++;
+
+    if (len == NULL)
+        return -EINVAL;
+
+    tapi_sim_transmit_apdu_logical_channel(context, atoi(slot_id),
+        EVENT_TRANSMIT_APDU_LOGICAL_CHANNEL_DONE, atoi(sessionid),
+        pdu, atoi(len), tele_sim_async_fun);
+    syslog(LOG_DEBUG, "%s, slot_id: %s sessionid: %s pdu: %s len: %s \n",
+        __func__, slot_id, sessionid, pdu, len);
+
+    return 0;
+}
+
+static int telephonytool_cmd_transmit_apdu_basic_channel(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* pdu;
+    char* len;
+    char* temp;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &temp);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*temp == ' ')
+        temp++;
+
+    pdu = strtok_r(temp, " ", &len);
+    if (pdu == NULL)
+        return -EINVAL;
+
+    while (*len == ' ')
+        len++;
+
+    if (len == NULL)
+        return -EINVAL;
+
+    tapi_sim_transmit_apdu_basic_channel(context, atoi(slot_id),
+        EVENT_TRANSMIT_APDU_BASIC_CHANNEL_DONE, pdu, atoi(len), tele_sim_async_fun);
+    syslog(LOG_DEBUG, "%s, slot_id: %s pdu: %s len: %s \n",
+        __func__, slot_id, pdu, len);
 
     return 0;
 }
@@ -3183,6 +3428,14 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     { "get-modem-status",
         telephonytool_cmd_get_modem_status,
         "get modem status (enter example : get-modem-status 0 [slot_id])" },
+    { "oem-req-raw",
+        telephonytool_cmd_oem_ril_req_raw,
+        "oem request raw (enter example : oem-req-raw 0 0x10,0x01 2 \
+        [slot_id][request_data][data_length])" },
+    { "oem-req-strings",
+        telephonytool_cmd_oem_ril_req_strings,
+        "oem request strings (enter example : oem-req-strings 0 10,22 2 \
+        [slot_id][request_data][data_length])" },
 
     /* Call Command */
     { "dial",
@@ -3326,6 +3579,25 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         telephonytool_cmd_unlock_sim_pin,
         "deactive sim lock (enter example : \
         unlock-pin 0 pin 1234 [slot_id][pin_type, pin or pin2][pin])" },
+    { "open-logical-channel",
+        telephonytool_cmd_open_logical_channel,
+        "open logical channel (enter example : \
+        open-logical-channel 0 A0000000871002FF86FFFF89FFFFFFFF \
+        [slot_id][aid_str])" },
+    { "close-logical-channel",
+        telephonytool_cmd_close_logical_channel,
+        "close logical channel (enter example : \
+        close-logical-channel 0 20 [slot_id][session_id])" },
+    { "transmit-apdu-logical-channel",
+        telephonytool_cmd_transmit_apdu_logical_channel,
+        "transmit apdu logical channel (enter example : \
+        transmit-apdu-logical-channel 0 20 A0B000010473656E669000 8 \
+        [slot_id][session_id][pdu][len])" },
+    { "transmit-apdu-basic-channel",
+        telephonytool_cmd_transmit_apdu_basic_channel,
+        "transmit apdu basic channel (enter example : \
+        transmit-apdu-basic-channel 0 A0B000010473656E669000 8 \
+        [slot_id][pdu][len])" },
     { "listen-sim",
         telephonytool_cmd_listen_sim_state_change,
         "register sim state change (enter example : listen-sim 0 [slot_id])" },
