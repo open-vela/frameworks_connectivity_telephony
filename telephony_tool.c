@@ -302,6 +302,80 @@ static void tele_sim_async_fun(tapi_async_result* result)
     }
 }
 
+static void ss_signal_change(tapi_async_result* result)
+{
+    tapi_call_forwarding_info* cf_info;
+    int signal = result->msg_id;
+    int slot_id = result->arg1;
+    int param = result->arg2;
+
+    switch (signal) {
+    case MSG_CALL_BARRING_PROPERTY_CHANGE_IND:
+        syslog(LOG_DEBUG, "call barring changed to %s in slot[%d] \n",
+            (char*)result->data, slot_id);
+        break;
+    case MSG_CALL_FORWARDING_PROPERTY_CHANGE_IND:
+        cf_info = (tapi_call_forwarding_info*)result->data;
+        syslog(LOG_DEBUG, "call forwarding number: %s \n", cf_info->phone_number);
+        syslog(LOG_DEBUG, "call forwarding voice busy: %s \n", cf_info->voice_busy);
+        syslog(LOG_DEBUG, "call forwarding voice no reply: %s \n", cf_info->voice_no_reply);
+        syslog(LOG_DEBUG, "call forwarding voice not reachable: %s \n",
+            cf_info->voice_not_reachable);
+        syslog(LOG_DEBUG, "call forwarding reply timeout: %d \n", cf_info->voice_no_reply_timeout);
+        syslog(LOG_DEBUG, "call forwarding flag on sim: %d \n", cf_info->forwarding_flag_on_sim);
+        break;
+    case MSG_USSD_PROPERTY_CHANGE_IND:
+        syslog(LOG_DEBUG, "ussd state changed to %d in slot[%d] \n", param, slot_id);
+        break;
+    case MSG_USSD_NOTIFICATION_RECEIVED_IND:
+        syslog(LOG_DEBUG, "ussd notification message %s received in slot[%d] \n",
+            (char*)result->data, slot_id);
+        break;
+    case MSG_USSD_REQUEST_RECEIVED_IND:
+        syslog(LOG_DEBUG, "ussd request message %s received in slot[%d] \n",
+            (char*)result->data, slot_id);
+        break;
+    default:
+        break;
+    }
+}
+
+static void ss_event_response(tapi_async_result* result)
+{
+    tapi_ss_initiate_info* info;
+    int event = result->msg_id;
+    int param = result->arg2;
+
+    switch (event) {
+    case EVENT_SEND_USSD_DONE:
+        syslog(LOG_DEBUG, "send ussd received response %s \n", (char*)result->data);
+        break;
+    case EVENT_INITIATE_SERVICE_DONE:
+        info = (tapi_ss_initiate_info*)result->data;
+        if (strcmp(info->ss_service_type, "CallBarring") == 0
+            || strcmp(info->ss_service_type, "CallForwarding") == 0) {
+            syslog(LOG_DEBUG, "service type : %s (%s, %s, %s, %s) \n", info->ss_service_type,
+                info->ss_service_operation, info->service_operation_requested,
+                info->append_service, info->append_service_value);
+        } else if (strcmp(info->ss_service_type, "CallWaiting") == 0) {
+            syslog(LOG_DEBUG, "service type : %s (%s, %s, %s) \n", info->ss_service_type,
+                info->ss_service_operation, info->append_service, info->append_service_value);
+        } else if (strcmp(info->ss_service_type, "USSD") == 0) {
+            syslog(LOG_DEBUG, "service type : %s (%s) \n",
+                info->ss_service_type, info->ussd_response);
+        } else {
+            syslog(LOG_DEBUG, "service type : %s (%s, %s) \n", info->ss_service_type,
+                info->ss_service_operation, info->call_setting_status);
+        }
+        break;
+    case EVENT_QUERY_FDN_DONE:
+        syslog(LOG_DEBUG, "fdn enabled or disabled : %d \n", param);
+        break;
+    default:
+        break;
+    }
+}
+
 static void modem_list_query_complete(tapi_async_result* result)
 {
     char* modem_path;
@@ -2979,7 +3053,7 @@ static int telephonytool_cmd_initiate_ss_service(tapi_context context, char* par
         return -EINVAL;
 
     tapi_ss_initiate_service(context, atoi(slot_id),
-        EVENT_INITIATE_SERVICE_DONE, ss_control_string, tele_call_async_fun);
+        EVENT_INITIATE_SERVICE_DONE, ss_control_string, ss_event_response);
     syslog(LOG_DEBUG, "%s, slotId : %s ss_control_string : %s \n", __func__, slot_id, ss_control_string);
 
     return 0;
@@ -3022,7 +3096,7 @@ static int telephonytool_cmd_send_ussd(tapi_context context, char* pargs)
         return -EINVAL;
 
     tapi_ss_send_ussd(context, atoi(slot_id),
-        EVENT_SEND_USSD_DONE, response_msg, tele_call_async_fun);
+        EVENT_SEND_USSD_DONE, response_msg, ss_event_response);
     syslog(LOG_DEBUG, "%s, slotId : %s response_msg : %s \n", __func__, slot_id, response_msg);
 
     return 0;
@@ -3167,13 +3241,14 @@ static int telephonytool_cmd_query_fdn(tapi_context context, char* pargs)
     if (slot_id == NULL)
         return -EINVAL;
 
-    return tapi_ss_query_fdn(context, atoi(slot_id), EVENT_QUERY_FDN_DONE, tele_call_async_fun);
+    return tapi_ss_query_fdn(context, atoi(slot_id), EVENT_QUERY_FDN_DONE, ss_event_response);
 }
 
-static int telephonytool_cmd_ss_register(tapi_context context, char* pargs)
+static int telephonytool_cmd_ss_listen(tapi_context context, char* pargs)
 {
     char* slot_id;
     char* target_state;
+    int watch_id;
 
     if (!strlen(pargs))
         return -EINVAL;
@@ -3188,7 +3263,32 @@ static int telephonytool_cmd_ss_register(tapi_context context, char* pargs)
     if (target_state == NULL)
         return -EINVAL;
 
-    return tapi_ss_register(context, atoi(slot_id), atoi(target_state), tele_call_async_fun);
+    watch_id = tapi_ss_register(context,
+        atoi(slot_id), atoi(target_state), ss_signal_change);
+    syslog(LOG_DEBUG, "start to watch ss event : %d , return watch_id : %d \n",
+        atoi(target_state), watch_id);
+
+    return watch_id;
+}
+
+static int telephonytool_cmd_ss_unlisten(tapi_context context, char* pargs)
+{
+    char* watch_id;
+    int ret;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    watch_id = strtok_r(pargs, " ", NULL);
+    if (watch_id == NULL)
+        return -EINVAL;
+
+    ret = tapi_ss_unregister(context, atoi(watch_id));
+    syslog(LOG_DEBUG, "stop to watch ss event : %s , with watch_id : \
+        %s with return value : %d \n",
+        watch_id, watch_id, ret);
+
+    return ret;
 }
 
 static int telephonytool_cmd_ims_enable(tapi_context context, char* pargs)
@@ -3775,9 +3875,11 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         telephonytool_cmd_query_fdn,
         "query fdn (enter example : query-fdn 0 [slot_id])" },
     { "listen-ss",
-        telephonytool_cmd_ss_register,
-        "listen ss event (enter example : listen-ss 0 1 \
-        [slot_id][event_id])" },
+        telephonytool_cmd_ss_listen,
+        "listen-ss (enter example : listen-ss 0 30 [slot_id][event_id])" },
+    { "unlisten-ss",
+        telephonytool_cmd_ss_unlisten,
+        "unlisten-ss (enter example : unlisten-ss 0 [slot_id])" },
 
     /* IMS Command */
     { "enable-ims",
