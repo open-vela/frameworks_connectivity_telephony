@@ -1881,6 +1881,25 @@ static int telephonytool_cmd_get_sim_operator_name(tapi_context context, char* p
     return 0;
 }
 
+static int telephonytool_cmd_get_sim_subscriber_id(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* subscriber_id;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = pargs;
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    tapi_sim_get_subscriber_id(context, atoi(slot_id), &subscriber_id);
+
+    syslog(LOG_DEBUG, "%s, slotId : %s subscriber_id : %s \n", __func__, slot_id, subscriber_id);
+
+    return 0;
+}
+
 static int telephonytool_cmd_change_sim_pin(tapi_context context, char* pargs)
 {
     char* slot_id;
@@ -3682,6 +3701,9 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     { "get-sim-operator-name",
         telephonytool_cmd_get_sim_operator_name,
         "get sim operator name (enter example : get-sim-operator-name 0 [slot_id])" },
+    { "get-sim-subscriber-id",
+        telephonytool_cmd_get_sim_subscriber_id,
+        "get sim subscriber id (enter example : get-sim-subscriber-id 0 [slot_id])" },
     { "change-pin",
         telephonytool_cmd_change_sim_pin,
         "change old pin to new pin (enter example : \

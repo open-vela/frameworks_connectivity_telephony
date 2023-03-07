@@ -530,6 +530,30 @@ int tapi_sim_get_sim_operator_name(tapi_context context, int slot_id, char** out
     return -EINVAL;
 }
 
+int tapi_sim_get_subscriber_id(tapi_context context, int slot_id, char** out)
+{
+    dbus_context* ctx = context;
+    GDBusProxy* proxy;
+    DBusMessageIter iter;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+        return -EINVAL;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    if (g_dbus_proxy_get_property(proxy, "SubscriberIdentity", &iter)) {
+        dbus_message_iter_get_basic(&iter, out);
+        return OK;
+    }
+
+    return -EINVAL;
+}
+
 int tapi_sim_register_sim_state_change(tapi_context context, int slot_id,
     tapi_async_function p_handle)
 {
