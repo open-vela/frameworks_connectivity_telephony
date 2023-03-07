@@ -74,6 +74,15 @@ int tapi_sim_get_sim_operator_name(tapi_context context, int slot_id, char** out
 int tapi_sim_get_sim_iccid(tapi_context context, int slot_id, char** out);
 
 /**
+ * Get the unique subscriber ID, for example, the IMSI of current sim.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[out] out           Subcriber id returned from ICC.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_sim_get_subscriber_id(tapi_context context, int slot_id, char** out);
+
+/**
  * Register sim state changed event callback.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
