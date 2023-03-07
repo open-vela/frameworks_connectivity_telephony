@@ -193,6 +193,10 @@ static void tele_call_manager_call_async_fun(tapi_async_result* result)
         syslog(LOG_DEBUG, "call removed call_id : %s\n", (char*)result->data);
     } else if (result->msg_id == MSG_CALL_RING_BACK_TONE_IND) {
         syslog(LOG_DEBUG, "ring back tone status : %d\n", result->arg2);
+    } else if (result->msg_id == MSG_CALL_FORWARDED_MESSAGE_IND) {
+        syslog(LOG_DEBUG, "call Forwarded: %s\n", (char*)result->data);
+    } else if (result->msg_id == MSG_CALL_BARRING_ACTIVE_MESSAGE_IND) {
+        syslog(LOG_DEBUG, "call BarringActive: %s\n", (char*)result->data);
     }
 }
 
@@ -857,6 +861,18 @@ static int telephonytool_cmd_listen_call_manager_change(tapi_context context, ch
     watch_id = tapi_call_register_managercall_change(context, slot_id, MSG_CALL_REMOVE_MESSAGE_IND,
         tele_call_manager_call_async_fun);
     syslog(LOG_DEBUG, "reitster call remove change, return watch id: %d\n", watch_id);
+    if (watch_id < 0)
+        return watch_id;
+
+    watch_id = tapi_call_register_managercall_change(context, slot_id,
+        MSG_CALL_FORWARDED_MESSAGE_IND, tele_call_manager_call_async_fun);
+    syslog(LOG_DEBUG, "reitster call forwared change, return watch id: %d\n", watch_id);
+    if (watch_id < 0)
+        return watch_id;
+
+    watch_id = tapi_call_register_managercall_change(context, slot_id,
+        MSG_CALL_BARRING_ACTIVE_MESSAGE_IND, tele_call_manager_call_async_fun);
+    syslog(LOG_DEBUG, "reitster call barring change, return watch id: %d\n", watch_id);
     if (watch_id < 0)
         return watch_id;
 
