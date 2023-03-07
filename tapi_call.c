@@ -866,7 +866,9 @@ int tapi_call_answer_call(tapi_context context, int slot_id, char* call_id, int 
             return -ENODEV;
         }
 
-        g_dbus_proxy_method_call(proxy, "Answer", NULL, no_operate_callback, NULL, NULL);
+        if (!g_dbus_proxy_method_call(proxy, "Answer", NULL, no_operate_callback, NULL, NULL))
+            return -EINVAL;
+
         error = OK;
     } else if (call_count == 2) {
         error = tapi_call_hold_and_answer(context, slot_id);
