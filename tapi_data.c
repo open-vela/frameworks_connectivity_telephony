@@ -499,8 +499,9 @@ static void apn_context_append(DBusMessageIter* iter, void* user_data)
 {
     tapi_async_handler* handler = user_data;
     tapi_async_result* ar;
-    tapi_apn_context* apn;
+    tapi_apn_context* apn_context;
     const char* type;
+    char *name, *apn, *username, *password;
 
     if (handler == NULL)
         return;
@@ -509,21 +510,34 @@ static void apn_context_append(DBusMessageIter* iter, void* user_data)
     if (ar == NULL)
         return;
 
-    apn = ar->data;
-    if (apn == NULL) {
+    apn_context = ar->data;
+    if (apn_context == NULL) {
         tapi_log_error("invalid apn settings ... \n");
         return;
     }
 
-    type = tapi_apn_context_type_to_string(apn->type);
+    type = tapi_apn_context_type_to_string(apn_context->type);
+    name = strdup(apn_context->name);
+    apn = strdup(apn_context->accesspointname);
+    username = strdup(apn_context->username);
+    password = strdup(apn_context->password);
+
+    tapi_log_info("type = %s; name = %s; apn = %s; \
+        username = %s; password = %s; proto = %d; auth = %d \n",
+        type, name, apn, username, password, apn_context->protocol, apn_context->auth_method);
 
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &type);
-    dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &apn->name);
-    dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &apn->accesspointname);
-    dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &apn->username);
-    dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &apn->password);
-    dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &apn->protocol);
-    dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &apn->auth_method);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &name);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &apn);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &username);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &password);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &apn_context->protocol);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &apn_context->auth_method);
+
+    free(name);
+    free(apn);
+    free(username);
+    free(password);
 }
 
 static void apn_context_remove(DBusMessageIter* iter, void* user_data)

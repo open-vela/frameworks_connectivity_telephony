@@ -1393,24 +1393,46 @@ static int telephonytool_cmd_load_apns(tapi_context context, char* pargs)
 
 static int telephonytool_cmd_save_apn(tapi_context context, char* pargs)
 {
+    char dst[6][CONFIG_NSH_LINELEN];
     char* slot_id;
-    tapi_apn_context* apn;
+    char *type, *name, *apn, *proto, *auth;
+    tapi_apn_context* apn_context;
+    int cnt;
 
-    if (!strlen(pargs))
+    if (strlen(pargs) == 0)
         return -EINVAL;
 
-    slot_id = strtok_r(pargs, " ", NULL);
-    if (slot_id == NULL)
+    cnt = split_input(dst, 6, pargs, " ");
+    if (cnt != 6)
         return -EINVAL;
 
-    apn = malloc(sizeof(tapi_apn_context));
-    if (apn == NULL)
+    slot_id = dst[0];
+    type = dst[1];
+    name = dst[2];
+    apn = dst[3];
+    proto = dst[4];
+    auth = dst[5];
+
+    apn_context = malloc(sizeof(tapi_apn_context));
+    if (apn_context == NULL)
         return -EINVAL;
 
-    apn->type = APN_CONTEXT_TYPE_INTERNET;
+    apn_context->type = atoi(type);
+    apn_context->protocol = atoi(proto);
+    apn_context->auth_method = atoi(auth);
+
+    if (strlen(name) <= MAX_APN_DOMAIN_LENGTH)
+        strcpy(apn_context->name, name);
+
+    if (strlen(apn) <= MAX_APN_DOMAIN_LENGTH)
+        strcpy(apn_context->accesspointname, name);
+
+    strcpy(apn_context->username, "");
+    strcpy(apn_context->password, "");
+
     tapi_data_save_apn_context(context,
-        atoi(slot_id), EVENT_APN_SAVE_DONE, apn, data_event_response);
-    free(apn);
+        atoi(slot_id), EVENT_APN_SAVE_DONE, apn_context, data_event_response);
+    free(apn_context);
 
     return 0;
 }
@@ -3496,7 +3518,8 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         "load apn settings (enter example : load-apns 0 [slot_id])" },
     { "save-apn",
         telephonytool_cmd_save_apn,
-        "save apn (enter example : save-apn 0 1 [slot_id][apn_type])" },
+        "save apn (enter example : save-apn 0 1 cmcc cmnet 2 2 \
+        [slot_id][type][name][apn][proto][auth])" },
     { "remove-apn",
         telephonytool_cmd_remove_apn,
         "remove apn (enter example : remove-apn 0 1 [slot_id][id])" },
