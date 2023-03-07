@@ -714,8 +714,11 @@ static int telephonytool_cmd_answer_call(tapi_context context, char* pargs)
         syslog(LOG_DEBUG, "%s, slotId : %d callId : %s\n", __func__, slot_id, call_id);
         ret = tapi_call_answer_call(context, slot_id, call_id, 1);
     } else if (type == 1) {
-        syslog(LOG_DEBUG, "%s, slotId : %d\n", __func__, slot_id);
+        syslog(LOG_DEBUG, "%s release and answer, slotId : %d\n", __func__, slot_id);
         ret = tapi_call_release_and_answer(context, slot_id);
+    } else if (type == 2) {
+        syslog(LOG_DEBUG, "%s hold and answer, slotId : %d\n", __func__, slot_id);
+        ret = tapi_call_answer_call(context, slot_id, NULL, 2);
     } else {
         ret = -EINVAL;
     }
@@ -3619,7 +3622,8 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         "Dial (enter example : dial 0 10086 0 [slot_id][number][hide_call_id, 0:show 1:hide])" },
     { "answer",
         telephonytool_cmd_answer_call,
-        "Answer (enter example : answer 0 0 [slot_id][action:0-answer 1-realse&answer][call_id])" },
+        "Answer (enter example : answer 0 0 [slot_id][action:0-answer 1-realse&answer \
+        2-hold&answer][call_id])" },
     { "swap",
         telephonytool_cmd_swap_call,
         "call Swap (enter example : swap 0 1 [slot_id][action:1-hold 0-unhold])" },
