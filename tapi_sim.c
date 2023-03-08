@@ -81,18 +81,22 @@ static int sim_state_changed(DBusConnection* connection,
     int index;
 
     if (handler == NULL)
-        return false;
+        return 0;
 
     ar = handler->result;
     if (ar == NULL)
-        return false;
+        return 0;
 
     cb = handler->cb_function;
     if (cb == NULL)
-        return false;
+        return 0;
+
+    if (ar->msg_id != MSG_SIM_STATE_CHANGE_IND) {
+        return 0;
+    }
 
     if (dbus_message_iter_init(message, &iter) == false)
-        return false;
+        return 0;
 
     dbus_message_iter_get_basic(&iter, &property);
     dbus_message_iter_next(&iter);
@@ -109,7 +113,7 @@ static int sim_state_changed(DBusConnection* connection,
     } else if (strcmp(property, "LockedPins") == 0) {
         sim_lock = malloc(sizeof(sim_lock_state));
         if (sim_lock == NULL) {
-            return false;
+            return 0;
         }
 
         index = 0;
@@ -129,7 +133,7 @@ static int sim_state_changed(DBusConnection* connection,
     } else if (strcmp(property, "Retries") == 0) {
         sim_lock = malloc(sizeof(sim_lock_state));
         if (sim_lock == NULL) {
-            return false;
+            return 0;
         }
 
         index = 0;
@@ -159,7 +163,7 @@ static int sim_state_changed(DBusConnection* connection,
         goto done;
     }
 
-    return true;
+    return 1;
 
 done:
     ss.name = property;
@@ -171,7 +175,76 @@ done:
     if (sim_lock != NULL)
         free(sim_lock);
 
-    return true;
+    return 1;
+}
+
+static int sim_uicc_app_enabled_changed(DBusConnection* connection,
+    DBusMessage* message, void* user_data)
+{
+    tapi_async_handler* handler = user_data;
+    tapi_async_result* ar;
+    tapi_async_function cb;
+    DBusMessageIter iter, var;
+    const char* property;
+    int enabled;
+
+    if (handler == NULL)
+        return 0;
+
+    ar = handler->result;
+    if (ar == NULL)
+        return 0;
+
+    cb = handler->cb_function;
+    if (cb == NULL)
+        return 0;
+
+    if (ar->msg_id != MSG_SIM_UICC_APP_ENABLED_CHANGE_IND) {
+        return 0;
+    }
+
+    if (dbus_message_iter_init(message, &iter) == false)
+        return 0;
+
+    dbus_message_iter_get_basic(&iter, &property);
+    dbus_message_iter_next(&iter);
+
+    dbus_message_iter_recurse(&iter, &var);
+    if (strcmp(property, "UiccActive") == 0) {
+        dbus_message_iter_get_basic(&var, &enabled);
+        ar->status = OK;
+        ar->arg2 = enabled;
+        cb(ar);
+    }
+
+    return 1;
+}
+
+static void sim_property_set_done(const DBusError* error, void* user_data)
+{
+    tapi_async_handler* handler = user_data;
+    tapi_async_result* ar;
+    tapi_async_function cb;
+
+    if (handler == NULL)
+        return;
+
+    ar = handler->result;
+    if (ar == NULL)
+        return;
+
+    cb = handler->cb_function;
+    if (cb == NULL)
+        return;
+
+    if (dbus_error_is_set(error)) {
+        tapi_log_error("%s: %s\n", error->name, error->message);
+        ar->status = ERROR;
+    } else {
+        ar->status = OK;
+    }
+
+    cb(ar);
 }
 
 static void user_data_free(void* user_data)
@@ -638,8 +711,8 @@ int tapi_sim_get_subscriber_id(tapi_context context, int slot_id, char** out)
     return -EINVAL;
 }
 
-int tapi_sim_register_sim_state_change(tapi_context context, int slot_id,
-    tapi_async_function p_handle)
+int tapi_sim_register(tapi_context context, int slot_id,
+    tapi_indication_msg msg, tapi_async_function p_handle)
 {
     dbus_context* ctx = context;
     tapi_async_handler* handler;
@@ -647,7 +720,8 @@ int tapi_sim_register_sim_state_change(tapi_context context, int slot_id,
     char* modem_path;
     int watch_id;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
+        || msg < MSG_SIM_STATE_CHANGE_IND || msg > MSG_SIM_UICC_APP_ENABLED_CHANGE_IND) {
         return -EINVAL;
     }
 
@@ -668,12 +742,24 @@ int tapi_sim_register_sim_state_change(tapi_context context, int slot_id,
         return -ENOMEM;
     }
     handler->result = ar;
-    ar->msg_id = MSG_SIM_STATE_CHANGE_IND;
+    ar->msg_id = msg;
     ar->arg1 = slot_id;
 
-    watch_id = g_dbus_add_signal_watch(ctx->connection,
-        OFONO_SERVICE, modem_path, OFONO_SIM_MANAGER_INTERFACE,
-        "PropertyChanged", sim_state_changed, handler, user_data_free);
+    switch (msg) {
+    case MSG_SIM_STATE_CHANGE_IND:
+        watch_id = g_dbus_add_signal_watch(ctx->connection,
+            OFONO_SERVICE, modem_path, OFONO_SIM_MANAGER_INTERFACE,
+            "PropertyChanged", sim_state_changed, handler, user_data_free);
+        break;
+    case MSG_SIM_UICC_APP_ENABLED_CHANGE_IND:
+        watch_id = g_dbus_add_signal_watch(ctx->connection,
+            OFONO_SERVICE, modem_path, OFONO_SIM_MANAGER_INTERFACE,
+            "PropertyChanged", sim_uicc_app_enabled_changed, handler, user_data_free);
+        break;
+    default:
+        break;
+    }
+
     if (watch_id == 0) {
         user_data_free(handler);
         return -EINVAL;
@@ -682,7 +768,7 @@ int tapi_sim_register_sim_state_change(tapi_context context, int slot_id,
     return watch_id;
 }
 
-int tapi_sim_unregister_sim_state_change(tapi_context context, int watch_id)
+int tapi_sim_unregister(tapi_context context, int watch_id)
 {
     dbus_context* ctx = context;
 
@@ -1153,6 +1239,74 @@ int tapi_sim_transmit_apdu_basic_channel(tapi_context context, int slot_id,
     if (!g_dbus_proxy_method_call(proxy, "TransmitApduBasicChannel",
             transmit_apdu_basic_channel_param_append, transmit_apdu_cb, user_data, user_data_free2)) {
         user_data_free2(user_data);
+        return -EINVAL;
+    }
+
+    return OK;
+}
+
+int tapi_sim_get_uicc_enablement(tapi_context context, int slot_id, tapi_sim_uicc_app_state* out)
+{
+    dbus_context* ctx = context;
+    GDBusProxy* proxy;
+    DBusMessageIter iter;
+    int result;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+        return -EINVAL;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    if (!g_dbus_proxy_get_property(proxy, "UiccActive", &iter))
+        return ERROR;
+
+    dbus_message_iter_get_basic(&iter, &result);
+    *out = result;
+    return OK;
+}
+
+int tapi_sim_set_uicc_enablement(tapi_context context,
+    int slot_id, int event_id, int state, tapi_async_function p_handle)
+{
+    dbus_context* ctx = context;
+    GDBusProxy* proxy;
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
+    int value = state;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+        return -EINVAL;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    handler = malloc(sizeof(tapi_async_handler));
+    if (handler == NULL)
+        return -ENOMEM;
+
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        free(handler);
+        return -ENOMEM;
+    }
+    handler->result = ar;
+
+    ar->msg_id = event_id;
+    ar->arg1 = slot_id;
+    handler->cb_function = p_handle;
+
+    if (!g_dbus_proxy_set_property_basic(proxy, "UiccActive", DBUS_TYPE_INT32,
+            &value, sim_property_set_done, handler, user_data_free)) {
+        user_data_free(handler);
         return -EINVAL;
     }
 

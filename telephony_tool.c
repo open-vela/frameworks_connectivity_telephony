@@ -61,29 +61,30 @@
 #define EVENT_CLOSE_LOGICAL_CHANNEL_DONE 0x14
 #define EVENT_TRANSMIT_APDU_LOGICAL_CHANNEL_DONE 0x15
 #define EVENT_TRANSMIT_APDU_BASIC_CHANNEL_DONE 0x16
+#define EVENT_UICC_ENABLEMENT_SET_DONE 0x17
 
-#define EVENT_NETWORK_SCAN_DONE 0x17
-#define EVENT_REGISTER_AUTO_DONE 0x18
-#define EVENT_REGISTER_MANUAL_DONE 0x19
-#define EVENT_QUERY_REGISTRATION_INFO_DONE 0x1A
-#define EVENT_QUERY_SERVING_CELL_DONE 0x1B
-#define EVENT_QUERY_NEIGHBOURING_CELL_DONE 0x1C
+#define EVENT_NETWORK_SCAN_DONE 0x18
+#define EVENT_REGISTER_AUTO_DONE 0x19
+#define EVENT_REGISTER_MANUAL_DONE 0x1A
+#define EVENT_QUERY_REGISTRATION_INFO_DONE 0x1B
+#define EVENT_QUERY_SERVING_CELL_DONE 0x1C
+#define EVENT_QUERY_NEIGHBOURING_CELL_DONE 0x1D
 
-#define EVENT_REQUEST_CALL_BARRING_DONE 0x1D
-#define EVENT_CALL_BARRING_PASSWD_CHANGE_DONE 0x1E
-#define EVENT_DISABLE_ALL_CALL_BARRINGS_DONE 0x1F
-#define EVENT_DISABLE_ALL_INCOMING_DONE 0x20
-#define EVENT_DISABLE_ALL_OUTGOING_DONE 0x21
-#define EVENT_REQUEST_CALL_FORWARDING_DONE 0x22
-#define EVENT_DISABLE_CALL_FORWARDING_DONE 0x23
-#define EVENT_CANCEL_USSD_DONE 0x24
-#define EVENT_REQUEST_CALL_WAITING_DONE 0x25
-#define EVENT_SEND_USSD_DONE 0x26
-#define EVENT_INITIATE_SERVICE_DONE 0x27
-#define EVENT_ENABLE_FDN_DONE 0x28
-#define EVENT_QUERY_FDN_DONE 0x29
+#define EVENT_REQUEST_CALL_BARRING_DONE 0x1E
+#define EVENT_CALL_BARRING_PASSWD_CHANGE_DONE 0x1F
+#define EVENT_DISABLE_ALL_CALL_BARRINGS_DONE 0x20
+#define EVENT_DISABLE_ALL_INCOMING_DONE 0x21
+#define EVENT_DISABLE_ALL_OUTGOING_DONE 0x22
+#define EVENT_REQUEST_CALL_FORWARDING_DONE 0x23
+#define EVENT_DISABLE_CALL_FORWARDING_DONE 0x24
+#define EVENT_CANCEL_USSD_DONE 0x25
+#define EVENT_REQUEST_CALL_WAITING_DONE 0x26
+#define EVENT_SEND_USSD_DONE 0x27
+#define EVENT_INITIATE_SERVICE_DONE 0x28
+#define EVENT_ENABLE_FDN_DONE 0x29
+#define EVENT_QUERY_FDN_DONE 0x2A
 
-#define EVENT_LOAD_ADN_ENTRIES_DONE 0x2A
+#define EVENT_LOAD_ADN_ENTRIES_DONE 0x2B
 
 /****************************************************************************
  * Public Type Declarations
@@ -2277,9 +2278,10 @@ static int telephonytool_cmd_transmit_apdu_basic_channel(tapi_context context, c
     return 0;
 }
 
-static int telephonytool_cmd_listen_sim_state_change(tapi_context context, char* pargs)
+static int telephonytool_cmd_get_uicc_enablement(tapi_context context, char* pargs)
 {
     char* slot_id;
+    tapi_sim_uicc_app_state state;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
@@ -2288,14 +2290,63 @@ static int telephonytool_cmd_listen_sim_state_change(tapi_context context, char*
     if (slot_id == NULL)
         return -EINVAL;
 
-    syslog(LOG_DEBUG, "%s, slotId : %s \n", __func__, slot_id);
-
-    tapi_sim_register_sim_state_change(context, atoi(slot_id), tele_sim_async_fun);
+    tapi_sim_get_uicc_enablement(context, atoi(slot_id), &state);
+    syslog(LOG_DEBUG, "%s, slotId : %s state : %d \n", __func__, slot_id, state);
 
     return 0;
 }
 
-static int telephonytool_cmd_unlisten_sim_state_change(tapi_context context, char* pargs)
+static int telephonytool_cmd_set_uicc_enablement(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* target_state;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &target_state);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*target_state == ' ')
+        target_state++;
+
+    if (target_state == NULL)
+        return -EINVAL;
+
+    tapi_sim_set_uicc_enablement(context, atoi(slot_id),
+        EVENT_UICC_ENABLEMENT_SET_DONE, atoi(target_state), tele_sim_async_fun);
+    syslog(LOG_DEBUG, "%s, slotId : %s target_state: %s \n", __func__, slot_id, target_state);
+
+    return 0;
+}
+
+static int telephonytool_cmd_listen_sim(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* target_state;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &target_state);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*target_state == ' ')
+        target_state++;
+
+    if (target_state == NULL)
+        return -EINVAL;
+
+    syslog(LOG_DEBUG, "%s, slotId : %s value :%s \n", __func__, slot_id, target_state);
+
+    tapi_sim_register(context, atoi(slot_id), atoi(target_state), tele_sim_async_fun);
+
+    return 0;
+}
+
+static int telephonytool_cmd_unlisten_sim(tapi_context context, char* pargs)
 {
     char* watch_id;
 
@@ -2308,7 +2359,7 @@ static int telephonytool_cmd_unlisten_sim_state_change(tapi_context context, cha
 
     syslog(LOG_DEBUG, "%s, watch_id : %s \n", __func__, watch_id);
 
-    tapi_sim_unregister_sim_state_change(context, atoi(watch_id));
+    tapi_sim_unregister(context, atoi(watch_id));
 
     return 0;
 }
@@ -3798,12 +3849,19 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         "transmit apdu basic channel (enter example : \
         transmit-apdu-basic-channel 0 A0B000010473656E669000 8 \
         [slot_id][pdu][len])" },
+    { "get-uicc-enablement",
+        telephonytool_cmd_get_uicc_enablement,
+        "get uicc enablement (enter example : get-uicc-enablement 0 [slot_id])" },
+    { "set-uicc-enablement",
+        telephonytool_cmd_set_uicc_enablement,
+        "set uicc enablement (enter example : set-uicc-enablement 0 1 \
+        [slot_id][state, 0:disable uicc app 1:enable uicc app])" },
     { "listen-sim",
-        telephonytool_cmd_listen_sim_state_change,
-        "register sim state change (enter example : listen-sim 0 [slot_id])" },
+        telephonytool_cmd_listen_sim,
+        "listen sim (enter example : listen-sim 0 23 [slot_id][event_id])" },
     { "unlisten-sim",
-        telephonytool_cmd_unlisten_sim_state_change,
-        "unregister sim state change (enter example : unlisten-sim 0 [slot_id])" },
+        telephonytool_cmd_unlisten_sim,
+        "unlisten sim (enter example : unlisten-sim [watch_id])" },
 
     /* Sms & Cbs Command */
     { "send-sms",

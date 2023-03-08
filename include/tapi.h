@@ -141,6 +141,12 @@ typedef enum {
     RADIO_STATE_EMERGENCY_ONLY,
 } tapi_radio_state;
 
+typedef enum {
+    SIM_UICC_APP_UNKNOWN = -1,
+    SIM_UICC_APP_INACTIVE,
+    SIM_UICC_APP_ACTIVE,
+} tapi_sim_uicc_app_state;
+
 typedef struct {
     char number[MAX_PHONE_NUMBER_LENGTH + 1];
     int type;
@@ -190,6 +196,7 @@ typedef enum {
 
     // SIM Indication Message
     MSG_SIM_STATE_CHANGE_IND,
+    MSG_SIM_UICC_APP_ENABLED_CHANGE_IND,
 
     // STK Indication Message
     MSG_STK_AGENT_DISPLAY_TEXT_IND,
