@@ -107,11 +107,12 @@ int tapi_sim_get_subscriber_id(tapi_context context, int slot_id, char** out);
  * Register sim state changed event callback.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
+ * @param[in] msg            Sim Message ID.
  * @param[in] p_handle       Event callback.
  * @return Positive value as watch_id on success; a negated errno value on failure.
  */
-int tapi_sim_register_sim_state_change(tapi_context context,
-    int slot_id, tapi_async_function p_handle);
+int tapi_sim_register(tapi_context context,
+    int slot_id, tapi_indication_msg msg, tapi_async_function p_handle);
 
 /**
  * Unregister sim state changed event callback.
@@ -119,7 +120,7 @@ int tapi_sim_register_sim_state_change(tapi_context context,
  * @param[in] watch_id       Watch id.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_sim_unregister_sim_state_change(tapi_context context, int watch_id);
+int tapi_sim_unregister(tapi_context context, int watch_id);
 
 /**
  * Change the ICC password used in ICC pin lock or ICC fdn enable.
@@ -245,6 +246,27 @@ int tapi_sim_transmit_apdu_logical_channel(tapi_context context, int slot_id,
  */
 int tapi_sim_transmit_apdu_basic_channel(tapi_context context, int slot_id,
     int event_id, char* pdu, unsigned int len, tapi_async_function p_handle);
+
+/**
+ * Get uicc applications state.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[out] out           Uicc Applications state of current sim.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_sim_get_uicc_enablement(tapi_context context, int slot_id, tapi_sim_uicc_app_state* out);
+
+/**
+ * Set uicc applications state.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] event_id       Async event identifier.
+ * @param[in] state          State uicc applications to sim.
+ * @param[in] p_handle       Event callback.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_sim_set_uicc_enablement(tapi_context context,
+    int slot_id, int event_id, int state, tapi_async_function p_handle);
 
 #ifdef __cplusplus
 }
