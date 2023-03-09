@@ -74,6 +74,11 @@ static int sim_state_changed(DBusConnection* connection,
     tapi_async_handler* handler = user_data;
     tapi_async_result* ar;
     tapi_async_function cb;
+    DBusMessageIter iter, var, arr, entry;
+    sim_lock_state* sim_lock;
+    sim_state_result ss;
+    char* property;
+    int index;
 
     if (handler == NULL)
         return false;
@@ -86,7 +91,86 @@ static int sim_state_changed(DBusConnection* connection,
     if (cb == NULL)
         return false;
 
+    if (dbus_message_iter_init(message, &iter) == false)
+        return false;
+
+    dbus_message_iter_get_basic(&iter, &property);
+    dbus_message_iter_next(&iter);
+
+    dbus_message_iter_recurse(&iter, &var);
+
+    sim_lock = NULL;
+    if (strcmp(property, "Present") == 0) {
+        dbus_message_iter_get_basic(&var, &ss.value);
+        goto done;
+    } else if (strcmp(property, "PinRequired") == 0) {
+        dbus_message_iter_get_basic(&var, &ss.data);
+        goto done;
+    } else if (strcmp(property, "LockedPins") == 0) {
+        sim_lock = malloc(sizeof(sim_lock_state));
+        if (sim_lock == NULL) {
+            return false;
+        }
+
+        index = 0;
+        dbus_message_iter_recurse(&var, &arr);
+        while (dbus_message_iter_get_arg_type(&arr) == DBUS_TYPE_STRING) {
+            dbus_message_iter_get_basic(&arr, &sim_lock->sim_pwd_type[index++]);
+            dbus_message_iter_next(&arr);
+
+            if (index >= MAX_SIM_PWD_TYPE)
+                break;
+        }
+
+        ss.data = sim_lock;
+        ar->arg2 = index;
+
+        goto done;
+    } else if (strcmp(property, "Retries") == 0) {
+        sim_lock = malloc(sizeof(sim_lock_state));
+        if (sim_lock == NULL) {
+            return false;
+        }
+
+        index = 0;
+        dbus_message_iter_recurse(&var, &arr);
+        if (dbus_message_iter_get_arg_type(&arr) == DBUS_TYPE_ARRAY) {
+            dbus_message_iter_recurse(&arr, &entry);
+
+            while (dbus_message_iter_get_arg_type(&entry) != DBUS_TYPE_INVALID) {
+                if (dbus_message_iter_get_arg_type(&entry) == DBUS_TYPE_DICT_ENTRY) {
+                    dbus_message_iter_get_basic(&entry, &sim_lock->sim_pwd_type[index++]);
+                    dbus_message_iter_next(&entry);
+
+                    dbus_message_iter_get_basic(&entry, &sim_lock->retry_count[index++]);
+                }
+
+                if (index >= MAX_SIM_PWD_TYPE)
+                    break;
+
+                dbus_message_iter_next(&arr);
+                dbus_message_iter_recurse(&arr, &entry);
+            }
+        }
+
+        ss.data = sim_lock;
+        ar->arg2 = index;
+
+        goto done;
+    }
+
+    return true;
+
+done:
+    ss.name = property;
+    ar->data = &ss;
+    ar->status = OK;
+
     cb(ar);
+
+    if (sim_lock != NULL)
+        free(sim_lock);
+
     return true;
 }
 
