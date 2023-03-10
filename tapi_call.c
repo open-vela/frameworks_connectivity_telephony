@@ -40,6 +40,11 @@ typedef struct {
     int hide_callerid;
 } call_param;
 
+typedef struct {
+    int length;
+    void* participants;
+} ims_conference_param;
+
 /****************************************************************************
  * Private Function Prototypes
  ****************************************************************************/
@@ -194,6 +199,27 @@ static void tone_param_append(DBusMessageIter* iter, void* user_data)
     char* param = user_data;
 
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &param);
+}
+
+static void conference_param_append(DBusMessageIter* iter, void* user_data)
+{
+    ims_conference_param* ims_conference_participants;
+    DBusMessageIter array;
+    char** participants;
+
+    ims_conference_participants = user_data;
+    if (ims_conference_participants == NULL)
+        return;
+
+    participants = (char**)ims_conference_participants->participants;
+
+    dbus_message_iter_open_container(iter, DBUS_TYPE_ARRAY, DBUS_TYPE_STRING_AS_STRING, &array);
+
+    for (int i = 0; i < ims_conference_participants->length; i++) {
+        dbus_message_iter_append_basic(&array, DBUS_TYPE_STRING, &participants[i]);
+    }
+
+    dbus_message_iter_close_container(iter, &array);
 }
 
 static int ring_back_tone_change(DBusMessage* message, tapi_async_handler* handler)
@@ -758,6 +784,34 @@ static int manage_call_proxy_method(tapi_context context, int slot_id, const cha
     return OK;
 }
 
+static int manager_conference(tapi_context context, int slot_id,
+    const char* member, ims_conference_param* param)
+{
+    dbus_context* ctx = context;
+    GDBusProxy* proxy;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || param == NULL) {
+        return -EINVAL;
+    }
+
+    if (param->length <= 0 || param->length > MAX_IMS_CONFERENCE_CALLS) {
+        return -EINVAL;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    if (!g_dbus_proxy_method_call(proxy, member, conference_param_append,
+            no_operate_callback, param, free)) {
+        return -EINVAL;
+    }
+
+    return OK;
+}
+
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
@@ -1304,4 +1358,51 @@ int tapi_call_register_ring_back_tone_change(tapi_context context, int slot_id,
     return tapi_register_manager_call_signal(context, slot_id,
         OFONO_VOICECALL_MANAGER_INTERFACE, MSG_CALL_RING_BACK_TONE_IND,
         p_handle, call_manager_property_changed);
+}
+
+int tapi_call_dial_conferece(tapi_context context, int slot_id, char* participants[], int size)
+{
+    ims_conference_param* ims_conference_participants_param;
+    int ret;
+
+    ims_conference_participants_param = malloc(sizeof(ims_conference_param));
+    if (ims_conference_participants_param == NULL) {
+        return -ENOMEM;
+    }
+
+    ims_conference_participants_param->length = size;
+    ims_conference_participants_param->participants = participants;
+
+    ret = manager_conference(context, slot_id, "DialConference",
+        ims_conference_participants_param);
+
+    if (ret != OK) {
+        free(ims_conference_participants_param);
+    }
+
+    return ret;
+}
+
+int tapi_call_invite_participants(tapi_context context, int slot_id,
+    char* participants[], int size)
+{
+    ims_conference_param* ims_conference_participants_param;
+    int ret;
+
+    ims_conference_participants_param = malloc(sizeof(ims_conference_param));
+    if (ims_conference_participants_param == NULL) {
+        return -ENOMEM;
+    }
+
+    ims_conference_participants_param->length = size;
+    ims_conference_participants_param->participants = participants;
+
+    ret = manager_conference(context, slot_id, "InviteParticipants",
+        ims_conference_participants_param);
+
+    if (ret != OK) {
+        free(ims_conference_participants_param);
+    }
+
+    return ret;
 }
