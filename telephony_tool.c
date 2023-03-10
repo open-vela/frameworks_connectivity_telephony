@@ -1001,6 +1001,46 @@ static int telephonytool_cmd_separate_call(tapi_context context, char* pargs)
     return tapi_call_separate_call(context, atoi(slot_id), dst[1], tele_call_async_fun);
 }
 
+static int telephonytool_cmd_dial_conference(tapi_context context, char* pargs)
+{
+    char dst[6][CONFIG_NSH_LINELEN];
+    int cnt = split_input(dst, 6, pargs, " ");
+    char* p[5];
+    int slot_id;
+
+    if (cnt > 6 || cnt < 2)
+        return -EINVAL;
+
+    for (int i = 0; i < 5; i++) {
+        p[i] = dst[i + 1];
+    }
+
+    slot_id = atoi(dst[0]);
+    syslog(LOG_DEBUG, "%s, slotId : %d\n", __func__, slot_id);
+
+    return tapi_call_dial_conferece(context, slot_id, p, cnt - 1);
+}
+
+static int telephonytool_cmd_invite_participants(tapi_context context, char* pargs)
+{
+    char dst[6][CONFIG_NSH_LINELEN];
+    int cnt = split_input(dst, 6, pargs, " ");
+    char* p[5];
+    int slot_id;
+
+    if (cnt > 6 || cnt < 2)
+        return -EINVAL;
+
+    for (int i = 0; i < 5; i++) {
+        p[i] = dst[i + 1];
+    }
+
+    slot_id = atoi(dst[0]);
+    syslog(LOG_DEBUG, "%s, slotId : %d\n", __func__, slot_id);
+
+    return tapi_call_invite_participants(context, slot_id, p, cnt - 1);
+}
+
 static int telephonytool_cmd_get_ecc_list(tapi_context context, char* pargs)
 {
     char dst[1][CONFIG_NSH_LINELEN];
@@ -3745,6 +3785,12 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     { "separate",
         telephonytool_cmd_separate_call,
         "call separate  (enter example : separate 0 [slot_id][call_id: /phonesim/voicecall01])" },
+    { "dial-conference",
+        telephonytool_cmd_dial_conference,
+        "dial a ims conference (enter example : dial 0 10001 10002 10003)" },
+    { "invite-participants",
+        telephonytool_cmd_invite_participants,
+        "invite participants join to conference (enter example : dial 0 10001 10002 10003)" },
     { "get-ecclist",
         telephonytool_cmd_get_ecc_list,
         "get ecc list  (enter example : get-ecclist 0 [slot_id])" },

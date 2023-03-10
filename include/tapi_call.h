@@ -43,6 +43,7 @@
 #define MAX_CALL_START_TIME_LENGTH 100
 #define MAX_CALL_INFO_LENGTH 100
 #define MAX_CALL_LIST_COUNT 10
+#define MAX_IMS_CONFERENCE_CALLS 5
 
 /****************************************************************************
  * Public Types
@@ -340,6 +341,27 @@ int tapi_call_register_emergencylist_change(tapi_context context, int slot_id, t
  */
 int tapi_call_register_ring_back_tone_change(tapi_context context, int slot_id,
     tapi_async_function p_handle);
+
+/**
+ * Initiates an IMS conferenca call.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] participant    Participant list to initiate an IMS conference call.
+ * @param[in] size           Size of participant list
+ * @return Positive value as watch_id on success; a negated errno value on failure.
+ */
+int tapi_call_dial_conferece(tapi_context context, int slot_id, char* participants[], int size);
+
+/**
+ * Requests the conference server to invite an additional participants to the conference.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] participant    Participant list to initiate an IMS conference call.
+ * @param[in] size           Size of participant list
+ * @return Positive value as watch_id on success; a negated errno value on failure.
+ */
+int tapi_call_invite_participants(tapi_context context, int slot_id, char* participants[],
+    int size);
 
 #ifdef __cplusplus
 }
