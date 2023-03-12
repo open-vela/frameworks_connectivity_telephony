@@ -567,7 +567,7 @@ static void network_signal_change(tapi_async_result* result)
             syslog(LOG_DEBUG, "phone state changed to %d in slot[%d] \n", param, slot_id);
         }
         break;
-    case MSG_SIGNAL_STRENGTH_STATE_CHANGE_IND:
+    case MSG_SIGNAL_STRENGTH_CHANGE_IND:
         syslog(LOG_DEBUG, "signal strength changed to %d in slot[%d] \n", param, slot_id);
         break;
     case MSG_NITZ_STATE_CHANGE_IND:
@@ -1857,6 +1857,21 @@ static int telephonytool_cmd_data_register(tapi_context context, char* pargs)
         atoi(target_state), watch_id);
 
     return watch_id;
+}
+
+static int telephonytool_cmd_data_unregister(tapi_context context, char* pargs)
+{
+    char* watch_id;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    watch_id = strtok_r(pargs, " ", NULL);
+    if (watch_id == NULL)
+        return -EINVAL;
+
+    syslog(LOG_DEBUG, "%s, watch_id : %s \n", __func__, watch_id);
+    return tapi_data_unregister(context, atoi(watch_id));
 }
 
 static int telephonytool_cmd_has_icc_card(tapi_context context, char* pargs)
@@ -3613,12 +3628,12 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         telephonytool_cmd_query_modem_list,
         "list available modem list (enter example : list-modem" },
     { "listen-modem", telephonytool_cmd_modem_register,
-        "modem event callback (enter example : listen-modem 0 0 \
-        [slot_id][event_id, 0:radio_state_change 1:call_added 2:call_removed])" },
+        "Register modem event (enter example : listen-modem 0 0 \
+        [slot_id][event_id, see Generic Indication Message in tapi.h/tapi_indication_msg])" },
     { "unlisten-modem",
         telephonytool_cmd_modem_unregister,
-        "modem event callback (enter example : unlisten-modem 0 \
-        [watch_id, one uint value returned from \"listen\"])" },
+        "Deregister modem event (enter example : unlisten-modem 100 \
+        [watch_id, one uint value returned from \"listen-modem\"])" },
     { "get-radio-cap",
         telephonytool_cmd_is_feature_supported,
         "query modem capability (enter example : get-radio-cap 0 \
@@ -3738,6 +3753,14 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         "is emergency number  (enter example : is-ecc 110 [number])" },
 
     /* Data Command */
+    { "listen-data",
+        telephonytool_cmd_data_register,
+        "Register data event (enter example : listen-data 0 1 \
+        [slot_id][event_id, see Data Indication Message in tapi.h/tapi_indication_msg])" },
+    { "unlisten-data",
+        telephonytool_cmd_data_unregister,
+        "Deregister data event (enter example : unlisten-data 100 \
+        [watch_id, one uint value returned from \"listen-data\"])" },
     { "load-apns",
         telephonytool_cmd_load_apns,
         "load apn settings (enter example : load-apns 0 [slot_id])" },
@@ -3769,9 +3792,6 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     { "is-data-on",
         telephonytool_cmd_get_data_enabled,
         "get data enabled (enter example : is-data-on 0 [slot_id])" },
-    { "listen-data",
-        telephonytool_cmd_data_register,
-        "listen data event (enter example : listen-data 0 1 [slot_id][event_id])" },
     { "is-ps-attached",
         telephonytool_cmd_get_ps_attached,
         "checki if ps attached (enter example : is-ps-attached 0 [slot_id])" },
@@ -3795,6 +3815,14 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         "allow data in specific slot for multsim devices (enter example : set-data-allow 0 1)" },
 
     /* SIM Command */
+    { "listen-sim",
+        telephonytool_cmd_listen_sim,
+        "Register sim event (enter example : listen-sim 0 23 \
+        [slot_id][event_id, see SIM Indication Message in tapi.h/tapi_indication_msg])" },
+    { "unlisten-sim",
+        telephonytool_cmd_unlisten_sim,
+        "Deregister sim event (enter example : unlisten-sim 100 \
+        [watch_id, one uint value returned from \"listen-sim\"])" },
     { "has-icc",
         telephonytool_cmd_has_icc_card,
         "has icc card (enter example : has-icc 0 [slot_id])" },
@@ -3856,12 +3884,6 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         telephonytool_cmd_set_uicc_enablement,
         "set uicc enablement (enter example : set-uicc-enablement 0 1 \
         [slot_id][state, 0:disable uicc app 1:enable uicc app])" },
-    { "listen-sim",
-        telephonytool_cmd_listen_sim,
-        "listen sim (enter example : listen-sim 0 23 [slot_id][event_id])" },
-    { "unlisten-sim",
-        telephonytool_cmd_unlisten_sim,
-        "unlisten sim (enter example : unlisten-sim [watch_id])" },
 
     /* Sms & Cbs Command */
     { "send-sms",
@@ -3904,10 +3926,12 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     /* Network Command */
     { "listen-network",
         telephonytool_cmd_network_listen,
-        "listen-network (enter example : listen-network 0 13 [slot_id][event_id])" },
+        "Register network event (enter example : listen-network 0 13 \
+        [slot_id][event_id, see Network Indication Message in tapi.h/tapi_indication_msg])" },
     { "unlisten-network",
         telephonytool_cmd_network_unlisten,
-        "unlisten-network (enter example : unlisten-network 0 [slot_id])" },
+        "Deregister network event (enter example : unlisten-network 100 \
+        [watch_id, one uint value returned from \"listen-network\"])" },
     { "register-auto",
         telephonytool_cmd_network_select_auto,
         "register auto (enter example : register-auto 0 [slot_id])" },
@@ -3940,6 +3964,14 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         "get neighbouring cellInfos  (enter example : get-neighbouring-cellInfos 0)" },
 
     /* Ss Command */
+    { "listen-ss",
+        telephonytool_cmd_ss_listen,
+        "Register ss event (enter example : listen-ss 0 30 \
+        [slot_id][event_id, see SS Indication Message in tapi.h/tapi_indication_msg])" },
+    { "unlisten-ss",
+        telephonytool_cmd_ss_unlisten,
+        "Deregister ss event (enter example : unlisten-ss 100 \
+        [watch_id, one uint value returned from \"listen-ss\"])" },
     { "set-callbarring",
         telephonytool_cmd_set_call_barring,
         "set callbarring (enter example : set-callbarring 0 AI 1234 \
@@ -4009,12 +4041,6 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     { "query-fdn",
         telephonytool_cmd_query_fdn,
         "query fdn (enter example : query-fdn 0 [slot_id])" },
-    { "listen-ss",
-        telephonytool_cmd_ss_listen,
-        "listen-ss (enter example : listen-ss 0 30 [slot_id][event_id])" },
-    { "unlisten-ss",
-        telephonytool_cmd_ss_unlisten,
-        "unlisten-ss (enter example : unlisten-ss 0 [slot_id])" },
 
     /* IMS Command */
     { "enable-ims",
