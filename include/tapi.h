@@ -184,7 +184,7 @@ typedef enum {
     // Network Indication Message
     MSG_NETWORK_STATE_CHANGE_IND,
     MSG_CELLINFO_CHANGE_IND,
-    MSG_SIGNAL_STRENGTH_STATE_CHANGE_IND,
+    MSG_SIGNAL_STRENGTH_CHANGE_IND,
     MSG_NITZ_STATE_CHANGE_IND,
 
     // Data Indication Message

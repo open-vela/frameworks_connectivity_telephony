@@ -407,7 +407,7 @@ static int signal_strength_changed(DBusConnection* connection,
     if (cb == NULL)
         return 0;
 
-    if (ar->msg_id != MSG_SIGNAL_STRENGTH_STATE_CHANGE_IND) {
+    if (ar->msg_id != MSG_SIGNAL_STRENGTH_CHANGE_IND) {
         return 0;
     }
 
@@ -1188,7 +1188,7 @@ int tapi_network_register(tapi_context context,
             OFONO_SERVICE, modem_path, OFONO_NETMON_INTERFACE,
             "PropertyChanged", cellinfo_list_changed, handler, user_data_free);
         break;
-    case MSG_SIGNAL_STRENGTH_STATE_CHANGE_IND:
+    case MSG_SIGNAL_STRENGTH_CHANGE_IND:
         watch_id = g_dbus_add_signal_watch(ctx->connection,
             OFONO_SERVICE, modem_path, OFONO_NETWORK_REGISTRATION_INTERFACE,
             "PropertyChanged", signal_strength_changed, handler, user_data_free);
