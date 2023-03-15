@@ -559,7 +559,7 @@ static void apn_context_remove(DBusMessageIter* iter, void* user_data)
         return;
     }
 
-    dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &apn->id);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_OBJECT_PATH, &apn->id);
 }
 
 static void network_operation_append(DBusMessageIter* iter, void* user_data)
