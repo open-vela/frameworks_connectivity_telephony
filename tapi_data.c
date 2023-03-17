@@ -478,7 +478,7 @@ done:
     }
 }
 
-static void apn_list_changd(DBusMessage* message, void* user_data)
+static void apn_list_changed(DBusMessage* message, void* user_data)
 {
     tapi_async_handler* handler = user_data;
     tapi_async_result* ar;
@@ -663,7 +663,7 @@ int tapi_data_save_apn_context(tapi_context context,
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy,
-            "AddContext", apn_context_append, apn_list_changd, handler, user_data_free)) {
+            "AddContext", apn_context_append, apn_list_changed, handler, user_data_free)) {
         user_data_free(handler);
         return -EINVAL;
     }
@@ -707,7 +707,7 @@ int tapi_data_remove_apn_context(tapi_context context,
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy,
-            "RemoveContext", apn_context_remove, apn_list_changd, handler, user_data_free)) {
+            "RemoveContext", apn_context_remove, apn_list_changed, handler, user_data_free)) {
         user_data_free(handler);
         return -EINVAL;
     }
@@ -750,7 +750,7 @@ int tapi_data_reset_apn_contexts(tapi_context context,
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy,
-            "ResetContexts", NULL, apn_list_changd, handler, user_data_free)) {
+            "ResetContexts", NULL, apn_list_changed, handler, user_data_free)) {
         user_data_free(handler);
         return -EINVAL;
     }
