@@ -998,7 +998,7 @@ int tapi_data_enable_roaming(tapi_context context, bool enabled)
         }
 
         if (!g_dbus_proxy_set_property_basic(proxy,
-                "DataRoamingOn", DBUS_TYPE_BOOLEAN, &value, NULL, NULL, NULL)) {
+                "RoamingAllowed", DBUS_TYPE_BOOLEAN, &value, NULL, NULL, NULL)) {
             ret = -EINVAL;
         }
     }
@@ -1023,7 +1023,7 @@ int tapi_data_get_roaming_enabled(tapi_context context, bool* out)
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property(proxy, "DataRoamingOn", &iter)) {
+    if (g_dbus_proxy_get_property(proxy, "RoamingAllowed", &iter)) {
         dbus_message_iter_get_basic(&iter, &result);
 
         *out = result;
