@@ -110,6 +110,7 @@ struct telephony_main_loop {
  * Private Declarations
  ****************************************************************************/
 
+static bool g_should_exit;
 static struct telephonytool_cmd_s g_telephonytool_cmds[][CONFIG_NSH_LINELEN];
 static int telephonytool_cmd_help(tapi_context context, char* pargs);
 static void telephonytool_execute(tapi_context context, char* cmd, char* arg);
@@ -3767,6 +3768,12 @@ static void telephonytool_execute(tapi_context context, char* cmd, char* arg)
     printf("Unknown cmd: \'%s\'. Type 'help' for more infomation.\n", cmd);
 }
 
+static void exit_handler(int signo)
+{
+    g_should_exit = true;
+    printf("telephonytool exit successful\n");
+}
+
 static void* read_stdin(pthread_addr_t pvarg)
 {
     int arg_len, len;
@@ -3778,7 +3785,7 @@ static void* read_stdin(pthread_addr_t pvarg)
         return NULL;
     }
 
-    while (1) {
+    while (!g_should_exit) {
         printf("telephonytool> ");
         fflush(stdout);
 
@@ -3824,6 +3831,7 @@ static void* read_stdin(pthread_addr_t pvarg)
  * Private Data
  ****************************************************************************/
 
+static bool g_should_exit = false;
 static struct telephonytool_cmd_s g_telephonytool_cmds[][CONFIG_NSH_LINELEN] = {
     /* Radio Command */
     { { "list-modem",
@@ -4304,6 +4312,11 @@ int main(int argc, char* argv[])
     pthread_attr_t attr;
     pthread_t thread;
     int ret;
+
+    g_should_exit = false;
+    if (signal(SIGINT, exit_handler) == SIG_ERR) {
+        return -errno;
+    }
 
     main_loop.context = tapi_open("vela.telephony.tool");
     if (main_loop.context == NULL) {
