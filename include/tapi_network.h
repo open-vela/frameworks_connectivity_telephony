@@ -221,6 +221,18 @@ int tapi_network_get_registration_info(tapi_context context,
     int slot_id, int event_id, tapi_async_function p_handle);
 
 /**
+ * Set cellinfo update rate.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] event_id       Async event identifier.
+ * @param[in] period         Rate in millis.
+ * @param[in] p_handle       Event callback.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_network_set_cell_info_list_rate(tapi_context context, int slot_id,
+    int event_id, u_int32_t period, tapi_async_function p_handle);
+
+/**
  * Register network event callback.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
