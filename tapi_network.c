@@ -394,7 +394,7 @@ static int signal_strength_changed(DBusConnection* connection,
     tapi_async_function cb;
     DBusMessageIter iter, var;
     const char* property;
-    int32_t strength;
+    int strength;
 
     if (handler == NULL)
         return 0;
@@ -778,6 +778,20 @@ done:
     }
 }
 
+static void cell_info_list_rate_param_append(DBusMessageIter* iter, void* user_data)
+{
+    tapi_async_handler* handler = user_data;
+    uint32_t period;
+
+    if (handler == NULL || handler->result == NULL) {
+        tapi_log_error("invalid rate argument ... \n");
+        return;
+    }
+
+    period = handler->result->arg2;
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_UINT32, &period);
+}
+
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
@@ -1078,7 +1092,7 @@ int tapi_network_get_signalstrength(tapi_context context, int slot_id, tapi_sign
     dbus_context* ctx = context;
     GDBusProxy* proxy;
     DBusMessageIter iter;
-    int32_t value;
+    int value;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
@@ -1136,6 +1150,51 @@ int tapi_network_get_registration_info(tapi_context context,
 
     if (!g_dbus_proxy_method_call(proxy,
             "GetProperties", NULL, registration_info_query_done, handler, user_data_free)) {
+        user_data_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
+}
+
+int tapi_network_set_cell_info_list_rate(tapi_context context, int slot_id,
+    int event_id, u_int32_t period, tapi_async_function p_handle)
+{
+    dbus_context* ctx = context;
+    GDBusProxy* proxy;
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+        return -EINVAL;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_NETMON];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    handler = malloc(sizeof(tapi_async_handler));
+    if (handler == NULL) {
+        return -ENOMEM;
+    }
+
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        free(handler);
+        return -ENOMEM;
+    }
+
+    ar->msg_id = event_id;
+    ar->arg1 = slot_id;
+    ar->arg2 = period;
+    handler->result = ar;
+    handler->cb_function = p_handle;
+
+    if (!g_dbus_proxy_method_call(proxy,
+            "CellInfoUpdateRate", cell_info_list_rate_param_append,
+            NULL, handler, user_data_free)) {
         user_data_free(handler);
         return -EINVAL;
     }

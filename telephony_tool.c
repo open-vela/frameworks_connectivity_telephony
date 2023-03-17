@@ -69,26 +69,27 @@
 #define EVENT_QUERY_REGISTRATION_INFO_DONE 0x1B
 #define EVENT_QUERY_SERVING_CELL_DONE 0x1C
 #define EVENT_QUERY_NEIGHBOURING_CELL_DONE 0x1D
+#define EVENT_NETWORK_SET_CELL_INFO_LIST_RATE_DONE 0x1E
 
-#define EVENT_REQUEST_CALL_BARRING_DONE 0x1E
-#define EVENT_CALL_BARRING_PASSWD_CHANGE_DONE 0x1F
-#define EVENT_DISABLE_ALL_CALL_BARRINGS_DONE 0x20
-#define EVENT_DISABLE_ALL_INCOMING_DONE 0x21
-#define EVENT_DISABLE_ALL_OUTGOING_DONE 0x22
-#define EVENT_REQUEST_CALL_FORWARDING_DONE 0x23
-#define EVENT_DISABLE_CALL_FORWARDING_DONE 0x24
-#define EVENT_CANCEL_USSD_DONE 0x25
-#define EVENT_REQUEST_CALL_WAITING_DONE 0x26
-#define EVENT_SEND_USSD_DONE 0x27
-#define EVENT_INITIATE_SERVICE_DONE 0x28
-#define EVENT_ENABLE_FDN_DONE 0x29
-#define EVENT_QUERY_FDN_DONE 0x2A
+#define EVENT_REQUEST_CALL_BARRING_DONE 0x1F
+#define EVENT_CALL_BARRING_PASSWD_CHANGE_DONE 0x20
+#define EVENT_DISABLE_ALL_CALL_BARRINGS_DONE 0x21
+#define EVENT_DISABLE_ALL_INCOMING_DONE 0x22
+#define EVENT_DISABLE_ALL_OUTGOING_DONE 0x23
+#define EVENT_REQUEST_CALL_FORWARDING_DONE 0x24
+#define EVENT_DISABLE_CALL_FORWARDING_DONE 0x25
+#define EVENT_CANCEL_USSD_DONE 0x26
+#define EVENT_REQUEST_CALL_WAITING_DONE 0x27
+#define EVENT_SEND_USSD_DONE 0x28
+#define EVENT_INITIATE_SERVICE_DONE 0x29
+#define EVENT_ENABLE_FDN_DONE 0x2A
+#define EVENT_QUERY_FDN_DONE 0x2B
 
-#define EVENT_LOAD_ADN_ENTRIES_DONE 0x2B
-#define EVENT_LOAD_FDN_ENTRIES_DONE 0x2C
-#define EVENT_INSERT_FDN_ENTRIES_DONE 0x2D
-#define EVENT_UPDATE_FDN_ENTRIES_DONE 0x2E
-#define EVENT_DELETE_FDN_ENTRIES_DONE 0x2F
+#define EVENT_LOAD_ADN_ENTRIES_DONE 0x2C
+#define EVENT_LOAD_FDN_ENTRIES_DONE 0x2D
+#define EVENT_INSERT_FDN_ENTRIES_DONE 0x2E
+#define EVENT_UPDATE_FDN_ENTRIES_DONE 0x2F
+#define EVENT_DELETE_FDN_ENTRIES_DONE 0x30
 
 /****************************************************************************
  * Public Type Declarations
@@ -2996,6 +2997,32 @@ static int telephonytool_cmd_get_neighbouring_cellInfos(tapi_context context, ch
         atoi(slot_id), EVENT_QUERY_NEIGHBOURING_CELL_DONE, network_event_callback);
 }
 
+static int telephonytool_cmd_set_cell_info_list_rate(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* period;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &period);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*period == ' ')
+        period++;
+
+    if (period == NULL)
+        return -EINVAL;
+
+    syslog(LOG_DEBUG, "%s, slot_id: %s period: %s \n", __func__, slot_id, period);
+
+    tapi_network_set_cell_info_list_rate(context, atoi(slot_id),
+        EVENT_NETWORK_SET_CELL_INFO_LIST_RATE_DONE, atoi(period), tele_call_async_fun);
+
+    return 0;
+}
+
 static int telephonytool_cmd_set_call_barring(tapi_context context, char* pargs)
 {
     char* slot_id;
@@ -4145,7 +4172,7 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[][CONFIG_NSH_LINELEN] = {
     /* Network Command */
     { { "listen-network",
           telephonytool_cmd_network_listen,
-          "Register network event (enter example : listen-network 0 13 "
+          "Register network event (enter example : listen-network 0 16 "
           "[slot_id][event_id, see Network Indication Message in tapi.h/tapi_indication_msg])" },
         { "unlisten-network",
             telephonytool_cmd_network_unlisten,
@@ -4156,7 +4183,8 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[][CONFIG_NSH_LINELEN] = {
             "register auto (enter example : register-auto 0 [slot_id])" },
         { "register-manual",
             telephonytool_cmd_network_select_manual,
-            "register manual (enter example : register-manual 0 [slot_id])" },
+            "register manual (enter example : register-manual 0 460 00 lte "
+            "[slot_id][mcc][mnc][technology])" },
         { "get-signalstrength",
             telephonytool_cmd_query_signalstrength,
             "signalstrength (enter example : get-signalstrength 0 [slot_id])" },
@@ -4180,7 +4208,11 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[][CONFIG_NSH_LINELEN] = {
             "get serving cellinfo  (enter example : get-serving-cellinfo 0)" },
         { "get-neighbouring-cellInfos",
             telephonytool_cmd_get_neighbouring_cellInfos,
-            "get neighbouring cellInfos  (enter example : get-neighbouring-cellInfos 0)" } },
+            "get neighbouring cellInfos  (enter example : get-neighbouring-cellInfos 0)" },
+        { "set-cell-info-list-rate",
+            telephonytool_cmd_set_cell_info_list_rate,
+            "set cell info list rate  (enter example : set-cell-info-list-rate 0 10 "
+            "[slot_id][period])" } },
 
     /* Ss Command */
     { { "listen-ss",
