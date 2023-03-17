@@ -1627,7 +1627,7 @@ static int telephonytool_cmd_save_apn(tapi_context context, char* pargs)
         strcpy(apn_context->name, name);
 
     if (strlen(apn) <= MAX_APN_DOMAIN_LENGTH)
-        strcpy(apn_context->accesspointname, name);
+        strcpy(apn_context->accesspointname, apn);
 
     strcpy(apn_context->username, "");
     strcpy(apn_context->password, "");
@@ -1743,7 +1743,7 @@ static int telephonytool_cmd_set_data_roaming(tapi_context context, char* pargs)
 
 static int telephonytool_cmd_get_data_roaming(tapi_context context, char* pargs)
 {
-    bool result;
+    bool result = false;
 
     tapi_data_get_roaming_enabled(context, &result);
     syslog(LOG_DEBUG, "%s : %d \n", __func__, result);
@@ -1767,7 +1767,7 @@ static int telephonytool_cmd_set_data_enabled(tapi_context context, char* pargs)
 
 static int telephonytool_cmd_get_data_enabled(tapi_context context, char* pargs)
 {
-    bool result;
+    bool result = false;
 
     tapi_data_get_enabled(context, &result);
     syslog(LOG_DEBUG, "%s : %d \n", __func__, result);
@@ -3998,16 +3998,16 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[][CONFIG_NSH_LINELEN] = {
             "release network (enter example : release-network 0 internet [slot_id][apn_type_string])" },
         { "set-data-roaming",
             telephonytool_cmd_set_data_roaming,
-            "set data roaming (enter example : set-data-roaming 0 1 [slot_id][state])" },
+            "set data roaming (enter example : set-data-roaming 1[state])" },
         { "get-data-roaming",
             telephonytool_cmd_get_data_roaming,
-            "get data roaming (enter example : get-data-roaming 0 [slot_id])" },
+            "get data roaming (enter example : get-data-roaming)" },
         { "set-data-on",
             telephonytool_cmd_set_data_enabled,
-            "set data enabled (enter example : set-data-on 0 1 [slot_id][state])" },
+            "set data enabled (enter example : set-data-on 1 [state])" },
         { "is-data-on",
             telephonytool_cmd_get_data_enabled,
-            "get data enabled (enter example : is-data-on 0 [slot_id])" },
+            "get data enabled (enter example : is-data-on)" },
         { "is-ps-attached",
             telephonytool_cmd_get_ps_attached,
             "checki if ps attached (enter example : is-ps-attached 0 [slot_id])" },
@@ -4019,7 +4019,7 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[][CONFIG_NSH_LINELEN] = {
             "set preferred apn (enter example : set-pref-apn[slot_id][apn_id])" },
         { "get-pref-apn",
             telephonytool_cmd_get_pref_apn,
-            "get preferred apn (enter example : get-pref-apn[slot_id][apn_id])" },
+            "get preferred apn (enter example : get-pref-apn[slot_id])" },
         { "set-data-slot",
             telephonytool_cmd_set_default_data_slot,
             "set default data slot (enter example : set-data-slot 0 [slot_id])" },
