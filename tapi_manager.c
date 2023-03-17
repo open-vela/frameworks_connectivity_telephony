@@ -1246,7 +1246,6 @@ int tapi_enable_modem(tapi_context context, int slot_id,
         free(handler);
         return -ENOMEM;
     }
-    handler->result = ar;
 
     ar->msg_id = event_id;
     ar->arg1 = slot_id;
@@ -1289,7 +1288,6 @@ int tapi_get_modem_status(tapi_context context, int slot_id,
         free(handler);
         return -ENOMEM;
     }
-    handler->result = ar;
 
     ar->msg_id = event_id;
     ar->arg1 = slot_id;
