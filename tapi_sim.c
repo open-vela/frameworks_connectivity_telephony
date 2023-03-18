@@ -220,33 +220,6 @@ static int sim_uicc_app_enabled_changed(DBusConnection* connection,
     return 1;
 }
 
-static void sim_property_set_done(const DBusError* error, void* user_data)
-{
-    tapi_async_handler* handler = user_data;
-    tapi_async_result* ar;
-    tapi_async_function cb;
-
-    if (handler == NULL)
-        return;
-
-    ar = handler->result;
-    if (ar == NULL)
-        return;
-
-    cb = handler->cb_function;
-    if (cb == NULL)
-        return;
-
-    if (dbus_error_is_set(error)) {
-        tapi_log_error("%s: %s\n", error->name, error->message);
-        ar->status = ERROR;
-    } else {
-        ar->status = OK;
-    }
-
-    cb(ar);
-}
-
 static void user_data_free(void* user_data)
 {
     tapi_async_handler* handler = user_data;
@@ -717,7 +690,7 @@ int tapi_sim_register(tapi_context context, int slot_id,
     dbus_context* ctx = context;
     tapi_async_handler* handler;
     tapi_async_result* ar;
-    char* modem_path;
+    const char* modem_path;
     int watch_id;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
@@ -1305,7 +1278,7 @@ int tapi_sim_set_uicc_enablement(tapi_context context,
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_set_property_basic(proxy, "UiccActive", DBUS_TYPE_INT32,
-            &value, sim_property_set_done, handler, user_data_free)) {
+            &value, property_set_done, handler, user_data_free)) {
         user_data_free(handler);
         return -EINVAL;
     }

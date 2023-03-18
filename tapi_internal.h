@@ -96,26 +96,9 @@ static inline bool tapi_is_valid_slotid(int slot_id)
     return (slot_id >= 0 && slot_id < CONFIG_ACTIVE_MODEM_COUNT);
 }
 void no_operate_callback(DBusMessage* message, void* user_data);
-const char* tapi_pref_network_mode_to_string(tapi_pref_net_mode mode);
-bool tapi_pref_network_mode_from_string(const char* str, tapi_pref_net_mode* mode);
-bool tapi_network_type_from_string(const char* str, tapi_network_type* type);
-const char* tapi_registration_status_to_string(int status);
-int tapi_registration_status_from_string(const char* status);
-int tapi_registration_mode_from_string(const char* mode);
-int tapi_operator_status_from_string(const char* mode);
-const char* tapi_apn_context_type_to_string(tapi_apn_context_type type);
-tapi_apn_context_type tapi_apn_context_type_from_string(const char* type);
-const char* tapi_apn_auth_method_to_string(tapi_data_auth_method auth);
-tapi_data_auth_method tapi_apn_auth_method_from_string(const char* auth);
-const char* tapi_apn_proto_to_string(tapi_data_proto proto);
-bool tapi_apn_proto_from_string(const char* str, tapi_data_proto* proto);
-char* tapi_utils_get_modem_path(int slot_id);
-enum tapi_call_status tapi_call_string_to_status(const char* str_status);
-enum tapi_call_disconnect_reason tapi_call_disconnected_reason_from_string(const char* str_status);
-const char* cell_type_to_tech_name(tapi_cell_type type);
-tapi_cell_type cell_type_from_tech_name(const char* name);
-bool tapi_is_call_signal_message(DBusMessage* message, DBusMessageIter* iter, int msg_type);
-const char* tapi_get_call_signal_member(tapi_indication_msg msg);
+bool is_call_signal_message(DBusMessage* message, DBusMessageIter* iter, int msg_type);
+const char* get_call_signal_member(tapi_indication_msg msg);
+void property_set_done(const DBusError* error, void* user_data);
 
 #ifdef __cplusplus
 }
