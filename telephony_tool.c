@@ -674,19 +674,22 @@ static void data_signal_change(tapi_async_result* result)
     case MSG_DATA_CONNECTION_STATE_CHANGE_IND:
         dc = result->data;
         if (dc != NULL) {
-            syslog(LOG_DEBUG, "id : %s, name : %s, type : %d, apn : %s, active : %d \n",
-                dc->id, dc->name, dc->type, dc->accesspointname, dc->active);
+            syslog(LOG_DEBUG, "id (apn_path) = %s \n", dc->id);
+            syslog(LOG_DEBUG, "name = %s \n", dc->name);
+            syslog(LOG_DEBUG, "accesspointname = %s \n", dc->accesspointname);
+            syslog(LOG_DEBUG, "type = %d \n", dc->type);
+            syslog(LOG_DEBUG, "active = %d \n", dc->active);
 
             if (dc->ip_settings != NULL) {
                 ipv4 = dc->ip_settings->ipv4;
                 if (ipv4 != NULL) {
-                    syslog(LOG_DEBUG, "ipv4-interface : %s, ip : %s, gateway : %s, dns : %s \n",
+                    syslog(LOG_DEBUG, "ipv4-interface = %s; ip = %s; gateway = %s; dns = %s; \n",
                         ipv4->interface, ipv4->ip, ipv4->gateway, ipv4->dns[0]);
                 }
 
                 ipv6 = dc->ip_settings->ipv6;
                 if (ipv6 != NULL) {
-                    syslog(LOG_DEBUG, "ipv6-interface : %s, ip : %s, gateway : %s, dns : %s \n",
+                    syslog(LOG_DEBUG, "ipv6-interface = %s; ip = %s; gateway = %s; dns = %s; \n",
                         ipv6->interface, ipv6->ip, ipv6->gateway, ipv6->dns[0]);
                 }
             }
@@ -3857,7 +3860,7 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[][CONFIG_NSH_LINELEN] = {
             "get radio power (enter example : get-radio-power 0 [slot_id])" },
         { "set-rat-mode",
             telephonytool_cmd_set_rat_mode,
-            "set rat mode (enter example : set-rat-set 0 9 [slot_id] "
+            "set rat mode (enter example : set-rat-mode 0 9 [slot_id] "
             "[mode: 0-any 1-gsm_only 2-wcdma_only 3-umts 9-lte_gsm_wcdma 12-lte_wcdma 14-lte_only])" },
         { "get-rat-mode",
             telephonytool_cmd_get_rat_mode,
@@ -4016,10 +4019,10 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[][CONFIG_NSH_LINELEN] = {
             "get ps network type (enter example : get-ps-nwtype 0 [slot_id])" },
         { "set-pref-apn",
             telephonytool_cmd_set_pref_apn,
-            "set preferred apn (enter example : set-pref-apn[slot_id][apn_id])" },
+            "set preferred apn (enter example : set-pref-apn 0 /ril_0/context1 [slot_id][apn_id])" },
         { "get-pref-apn",
             telephonytool_cmd_get_pref_apn,
-            "get preferred apn (enter example : get-pref-apn[slot_id])" },
+            "get preferred apn (enter example : get-pref-apn 0 [slot_id])" },
         { "set-data-slot",
             telephonytool_cmd_set_default_data_slot,
             "set default data slot (enter example : set-data-slot 0 [slot_id])" },

@@ -251,34 +251,6 @@ static void fill_ss_initiate_cs_service(DBusMessageIter* iter,
     }
 }
 
-static void ss_set_property_complete(const DBusError* error, void* user_data)
-{
-    tapi_async_handler* handler;
-    tapi_async_result* ar;
-    tapi_async_function cb;
-
-    handler = user_data;
-    if (handler == NULL)
-        return;
-
-    ar = handler->result;
-    if (ar == NULL)
-        return;
-
-    cb = handler->cb_function;
-    if (cb == NULL)
-        return;
-
-    if (dbus_error_is_set(error)) {
-        tapi_log_error("%s: %s\n", error->name, error->message);
-        ar->status = ERROR;
-    } else {
-        ar->status = OK;
-    }
-
-    cb(ar);
-}
-
 static void method_call_complete(DBusMessage* message, void* user_data)
 {
     tapi_async_handler* handler = user_data;
@@ -891,7 +863,7 @@ int tapi_ss_request_call_barring(tapi_context context, int slot_id, int event_id
     value[1] = pin2;
 
     if (!g_dbus_proxy_set_property_array(proxy, key, DBUS_TYPE_STRING,
-            value, sizeof(value) / sizeof(char*), ss_set_property_complete,
+            value, sizeof(value) / sizeof(char*), property_set_done,
             handler, user_data_free)) {
         user_data_free(handler);
         return -EINVAL;
@@ -1156,7 +1128,7 @@ int tapi_ss_request_call_forwarding(tapi_context context, int slot_id, int event
         value_type = DBUS_TYPE_STRING;
 
     if (!g_dbus_proxy_set_property_basic(proxy, cf_type, value_type,
-            &value, ss_set_property_complete, handler, user_data_free)) {
+            &value, property_set_done, handler, user_data_free)) {
         user_data_free(handler);
         return -EINVAL;
     }
@@ -1381,7 +1353,7 @@ int tapi_ss_request_call_wating(tapi_context context, int slot_id, int event_id,
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_set_property_basic(proxy, "VoiceCallWaiting", DBUS_TYPE_STRING,
-            &state, ss_set_property_complete, handler, user_data_free)) {
+            &state, property_set_done, handler, user_data_free)) {
         user_data_free(handler);
         return -EINVAL;
     }
@@ -1558,7 +1530,7 @@ int tapi_ss_register(tapi_context context,
     dbus_context* ctx = context;
     tapi_async_handler* handler;
     tapi_async_result* ar;
-    char* modem_path;
+    const char* modem_path;
     int watch_id;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)

@@ -20,6 +20,7 @@
 
 #include <stdio.h>
 
+#include "tapi.h"
 #include "tapi_internal.h"
 
 /****************************************************************************
@@ -30,7 +31,7 @@ void no_operate_callback(DBusMessage* message, void* user_data)
 {
 }
 
-const char* tapi_pref_network_mode_to_string(tapi_pref_net_mode mode)
+const char* tapi_utils_network_mode_to_string(tapi_pref_net_mode mode)
 {
     switch (mode) {
     case NETWORK_PREF_NET_TYPE_ANY:
@@ -54,78 +55,58 @@ const char* tapi_pref_network_mode_to_string(tapi_pref_net_mode mode)
     return NULL;
 }
 
-bool tapi_pref_network_mode_from_string(const char* str, tapi_pref_net_mode* mode)
+tapi_pref_net_mode tapi_utils_network_mode_from_string(const char* mode)
 {
-    if (str == NULL) {
-        *mode = NETWORK_PREF_NET_TYPE_ANY;
-        return false;
+    if (mode == NULL) {
+        return NETWORK_PREF_NET_TYPE_ANY;
     }
 
-    if (strcmp(str, "any") == 0) {
-        *mode = NETWORK_PREF_NET_TYPE_ANY;
-        return true;
-    } else if (strcmp(str, "gsm") == 0) {
-        *mode = NETWORK_PREF_NET_TYPE_GSM_ONLY;
-        return true;
-    } else if (strcmp(str, "umts") == 0) {
-        *mode = NETWORK_PREF_NET_TYPE_WCDMA_ONLY;
-        return true;
-    } else if (strcmp(str, "lte") == 0) {
-        *mode = NETWORK_PREF_NET_TYPE_LTE_ONLY;
-        return true;
-    } else if (strcmp(str, "umts,gsm") == 0) {
-        *mode = NETWORK_PREF_NET_TYPE_UMTS;
-        return true;
-    } else if (strcmp(str, "lte,umts") == 0) {
-        *mode = NETWORK_PREF_NET_TYPE_LTE_WCDMA;
-        return true;
-    } else if (strcmp(str, "lte,gsm") == 0) {
-        *mode = NETWORK_PREF_NET_TYPE_LTE_TDSCDMA_GSM;
-        return true;
-    } else if (strcmp(str, "lte,umts,gsm") == 0) {
-        *mode = NETWORK_PREF_NET_TYPE_LTE_GSM_WCDMA;
-        return true;
-    } else {
-        *mode = NETWORK_PREF_NET_TYPE_ANY;
+    if (strcmp(mode, "any") == 0) {
+        return NETWORK_PREF_NET_TYPE_ANY;
+    } else if (strcmp(mode, "gsm") == 0) {
+        return NETWORK_PREF_NET_TYPE_GSM_ONLY;
+    } else if (strcmp(mode, "umts") == 0) {
+        return NETWORK_PREF_NET_TYPE_WCDMA_ONLY;
+    } else if (strcmp(mode, "lte") == 0) {
+        return NETWORK_PREF_NET_TYPE_LTE_ONLY;
+    } else if (strcmp(mode, "umts,gsm") == 0) {
+        return NETWORK_PREF_NET_TYPE_UMTS;
+    } else if (strcmp(mode, "lte,umts") == 0) {
+        return NETWORK_PREF_NET_TYPE_LTE_WCDMA;
+    } else if (strcmp(mode, "lte,gsm") == 0) {
+        return NETWORK_PREF_NET_TYPE_LTE_TDSCDMA_GSM;
+    } else if (strcmp(mode, "lte,umts,gsm") == 0) {
+        return NETWORK_PREF_NET_TYPE_LTE_GSM_WCDMA;
     }
 
-    return false;
+    return NETWORK_PREF_NET_TYPE_ANY;
 }
 
-bool tapi_network_type_from_string(const char* str, tapi_network_type* type)
+tapi_network_type tapi_utils_network_type_from_string(const char* type)
 {
-    if (str == NULL)
-        return false;
+    if (type == NULL)
+        return NETWORK_TYPE_UNKNOWN;
 
-    if (strcmp(str, "gsm") == 0) {
-        *type = NETWORK_TYPE_EDGE;
-        return true;
-    } else if (strcmp(str, "umts") == 0) {
-        *type = NETWORK_TYPE_UMTS;
-        return true;
-    } else if (strcmp(str, "lte") == 0) {
-        *type = NETWORK_TYPE_LTE;
-        return true;
-    } else if (strcmp(str, "hsdpa") == 0) {
-        *type = NETWORK_TYPE_HSDPA;
-        return true;
-    } else if (strcmp(str, "hspa") == 0) {
-        *type = NETWORK_TYPE_HSPA;
-        return true;
-    } else if (strcmp(str, "hsupa") == 0) {
-        *type = NETWORK_TYPE_HSUPA;
-        return true;
-    } else if (strcmp(str, "lte_ca") == 0) {
-        *type = NETWORK_TYPE_LTE_CA;
-        return true;
-    } else {
-        *type = NETWORK_TYPE_UNKNOWN;
+    if (strcmp(type, "gsm") == 0) {
+        return NETWORK_TYPE_EDGE;
+    } else if (strcmp(type, "umts") == 0) {
+        return NETWORK_TYPE_UMTS;
+    } else if (strcmp(type, "lte") == 0) {
+        return NETWORK_TYPE_LTE;
+    } else if (strcmp(type, "hsdpa") == 0) {
+        return NETWORK_TYPE_HSDPA;
+    } else if (strcmp(type, "hspa") == 0) {
+        return NETWORK_TYPE_HSPA;
+    } else if (strcmp(type, "hsupa") == 0) {
+        return NETWORK_TYPE_HSUPA;
+    } else if (strcmp(type, "lte_ca") == 0) {
+        return NETWORK_TYPE_LTE_CA;
     }
 
-    return false;
+    return NETWORK_TYPE_UNKNOWN;
 }
 
-const char* tapi_registration_status_to_string(int status)
+const char* tapi_utils_registration_status_to_string(int status)
 {
     switch (status) {
     case NETWORK_REGISTRATION_STATUS_NOT_REGISTERED:
@@ -145,7 +126,7 @@ const char* tapi_registration_status_to_string(int status)
     return "";
 }
 
-int tapi_registration_status_from_string(const char* status)
+int tapi_utils_registration_status_from_string(const char* status)
 {
     if (status == NULL)
         return NETWORK_REGISTRATION_STATUS_UNKNOWN;
@@ -167,7 +148,7 @@ int tapi_registration_status_from_string(const char* status)
     return NETWORK_REGISTRATION_STATUS_UNKNOWN;
 }
 
-int tapi_registration_mode_from_string(const char* mode)
+int tapi_utils_registration_mode_from_string(const char* mode)
 {
     if (mode == NULL)
         return NETWORK_SELECTION_UNKNOWN;
@@ -181,7 +162,7 @@ int tapi_registration_mode_from_string(const char* mode)
     return NETWORK_SELECTION_UNKNOWN;
 }
 
-int tapi_operator_status_from_string(const char* mode)
+int tapi_utils_operator_status_from_string(const char* mode)
 {
     if (mode == NULL)
         return UNKNOWN;
@@ -197,7 +178,7 @@ int tapi_operator_status_from_string(const char* mode)
     return UNKNOWN;
 }
 
-const char* tapi_get_call_signal_member(tapi_indication_msg msg)
+const char* get_call_signal_member(tapi_indication_msg msg)
 {
     int msg_id = msg;
 
@@ -223,7 +204,7 @@ const char* tapi_get_call_signal_member(tapi_indication_msg msg)
     return NULL;
 }
 
-char* tapi_utils_get_modem_path(int slot_id)
+const char* tapi_utils_get_modem_path(int slot_id)
 {
     switch (slot_id) {
     case SLOT_ID_1:
@@ -243,33 +224,33 @@ char* tapi_utils_get_modem_path(int slot_id)
     return NULL;
 }
 
-enum tapi_call_status tapi_call_string_to_status(const char* str_status)
+enum tapi_call_status tapi_utils_call_status_from_string(const char* status)
 {
     enum tapi_call_status ret = CALL_STATUS_UNKNOW;
 
-    if (str_status == NULL)
+    if (status == NULL)
         return CALL_STATUS_UNKNOW;
 
-    if (strcmp(str_status, "active") == 0) {
+    if (strcmp(status, "active") == 0) {
         ret = CALL_STATUS_ACTIVE;
-    } else if (strcmp(str_status, "held") == 0) {
+    } else if (strcmp(status, "held") == 0) {
         ret = CALL_STATUS_HELD;
-    } else if (strcmp(str_status, "dialing") == 0) {
+    } else if (strcmp(status, "dialing") == 0) {
         ret = CALL_STATUS_DIALING;
-    } else if (strcmp(str_status, "alerting") == 0) {
+    } else if (strcmp(status, "alerting") == 0) {
         ret = CALL_STATUS_ALERTING;
-    } else if (strcmp(str_status, "incoming") == 0) {
+    } else if (strcmp(status, "incoming") == 0) {
         ret = CALL_STATUS_INCOMING;
-    } else if (strcmp(str_status, "waiting") == 0) {
+    } else if (strcmp(status, "waiting") == 0) {
         ret = CALL_STATUS_WAITING;
-    } else if (strcmp(str_status, "disconnected") == 0) {
+    } else if (strcmp(status, "disconnected") == 0) {
         ret = CALL_STATUS_DISCONNECTED;
     }
 
     return ret;
 }
 
-enum tapi_call_disconnect_reason tapi_call_disconnected_reason_from_string(const char* str_status)
+enum tapi_call_disconnect_reason tapi_utils_call_disconnected_reason(const char* str_status)
 {
     enum tapi_call_disconnect_reason ret = CALL_DISCONNECT_REASON_UNKNOWN;
 
@@ -287,7 +268,7 @@ enum tapi_call_disconnect_reason tapi_call_disconnected_reason_from_string(const
     return ret;
 }
 
-const char* tapi_apn_context_type_to_string(tapi_apn_context_type type)
+const char* tapi_utils_apn_type_to_string(tapi_apn_context_type type)
 {
     switch (type) {
     case APN_CONTEXT_TYPE_ANY:
@@ -311,7 +292,7 @@ const char* tapi_apn_context_type_to_string(tapi_apn_context_type type)
     return NULL;
 }
 
-tapi_apn_context_type tapi_apn_context_type_from_string(const char* type)
+tapi_apn_context_type tapi_utils_apn_type_from_string(const char* type)
 {
     if (type == NULL)
         return APN_CONTEXT_TYPE_ANY;
@@ -334,7 +315,7 @@ tapi_apn_context_type tapi_apn_context_type_from_string(const char* type)
     return APN_CONTEXT_TYPE_ANY;
 }
 
-const char* tapi_apn_auth_method_to_string(tapi_data_auth_method auth)
+const char* tapi_utils_apn_auth_to_string(tapi_data_auth_method auth)
 {
     switch (auth) {
     case DATA_AUTH_METHOD_CHAP:
@@ -348,7 +329,7 @@ const char* tapi_apn_auth_method_to_string(tapi_data_auth_method auth)
     return NULL;
 }
 
-tapi_data_auth_method tapi_apn_auth_method_from_string(const char* auth)
+tapi_data_auth_method tapi_utils_apn_auth_from_string(const char* auth)
 {
     if (auth == NULL)
         return DATA_AUTH_METHOD_NONE;
@@ -363,7 +344,7 @@ tapi_data_auth_method tapi_apn_auth_method_from_string(const char* auth)
     return DATA_AUTH_METHOD_NONE;
 }
 
-const char* tapi_apn_proto_to_string(tapi_data_proto proto)
+const char* tapi_utils_apn_proto_to_string(tapi_data_proto proto)
 {
     switch (proto) {
     case DATA_PROTO_IP:
@@ -377,26 +358,23 @@ const char* tapi_apn_proto_to_string(tapi_data_proto proto)
     return NULL;
 }
 
-bool tapi_apn_proto_from_string(const char* str, tapi_data_proto* proto)
+tapi_data_proto tapi_utils_apn_proto_from_string(const char* proto)
 {
-    if (str == NULL)
-        return false;
+    if (proto == NULL)
+        return DATA_PROTO_IP;
 
-    if (strcmp(str, "ip") == 0) {
-        *proto = DATA_PROTO_IP;
-        return true;
-    } else if (strcmp(str, "ipv6") == 0) {
-        *proto = DATA_PROTO_IPV6;
-        return true;
-    } else if (strcmp(str, "dual") == 0) {
-        *proto = DATA_PROTO_IPV4V6;
-        return true;
+    if (strcmp(proto, "ip") == 0) {
+        return DATA_PROTO_IP;
+    } else if (strcmp(proto, "ipv6") == 0) {
+        return DATA_PROTO_IPV6;
+    } else if (strcmp(proto, "dual") == 0) {
+        return DATA_PROTO_IPV4V6;
     }
 
-    return false;
+    return DATA_PROTO_IP;
 }
 
-const char* cell_type_to_tech_name(tapi_cell_type type)
+const char* tapi_utils_cell_type_to_string(tapi_cell_type type)
 {
     switch (type) {
     case TYPE_NONE:
@@ -414,7 +392,7 @@ const char* cell_type_to_tech_name(tapi_cell_type type)
     return NULL;
 }
 
-tapi_cell_type cell_type_from_tech_name(const char* name)
+tapi_cell_type tapi_utils_cell_type_from_string(const char* name)
 {
     if (name == NULL)
         return TYPE_NONE;
@@ -432,7 +410,7 @@ tapi_cell_type cell_type_from_tech_name(const char* name)
     return TYPE_NONE;
 }
 
-bool tapi_is_call_signal_message(DBusMessage* message, DBusMessageIter* iter, int msg_type)
+bool is_call_signal_message(DBusMessage* message, DBusMessageIter* iter, int msg_type)
 {
     bool ret = false;
 
@@ -444,4 +422,31 @@ bool tapi_is_call_signal_message(DBusMessage* message, DBusMessageIter* iter, in
         ret = true;
 
     return ret;
+}
+
+void property_set_done(const DBusError* error, void* user_data)
+{
+    tapi_async_handler* handler = user_data;
+    tapi_async_result* ar;
+    tapi_async_function cb;
+
+    if (handler == NULL)
+        return;
+
+    ar = handler->result;
+    if (ar == NULL)
+        return;
+
+    cb = handler->cb_function;
+    if (cb == NULL)
+        return;
+
+    if (dbus_error_is_set(error)) {
+        tapi_log_error("%s: %s\n", error->name, error->message);
+        ar->status = ERROR;
+    } else {
+        ar->status = OK;
+    }
+
+    cb(ar);
 }

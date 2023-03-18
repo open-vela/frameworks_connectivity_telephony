@@ -571,7 +571,7 @@ int tapi_sms_register(tapi_context context, int slot_id,
     tapi_async_function p_handle)
 {
     dbus_context* ctx = context;
-    char* path;
+    const char* path;
     tapi_async_handler* user_data;
     tapi_async_result* ar;
     int watch_id;
@@ -595,7 +595,6 @@ int tapi_sms_register(tapi_context context, int slot_id,
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
         free(user_data);
-        free(path);
         return -ENOMEM;
     }
 

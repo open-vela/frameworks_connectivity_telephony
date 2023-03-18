@@ -239,7 +239,7 @@ int tapi_cbs_register(tapi_context context, int slot_id, tapi_indication_msg msg
     dbus_context* ctx = context;
     tapi_async_handler* user_data;
     tapi_async_result* ar;
-    char* path;
+    const char* path;
     int watch_id;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)

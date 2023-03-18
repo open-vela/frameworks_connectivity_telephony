@@ -21,8 +21,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "tapi.h"
 #include "tapi_internal.h"
-#include "tapi_network.h"
 
 /****************************************************************************
  * Private Functions
@@ -89,10 +89,10 @@ static void fill_registration_info(const char* prop, DBusMessageIter* iter,
 
     if (strcmp(prop, "Status") == 0) {
         dbus_message_iter_get_basic(iter, &value_str);
-        registration_info->reg_state = tapi_registration_status_from_string(value_str);
+        registration_info->reg_state = tapi_utils_registration_status_from_string(value_str);
     } else if (strcmp(prop, "Mode") == 0) {
         dbus_message_iter_get_basic(iter, &value_str);
-        registration_info->selection_mode = tapi_registration_mode_from_string(value_str);
+        registration_info->selection_mode = tapi_utils_registration_mode_from_string(value_str);
     } else if (strcmp(prop, "Technology") == 0) {
         dbus_message_iter_get_basic(iter, &value_str);
 
@@ -171,7 +171,7 @@ static void fill_cell_identity(const char* prop, DBusMessageIter* iter,
         identity->registered = value_int;
     } else if (strcmp(prop, "Technology") == 0) {
         dbus_message_iter_get_basic(iter, &value_str);
-        identity->type = cell_type_from_tech_name(value_str);
+        identity->type = tapi_utils_cell_type_from_string(value_str);
     }
 }
 
@@ -207,7 +207,7 @@ static void update_network_operator(const char* prop, DBusMessageIter* iter, tap
         if (strlen(value) <= MAX_NETWORK_INFO_LENGTH)
             strcpy(operator->name, value);
     } else if (strcmp(prop, "Status") == 0) {
-        operator->status = tapi_operator_status_from_string(value);
+        operator->status = tapi_utils_operator_status_from_string(value);
     } else if (strcmp(prop, "MobileCountryCode") == 0) {
         if (strlen(value) <= MAX_MCC_LENGTH)
             strcpy(operator->mcc, value);
@@ -1013,7 +1013,7 @@ int tapi_network_get_voice_network_type(tapi_context context, int slot_id, tapi_
     if (g_dbus_proxy_get_property(proxy, "Technology", &iter)) {
         dbus_message_iter_get_basic(&iter, &result);
 
-        tapi_network_type_from_string(result, out);
+        *out = tapi_utils_network_type_from_string(result);
         return OK;
     }
 
@@ -1043,7 +1043,7 @@ int tapi_network_is_voice_roaming(tapi_context context, int slot_id, bool* out)
     }
 
     dbus_message_iter_get_basic(&iter, &result);
-    reg_state = tapi_registration_status_from_string(result);
+    reg_state = tapi_utils_registration_status_from_string(result);
     *out = (reg_state == NETWORK_REGISTRATION_STATUS_ROAMING);
 
     return OK;
@@ -1149,7 +1149,7 @@ int tapi_network_register(tapi_context context,
     dbus_context* ctx = context;
     tapi_async_handler* handler;
     tapi_async_result* ar;
-    char* modem_path;
+    const char* modem_path;
     int watch_id;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
