@@ -87,7 +87,7 @@ static int decode_voice_call_path(char* call_path, int slot_id)
 {
     // /phonesim/voicecall01
     char sub_path[256] = { 0 };
-    char* modem_path;
+    const char* modem_path;
     int call_id = 0;
     char* token;
 
@@ -239,7 +239,7 @@ static int ring_back_tone_change(DBusMessage* message, tapi_async_handler* handl
     if (cb == NULL)
         return false;
 
-    if (tapi_is_call_signal_message(message, &iter, DBUS_TYPE_INT32)) {
+    if (is_call_signal_message(message, &iter, DBUS_TYPE_INT32)) {
         dbus_message_iter_get_basic(&iter, &ar->arg2);
 
         ar->status = OK;
@@ -335,18 +335,18 @@ static int call_property_changed(DBusConnection* connection, DBusMessage* messag
 
     if (dbus_message_is_signal(message, OFONO_VOICECALL_INTERFACE, "DisconnectReason")
         && msg_id == MSG_CALL_DISCONNECTED_REASON_MESSAGE_IND) {
-        if (tapi_is_call_signal_message(message, &iter, DBUS_TYPE_STRING)) {
+        if (is_call_signal_message(message, &iter, DBUS_TYPE_STRING)) {
             dbus_message_iter_get_basic(&iter, &reason_str);
 
             ar->data = call_property.call_id;
             ar->status = OK;
-            ar->arg2 = tapi_call_disconnected_reason_from_string(reason_str);
+            ar->arg2 = tapi_utils_call_disconnected_reason(reason_str);
             tapi_log_debug("DisconnectReason %s", reason_str);
         }
         ret = true;
     } else if (dbus_message_is_signal(message, OFONO_VOICECALL_INTERFACE, "PropertyChanged")
         && msg_id == MSG_CALL_PROPERTY_CHANGED_MESSAGE_IND) {
-        if (tapi_is_call_signal_message(message, &iter, DBUS_TYPE_STRING)) {
+        if (is_call_signal_message(message, &iter, DBUS_TYPE_STRING)) {
             dbus_message_iter_get_basic(&iter, &key);
             dbus_message_iter_next(&iter);
             call_strcpy(call_property.key, key, MAX_CALL_PROPERTY_NAME_LENGTH);
@@ -502,7 +502,7 @@ static int tapi_call_signal_call_added(DBusMessage* message, tapi_async_handler*
     if (cb == NULL)
         return false;
 
-    if (tapi_is_call_signal_message(message, &iter, DBUS_TYPE_OBJECT_PATH)) {
+    if (is_call_signal_message(message, &iter, DBUS_TYPE_OBJECT_PATH)) {
 
         if (decode_voice_call_info(&iter, &voicecall)) {
             ar->data = &voicecall;
@@ -533,7 +533,7 @@ static int tapi_call_signal_normal(DBusMessage* message, tapi_async_handler* han
     if (cb == NULL)
         return false;
 
-    if (tapi_is_call_signal_message(message, &iter, msg_type)) {
+    if (is_call_signal_message(message, &iter, msg_type)) {
         dbus_message_iter_get_basic(&iter, &info);
 
         ar->data = info;
@@ -567,7 +567,7 @@ static int tapi_call_signal_ecc_list_change(DBusMessage* message, tapi_async_han
     if (cb == NULL)
         return false;
 
-    if (tapi_is_call_signal_message(message, &iter, DBUS_TYPE_STRING)) {
+    if (is_call_signal_message(message, &iter, DBUS_TYPE_STRING)) {
         dbus_message_iter_get_basic(&iter, &key);
         dbus_message_iter_next(&iter);
 
@@ -623,7 +623,7 @@ static int decode_voice_call_info(DBusMessageIter* iter, tapi_call_info* call_in
 
         if (strcmp(key, "State") == 0) {
             dbus_message_iter_get_basic(&value, &result);
-            call_info->state = tapi_call_string_to_status(result);
+            call_info->state = tapi_utils_call_status_from_string(result);
         } else if (strcmp(key, "LineIdentification") == 0) {
             dbus_message_iter_get_basic(&value, &result);
             call_strcpy(call_info->lineIdentification, result, MAX_CALL_LINE_ID_LENGTH);
@@ -680,7 +680,7 @@ static int tapi_register_call_signal(tapi_context context, int slot_id, char* pa
         return -ENODEV;
     }
 
-    member = tapi_get_call_signal_member(msg);
+    member = get_call_signal_member(msg);
     if (member == NULL) {
         tapi_log_error("no signal member found ...\n");
         return -EINVAL;
@@ -718,14 +718,14 @@ static int tapi_register_manager_call_signal(tapi_context context, int slot_id, 
     dbus_context* ctx = context;
     tapi_async_result* ar;
     const char* member;
-    char* modem_path;
+    const char* modem_path;
     int watch_id;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
     }
 
-    member = tapi_get_call_signal_member(msg);
+    member = get_call_signal_member(msg);
     if (member == NULL) {
         tapi_log_error("no signal member found ...\n");
         return -EINVAL;
@@ -1081,7 +1081,7 @@ int tapi_call_get_call_info(tapi_context context, int slot_id,
 
     if (g_dbus_proxy_get_property(proxy, "State", &iter)) {
         dbus_message_iter_get_basic(&iter, &result);
-        info->state = tapi_call_string_to_status(result);
+        info->state = tapi_utils_call_status_from_string(result);
     }
     if (g_dbus_proxy_get_property(proxy, "LineIdentification", &iter)) {
         dbus_message_iter_get_basic(&iter, &result);
