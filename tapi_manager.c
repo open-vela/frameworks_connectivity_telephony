@@ -93,33 +93,6 @@ static void release_dbus_proxy(dbus_context* ctx)
     }
 }
 
-static void modem_property_set_done(const DBusError* error, void* user_data)
-{
-    tapi_async_handler* handler = user_data;
-    tapi_async_result* ar;
-    tapi_async_function cb;
-
-    if (handler == NULL)
-        return;
-
-    ar = handler->result;
-    if (ar == NULL)
-        return;
-
-    cb = handler->cb_function;
-    if (cb == NULL)
-        return;
-
-    if (dbus_error_is_set(error)) {
-        tapi_log_error("%s: %s\n", error->name, error->message);
-        ar->status = ERROR;
-    } else {
-        ar->status = OK;
-    }
-
-    cb(ar);
-}
-
 static void modem_list_query_done(DBusMessage* message, void* user_data)
 {
     tapi_async_handler* handler = user_data;
@@ -760,11 +733,11 @@ int tapi_set_pref_net_mode(tapi_context context,
     ar->arg1 = slot_id;
     handler->cb_function = p_handle;
     ar->data = "TechnologyPreference";
-    rat = tapi_pref_network_mode_to_string(mode);
+    rat = tapi_utils_network_mode_to_string(mode);
 
     if (!g_dbus_proxy_set_property_basic(proxy,
             "TechnologyPreference", DBUS_TYPE_STRING, &rat,
-            modem_property_set_done, handler, user_data_free)) {
+            property_set_done, handler, user_data_free)) {
         user_data_free(handler);
         return -EINVAL;
     }
@@ -792,7 +765,7 @@ int tapi_get_pref_net_mode(tapi_context context, int slot_id, tapi_pref_net_mode
     if (g_dbus_proxy_get_property(proxy, "TechnologyPreference", &iter)) {
         dbus_message_iter_get_basic(&iter, &result);
 
-        tapi_pref_network_mode_from_string(result, out);
+        *out = tapi_utils_network_mode_from_string(result);
         return OK;
     }
 
@@ -1001,7 +974,7 @@ int tapi_set_radio_power(tapi_context context,
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_set_property_basic(proxy, "Online", DBUS_TYPE_BOOLEAN,
-            &value, modem_property_set_done, handler, user_data_free)) {
+            &value, property_set_done, handler, user_data_free)) {
         user_data_free(handler);
         return -EINVAL;
     }
@@ -1336,7 +1309,7 @@ int tapi_register(tapi_context context,
     int slot_id, tapi_indication_msg msg, tapi_async_function p_handle)
 {
     dbus_context* ctx = context;
-    char* modem_path;
+    const char* modem_path;
     int watch_id;
     tapi_async_handler* handler;
     tapi_async_result* ar;
