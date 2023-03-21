@@ -49,6 +49,17 @@ typedef struct {
 } tapi_call_barring_lock;
 
 typedef struct {
+    char* key;
+    char* value;
+    char* pin2;
+} cb_request_param;
+
+typedef struct {
+    char* service_type;
+    char* value;
+} cb_service_value;
+
+typedef struct {
     char phone_number[MAX_SS_CALL_FORWARD_NUM_LEN + 1];
     char voice_busy[MAX_SS_CALL_FORWARD_NUM_LEN + 1];
     char voice_no_reply[MAX_SS_CALL_FORWARD_NUM_LEN + 1];
@@ -66,27 +77,6 @@ typedef struct {
     char* append_service;
     char* append_service_value;
 } tapi_ss_initiate_info;
-
-typedef enum {
-    USSD_STATE_IDLE = 0,
-    USSD_STATE_ACTIVE = 1,
-    USSD_STATE_USER_ACTION = 2,
-    USSD_STATE_RESPONSE_SENT = 3,
-} tapi_ussd_state;
-
-typedef enum {
-    CLIR_STATUS_NOT_PROVISIONED = 0,
-    CLIR_STATUS_PROVISIONED_PERMANENT = 1,
-    CLIR_STATUS_UNKNOWN = 2,
-    CLIR_STATUS_TEMPORARY_RESTRICTED = 3,
-    CLIR_STATUS_TEMPORARY_ALLOWED = 4,
-} tapi_clir_status;
-
-typedef enum {
-    CLIP_STATUS_NOT_PROVISIONE = 0,
-    CLIP_STATUS_PROVISIONED = 1,
-    CLIP_STATUS_UNKNOWN = 2,
-} tapi_clip_status;
 
 /****************************************************************************
  * Public Function Prototypes
@@ -223,7 +213,7 @@ int tapi_ss_initiate_service(tapi_context context, int slot_id, int event_id,
  * @param[out] out           The USSD state.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_get_ussd_state(tapi_context context, int slot_id, tapi_ussd_state* out);
+int tapi_get_ussd_state(tapi_context context, int slot_id, char** out);
 
 /**
  * Sends an USSD message.
@@ -277,7 +267,19 @@ int tapi_ss_query_call_wating(tapi_context context, int slot_id, char** out);
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_ss_query_calling_line_presentation_info(tapi_context context, int slot_id,
-    tapi_clip_status* out);
+    char** out);
+
+/**
+ * Sets Connected Line Restriction.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] event_id       Async event identifier.
+ * @param[in] state          The state of the CLIR supplementary service in the network.
+ * @param[in] p_handle       Event callback.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_ss_request_calling_line_restriction(tapi_context context, int slot_id, int event_id,
+    char* state, tapi_async_function p_handle);
 
 /**
  * Gets Connected Line Restriction info.
@@ -287,7 +289,7 @@ int tapi_ss_query_calling_line_presentation_info(tapi_context context, int slot_
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_ss_query_calling_line_restriction_info(tapi_context context, int slot_id,
-    tapi_clir_status* out);
+    char** out);
 
 /**
  * Sets the ICC fdn enabled or disabled.

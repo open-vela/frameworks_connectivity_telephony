@@ -90,6 +90,7 @@
 #define EVENT_INSERT_FDN_ENTRIES_DONE 0x2E
 #define EVENT_UPDATE_FDN_ENTRIES_DONE 0x2F
 #define EVENT_DELETE_FDN_ENTRIES_DONE 0x30
+#define EVENT_REQUEST_CLIR_DONE 0x31
 
 /****************************************************************************
  * Public Type Declarations
@@ -379,14 +380,15 @@ static void tele_phonebook_async_fun(tapi_async_result* result)
 static void ss_signal_change(tapi_async_result* result)
 {
     tapi_call_forwarding_info* cf_info;
+    cb_service_value* cb_value;
     int signal = result->msg_id;
     int slot_id = result->arg1;
-    int param = result->arg2;
 
     switch (signal) {
     case MSG_CALL_BARRING_PROPERTY_CHANGE_IND:
-        syslog(LOG_DEBUG, "call barring changed to %s in slot[%d] \n",
-            (char*)result->data, slot_id);
+        cb_value = (cb_service_value*)result->data;
+        syslog(LOG_DEBUG, "call barring service %s changed to %s in slot[%d] \n",
+            cb_value->service_type, cb_value->value, slot_id);
         break;
     case MSG_CALL_FORWARDING_PROPERTY_CHANGE_IND:
         cf_info = (tapi_call_forwarding_info*)result->data;
@@ -399,7 +401,7 @@ static void ss_signal_change(tapi_async_result* result)
         syslog(LOG_DEBUG, "call forwarding flag on sim: %d \n", cf_info->forwarding_flag_on_sim);
         break;
     case MSG_USSD_PROPERTY_CHANGE_IND:
-        syslog(LOG_DEBUG, "ussd state changed to %d in slot[%d] \n", param, slot_id);
+        syslog(LOG_DEBUG, "ussd state changed to %s in slot[%d] \n", (char*)result->data, slot_id);
         break;
     case MSG_USSD_NOTIFICATION_RECEIVED_IND:
         syslog(LOG_DEBUG, "ussd notification message %s received in slot[%d] \n",
@@ -419,34 +421,37 @@ static void ss_event_response(tapi_async_result* result)
     tapi_ss_initiate_info* info;
     int event = result->msg_id;
     int param = result->arg2;
+    int status = result->status;
 
-    switch (event) {
-    case EVENT_SEND_USSD_DONE:
-        syslog(LOG_DEBUG, "send ussd received response %s \n", (char*)result->data);
-        break;
-    case EVENT_INITIATE_SERVICE_DONE:
-        info = (tapi_ss_initiate_info*)result->data;
-        if (strcmp(info->ss_service_type, "CallBarring") == 0
-            || strcmp(info->ss_service_type, "CallForwarding") == 0) {
-            syslog(LOG_DEBUG, "service type : %s (%s, %s, %s, %s) \n", info->ss_service_type,
-                info->ss_service_operation, info->service_operation_requested,
-                info->append_service, info->append_service_value);
-        } else if (strcmp(info->ss_service_type, "CallWaiting") == 0) {
-            syslog(LOG_DEBUG, "service type : %s (%s, %s, %s) \n", info->ss_service_type,
-                info->ss_service_operation, info->append_service, info->append_service_value);
-        } else if (strcmp(info->ss_service_type, "USSD") == 0) {
-            syslog(LOG_DEBUG, "service type : %s (%s) \n",
-                info->ss_service_type, info->ussd_response);
-        } else {
-            syslog(LOG_DEBUG, "service type : %s (%s, %s) \n", info->ss_service_type,
-                info->ss_service_operation, info->call_setting_status);
+    if (status == OK) {
+        switch (event) {
+        case EVENT_SEND_USSD_DONE:
+            syslog(LOG_DEBUG, "send ussd received response %s \n", (char*)result->data);
+            break;
+        case EVENT_INITIATE_SERVICE_DONE:
+            info = (tapi_ss_initiate_info*)result->data;
+            if (strcmp(info->ss_service_type, "CallBarring") == 0
+                || strcmp(info->ss_service_type, "CallForwarding") == 0) {
+                syslog(LOG_DEBUG, "service type : %s (%s, %s, %s, %s) \n", info->ss_service_type,
+                    info->ss_service_operation, info->service_operation_requested,
+                    info->append_service, info->append_service_value);
+            } else if (strcmp(info->ss_service_type, "CallWaiting") == 0) {
+                syslog(LOG_DEBUG, "service type : %s (%s, %s, %s) \n", info->ss_service_type,
+                    info->ss_service_operation, info->append_service, info->append_service_value);
+            } else if (strcmp(info->ss_service_type, "USSD") == 0) {
+                syslog(LOG_DEBUG, "service type : %s (%s) \n",
+                    info->ss_service_type, info->ussd_response);
+            } else {
+                syslog(LOG_DEBUG, "service type : %s (%s, %s) \n", info->ss_service_type,
+                    info->ss_service_operation, info->call_setting_status);
+            }
+            break;
+        case EVENT_QUERY_FDN_DONE:
+            syslog(LOG_DEBUG, "fdn enabled or disabled : %d \n", param);
+            break;
+        default:
+            break;
         }
-        break;
-    case EVENT_QUERY_FDN_DONE:
-        syslog(LOG_DEBUG, "fdn enabled or disabled : %d \n", param);
-        break;
-    default:
-        break;
     }
 }
 
@@ -3064,7 +3069,7 @@ static int telephonytool_cmd_set_call_barring(tapi_context context, char* pargs)
         return -EINVAL;
 
     tapi_ss_request_call_barring(context, atoi(slot_id), EVENT_REQUEST_CALL_BARRING_DONE, fac, pin2, tele_call_async_fun);
-    syslog(LOG_DEBUG, "%s, slot_id : %s fc : %s  pin2 : %s \n", __func__, slot_id, fac, pin2);
+    syslog(LOG_DEBUG, "%s, slot_id : %s fac : %s  pin2 : %s \n", __func__, slot_id, fac, pin2);
 
     return 0;
 }
@@ -3122,7 +3127,7 @@ static int telephonytool_cmd_change_call_barring_passwd(tapi_context context, ch
         return -EINVAL;
 
     tapi_ss_change_call_barring_password(context, atoi(slot_id),
-        EVENT_CALL_BARRING_PASSWD_CHANGE_DONE, old_passwd, old_passwd, tele_call_async_fun);
+        EVENT_CALL_BARRING_PASSWD_CHANGE_DONE, old_passwd, new_passwd, tele_call_async_fun);
     syslog(LOG_DEBUG, "%s, slotId : %s old_passwd : %s new_passwd : %s \n", __func__,
         slot_id, old_passwd, new_passwd);
 
@@ -3317,7 +3322,7 @@ static int telephonytool_cmd_initiate_ss_service(tapi_context context, char* par
 static int telephonytool_cmd_get_ussd_state(tapi_context context, char* pargs)
 {
     char* slot_id;
-    tapi_ussd_state ussd_state;
+    char* ussd_state;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
@@ -3327,7 +3332,7 @@ static int telephonytool_cmd_get_ussd_state(tapi_context context, char* pargs)
         return -EINVAL;
 
     tapi_get_ussd_state(context, atoi(slot_id), &ussd_state);
-    syslog(LOG_DEBUG, "%s, slotId : %s ussd_state : %d \n", __func__, slot_id, ussd_state);
+    syslog(LOG_DEBUG, "%s, slotId : %s ussd_state : %s \n", __func__, slot_id, ussd_state);
 
     return 0;
 }
@@ -3417,7 +3422,7 @@ static int telephonytool_cmd_get_call_waiting(tapi_context context, char* pargs)
 static int telephonytool_cmd_get_clip(tapi_context context, char* pargs)
 {
     char* slot_id;
-    tapi_clip_status clip_status;
+    char* clip_status;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
@@ -3427,7 +3432,32 @@ static int telephonytool_cmd_get_clip(tapi_context context, char* pargs)
         return -EINVAL;
 
     tapi_ss_query_calling_line_presentation_info(context, atoi(slot_id), &clip_status);
-    syslog(LOG_DEBUG, "%s, slotId : %s clip_status : %d \n", __func__, slot_id, clip_status);
+    syslog(LOG_DEBUG, "%s, slotId : %s clip_status : %s \n", __func__, slot_id, clip_status);
+
+    return 0;
+}
+
+static int telephonytool_cmd_set_clir(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* value;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &value);
+    if (slot_id == NULL)
+        return -EINVAL;
+
+    while (*value == ' ')
+        value++;
+
+    if (value == NULL)
+        return -EINVAL;
+
+    tapi_ss_request_calling_line_restriction(context, atoi(slot_id),
+        EVENT_REQUEST_CLIR_DONE, value, tele_call_async_fun);
+    syslog(LOG_DEBUG, "%s, slot_id : %s value : %s \n", __func__, slot_id, value);
 
     return 0;
 }
@@ -3435,7 +3465,7 @@ static int telephonytool_cmd_get_clip(tapi_context context, char* pargs)
 static int telephonytool_cmd_get_clir(tapi_context context, char* pargs)
 {
     char* slot_id;
-    tapi_clir_status clir_status;
+    char* clir_status;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
@@ -3445,7 +3475,7 @@ static int telephonytool_cmd_get_clir(tapi_context context, char* pargs)
         return -EINVAL;
 
     tapi_ss_query_calling_line_restriction_info(context, atoi(slot_id), &clir_status);
-    syslog(LOG_DEBUG, "%s, slotId : %s clir_status : %d \n", __func__, slot_id, clir_status);
+    syslog(LOG_DEBUG, "%s, slotId : %s clir_status : %s \n", __func__, slot_id, clir_status);
 
     return 0;
 }
@@ -4231,7 +4261,7 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[][CONFIG_NSH_LINELEN] = {
     /* Ss Command */
     { { "listen-ss",
           telephonytool_cmd_ss_listen,
-          "Register ss event (enter example : listen-ss 0 47 "
+          "Register ss event (enter example : listen-ss 0 51 "
           "[slot_id][event_id, see SS Indication Message in tapi.h/tapi_indication_msg])" },
         { "unlisten-ss",
             telephonytool_cmd_ss_unlisten,
@@ -4296,6 +4326,9 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[][CONFIG_NSH_LINELEN] = {
         { "get-clip",
             telephonytool_cmd_get_clip,
             "get clip (enter example : get-clip 0 [slot_id])" },
+        { "set-clir",
+            telephonytool_cmd_set_clir,
+            "set clir (enter example : set-clir 0 enabled [slot_id])" },
         { "get-clir",
             telephonytool_cmd_get_clir,
             "get clir (enter example : get-clir 0 [slot_id])" },
@@ -4360,6 +4393,7 @@ int main(int argc, char* argv[])
     struct sched_param param;
     pthread_attr_t attr;
     pthread_t thread;
+    char* dbus_name;
     int ret;
 
     g_should_exit = false;
@@ -4367,7 +4401,11 @@ int main(int argc, char* argv[])
         return -errno;
     }
 
-    main_loop.context = tapi_open("vela.telephony.tool");
+    dbus_name = "vela.telephony.tool";
+    if (argc == 2)
+        dbus_name = argv[1];
+
+    main_loop.context = tapi_open(dbus_name);
     if (main_loop.context == NULL) {
         return 0;
     }
