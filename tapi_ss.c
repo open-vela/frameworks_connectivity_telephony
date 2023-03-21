@@ -27,6 +27,26 @@
  * Private Functions
  ****************************************************************************/
 
+static void cb_request_param_append(DBusMessageIter* iter, void* user_data)
+{
+    cb_request_param* set_property_param;
+    tapi_async_handler* param;
+    DBusMessageIter value;
+
+    param = user_data;
+    if (param == NULL || param->result == NULL)
+        return;
+
+    set_property_param = param->result->data;
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &set_property_param->key);
+
+    dbus_message_iter_open_container(iter, DBUS_TYPE_VARIANT, DBUS_TYPE_STRING_AS_STRING, &value);
+    dbus_message_iter_append_basic(&value, DBUS_TYPE_STRING, &set_property_param->value);
+    dbus_message_iter_close_container(iter, &value);
+
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &set_property_param->pin2);
+}
+
 static void cb_change_passwd_append(DBusMessageIter* iter, void* user_data)
 {
     cb_change_passwd_param* change_passwd_param;
@@ -446,7 +466,7 @@ static void user_data_free(void* user_data)
     }
 }
 
-static void change_passwd_data_free(void* user_data)
+static void user_data_free2(void* user_data)
 {
     tapi_async_handler* handler;
     tapi_async_result* ar;
@@ -467,8 +487,9 @@ static void change_passwd_data_free(void* user_data)
 static int call_barring_property_changed(DBusConnection* connection,
     DBusMessage* message, void* user_data)
 {
+    DBusMessageIter iter, list, entry, value;
+    cb_service_value* cb_value = NULL;
     tapi_async_handler* handler;
-    DBusMessageIter iter, list;
     tapi_async_function cb;
     tapi_async_result* ar;
     DBusError err;
@@ -503,26 +524,31 @@ static int call_barring_property_changed(DBusConnection* connection,
     }
 
     dbus_message_iter_recurse(&iter, &list);
-    while (dbus_message_iter_get_arg_type(&list) == DBUS_TYPE_DICT_ENTRY) {
-        DBusMessageIter entry, value;
-        const char* property;
 
+    cb_value = malloc(sizeof(cb_service_value));
+    if (cb_value == NULL) {
+        tapi_log_error("no memory ... \n");
+        ar->status = ERROR;
+        goto done;
+    }
+
+    while (dbus_message_iter_get_arg_type(&list) == DBUS_TYPE_DICT_ENTRY) {
         dbus_message_iter_recurse(&list, &entry);
-        dbus_message_iter_get_basic(&entry, &property);
+        dbus_message_iter_get_basic(&entry, &cb_value->service_type);
 
         dbus_message_iter_next(&entry);
         dbus_message_iter_recurse(&entry, &value);
 
-        if (strcmp(property, "VoiceIncoming") == 0) {
-            char* voiceincoming;
-            dbus_message_iter_get_basic(&value, &voiceincoming);
-            ar->data = voiceincoming;
+        if (strcmp(cb_value->service_type, "VoiceIncoming") == 0) {
+            dbus_message_iter_get_basic(&value, &cb_value->value);
+            ar->data = cb_value;
             ar->status = OK;
-        } else if (strcmp(property, "VoiceOutgoing") == 0) {
-            char* voiceoutgoing;
-            dbus_message_iter_get_basic(&value, &voiceoutgoing);
-            ar->data = voiceoutgoing;
+            goto done;
+        } else if (strcmp(cb_value->service_type, "VoiceOutgoing") == 0) {
+            dbus_message_iter_get_basic(&value, &cb_value->value);
+            ar->data = cb_value;
             ar->status = OK;
+            goto done;
         }
 
         dbus_message_iter_next(&list);
@@ -530,6 +556,9 @@ static int call_barring_property_changed(DBusConnection* connection,
 
 done:
     cb(ar);
+    if (cb_value != NULL)
+        free(cb_value);
+
     return true;
 }
 
@@ -604,7 +633,7 @@ done:
     if (info != NULL)
         free(info);
 
-    return OK;
+    return true;
 }
 
 static int ussd_state_changed(DBusConnection* connection,
@@ -613,8 +642,10 @@ static int ussd_state_changed(DBusConnection* connection,
     tapi_async_handler* handler;
     tapi_async_function cb;
     tapi_async_result* ar;
-    DBusMessageIter iter;
+    DBusMessageIter iter, var;
     DBusError err;
+    const char* property;
+    char* ussd_state;
 
     handler = user_data;
     if (handler == NULL)
@@ -645,23 +676,16 @@ static int ussd_state_changed(DBusConnection* connection,
         goto done;
     }
 
-    while (dbus_message_iter_get_arg_type(&iter) == DBUS_TYPE_DICT_ENTRY) {
-        DBusMessageIter entry, value;
-        const char* property;
+    dbus_message_iter_get_basic(&iter, &property);
+    dbus_message_iter_next(&iter);
 
-        dbus_message_iter_recurse(&iter, &entry);
-        dbus_message_iter_get_basic(&entry, &property);
+    dbus_message_iter_recurse(&iter, &var);
 
-        dbus_message_iter_next(&entry);
-        dbus_message_iter_recurse(&entry, &value);
-
-        if (strcmp(property, "State") == 0) {
-            dbus_message_iter_get_basic(&value, &ar->arg2);
-            ar->status = OK;
-            goto done;
-        }
-
-        dbus_message_iter_next(&iter);
+    if (strcmp(property, "State") == 0) {
+        dbus_message_iter_get_basic(&var, &ussd_state);
+        ar->data = ussd_state;
+        ar->status = OK;
+        goto done;
     }
 
 done:
@@ -805,9 +829,9 @@ int tapi_ss_request_call_barring(tapi_context context, int slot_id, int event_id
 {
     dbus_context* ctx = context;
     tapi_async_handler* handler;
+    cb_request_param* param;
     tapi_async_result* ar;
     GDBusProxy* proxy;
-    char* value[2];
     int temp;
     int len;
     char* key;
@@ -834,6 +858,13 @@ int tapi_ss_request_call_barring(tapi_context context, int slot_id, int event_id
     }
     handler->result = ar;
 
+    param = malloc(sizeof(cb_request_param));
+    if (param == NULL) {
+        free(handler);
+        free(ar);
+        return -ENOMEM;
+    }
+
     ar->arg1 = slot_id;
     ar->msg_id = event_id;
     handler->cb_function = p_handle;
@@ -859,13 +890,15 @@ int tapi_ss_request_call_barring(tapi_context context, int slot_id, int event_id
         key = "VoiceOutgoing";
     }
 
-    value[0] = tapi_call_barring_info[temp].value;
-    value[1] = pin2;
+    param->key = key;
+    param->value = tapi_call_barring_info[temp].value;
+    param->pin2 = pin2;
+    ar->data = param;
 
-    if (!g_dbus_proxy_set_property_array(proxy, key, DBUS_TYPE_STRING,
-            value, sizeof(value) / sizeof(char*), property_set_done,
-            handler, user_data_free)) {
-        user_data_free(handler);
+    if (!g_dbus_proxy_method_call(proxy, "SetProperty", cb_request_param_append,
+            method_call_complete, handler, user_data_free2)) {
+        tapi_log_error("failed to set callbarring \n");
+        user_data_free2(handler);
         return -EINVAL;
     }
 
@@ -943,9 +976,9 @@ int tapi_ss_change_call_barring_password(tapi_context context, int slot_id, int 
     ar->data = param;
 
     if (!g_dbus_proxy_method_call(proxy, "ChangePassword", cb_change_passwd_append,
-            method_call_complete, handler, change_passwd_data_free)) {
+            method_call_complete, handler, user_data_free2)) {
         tapi_log_error("failed to change callbarring passward \n");
-        change_passwd_data_free(handler);
+        user_data_free2(handler);
         return -EINVAL;
     }
 
@@ -1206,7 +1239,7 @@ int tapi_ss_disable_call_forwarding(tapi_context context, int slot_id, int event
 }
 
 // USSD
-int tapi_get_ussd_state(tapi_context context, int slot_id, tapi_ussd_state* out)
+int tapi_get_ussd_state(tapi_context context, int slot_id, char** out)
 {
     dbus_context* ctx = context;
     DBusMessageIter iter;
@@ -1387,7 +1420,7 @@ int tapi_ss_query_call_wating(tapi_context context, int slot_id, char** out)
 
 // Calling Line Presentation
 int tapi_ss_query_calling_line_presentation_info(tapi_context context, int slot_id,
-    tapi_clip_status* out)
+    char** out)
 {
     dbus_context* ctx = context;
     DBusMessageIter iter;
@@ -1412,8 +1445,51 @@ int tapi_ss_query_calling_line_presentation_info(tapi_context context, int slot_
 }
 
 // Calling Line Restriction
+int tapi_ss_request_calling_line_restriction(tapi_context context, int slot_id, int event_id,
+    char* state, tapi_async_function p_handle)
+{
+    dbus_context* ctx = context;
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
+    GDBusProxy* proxy;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
+        || state == NULL) {
+        return -EINVAL;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_SETTING];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    handler = malloc(sizeof(tapi_async_handler));
+    if (handler == NULL)
+        return -ENOMEM;
+
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        free(handler);
+        return -ENOMEM;
+    }
+
+    handler->result = ar;
+    ar->arg1 = slot_id;
+    ar->msg_id = event_id;
+    handler->cb_function = p_handle;
+
+    if (!g_dbus_proxy_set_property_basic(proxy, "HideCallerId", DBUS_TYPE_STRING,
+            &state, property_set_done, handler, user_data_free)) {
+        user_data_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
+}
+
 int tapi_ss_query_calling_line_restriction_info(tapi_context context, int slot_id,
-    tapi_clir_status* out)
+    char** out)
 {
     dbus_context* ctx = context;
     DBusMessageIter iter;
@@ -1423,13 +1499,13 @@ int tapi_ss_query_calling_line_restriction_info(tapi_context context, int slot_i
         return -EINVAL;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_FORWARDING];
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_SETTING];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property(proxy, "CallingLineRestriction", &iter)) {
+    if (g_dbus_proxy_get_property(proxy, "HideCallerId", &iter)) {
         dbus_message_iter_get_basic(&iter, out);
         return OK;
     }
