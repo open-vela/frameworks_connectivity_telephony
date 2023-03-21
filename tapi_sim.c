@@ -748,7 +748,10 @@ int tapi_sim_unregister(tapi_context context, int watch_id)
     if (ctx == NULL || watch_id <= 0)
         return -EINVAL;
 
-    return g_dbus_remove_watch(ctx->connection, watch_id);
+    if (!g_dbus_remove_watch(ctx->connection, watch_id))
+        return -EINVAL;
+
+    return OK;
 }
 
 int tapi_sim_change_pin(tapi_context context, int slot_id,

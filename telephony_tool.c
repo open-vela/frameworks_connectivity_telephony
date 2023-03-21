@@ -931,12 +931,17 @@ static int telephonytool_cmd_unlisten_call_singal(tapi_context context, char* pa
 {
     char dst[1][CONFIG_NSH_LINELEN];
     int cnt = split_input(dst, 1, pargs, " ");
+    int ret;
 
     if (cnt != 1)
         return -EINVAL;
 
-    syslog(LOG_DEBUG, "%s, cnt : %d\n", __func__, cnt);
-    return tapi_unregister(context, atoi(dst[0]));
+    ret = tapi_unregister(context, atoi(dst[0]));
+    syslog(LOG_DEBUG, "stop to watch call event with watch_id : "
+                      "%s with return value : %d \n",
+        dst[0], ret);
+
+    return ret;
 }
 
 static int telephonytool_cmd_call_proxy(tapi_context context, char* pargs)
@@ -1165,9 +1170,9 @@ static int telephonytool_cmd_modem_unregister(tapi_context context, char* pargs)
         return -EINVAL;
 
     ret = tapi_unregister(context, atoi(watch_id));
-    syslog(LOG_DEBUG, "stop to watch radio event : %s , with watch_id : \
-        %s with return value : %d \n",
-        watch_id, watch_id, ret);
+    syslog(LOG_DEBUG, "stop to watch radio event with watch_id : "
+                      "%s with return value : %d \n",
+        watch_id, ret);
 
     return ret;
 }
@@ -1939,6 +1944,7 @@ static int telephonytool_cmd_data_register(tapi_context context, char* pargs)
 static int telephonytool_cmd_data_unregister(tapi_context context, char* pargs)
 {
     char* watch_id;
+    int ret;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
@@ -1947,8 +1953,12 @@ static int telephonytool_cmd_data_unregister(tapi_context context, char* pargs)
     if (watch_id == NULL)
         return -EINVAL;
 
-    syslog(LOG_DEBUG, "%s, watch_id : %s \n", __func__, watch_id);
-    return tapi_data_unregister(context, atoi(watch_id));
+    ret = tapi_data_unregister(context, atoi(watch_id));
+    syslog(LOG_DEBUG, "stop to watch data event with watch_id : "
+                      "%s with return value : %d \n",
+        watch_id, ret);
+
+    return ret;
 }
 
 static int telephonytool_cmd_has_icc_card(tapi_context context, char* pargs)
@@ -2417,6 +2427,7 @@ static int telephonytool_cmd_listen_sim(tapi_context context, char* pargs)
 {
     char* slot_id;
     char* target_state;
+    int watch_id;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
@@ -2431,16 +2442,17 @@ static int telephonytool_cmd_listen_sim(tapi_context context, char* pargs)
     if (target_state == NULL)
         return -EINVAL;
 
-    syslog(LOG_DEBUG, "%s, slotId : %s value :%s \n", __func__, slot_id, target_state);
+    watch_id = tapi_sim_register(context, atoi(slot_id), atoi(target_state), tele_sim_async_fun);
+    syslog(LOG_DEBUG, "start to watch sim event : %d , return watch_id : %d \n",
+        atoi(target_state), watch_id);
 
-    tapi_sim_register(context, atoi(slot_id), atoi(target_state), tele_sim_async_fun);
-
-    return 0;
+    return watch_id;
 }
 
 static int telephonytool_cmd_unlisten_sim(tapi_context context, char* pargs)
 {
     char* watch_id;
+    int ret;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
@@ -2449,11 +2461,12 @@ static int telephonytool_cmd_unlisten_sim(tapi_context context, char* pargs)
     if (watch_id == NULL)
         return -EINVAL;
 
-    syslog(LOG_DEBUG, "%s, watch_id : %s \n", __func__, watch_id);
+    ret = tapi_sim_unregister(context, atoi(watch_id));
+    syslog(LOG_DEBUG, "stop to watch sim event with watch_id : "
+                      "%s with return value : %d \n",
+        watch_id, ret);
 
-    tapi_sim_unregister(context, atoi(watch_id));
-
-    return 0;
+    return ret;
 }
 
 static int telephonytool_tapi_sms_send_message(tapi_context context, char* pargs)
@@ -2784,9 +2797,9 @@ static int telephonytool_cmd_network_unlisten(tapi_context context, char* pargs)
         return -EINVAL;
 
     ret = tapi_network_unregister(context, atoi(watch_id));
-    syslog(LOG_DEBUG, "stop to watch network event : %s , with watch_id : \
-        %s with return value : %d \n",
-        watch_id, watch_id, ret);
+    syslog(LOG_DEBUG, "stop to watch network event with watch_id : "
+                      "%s with return value : %d \n",
+        watch_id, ret);
 
     return ret;
 }
@@ -3526,9 +3539,9 @@ static int telephonytool_cmd_ss_unlisten(tapi_context context, char* pargs)
         return -EINVAL;
 
     ret = tapi_ss_unregister(context, atoi(watch_id));
-    syslog(LOG_DEBUG, "stop to watch ss event : %s , with watch_id : \
-        %s with return value : %d \n",
-        watch_id, watch_id, ret);
+    syslog(LOG_DEBUG, "stop to watch ss event with watch_id : "
+                      "%s with return value : %d \n",
+        watch_id, ret);
 
     return ret;
 }
@@ -3872,7 +3885,7 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[][CONFIG_NSH_LINELEN] = {
             "[slot_id][event_id, see Generic Indication Message in tapi.h/tapi_indication_msg])" },
         { "unlisten-modem",
             telephonytool_cmd_modem_unregister,
-            "Deregister modem event (enter example : unlisten-modem 100 "
+            "Deregister modem event (enter example : unlisten-modem [watch_id] "
             "[watch_id, one uint value returned from \"listen-modem\"])" },
         { "get-radio-cap",
             telephonytool_cmd_is_feature_supported,
@@ -3954,7 +3967,8 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[][CONFIG_NSH_LINELEN] = {
             "call manger event callback (enter example : listen-call 0" },
         { "unlisten-call",
             telephonytool_cmd_unlisten_call_singal,
-            "call unlisten event callback (enter example : unlisten-call [watch_id]" },
+            "call unlisten event callback (enter example : unlisten-call [watch_id] "
+            "[watch_id, one uint value returned from \"listen-call\"]" },
         { "call-proxy",
             telephonytool_cmd_call_proxy,
             "new/release call proxy (enter example : "
@@ -4001,11 +4015,11 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[][CONFIG_NSH_LINELEN] = {
     /* Data Command */
     { { "listen-data",
           telephonytool_cmd_data_register,
-          "Register data event (enter example : listen-data 0 1 "
+          "Register data event (enter example : listen-data 0 18 "
           "[slot_id][event_id, see Data Indication Message in tapi.h/tapi_indication_msg])" },
         { "unlisten-data",
             telephonytool_cmd_data_unregister,
-            "Deregister data event (enter example : unlisten-data 100 "
+            "Deregister data event (enter example : unlisten-data [watch_id] "
             "[watch_id, one uint value returned from \"listen-data\"])" },
         { "load-apns",
             telephonytool_cmd_load_apns,
@@ -4067,7 +4081,7 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[][CONFIG_NSH_LINELEN] = {
           "[slot_id][event_id, see SIM Indication Message in tapi.h/tapi_indication_msg])" },
         { "unlisten-sim",
             telephonytool_cmd_unlisten_sim,
-            "Deregister sim event (enter example : unlisten-sim 100 "
+            "Deregister sim event (enter example : unlisten-sim [watch_id] "
             "[watch_id, one uint value returned from \"listen-sim\"])" },
         { "has-icc",
             telephonytool_cmd_has_icc_card,
@@ -4176,7 +4190,7 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[][CONFIG_NSH_LINELEN] = {
           "[slot_id][event_id, see Network Indication Message in tapi.h/tapi_indication_msg])" },
         { "unlisten-network",
             telephonytool_cmd_network_unlisten,
-            "Deregister network event (enter example : unlisten-network 100 "
+            "Deregister network event (enter example : unlisten-network [watch_id] "
             "[watch_id, one uint value returned from \"listen-network\"])" },
         { "register-auto",
             telephonytool_cmd_network_select_auto,
@@ -4217,11 +4231,11 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[][CONFIG_NSH_LINELEN] = {
     /* Ss Command */
     { { "listen-ss",
           telephonytool_cmd_ss_listen,
-          "Register ss event (enter example : listen-ss 0 30 "
+          "Register ss event (enter example : listen-ss 0 47 "
           "[slot_id][event_id, see SS Indication Message in tapi.h/tapi_indication_msg])" },
         { "unlisten-ss",
             telephonytool_cmd_ss_unlisten,
-            "Deregister ss event (enter example : unlisten-ss 100 "
+            "Deregister ss event (enter example : unlisten-ss [watch_id] "
             "[watch_id, one uint value returned from \"listen-ss\"])" },
         { "set-callbarring",
             telephonytool_cmd_set_call_barring,
