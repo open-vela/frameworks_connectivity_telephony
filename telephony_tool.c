@@ -37,6 +37,7 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
+// Generic Callback Event
 #define EVENT_MODEM_LIST_QUERY_DONE 0x01
 #define EVENT_RADIO_STATE_SET_DONE 0x02
 #define EVENT_RAT_MODE_SET_DONE 0x03
@@ -46,51 +47,56 @@
 #define EVENT_OEM_RIL_REQUEST_RAW_DONE 0x07
 #define EVENT_OEM_RIL_REQUEST_STRINGS_DONE 0x08
 
-#define EVENT_APN_LOADED_DONE 0x09
-#define EVENT_APN_SAVE_DONE 0x0A
-#define EVENT_APN_REMOVAL_DONE 0x0B
-#define EVENT_APN_RESTORE_DONE 0x0C
-#define EVENT_DATA_ALLOWED_DONE 0x0D
+// Data Callback Event
+#define EVENT_APN_LOADED_DONE 0x11
+#define EVENT_APN_SAVE_DONE 0x12
+#define EVENT_APN_REMOVAL_DONE 0x13
+#define EVENT_APN_RESTORE_DONE 0x14
+#define EVENT_DATA_ALLOWED_DONE 0x15
 
-#define EVENT_CHANGE_SIM_PIN_DONE 0x0E
-#define EVENT_ENTER_SIM_PIN_DONE 0x0F
-#define EVENT_RESET_SIM_PIN_DONE 0x10
-#define EVENT_LOCK_SIM_PIN_DONE 0x11
-#define EVENT_UNLOCK_SIM_PIN_DONE 0x12
-#define EVENT_OPEN_LOGICAL_CHANNEL_DONE 0x13
-#define EVENT_CLOSE_LOGICAL_CHANNEL_DONE 0x14
-#define EVENT_TRANSMIT_APDU_LOGICAL_CHANNEL_DONE 0x15
-#define EVENT_TRANSMIT_APDU_BASIC_CHANNEL_DONE 0x16
-#define EVENT_UICC_ENABLEMENT_SET_DONE 0x17
+// SIM Callback Event
+#define EVENT_CHANGE_SIM_PIN_DONE 0x21
+#define EVENT_ENTER_SIM_PIN_DONE 0x22
+#define EVENT_RESET_SIM_PIN_DONE 0x23
+#define EVENT_LOCK_SIM_PIN_DONE 0x24
+#define EVENT_UNLOCK_SIM_PIN_DONE 0x25
+#define EVENT_OPEN_LOGICAL_CHANNEL_DONE 0x26
+#define EVENT_CLOSE_LOGICAL_CHANNEL_DONE 0x27
+#define EVENT_TRANSMIT_APDU_LOGICAL_CHANNEL_DONE 0x28
+#define EVENT_TRANSMIT_APDU_BASIC_CHANNEL_DONE 0x29
+#define EVENT_UICC_ENABLEMENT_SET_DONE 0x2A
 
-#define EVENT_NETWORK_SCAN_DONE 0x18
-#define EVENT_REGISTER_AUTO_DONE 0x19
-#define EVENT_REGISTER_MANUAL_DONE 0x1A
-#define EVENT_QUERY_REGISTRATION_INFO_DONE 0x1B
-#define EVENT_QUERY_SERVING_CELL_DONE 0x1C
-#define EVENT_QUERY_NEIGHBOURING_CELL_DONE 0x1D
-#define EVENT_NETWORK_SET_CELL_INFO_LIST_RATE_DONE 0x1E
+// Network Callback Event
+#define EVENT_NETWORK_SCAN_DONE 0x31
+#define EVENT_REGISTER_AUTO_DONE 0x32
+#define EVENT_REGISTER_MANUAL_DONE 0x33
+#define EVENT_QUERY_REGISTRATION_INFO_DONE 0x34
+#define EVENT_QUERY_SERVING_CELL_DONE 0x35
+#define EVENT_QUERY_NEIGHBOURING_CELL_DONE 0x36
+#define EVENT_NETWORK_SET_CELL_INFO_LIST_RATE_DONE 0x37
 
-#define EVENT_REQUEST_CALL_BARRING_DONE 0x1F
-#define EVENT_CALL_BARRING_PASSWD_CHANGE_DONE 0x20
-#define EVENT_DISABLE_ALL_CALL_BARRINGS_DONE 0x21
-#define EVENT_DISABLE_ALL_INCOMING_DONE 0x22
-#define EVENT_DISABLE_ALL_OUTGOING_DONE 0x23
-#define EVENT_REQUEST_CALL_FORWARDING_DONE 0x24
-#define EVENT_DISABLE_CALL_FORWARDING_DONE 0x25
-#define EVENT_CANCEL_USSD_DONE 0x26
-#define EVENT_REQUEST_CALL_WAITING_DONE 0x27
-#define EVENT_SEND_USSD_DONE 0x28
-#define EVENT_INITIATE_SERVICE_DONE 0x29
-#define EVENT_ENABLE_FDN_DONE 0x2A
-#define EVENT_QUERY_FDN_DONE 0x2B
+// Call Callback Event
+#define EVENT_REQUEST_CALL_BARRING_DONE 0x41
+#define EVENT_CALL_BARRING_PASSWD_CHANGE_DONE 0x42
+#define EVENT_DISABLE_ALL_CALL_BARRINGS_DONE 0x43
+#define EVENT_DISABLE_ALL_INCOMING_DONE 0x44
+#define EVENT_DISABLE_ALL_OUTGOING_DONE 0x45
+#define EVENT_REQUEST_CALL_FORWARDING_DONE 0x46
+#define EVENT_DISABLE_CALL_FORWARDING_DONE 0x47
+#define EVENT_CANCEL_USSD_DONE 0x48
+#define EVENT_REQUEST_CALL_WAITING_DONE 0x49
+#define EVENT_SEND_USSD_DONE 0x4A
+#define EVENT_INITIATE_SERVICE_DONE 0x4B
+#define EVENT_ENABLE_FDN_DONE 0x4C
+#define EVENT_QUERY_FDN_DONE 0x4D
+#define EVENT_REQUEST_CLIR_DONE 0x4E
 
-#define EVENT_LOAD_ADN_ENTRIES_DONE 0x2C
-#define EVENT_LOAD_FDN_ENTRIES_DONE 0x2D
-#define EVENT_INSERT_FDN_ENTRIES_DONE 0x2E
-#define EVENT_UPDATE_FDN_ENTRIES_DONE 0x2F
-#define EVENT_DELETE_FDN_ENTRIES_DONE 0x30
-#define EVENT_REQUEST_CLIR_DONE 0x31
+// PhoneBook Callback Event
+#define EVENT_LOAD_ADN_ENTRIES_DONE 0x61
+#define EVENT_LOAD_FDN_ENTRIES_DONE 0x62
+#define EVENT_INSERT_FDN_ENTRIES_DONE 0x63
+#define EVENT_UPDATE_FDN_ENTRIES_DONE 0x64
+#define EVENT_DELETE_FDN_ENTRIES_DONE 0x65
 
 /****************************************************************************
  * Public Type Declarations
@@ -121,6 +127,17 @@ static void* read_stdin(pthread_addr_t pvarg);
 /****************************************************************************
  * Private Function
  ****************************************************************************/
+
+static bool is_valid_slot_id_str(char* slot_id_str)
+{
+    if (slot_id_str == NULL
+        || strlen(slot_id_str) != 1
+        || *slot_id_str < '0'
+        || *slot_id_str >= '0' + CONFIG_ACTIVE_MODEM_COUNT)
+        return false;
+
+    return true;
+}
 
 static int split_input(char dst[][CONFIG_NSH_LINELEN], int size, char* str, const char* spl)
 {
@@ -720,7 +737,7 @@ static int telephonytool_cmd_dial(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &temp);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*temp == ' ')
@@ -782,7 +799,7 @@ static int telephonytool_cmd_hangup_all(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &temp);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     syslog(LOG_DEBUG, "%s, slotId : %s\n", __func__, slot_id);
@@ -1146,7 +1163,7 @@ static int telephonytool_cmd_modem_register(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &target_state);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*target_state == ' ')
@@ -1209,7 +1226,7 @@ static int telephonytool_cmd_set_radio_power(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &target_state);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*target_state == ' ')
@@ -1234,7 +1251,7 @@ static int telephonytool_cmd_get_radio_power(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", NULL);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     tapi_get_radio_power(context, atoi(slot_id), &value);
@@ -1252,7 +1269,7 @@ static int telephonytool_cmd_set_rat_mode(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &target_state);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*target_state == ' ')
@@ -1277,7 +1294,7 @@ static int telephonytool_cmd_get_rat_mode(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", NULL);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     tapi_get_pref_net_mode(context, atoi(slot_id), &value);
@@ -1295,7 +1312,7 @@ static int telephonytool_cmd_get_imei(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", NULL);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     tapi_get_imei(context, atoi(slot_id), &imei);
@@ -1313,7 +1330,7 @@ static int telephonytool_cmd_get_imeisv(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", NULL);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     tapi_get_imeisv(context, atoi(slot_id), &imeisv);
@@ -1331,7 +1348,7 @@ static int telephonytool_cmd_get_modem_revision(tapi_context context, char* parg
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", NULL);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     tapi_get_modem_revision(context, atoi(slot_id), &value);
@@ -1349,7 +1366,7 @@ static int telephonytool_cmd_get_modem_manufacturer(tapi_context context, char* 
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", NULL);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     tapi_get_modem_manufacturer(context, atoi(slot_id), &value);
@@ -1367,7 +1384,7 @@ static int telephonytool_cmd_get_modem_model(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", NULL);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     tapi_get_modem_model(context, atoi(slot_id), &value);
@@ -1385,7 +1402,7 @@ static int telephonytool_cmd_get_phone_state(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", NULL);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     tapi_get_phone_state(context, atoi(slot_id), &state);
@@ -1403,7 +1420,7 @@ static int telephonytool_cmd_send_modem_power(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &target_state);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*target_state == ' ')
@@ -1425,7 +1442,7 @@ static int telephonytool_cmd_get_radio_state(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", NULL);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     tapi_get_radio_state(context, atoi(slot_id), &state);
@@ -1443,7 +1460,7 @@ static int telephonytool_cmd_get_line_number(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = pargs;
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     tapi_get_msisdn_number(context, atoi(slot_id), &number);
@@ -1460,7 +1477,7 @@ static int telephonytool_cmd_get_modem_activity_info(tapi_context context, char*
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", NULL);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     syslog(LOG_DEBUG, "%s, slotId : %s  \n", __func__, slot_id);
@@ -1479,7 +1496,7 @@ static int telephonytool_cmd_enable_modem(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &target_state);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*target_state == ' ')
@@ -1503,7 +1520,7 @@ static int telephonytool_cmd_get_modem_status(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", NULL);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     syslog(LOG_DEBUG, "%s, slotId : %s  \n", __func__, slot_id);
@@ -1524,7 +1541,7 @@ static int telephonytool_cmd_oem_ril_req_raw(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &temp);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*temp == ' ')
@@ -1562,7 +1579,7 @@ static int telephonytool_cmd_oem_ril_req_strings(tapi_context context, char* par
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &temp);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*temp == ' ')
@@ -1600,7 +1617,7 @@ static int telephonytool_cmd_load_apns(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", NULL);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     return tapi_data_load_apn_contexts(context,
@@ -1663,7 +1680,7 @@ static int telephonytool_cmd_remove_apn(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &target_state);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*target_state == ' ')
@@ -1692,7 +1709,7 @@ static int telephonytool_cmd_reset_apn(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", NULL);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     return tapi_data_reset_apn_contexts(context,
@@ -1708,7 +1725,7 @@ static int telephonytool_cmd_request_network(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &target_state);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*target_state == ' ')
@@ -1729,7 +1746,7 @@ static int telephonytool_cmd_release_network(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &target_state);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*target_state == ' ')
@@ -1798,7 +1815,7 @@ static int telephonytool_cmd_get_ps_attached(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", NULL);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     tapi_data_is_ps_attached(context, atoi(slot_id), &result);
@@ -1816,7 +1833,7 @@ static int telephonytool_cmd_get_ps_network_type(tapi_context context, char* par
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", NULL);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     tapi_data_get_network_type(context, atoi(slot_id), &result);
@@ -1835,7 +1852,7 @@ static int telephonytool_cmd_set_pref_apn(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &target_state);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*target_state == ' ')
@@ -1865,7 +1882,7 @@ static int telephonytool_cmd_get_pref_apn(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", NULL);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     tapi_data_get_preferred_apn(context, atoi(slot_id), &apn);
@@ -1907,7 +1924,7 @@ static int telephonytool_cmd_set_data_allow(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &target_state);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*target_state == ' ')
@@ -1930,7 +1947,7 @@ static int telephonytool_cmd_data_register(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &target_state);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*target_state == ' ')
@@ -1975,7 +1992,7 @@ static int telephonytool_cmd_has_icc_card(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", NULL);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     tapi_sim_has_icc_card(context, atoi(slot_id), &value);
@@ -1994,9 +2011,10 @@ static int telephonytool_cmd_get_sim_iccid(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = pargs;
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
+    iccid = NULL;
     tapi_sim_get_sim_iccid(context, atoi(slot_id), &iccid);
 
     syslog(LOG_DEBUG, "%s, slotId : %s iccid : %s \n", __func__, slot_id, iccid);
@@ -2013,9 +2031,10 @@ static int telephonytool_cmd_get_sim_operator(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = pargs;
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
+    operator[0] = '\0';
     tapi_sim_get_sim_operator(context,
         atoi(slot_id), (MAX_MCC_LENGTH + MAX_MNC_LENGTH + 1), operator);
 
@@ -2033,9 +2052,10 @@ static int telephonytool_cmd_get_sim_operator_name(tapi_context context, char* p
         return -EINVAL;
 
     slot_id = pargs;
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
+    spn = NULL;
     tapi_sim_get_sim_operator_name(context, atoi(slot_id), &spn);
 
     syslog(LOG_DEBUG, "%s, slotId : %s spn : %s \n", __func__, slot_id, spn);
@@ -2052,9 +2072,10 @@ static int telephonytool_cmd_get_sim_subscriber_id(tapi_context context, char* p
         return -EINVAL;
 
     slot_id = pargs;
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
+    subscriber_id = NULL;
     tapi_sim_get_subscriber_id(context, atoi(slot_id), &subscriber_id);
 
     syslog(LOG_DEBUG, "%s, slotId : %s subscriber_id : %s \n", __func__, slot_id, subscriber_id);
@@ -2074,7 +2095,7 @@ static int telephonytool_cmd_change_sim_pin(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &temp);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*temp == ' ')
@@ -2099,10 +2120,8 @@ static int telephonytool_cmd_change_sim_pin(tapi_context context, char* pargs)
 
     syslog(LOG_DEBUG, "%s, slot_id: %s pin_type: %s old_pin: %s new_pin: %s \n", __func__, slot_id, pin_type, old_pin, new_pin);
 
-    tapi_sim_change_pin(context, atoi(slot_id),
+    return tapi_sim_change_pin(context, atoi(slot_id),
         EVENT_CHANGE_SIM_PIN_DONE, pin_type, old_pin, new_pin, tele_call_async_fun);
-
-    return 0;
 }
 
 static int telephonytool_cmd_enter_sim_pin(tapi_context context, char* pargs)
@@ -2116,7 +2135,7 @@ static int telephonytool_cmd_enter_sim_pin(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &temp);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*temp == ' ')
@@ -2135,10 +2154,8 @@ static int telephonytool_cmd_enter_sim_pin(tapi_context context, char* pargs)
     syslog(LOG_DEBUG, "%s, slot_id: %s pin_type: %s pin: %s \n", __func__,
         slot_id, pin_type, pin);
 
-    tapi_sim_enter_pin(context, atoi(slot_id),
+    return tapi_sim_enter_pin(context, atoi(slot_id),
         EVENT_ENTER_SIM_PIN_DONE, pin_type, pin, tele_call_async_fun);
-
-    return 0;
 }
 
 static int telephonytool_cmd_reset_sim_pin(tapi_context context, char* pargs)
@@ -2153,7 +2170,7 @@ static int telephonytool_cmd_reset_sim_pin(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &temp);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*temp == ' ')
@@ -2179,10 +2196,8 @@ static int telephonytool_cmd_reset_sim_pin(tapi_context context, char* pargs)
     syslog(LOG_DEBUG, "%s, slot_id: %s puk_type: %s puk: %s new_pin: %s \n", __func__,
         slot_id, puk_type, puk, new_pin);
 
-    tapi_sim_reset_pin(context, atoi(slot_id),
+    return tapi_sim_reset_pin(context, atoi(slot_id),
         EVENT_RESET_SIM_PIN_DONE, puk_type, puk, new_pin, tele_call_async_fun);
-
-    return 0;
 }
 
 static int telephonytool_cmd_lock_sim_pin(tapi_context context, char* pargs)
@@ -2196,7 +2211,7 @@ static int telephonytool_cmd_lock_sim_pin(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &temp);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*temp == ' ')
@@ -2214,10 +2229,8 @@ static int telephonytool_cmd_lock_sim_pin(tapi_context context, char* pargs)
 
     syslog(LOG_DEBUG, "%s, slot_id: %s pin_type: %s pin: %s \n", __func__, slot_id, pin_type, pin);
 
-    tapi_sim_lock_pin(context, atoi(slot_id),
+    return tapi_sim_lock_pin(context, atoi(slot_id),
         EVENT_LOCK_SIM_PIN_DONE, pin_type, pin, tele_call_async_fun);
-
-    return 0;
 }
 
 static int telephonytool_cmd_unlock_sim_pin(tapi_context context, char* pargs)
@@ -2231,7 +2244,7 @@ static int telephonytool_cmd_unlock_sim_pin(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &temp);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*temp == ' ')
@@ -2249,10 +2262,8 @@ static int telephonytool_cmd_unlock_sim_pin(tapi_context context, char* pargs)
 
     syslog(LOG_DEBUG, "%s, slot_id: %s pin_type: %s pin: %s \n", __func__, slot_id, pin_type, pin);
 
-    tapi_sim_unlock_pin(context, atoi(slot_id),
+    return tapi_sim_unlock_pin(context, atoi(slot_id),
         EVENT_UNLOCK_SIM_PIN_DONE, pin_type, pin, tele_call_async_fun);
-
-    return 0;
 }
 
 static int telephonytool_cmd_open_logical_channel(tapi_context context, char* pargs)
@@ -2264,7 +2275,7 @@ static int telephonytool_cmd_open_logical_channel(tapi_context context, char* pa
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &aid);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*aid == ' ')
@@ -2289,7 +2300,7 @@ static int telephonytool_cmd_close_logical_channel(tapi_context context, char* p
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &sessionid);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*sessionid == ' ')
@@ -2318,7 +2329,7 @@ static int telephonytool_cmd_transmit_apdu_logical_channel(tapi_context context,
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &temp);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*temp == ' ')
@@ -2361,7 +2372,7 @@ static int telephonytool_cmd_transmit_apdu_basic_channel(tapi_context context, c
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &temp);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*temp == ' ')
@@ -2394,7 +2405,7 @@ static int telephonytool_cmd_get_uicc_enablement(tapi_context context, char* par
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", NULL);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     tapi_sim_get_uicc_enablement(context, atoi(slot_id), &state);
@@ -2412,7 +2423,7 @@ static int telephonytool_cmd_set_uicc_enablement(tapi_context context, char* par
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &target_state);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*target_state == ' ')
@@ -2438,7 +2449,7 @@ static int telephonytool_cmd_listen_sim(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &target_state);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*target_state == ' ')
@@ -2486,7 +2497,7 @@ static int telephonytool_tapi_sms_send_message(tapi_context context, char* pargs
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &temp);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*temp == ' ')
@@ -2519,7 +2530,7 @@ static int telephonytool_tapi_sms_send_data_message(tapi_context context, char* 
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &temp);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*temp == ' ')
@@ -2550,7 +2561,7 @@ static int telephonytool_tapi_sms_get_service_center_number(tapi_context context
         return -EINVAL;
 
     slot_id = pargs;
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     tapi_sms_get_service_center_address(context, atoi(slot_id), &smsc_addr);
@@ -2568,7 +2579,7 @@ static int telephonytool_tapi_sms_set_service_center_number(tapi_context context
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &smsc_addr);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*smsc_addr == ' ')
@@ -2592,7 +2603,7 @@ static int telephonytool_tapi_sms_register(tapi_context context, char* pargs)
 
     slot_id = pargs;
     syslog(LOG_DEBUG, "telephonytool_tapi_sms_register slotId : %s\n", slot_id);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     syslog(LOG_DEBUG, "%s, slotId : %s \n", __func__, slot_id);
@@ -2611,7 +2622,7 @@ static int telephonytool_tapi_sms_get_cell_broadcast_power(tapi_context context,
         return -EINVAL;
 
     slot_id = pargs;
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     tapi_sms_get_cell_broadcast_power_on(context, atoi(slot_id), &state);
@@ -2629,7 +2640,7 @@ static int telephonytool_tapi_sms_set_cell_broadcast_power(tapi_context context,
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &state);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*state == ' ')
@@ -2653,7 +2664,7 @@ static int telephonytool_tapi_sms_get_cell_broadcast_topics(tapi_context context
         return -EINVAL;
 
     slot_id = pargs;
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     tapi_sms_get_cell_broadcast_topics(context, atoi(slot_id), &cbs_topics);
@@ -2671,7 +2682,7 @@ static int telephonytool_tapi_sms_set_cell_broadcast_topics(tapi_context context
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &cbs_topics);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*cbs_topics == ' ')
@@ -2694,7 +2705,7 @@ static int telephonytool_tapi_cbs_register(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = pargs;
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     syslog(LOG_DEBUG, "%s, slotId : %s \n", __func__, slot_id);
@@ -2716,7 +2727,7 @@ static int telephonytool_tapi_sms_copy_message_to_sim(tapi_context context, char
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &temp);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*temp == ' ')
@@ -2747,7 +2758,7 @@ static int telephonytool_tapi_sms_delete_message_from_sim(tapi_context context, 
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &index);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*index == ' ')
@@ -2772,7 +2783,7 @@ static int telephonytool_cmd_network_listen(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &target_state);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*target_state == ' ')
@@ -2818,7 +2829,7 @@ static int telephonytool_cmd_network_select_auto(tapi_context context, char* par
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", NULL);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     ret = tapi_network_select_auto(context,
@@ -2841,7 +2852,7 @@ static int telephonytool_cmd_network_select_manual(tapi_context context, char* p
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &temp);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*temp == ' ')
@@ -2890,7 +2901,7 @@ static int telephonytool_cmd_query_signalstrength(tapi_context context, char* pa
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", NULL);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     tapi_network_get_signalstrength(context, atoi(slot_id), &ss);
@@ -2908,7 +2919,7 @@ static int telephonytool_cmd_get_operator_name(tapi_context context, char* pargs
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", NULL);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     tapi_network_get_display_name(context, atoi(slot_id), &operator);
@@ -2925,7 +2936,7 @@ static int telephonytool_cmd_get_net_registration_info(tapi_context context, cha
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", NULL);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     tapi_network_get_registration_info(context, atoi(slot_id),
@@ -2943,7 +2954,7 @@ static int telephonytool_cmd_get_voice_networktype(tapi_context context, char* p
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", NULL);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     tapi_network_get_voice_network_type(context, atoi(slot_id), &type);
@@ -2961,7 +2972,7 @@ static int telephonytool_cmd_is_voice_roaming(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", NULL);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     tapi_network_is_voice_roaming(context, atoi(slot_id), &value);
@@ -2978,7 +2989,7 @@ static int telephonytool_cmd_network_scan(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", NULL);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     return tapi_network_scan(context,
@@ -2993,7 +3004,7 @@ static int telephonytool_cmd_get_serving_cellinfos(tapi_context context, char* p
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", NULL);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     return tapi_network_get_serving_cellinfos(context,
@@ -3008,7 +3019,7 @@ static int telephonytool_cmd_get_neighbouring_cellInfos(tapi_context context, ch
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", NULL);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     return tapi_network_get_neighbouring_cellinfos(context,
@@ -3024,7 +3035,7 @@ static int telephonytool_cmd_set_cell_info_list_rate(tapi_context context, char*
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &period);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*period == ' ')
@@ -3052,7 +3063,7 @@ static int telephonytool_cmd_set_call_barring(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &temp);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*temp == ' ')
@@ -3084,7 +3095,7 @@ static int telephonytool_cmd_get_call_barring(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &key);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*key == ' ')
@@ -3110,7 +3121,7 @@ static int telephonytool_cmd_change_call_barring_passwd(tapi_context context, ch
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &temp);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*temp == ' ')
@@ -3143,7 +3154,7 @@ static int telephonytool_cmd_disable_all_call_barrings(tapi_context context, cha
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &passwd);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*passwd == ' ')
@@ -3168,7 +3179,7 @@ static int telephonytool_cmd_disable_all_incoming(tapi_context context, char* pa
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &passwd);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*passwd == ' ')
@@ -3193,7 +3204,7 @@ static int telephonytool_cmd_disable_all_outgoing(tapi_context context, char* pa
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &passwd);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*passwd == ' ')
@@ -3220,7 +3231,7 @@ static int telephonytool_cmd_set_call_forwarding(tapi_context context, char* par
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &temp);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*temp == ' ')
@@ -3254,7 +3265,7 @@ static int telephonytool_cmd_get_call_forwarding(tapi_context context, char* par
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &key);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*key == ' ')
@@ -3278,7 +3289,7 @@ static int telephonytool_cmd_disable_call_forwarding(tapi_context context, char*
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &type);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*type == ' ')
@@ -3303,7 +3314,7 @@ static int telephonytool_cmd_initiate_ss_service(tapi_context context, char* par
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &ss_control_string);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*ss_control_string == ' ')
@@ -3328,7 +3339,7 @@ static int telephonytool_cmd_get_ussd_state(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", NULL);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     tapi_get_ussd_state(context, atoi(slot_id), &ussd_state);
@@ -3346,7 +3357,7 @@ static int telephonytool_cmd_send_ussd(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &response_msg);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*response_msg == ' ')
@@ -3370,7 +3381,7 @@ static int telephonytool_cmd_cancel_ussd(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", NULL);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     return tapi_ss_cancel_ussd(context, atoi(slot_id), EVENT_CANCEL_USSD_DONE, tele_call_async_fun);
@@ -3385,7 +3396,7 @@ static int telephonytool_cmd_set_call_waiting(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &value);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*value == ' ')
@@ -3410,7 +3421,7 @@ static int telephonytool_cmd_get_call_waiting(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", NULL);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     tapi_ss_query_call_wating(context, atoi(slot_id), &cw_info);
@@ -3428,7 +3439,7 @@ static int telephonytool_cmd_get_clip(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", NULL);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     tapi_ss_query_calling_line_presentation_info(context, atoi(slot_id), &clip_status);
@@ -3446,7 +3457,7 @@ static int telephonytool_cmd_set_clir(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &value);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*value == ' ')
@@ -3471,7 +3482,7 @@ static int telephonytool_cmd_get_clir(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", NULL);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     tapi_ss_query_calling_line_restriction_info(context, atoi(slot_id), &clir_status);
@@ -3491,7 +3502,7 @@ static int telephonytool_cmd_enable_fdn(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &temp);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*temp == ' ')
@@ -3523,7 +3534,7 @@ static int telephonytool_cmd_query_fdn(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", NULL);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     return tapi_ss_query_fdn(context, atoi(slot_id), EVENT_QUERY_FDN_DONE, ss_event_response);
@@ -3539,7 +3550,7 @@ static int telephonytool_cmd_ss_listen(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", &target_state);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     while (*target_state == ' ')
@@ -3677,7 +3688,7 @@ static int telephonytool_cmd_load_adn_entries(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", NULL);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     return tapi_phonebook_load_adn_entries(context, atoi(slot_id),
@@ -3692,7 +3703,7 @@ static int telephonytool_cmd_load_fdn_entries(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = strtok_r(pargs, " ", NULL);
-    if (slot_id == NULL)
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     return tapi_phonebook_load_fdn_entries(context, atoi(slot_id),
