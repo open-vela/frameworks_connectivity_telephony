@@ -1254,6 +1254,7 @@ static int telephonytool_cmd_get_radio_power(tapi_context context, char* pargs)
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
+    value = false;
     tapi_get_radio_power(context, atoi(slot_id), &value);
     syslog(LOG_DEBUG, "%s, slotId : %s value : %d \n", __func__, slot_id, value);
 
@@ -1818,6 +1819,7 @@ static int telephonytool_cmd_get_ps_attached(tapi_context context, char* pargs)
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
+    result = false;
     tapi_data_is_ps_attached(context, atoi(slot_id), &result);
     syslog(LOG_DEBUG, "%s, slotId : %s result : %d \n", __func__, slot_id, result);
 
@@ -1995,6 +1997,7 @@ static int telephonytool_cmd_has_icc_card(tapi_context context, char* pargs)
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
+    value = false;
     tapi_sim_has_icc_card(context, atoi(slot_id), &value);
 
     syslog(LOG_DEBUG, "%s, slotId : %s value : %d \n", __func__, slot_id, value);
@@ -2625,6 +2628,7 @@ static int telephonytool_tapi_sms_get_cell_broadcast_power(tapi_context context,
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
+    state = false;
     tapi_sms_get_cell_broadcast_power_on(context, atoi(slot_id), &state);
     syslog(LOG_DEBUG, "%s, slotId : %s state: %d \n", __func__, slot_id, state);
 
@@ -2975,6 +2979,7 @@ static int telephonytool_cmd_is_voice_roaming(tapi_context context, char* pargs)
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
+    value = false;
     tapi_network_is_voice_roaming(context, atoi(slot_id), &value);
     syslog(LOG_DEBUG, "%s, slotId : %s value :%d \n", __func__, slot_id, value);
 
