@@ -2005,6 +2005,27 @@ static int telephonytool_cmd_has_icc_card(tapi_context context, char* pargs)
     return 0;
 }
 
+static int telephonytool_cmd_get_sim_state(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    int state;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", NULL);
+    if (!is_valid_slot_id_str(slot_id))
+        return -EINVAL;
+
+    state = -1;
+    tapi_sim_get_sim_state(context, atoi(slot_id), &state);
+
+    syslog(LOG_DEBUG, "%s, slotId : %s state : %s \n", __func__, slot_id,
+        tapi_sim_state_to_string((tapi_sim_state)state));
+
+    return 0;
+}
+
 static int telephonytool_cmd_get_sim_iccid(tapi_context context, char* pargs)
 {
     char* slot_id;
@@ -4132,6 +4153,9 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[][CONFIG_NSH_LINELEN] = {
         { "has-icc",
             telephonytool_cmd_has_icc_card,
             "has icc card (enter example : has-icc 0 [slot_id])" },
+        { "get-sim-state",
+            telephonytool_cmd_get_sim_state,
+            "get sim state (enter example : get-sim-state 0 [slot_id])" },
         { "get-iccid",
             telephonytool_cmd_get_sim_iccid,
             "get sim iccid (enter example : get-iccid 0 [slot_id])" },
