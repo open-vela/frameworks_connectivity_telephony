@@ -450,3 +450,21 @@ void property_set_done(const DBusError* error, void* user_data)
 
     cb(ar);
 }
+
+const char* tapi_sim_state_to_string(tapi_sim_state sim_state)
+{
+    switch (sim_state) {
+    case SIM_STATE_NOT_PRESENT:
+        return "SIM_ABSENT";
+    case SIM_STATE_INSERTED:
+        return "SIM_PRESENT";
+    case SIM_STATE_LOCKED_OUT:
+        return "SIM_LOCKED";
+    case SIM_STATE_READY:
+        return "SIM_READY";
+    case SIM_STATE_RESETTING:
+        return "SIM_RESETTING";
+    default:
+        return "SIM_UNKNOWN";
+    }
+}
