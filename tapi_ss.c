@@ -1607,7 +1607,7 @@ int tapi_ss_register(tapi_context context,
     tapi_async_handler* handler;
     tapi_async_result* ar;
     const char* modem_path;
-    int watch_id;
+    int watch_id = 0;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
         || msg < MSG_CALL_BARRING_PROPERTY_CHANGE_IND || msg > MSG_USSD_PROPERTY_CHANGE_IND) {

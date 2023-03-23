@@ -154,7 +154,7 @@ static int unsol_sms_message(DBusConnection* connection,
     tapi_async_handler* handler = user_data;
     tapi_async_result* ar;
     tapi_async_function cb;
-    tapi_message_info* message_info;
+    tapi_message_info* message_info = NULL;
 
     if (handler == NULL)
         return false;
@@ -183,7 +183,6 @@ static int unsol_sms_message(DBusConnection* connection,
     dbus_message_iter_get_basic(&iter, &text);
     member = dbus_message_get_member(message);
 
-    message_info = NULL;
     if (strcmp(member, "IncomingMessage") == 0
         || strcmp(member, "ImmediateMessage") == 0) {
         dbus_message_iter_next(&iter);
@@ -574,7 +573,7 @@ int tapi_sms_register(tapi_context context, int slot_id,
     const char* path;
     tapi_async_handler* user_data;
     tapi_async_result* ar;
-    int watch_id;
+    int watch_id = 0;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
         || msg_type < MSG_INCOMING_MESSAGE_IND || msg_type > MSG_STATUS_REPORT_MESSAGE_IND) {

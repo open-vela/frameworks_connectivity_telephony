@@ -531,7 +531,7 @@ static void cell_list_request_complete(DBusMessage* message, void* user_data)
     tapi_async_function cb;
     DBusMessageIter iter, list;
     DBusError err;
-    int cell_index;
+    int cell_index = 0;
 
     if (dbus_message_get_type(message) == DBUS_MESSAGE_TYPE_ERROR) {
         const char* dbus_error = dbus_message_get_error_name(message);
@@ -572,7 +572,6 @@ static void cell_list_request_complete(DBusMessage* message, void* user_data)
 
     dbus_message_iter_recurse(&iter, &list);
 
-    cell_index = 0;
     while (dbus_message_iter_get_arg_type(&list) == DBUS_TYPE_STRUCT) {
         DBusMessageIter entry, dict;
 
@@ -700,7 +699,7 @@ static void operator_scan_complete(DBusMessage* message, void* user_data)
     tapi_async_function cb;
     DBusMessageIter iter, list;
     DBusError err;
-    int operator_index;
+    int operator_index = 0;
 
     if (dbus_message_get_type(message) == DBUS_MESSAGE_TYPE_ERROR) {
         const char* dbus_error = dbus_message_get_error_name(message);
@@ -739,7 +738,6 @@ static void operator_scan_complete(DBusMessage* message, void* user_data)
 
     dbus_message_iter_recurse(&iter, &list);
 
-    operator_index = 0;
     while (dbus_message_iter_get_arg_type(&list) == DBUS_TYPE_STRUCT) {
         DBusMessageIter entry, dict;
         char* path;
@@ -1209,7 +1207,7 @@ int tapi_network_register(tapi_context context,
     tapi_async_handler* handler;
     tapi_async_result* ar;
     const char* modem_path;
-    int watch_id;
+    int watch_id = 0;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
         || msg < MSG_NETWORK_STATE_CHANGE_IND || msg > MSG_NITZ_STATE_CHANGE_IND) {

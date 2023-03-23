@@ -3675,7 +3675,8 @@ static int telephonytool_cmd_ims_get_registration(tapi_context context, char* pa
     char dst[2][CONFIG_NSH_LINELEN];
     int cnt = split_input(dst, 2, pargs, " ");
     tapi_ims_registration_info info;
-    int slot_id, ret, action_type;
+    int slot_id, action_type;
+    int ret = 0;
 
     if (cnt != 2)
         return -EINVAL;
