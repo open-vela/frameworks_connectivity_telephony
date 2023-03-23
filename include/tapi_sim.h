@@ -48,6 +48,14 @@ typedef struct {
     char retry_count[MAX_SIM_PWD_TYPE];
 } sim_lock_state;
 
+typedef enum {
+    SIM_STATE_NOT_PRESENT = 0,
+    SIM_STATE_INSERTED = 1,
+    SIM_STATE_LOCKED_OUT = 2,
+    SIM_STATE_READY = 3,
+    SIM_STATE_RESETTING = 4,
+} tapi_sim_state;
+
 /****************************************************************************
  * Public Function Prototypes
  ****************************************************************************/
@@ -64,6 +72,20 @@ extern "C" {
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_sim_has_icc_card(tapi_context context, int slot_id, bool* out);
+
+/**
+ * Returns a constant indicating the state of the current SIM card.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[out] out           State of Icc card. The possible values are:
+				0 - SIM_STATE_NOT_PRESENT
+				1 - SIM_STATE_INSERTED
+				2 - SIM_STATE_LOCKED_OUT
+				3 - STATE_READY
+				4 - SIM_STATE_RESETTING
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_sim_get_sim_state(tapi_context context, int slot_id, int* out);
 
 /**
  * Get the MCC+MNC (mobile country code + mobile network code) of the

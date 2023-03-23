@@ -268,5 +268,6 @@ enum tapi_call_disconnect_reason tapi_utils_call_disconnected_reason(const char*
 const char* tapi_utils_cell_type_to_string(tapi_cell_type type);
 tapi_cell_type tapi_utils_cell_type_from_string(const char* name);
 const char* tapi_utils_get_modem_path(int slot_id);
+const char* tapi_sim_state_to_string(tapi_sim_state sim_state);
 
 #endif /* __TELEPHONY_APIS_H */

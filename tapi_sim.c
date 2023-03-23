@@ -568,6 +568,31 @@ int tapi_sim_has_icc_card(tapi_context context, int slot_id, bool* out)
     return -EINVAL;
 }
 
+int tapi_sim_get_sim_state(tapi_context context, int slot_id, int* out)
+{
+    dbus_context* ctx = context;
+    GDBusProxy* proxy;
+    DBusMessageIter iter;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+        return -EINVAL;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    if (g_dbus_proxy_get_property(proxy, "SimState", &iter)) {
+        dbus_message_iter_get_basic(&iter, out);
+
+        return OK;
+    }
+
+    return -EINVAL;
+}
+
 int tapi_sim_get_sim_iccid(tapi_context context, int slot_id, char** out)
 {
     dbus_context* ctx = context;
