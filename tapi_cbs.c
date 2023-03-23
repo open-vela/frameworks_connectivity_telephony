@@ -240,7 +240,7 @@ int tapi_cbs_register(tapi_context context, int slot_id, tapi_indication_msg msg
     tapi_async_handler* user_data;
     tapi_async_result* ar;
     const char* path;
-    int watch_id;
+    int watch_id = 0;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
         || msg < MSG_INCOMING_CBS_IND || msg > MSG_EMERGENCY_CBS_IND) {

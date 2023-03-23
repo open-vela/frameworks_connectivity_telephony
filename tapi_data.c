@@ -421,7 +421,7 @@ static void apn_list_loaded(DBusMessage* message, void* user_data)
     DBusMessageIter args, list;
     DBusError err;
     tapi_apn_context* result[MAX_APN_LIST_CAPACITY];
-    int index;
+    int index = 0;
 
     if (handler == NULL)
         return;
@@ -447,7 +447,6 @@ static void apn_list_loaded(DBusMessage* message, void* user_data)
         goto done;
     dbus_message_iter_recurse(&args, &list);
 
-    index = 0;
     while (dbus_message_iter_get_arg_type(&list) == DBUS_TYPE_STRUCT) {
         DBusMessageIter entry, dict;
         tapi_apn_context* apn = malloc(sizeof(tapi_apn_context));
@@ -1131,9 +1130,9 @@ int tapi_data_register(tapi_context context,
 {
     dbus_context* ctx = context;
     const char* modem_path;
-    int watch_id;
     tapi_async_handler* handler;
     tapi_async_result* ar;
+    int watch_id = 0;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
         || msg < MSG_DATA_ENABLED_CHANGE_IND || msg > MSG_DEFAULT_DATA_SLOT_CHANGE_IND) {
