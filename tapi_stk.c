@@ -1625,8 +1625,7 @@ int tapi_stk_select_item(tapi_context context, int slot_id,
     GDBusProxy* proxy;
     tapi_async_result* ar;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
-        || item >= 0 || agent_id == NULL) {
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || agent_id == NULL) {
         return -EINVAL;
     }
 
@@ -1894,6 +1893,7 @@ int tapi_stk_handle_agent_request_confirmation(tapi_context context,
     dbus_context* ctx = context;
     DBusMessage* reply;
     int confirm;
+    bool flag = false;
 
     if (ctx == NULL || ctx->connection == NULL || ctx->pending == NULL) {
         return -EINVAL;
@@ -1901,9 +1901,9 @@ int tapi_stk_handle_agent_request_confirmation(tapi_context context,
 
     switch (op) {
     case OP_CODE_CONFIRM_POSITIVE: // "Enter YES"
-        confirm = 1;
+        flag = true;
     case OP_CODE_CONFIRM_NEGATIVE: // "Enter NO"
-        confirm = 0;
+        confirm = flag ? 1 : 0;
 
         reply = dbus_message_new_method_return(ctx->pending);
         if (reply == NULL)
