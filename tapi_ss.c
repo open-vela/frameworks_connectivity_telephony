@@ -265,7 +265,7 @@ static void fill_ss_initiate_cs_service(DBusMessageIter* iter,
 
         dbus_message_iter_next(&entry);
         dbus_message_iter_recurse(&entry, &value);
-        dbus_message_iter_get_basic(&value, info->call_setting_status);
+        dbus_message_iter_get_basic(&value, &info->call_setting_status);
 
         dbus_message_iter_next(iter);
     }
