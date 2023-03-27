@@ -268,7 +268,7 @@ int tapi_cbs_register(tapi_context context, int slot_id, tapi_indication_msg msg
     ar->arg1 = slot_id;
 
     switch (msg) {
-    case MSG_INCOMING_MESSAGE_IND:
+    case MSG_INCOMING_CBS_IND:
         watch_id = g_dbus_add_signal_watch(ctx->connection, OFONO_SERVICE, path,
             OFONO_CELL_BROADCAST_INTERFACE, "IncomingBroadcast",
             unsol_cbs_message, user_data, cbs_event_free);
