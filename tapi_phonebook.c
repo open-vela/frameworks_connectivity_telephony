@@ -163,13 +163,15 @@ static void load_fdn_entries_cb(DBusMessage* message, void* user_data)
         index = 0;
         while (dbus_message_iter_get_arg_type(&entry) != DBUS_TYPE_INVALID) {
             if (dbus_message_iter_get_arg_type(&entry) == DBUS_TYPE_STRUCT) {
-                dbus_message_iter_get_basic(&entry, &entries[index++].fdn_idx);
+                dbus_message_iter_get_basic(&entry, &entries[index].fdn_idx);
                 dbus_message_iter_next(&entry);
 
-                dbus_message_iter_get_basic(&entry, &entries[index++].tag);
+                dbus_message_iter_get_basic(&entry, &entries[index].tag);
                 dbus_message_iter_next(&entry);
 
-                dbus_message_iter_get_basic(&entry, &entries[index++].number);
+                dbus_message_iter_get_basic(&entry, &entries[index].number);
+
+                index++;
             }
 
             if (index >= MAX_FDN_RECORD_LENGTH)
@@ -444,6 +446,7 @@ int tapi_phonebook_insert_fdn_entry(tapi_context context, int slot_id,
 
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
+        free(fdn_record);
         return -ENOMEM;
     }
     ar->msg_id = event_id;
@@ -497,6 +500,7 @@ int tapi_phonebook_delete_fdn_entry(tapi_context context, int slot_id,
 
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
+        free(fdn_record);
         return -ENOMEM;
     }
     ar->msg_id = event_id;
@@ -553,6 +557,7 @@ int tapi_phonebook_update_fdn_entry(tapi_context context, int slot_id, int event
 
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
+        free(fdn_record);
         return -ENOMEM;
     }
     ar->msg_id = event_id;
