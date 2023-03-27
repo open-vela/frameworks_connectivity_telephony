@@ -283,6 +283,8 @@ static int data_connection_changed(DBusConnection* connection,
     dc->password[0] = '\0';
     dc->messageproxy[0] = '\0';
     dc->messagecenter[0] = '\0';
+    dc->ip_settings->ipv4 = NULL;
+    dc->ip_settings->ipv6 = NULL;
 
     while (dbus_message_iter_get_arg_type(&list) == DBUS_TYPE_DICT_ENTRY) {
         DBusMessageIter entry, value;
