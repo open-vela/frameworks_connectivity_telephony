@@ -1352,6 +1352,7 @@ int tapi_register(tapi_context context,
         watch_id = g_dbus_add_signal_watch(ctx->connection,
             OFONO_SERVICE, modem_path, OFONO_MODEM_INTERFACE,
             "OemHookIndication", process_oem_hook_raw_indication, handler, user_data_free);
+        break;
     case MSG_MODEM_RESTART_IND:
         watch_id = g_dbus_add_signal_watch(ctx->connection,
             OFONO_SERVICE, modem_path, OFONO_MODEM_INTERFACE,
