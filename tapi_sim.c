@@ -742,7 +742,7 @@ int tapi_sim_register(tapi_context context, int slot_id,
     tapi_async_handler* handler;
     tapi_async_result* ar;
     const char* modem_path;
-    int watch_id;
+    int watch_id = 0;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
         || msg < MSG_SIM_STATE_CHANGE_IND || msg > MSG_SIM_UICC_APP_ENABLED_CHANGE_IND) {
