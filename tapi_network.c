@@ -125,7 +125,7 @@ static void fill_registration_info(const char* prop, DBusMessageIter* iter,
         dbus_message_iter_get_basic(iter, &value_int);
         registration_info->lac = value_int;
     } else if (strcmp(prop, "NITZ") == 0) {
-        tapi_network_time nitz_time;
+        tapi_network_time nitz_time = { -1, -1, -1, -1, -1, -1, -1, -1 };
         dbus_message_iter_get_basic(iter, &value_str);
         parse_nitz(value_str, &nitz_time);
         registration_info->nitz_time = nitz_time;
@@ -204,7 +204,7 @@ static void update_network_operator(const char* prop, DBusMessageIter* iter, tap
     dbus_message_iter_get_basic(iter, &value);
 
     if (strcmp(prop, "Name") == 0) {
-        if (strlen(value) <= MAX_NETWORK_INFO_LENGTH)
+        if (strlen(value) <= MAX_OPERATOR_NAME_LENGTH)
             strcpy(operator->name, value);
     } else if (strcmp(prop, "Status") == 0) {
         operator->status = tapi_utils_operator_status_from_string(value);
