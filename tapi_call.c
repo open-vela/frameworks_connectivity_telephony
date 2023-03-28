@@ -88,7 +88,7 @@ static int decode_voice_call_path(char* call_path, int slot_id)
     // /phonesim/voicecall01
     char sub_path[256] = { 0 };
     const char* modem_path;
-    int call_id = 0;
+    int call_id = -1;
     char* token;
 
     modem_path = tapi_utils_get_modem_path(slot_id);
@@ -103,12 +103,12 @@ static int decode_voice_call_path(char* call_path, int slot_id)
 
     tapi_log_debug("decode_voice_call_path call_id: %d\n", call_id);
 
-    if (call_id < 1 || call_id > MAX_VOICE_CALL_PROXY_COUNT) {
+    if (call_id < 0 || call_id > MAX_VOICE_CALL_PROXY_COUNT) {
         tapi_log_error("new voice call proxy error, call_id:%d Out of range", call_id);
         return -EIO;
     }
 
-    return call_id - 1;
+    return call_id;
 }
 
 static int manager_voice_call_dbus_proxy(tapi_context context, int slot_id, char* call_id, int action)
