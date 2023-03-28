@@ -60,7 +60,6 @@ static void cbs_event_free(void* user_data)
 static int unsol_cbs_message(DBusConnection* connection,
     DBusMessage* message, void* user_data)
 {
-    const char* sender;
     const char* member;
     DBusMessageIter iter, list;
     DBusMessageIter entry, result;
@@ -69,38 +68,35 @@ static int unsol_cbs_message(DBusConnection* connection,
     tapi_async_result* ar;
     tapi_async_function cb;
     char *name, *value;
+    dbus_bool_t value_t = false;
     tapi_cbs_message* cbs_message;
 
     if (NULL == handler)
-        return false;
+        return 0;
 
     ar = handler->result;
     if (ar == NULL)
-        return false;
+        return 0;
 
     cb = handler->cb_function;
     if (cb == NULL)
-        return false;
+        return 0;
 
     if (dbus_message_get_type(message) != DBUS_MESSAGE_TYPE_SIGNAL)
-        return false;
-
-    sender = dbus_message_get_sender(message);
-    if (sender == NULL)
-        return false;
+        return 0;
 
     if (!dbus_message_iter_init(message, &iter))
-        return false;
+        return 0;
 
     if (dbus_message_iter_get_arg_type(&iter) != DBUS_TYPE_STRING)
-        return false;
+        return 0;
 
     dbus_message_iter_get_basic(&iter, &text);
     member = dbus_message_get_member(message);
     if (strcmp(member, "IncomingBroadcast") == 0) {
         cbs_message = calloc(1, sizeof(tapi_cbs_message));
         if (cbs_message == NULL)
-            return false;
+            return 0;
 
         cbs_message->text = text;
         dbus_message_iter_next(&iter);
@@ -112,7 +108,7 @@ static int unsol_cbs_message(DBusConnection* connection,
     } else if (strcmp(member, "EmergencyBroadcast") == 0) {
         tapi_cbs_emergency_message* cbs_emergency_message = calloc(1, sizeof(tapi_cbs_emergency_message));
         if (cbs_emergency_message == NULL)
-            return false;
+            return 0;
 
         cbs_emergency_message->text = text;
         dbus_message_iter_next(&iter);
@@ -129,9 +125,11 @@ static int unsol_cbs_message(DBusConnection* connection,
             if (strcmp(name, "EmergencyType") == 0) {
                 dbus_message_iter_get_basic(&result, &cbs_emergency_message->emergency_type);
             } else if (strcmp(name, "EmergencyAlert") == 0) {
-                dbus_message_iter_get_basic(&result, &cbs_emergency_message->emergency_alert);
+                dbus_message_iter_get_basic(&result, &value_t);
+                cbs_emergency_message->emergency_alert = value_t;
             } else if (strcmp(name, "Popup") == 0) {
-                dbus_message_iter_get_basic(&result, &cbs_emergency_message->popup);
+                dbus_message_iter_get_basic(&result, &value_t);
+                cbs_emergency_message->popup = value_t;
             }
             dbus_message_iter_next(&list);
         }
@@ -141,7 +139,7 @@ static int unsol_cbs_message(DBusConnection* connection,
         free(cbs_emergency_message);
     }
 
-    return true;
+    return 1;
 }
 
 int tapi_sms_set_cell_broadcast_power_on(tapi_context context, int slot_id, bool state)

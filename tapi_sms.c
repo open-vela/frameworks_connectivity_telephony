@@ -157,18 +157,18 @@ static int unsol_sms_message(DBusConnection* connection,
     tapi_message_info* message_info = NULL;
 
     if (handler == NULL)
-        return false;
+        return 0;
 
     ar = handler->result;
     if (ar == NULL)
-        return false;
+        return 0;
 
     cb = handler->cb_function;
     if (cb == NULL)
-        return false;
+        return 0;
 
     if (dbus_message_get_type(message) != DBUS_MESSAGE_TYPE_SIGNAL)
-        return false;
+        return 0;
 
     sender = dbus_message_get_sender(message);
     if (sender == NULL)
@@ -228,7 +228,7 @@ done:
     if (message_info != NULL)
         free(message_info);
 
-    return true;
+    return 1;
 }
 
 static int decode_message_info(DBusMessageIter* iter, tapi_message_info* message_info)
@@ -268,7 +268,7 @@ static int decode_message_info(DBusMessageIter* iter, tapi_message_info* message
         dbus_message_iter_next(&subArrayIter);
     }
 
-    return true;
+    return 1;
 }
 
 static void message_list_query_complete(DBusMessage* message, void* user_data)
@@ -365,7 +365,7 @@ int tapi_sms_send_message(tapi_context context, int slot_id,
     message->text = strdup0(text);
 
     if (!g_dbus_proxy_method_call(proxy, "SendMessage",
-            send_message_param_append, NULL, message, message_free)) {
+            send_message_param_append, no_operate_callback, message, message_free)) {
         message_free(message);
         return -EINVAL;
     }
@@ -403,7 +403,7 @@ int tapi_sms_send_data_message(tapi_context context, int slot_id,
     data_message->port = port;
 
     if (!g_dbus_proxy_method_call(proxy, "SendDataMessage",
-            send_data_message_param_append, NULL, data_message, data_message_free)) {
+            send_data_message_param_append, no_operate_callback, data_message, data_message_free)) {
         data_message_free(data_message);
         return -EINVAL;
     }
@@ -558,7 +558,7 @@ int tapi_sms_delete_message_from_sim(tapi_context context, int slot_id, int inde
     }
 
     if (!g_dbus_proxy_method_call(proxy, "DeleteMessageFromSim",
-            delete_message_param_append, NULL, (void*)index, NULL)) {
+            delete_message_param_append, no_operate_callback, (void*)index, NULL)) {
         return -EINVAL;
     }
 
