@@ -79,7 +79,7 @@ typedef struct {
     char name[MAX_OPERATOR_NAME_LENGTH + 1];
     char mcc[MAX_MCC_LENGTH + 1];
     char mnc[MAX_MNC_LENGTH + 1];
-    int status;
+    tapi_operator_status status;
     char technology[MAX_NETWORK_INFO_LENGTH + 1];
     void* extra;
 } tapi_operator_info;

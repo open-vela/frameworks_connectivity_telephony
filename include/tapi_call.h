@@ -49,7 +49,7 @@
  * Public Types
  ****************************************************************************/
 
-enum tapi_call_status {
+typedef enum {
     CALL_STATUS_UNKNOW = -1,
     CALL_STATUS_ACTIVE = 0,
     CALL_STATUS_HELD = 1,
@@ -58,31 +58,19 @@ enum tapi_call_status {
     CALL_STATUS_INCOMING = 4,
     CALL_STATUS_WAITING = 5,
     CALL_STATUS_DISCONNECTED
-};
+} tapi_call_status;
 
-enum tapi_call_disconnect_reason {
+typedef enum {
     CALL_DISCONNECT_REASON_UNKNOWN = 0,
     CALL_DISCONNECT_REASON_LOCAL_HANGUP,
     CALL_DISCONNECT_REASON_REMOTE_HANGUP,
     CALL_DISCONNECT_REASON_NETWORK_HANGUP,
     CALL_DISCONNECT_REASON_ERROR,
-};
-
-typedef struct {
-    unsigned int id;
-    int type;
-    int direction;
-    int status;
-    tapi_phone_number phone_number;
-    tapi_phone_number called_number;
-    char name[MAX_CALLER_NAME_LENGTH + 1];
-    int clip_validity;
-    int cnap_validity;
-} tapi_call;
+} tapi_call_disconnect_reason;
 
 typedef struct {
     char call_id[MAX_CALL_ID_LENGTH + 1];
-    int state;
+    tapi_call_status state;
     char lineIdentification[MAX_CALL_LINE_ID_LENGTH + 1];
     char incoming_line[MAX_CALL_INCOMING_LINE_LENGTH + 1];
     char name[MAX_CALL_NAME_LENGTH + 1];

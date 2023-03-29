@@ -126,7 +126,7 @@ const char* tapi_utils_registration_status_to_string(int status)
     return "";
 }
 
-int tapi_utils_registration_status_from_string(const char* status)
+tapi_registration_state tapi_utils_registration_status_from_string(const char* status)
 {
     if (status == NULL)
         return NETWORK_REGISTRATION_STATUS_UNKNOWN;
@@ -148,7 +148,7 @@ int tapi_utils_registration_status_from_string(const char* status)
     return NETWORK_REGISTRATION_STATUS_UNKNOWN;
 }
 
-int tapi_utils_registration_mode_from_string(const char* mode)
+tapi_selection_mode tapi_utils_registration_mode_from_string(const char* mode)
 {
     if (mode == NULL)
         return NETWORK_SELECTION_UNKNOWN;
@@ -162,7 +162,7 @@ int tapi_utils_registration_mode_from_string(const char* mode)
     return NETWORK_SELECTION_UNKNOWN;
 }
 
-int tapi_utils_operator_status_from_string(const char* mode)
+tapi_operator_status tapi_utils_operator_status_from_string(const char* mode)
 {
     if (mode == NULL)
         return UNKNOWN;
@@ -224,9 +224,9 @@ const char* tapi_utils_get_modem_path(int slot_id)
     return NULL;
 }
 
-enum tapi_call_status tapi_utils_call_status_from_string(const char* status)
+tapi_call_status tapi_utils_call_status_from_string(const char* status)
 {
-    enum tapi_call_status ret = CALL_STATUS_UNKNOW;
+    tapi_call_status ret = CALL_STATUS_UNKNOW;
 
     if (status == NULL)
         return CALL_STATUS_UNKNOW;
@@ -250,9 +250,9 @@ enum tapi_call_status tapi_utils_call_status_from_string(const char* status)
     return ret;
 }
 
-enum tapi_call_disconnect_reason tapi_utils_call_disconnected_reason(const char* str_status)
+tapi_call_disconnect_reason tapi_utils_call_disconnected_reason(const char* str_status)
 {
-    enum tapi_call_disconnect_reason ret = CALL_DISCONNECT_REASON_UNKNOWN;
+    tapi_call_disconnect_reason ret = CALL_DISCONNECT_REASON_UNKNOWN;
 
     if (str_status == NULL)
         return ret;
