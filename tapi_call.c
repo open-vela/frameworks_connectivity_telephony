@@ -21,7 +21,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "tapi_call.h"
+#include "tapi.h"
 #include "tapi_internal.h"
 
 /****************************************************************************
