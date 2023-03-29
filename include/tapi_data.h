@@ -101,7 +101,7 @@ typedef struct {
 typedef struct {
     char* id;
     char name[MAX_APN_DOMAIN_LENGTH + 1];
-    int type;
+    tapi_apn_context_type type;
     bool active;
     bool preferred;
     char username[MAX_APN_DOMAIN_LENGTH + 1];
