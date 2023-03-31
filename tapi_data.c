@@ -636,7 +636,12 @@ int tapi_data_save_apn_context(tapi_context context,
     tapi_async_handler* handler;
     tapi_async_result* ar;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || apn == NULL) {
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+        return -EINVAL;
+    }
+
+    if (apn == NULL || tapi_utils_apn_type_to_string(apn->type) == NULL) {
+        tapi_log_error("invalid apn argument ...\n");
         return -EINVAL;
     }
 

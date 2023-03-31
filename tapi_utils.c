@@ -272,7 +272,7 @@ const char* tapi_utils_apn_type_to_string(tapi_apn_context_type type)
 {
     switch (type) {
     case APN_CONTEXT_TYPE_ANY:
-        return NULL;
+        return "";
     case APN_CONTEXT_TYPE_INTERNET:
         return "internet";
     case APN_CONTEXT_TYPE_HIPRI:
