@@ -70,19 +70,6 @@ static int call_strcpy(char* dst, const char* src, int dst_size)
     return 0;
 }
 
-static void call_event_free(void* user_data)
-{
-    tapi_async_handler* handler = user_data;
-    tapi_async_result* ar;
-
-    if (handler != NULL) {
-        ar = handler->result;
-        if (ar != NULL)
-            free(ar);
-        free(handler);
-    }
-}
-
 static int decode_voice_call_path(char* call_path, int slot_id)
 {
     // /phonesim/voicecall01
@@ -702,9 +689,9 @@ static int tapi_register_call_signal(tapi_context context, int slot_id, char* pa
     handler->result = ar;
 
     watch_id = g_dbus_add_signal_watch(ctx->connection,
-        OFONO_SERVICE, path, interface, member, function, handler, call_event_free);
+        OFONO_SERVICE, path, interface, member, function, handler, user_data_free);
     if (watch_id == 0) {
-        call_event_free(handler);
+        user_data_free(handler);
         return -EINVAL;
     }
 
@@ -753,9 +740,9 @@ static int tapi_register_manager_call_signal(tapi_context context, int slot_id, 
     handler->result = ar;
 
     watch_id = g_dbus_add_signal_watch(ctx->connection,
-        OFONO_SERVICE, modem_path, interface, member, function, handler, call_event_free);
+        OFONO_SERVICE, modem_path, interface, member, function, handler, user_data_free);
     if (watch_id == 0) {
-        call_event_free(handler);
+        user_data_free(handler);
         return -EINVAL;
     }
 
@@ -1040,8 +1027,8 @@ int tapi_call_get_all_calls(tapi_context context, int slot_id,
     handler->result = ar;
 
     if (!g_dbus_proxy_method_call(proxy, "GetCalls", NULL,
-            call_list_query_complete, handler, call_event_free)) {
-        call_event_free(handler);
+            call_list_query_complete, handler, user_data_free)) {
+        user_data_free(handler);
         return -EINVAL;
     }
 
@@ -1162,8 +1149,8 @@ int tapi_call_merge_call(tapi_context context,
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy, "CreateMultiparty", NULL,
-            merge_call_complete, handler, call_event_free)) {
-        call_event_free(handler);
+            merge_call_complete, handler, user_data_free)) {
+        user_data_free(handler);
         return -EINVAL;
     }
 
@@ -1205,8 +1192,8 @@ int tapi_call_separate_call(tapi_context context,
     handler->result = ar;
 
     if (!g_dbus_proxy_method_call(proxy, "PrivateChat",
-            separate_param_append, merge_call_complete, handler, call_event_free)) {
-        call_event_free(handler);
+            separate_param_append, merge_call_complete, handler, user_data_free)) {
+        user_data_free(handler);
         return -EINVAL;
     }
 
