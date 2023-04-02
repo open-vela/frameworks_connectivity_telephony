@@ -42,9 +42,8 @@ typedef struct {
  * Private Function Prototypes
  ****************************************************************************/
 
-static void user_data_free(void* user_data);
 /* This method should be called if the data field needs to be recycled. */
-static void user_data_free2(void* user_data);
+static void stk_event_data_free(void* user_data);
 static void method_call_complete(DBusMessage* message, void* user_data);
 static bool stk_agent_dbus_pending_reply(DBusConnection* conn,
     DBusMessage** msg, DBusMessage* reply);
@@ -155,22 +154,8 @@ static const GDBusMethodTable stk_agent_methods[] = {
  * Private Functions
  ****************************************************************************/
 
-static void user_data_free(void* user_data)
-{
-    tapi_async_handler* handler = user_data;
-    tapi_async_result* ar;
-
-    if (handler != NULL) {
-        ar = handler->result;
-        if (ar != NULL)
-            free(ar);
-
-        free(handler);
-    }
-}
-
 /* This method should be called if the data field needs to be recycled. */
-static void user_data_free2(void* user_data)
+static void stk_event_data_free(void* user_data)
 {
     tapi_async_handler* handler = user_data;
     tapi_async_result* ar;
@@ -1662,9 +1647,9 @@ int tapi_stk_select_item(tapi_context context, int slot_id,
 
     tapi_log_info("tapi_stk_select_item item : %d, path : %s\n", item, agent_id);
     if (!g_dbus_proxy_method_call(proxy, "SelectItem", stk_select_item_param_append,
-            method_call_complete, user_data, user_data_free2)) {
+            method_call_complete, user_data, stk_event_data_free)) {
         tapi_log_error("failed to select item\n");
-        user_data_free2(user_data);
+        stk_event_data_free(user_data);
         return -EINVAL;
     }
 
