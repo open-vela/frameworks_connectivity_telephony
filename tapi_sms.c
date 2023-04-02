@@ -116,20 +116,6 @@ static void message_info_free(void* user_data)
     free(message_info);
 }
 
-static void message_event_free(void* user_data)
-{
-    tapi_async_handler* handler;
-    tapi_async_result* ar;
-
-    handler = user_data;
-    if (handler != NULL) {
-        ar = handler->result;
-        if (ar != NULL)
-            free(ar);
-        free(handler);
-    }
-}
-
 static char* proxy_get_string(GDBusProxy* proxy, const char* property)
 {
     DBusMessageIter iter;
@@ -491,8 +477,8 @@ int tapi_sms_get_all_messages_from_sim(tapi_context context, int slot_id,
     ar->data = list;
 
     if (!g_dbus_proxy_method_call(proxy, "GetAllMessagesFromSim", NULL,
-            message_list_query_complete, user_data, message_event_free)) {
-        message_event_free(user_data);
+            message_list_query_complete, user_data, user_data_free)) {
+        user_data_free(user_data);
         return -EINVAL;
     }
 
@@ -605,24 +591,24 @@ int tapi_sms_register(tapi_context context, int slot_id,
     case MSG_INCOMING_MESSAGE_IND:
         watch_id = g_dbus_add_signal_watch(ctx->connection, OFONO_SERVICE, path,
             OFONO_MESSAGE_MANAGER_INTERFACE, "IncomingMessage",
-            unsol_sms_message, user_data, message_event_free);
+            unsol_sms_message, user_data, user_data_free);
         break;
     case MSG_IMMEDIATE_MESSAGE_IND:
         watch_id = g_dbus_add_signal_watch(ctx->connection, OFONO_SERVICE, path,
             OFONO_MESSAGE_MANAGER_INTERFACE, "ImmediateMessage",
-            unsol_sms_message, user_data, message_event_free);
+            unsol_sms_message, user_data, user_data_free);
         break;
     case MSG_STATUS_REPORT_MESSAGE_IND:
         watch_id = g_dbus_add_signal_watch(ctx->connection, OFONO_SERVICE, path,
             OFONO_MESSAGE_MANAGER_INTERFACE, "StatusReportMessage",
-            unsol_sms_message, user_data, message_event_free);
+            unsol_sms_message, user_data, user_data_free);
         break;
     default:
         break;
     }
 
     if (watch_id == 0) {
-        message_event_free(user_data);
+        user_data_free(user_data);
         return -EINVAL;
     }
 

@@ -405,37 +405,6 @@ static int modem_restart(DBusConnection* connection,
     return 1;
 }
 
-static void user_data_free(void* user_data)
-{
-    tapi_async_handler* handler = user_data;
-    tapi_async_result* ar;
-
-    if (handler != NULL) {
-        ar = handler->result;
-        if (ar != NULL)
-            free(ar);
-        free(handler);
-    }
-}
-
-static void oem_ril_req_data_free(void* user_data)
-{
-    tapi_async_handler* handler;
-    tapi_async_result* ar;
-
-    handler = user_data;
-    if (handler) {
-        ar = handler->result;
-        if (ar) {
-            if (ar->data)
-                free(ar->data);
-            free(ar);
-        }
-
-        free(handler);
-    }
-}
-
 static void oem_ril_request_raw_param_append(DBusMessageIter* iter, void* user_data)
 {
     oem_ril_request_data* oem_ril_req_raw_param;
@@ -458,6 +427,8 @@ static void oem_ril_request_raw_param_append(DBusMessageIter* iter, void* user_d
     }
 
     dbus_message_iter_close_container(iter, &array);
+
+    free(oem_ril_req_raw_param);
 }
 
 static void oem_ril_request_raw_cb(DBusMessage* message, void* user_data)
@@ -523,6 +494,8 @@ static void oem_ril_request_strings_param_append(DBusMessageIter* iter, void* us
     }
 
     dbus_message_iter_close_container(iter, &array);
+
+    free(oem_ril_req_strings_param);
 }
 
 static void oem_ril_request_strings_cb(DBusMessage* message, void* user_data)
@@ -1157,8 +1130,9 @@ int tapi_invoke_oem_ril_request_raw(tapi_context context, int slot_id, int event
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy, "OemRequestRaw", oem_ril_request_raw_param_append,
-            oem_ril_request_raw_cb, handler, oem_ril_req_data_free)) {
-        oem_ril_req_data_free(handler);
+            oem_ril_request_raw_cb, handler, user_data_free)) {
+        user_data_free(handler);
+        free(oem_ril_req);
         return -EINVAL;
     }
 
@@ -1211,8 +1185,9 @@ int tapi_invoke_oem_ril_request_strings(tapi_context context, int slot_id, int e
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy, "OemRequestStrings", oem_ril_request_strings_param_append,
-            oem_ril_request_strings_cb, handler, oem_ril_req_data_free)) {
-        oem_ril_req_data_free(handler);
+            oem_ril_request_strings_cb, handler, user_data_free)) {
+        user_data_free(handler);
+        free(oem_ril_req_param);
         return -EINVAL;
     }
 
