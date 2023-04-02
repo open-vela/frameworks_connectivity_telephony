@@ -338,19 +338,6 @@ done:
     return true;
 }
 
-static void user_data_free(void* user_data)
-{
-    tapi_async_handler* handler = user_data;
-    tapi_async_result* ar;
-
-    if (handler != NULL) {
-        ar = handler->result;
-        if (ar != NULL)
-            free(ar);
-        free(handler);
-    }
-}
-
 static void update_apn_context(const char* prop, DBusMessageIter* iter, tapi_apn_context* apn)
 {
     const char* value;

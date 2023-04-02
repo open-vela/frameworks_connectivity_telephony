@@ -43,20 +43,6 @@ static char* proxy_get_string(GDBusProxy* proxy, const char* property)
     return str;
 }
 
-static void cbs_event_free(void* user_data)
-{
-    tapi_async_handler* handler;
-    tapi_async_result* ar;
-
-    handler = user_data;
-    if (handler != NULL) {
-        ar = handler->result;
-        if (ar != NULL)
-            free(ar);
-        free(handler);
-    }
-}
-
 static int unsol_cbs_message(DBusConnection* connection,
     DBusMessage* message, void* user_data)
 {
@@ -269,19 +255,19 @@ int tapi_cbs_register(tapi_context context, int slot_id, tapi_indication_msg msg
     case MSG_INCOMING_CBS_IND:
         watch_id = g_dbus_add_signal_watch(ctx->connection, OFONO_SERVICE, path,
             OFONO_CELL_BROADCAST_INTERFACE, "IncomingBroadcast",
-            unsol_cbs_message, user_data, cbs_event_free);
+            unsol_cbs_message, user_data, user_data_free);
         break;
     case MSG_EMERGENCY_CBS_IND:
         watch_id = g_dbus_add_signal_watch(ctx->connection, OFONO_SERVICE, path,
             OFONO_CELL_BROADCAST_INTERFACE, "EmergencyBroadcast",
-            unsol_cbs_message, user_data, cbs_event_free);
+            unsol_cbs_message, user_data, user_data_free);
         break;
     default:
         break;
     }
 
     if (watch_id == 0) {
-        cbs_event_free(user_data);
+        user_data_free(user_data);
         return -EINVAL;
     }
 

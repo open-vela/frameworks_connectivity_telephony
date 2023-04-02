@@ -51,9 +51,8 @@ typedef struct {
 
 static int sim_state_changed(DBusConnection* connection,
     DBusMessage* message, void* user_data);
-static void user_data_free(void* user_data);
 /* This method should be called if the data field needs to be recycled. */
-static void user_data_free2(void* user_data);
+static void sim_event_data_free(void* user_data);
 static void change_pin_param_append(DBusMessageIter* iter, void* user_data);
 static void method_call_complete(DBusMessage* message, void* user_data);
 static void enter_pin_param_append(DBusMessageIter* iter, void* user_data);
@@ -220,21 +219,8 @@ static int sim_uicc_app_enabled_changed(DBusConnection* connection,
     return 1;
 }
 
-static void user_data_free(void* user_data)
-{
-    tapi_async_handler* handler = user_data;
-    tapi_async_result* ar;
-
-    if (handler != NULL) {
-        ar = handler->result;
-        if (ar != NULL)
-            free(ar);
-        free(handler);
-    }
-}
-
 /* This method should be called if the data field needs to be recycled. */
-static void user_data_free2(void* user_data)
+static void sim_event_data_free(void* user_data)
 {
     tapi_async_handler* handler = user_data;
     tapi_async_result* ar;
@@ -857,8 +843,8 @@ int tapi_sim_change_pin(tapi_context context, int slot_id,
         user_data->result = ar;
 
         if (!g_dbus_proxy_method_call(proxy, "ChangePin",
-                change_pin_param_append, method_call_complete, user_data, user_data_free2)) {
-            user_data_free2(user_data);
+                change_pin_param_append, method_call_complete, user_data, sim_event_data_free)) {
+            sim_event_data_free(user_data);
             return -EINVAL;
         }
 
@@ -919,8 +905,8 @@ int tapi_sim_enter_pin(tapi_context context, int slot_id,
         user_data->result = ar;
 
         if (!g_dbus_proxy_method_call(proxy, "EnterPin",
-                enter_pin_param_append, method_call_complete, user_data, user_data_free2)) {
-            user_data_free2(user_data);
+                enter_pin_param_append, method_call_complete, user_data, sim_event_data_free)) {
+            sim_event_data_free(user_data);
             return -EINVAL;
         }
 
@@ -982,8 +968,8 @@ int tapi_sim_reset_pin(tapi_context context, int slot_id,
         user_data->result = ar;
 
         if (!g_dbus_proxy_method_call(proxy, "ResetPin",
-                reset_pin_param_append, method_call_complete, user_data, user_data_free2)) {
-            user_data_free2(user_data);
+                reset_pin_param_append, method_call_complete, user_data, sim_event_data_free)) {
+            sim_event_data_free(user_data);
             return -EINVAL;
         }
 
@@ -1044,8 +1030,8 @@ int tapi_sim_lock_pin(tapi_context context, int slot_id,
         user_data->result = ar;
 
         if (!g_dbus_proxy_method_call(proxy, "LockPin",
-                lock_pin_param_append, method_call_complete, user_data, user_data_free2)) {
-            user_data_free2(user_data);
+                lock_pin_param_append, method_call_complete, user_data, sim_event_data_free)) {
+            sim_event_data_free(user_data);
             return -EINVAL;
         }
 
@@ -1106,8 +1092,8 @@ int tapi_sim_unlock_pin(tapi_context context, int slot_id,
         user_data->result = ar;
 
         if (!g_dbus_proxy_method_call(proxy, "UnlockPin",
-                unlock_pin_param_append, method_call_complete, user_data, user_data_free2)) {
-            user_data_free2(user_data);
+                unlock_pin_param_append, method_call_complete, user_data, sim_event_data_free)) {
+            sim_event_data_free(user_data);
             return -EINVAL;
         }
 
@@ -1272,8 +1258,8 @@ int tapi_sim_transmit_apdu_logical_channel(tapi_context context, int slot_id,
         user_data->result = ar;
 
         if (!g_dbus_proxy_method_call(proxy, "TransmitApduLogicalChannel",
-                transmit_apdu_param_append, transmit_apdu_cb, user_data, user_data_free2)) {
-            user_data_free2(user_data);
+                transmit_apdu_param_append, transmit_apdu_cb, user_data, sim_event_data_free)) {
+            sim_event_data_free(user_data);
             return -EINVAL;
         }
 
@@ -1333,8 +1319,8 @@ int tapi_sim_transmit_apdu_basic_channel(tapi_context context, int slot_id,
         user_data->result = ar;
 
         if (!g_dbus_proxy_method_call(proxy, "TransmitApduBasicChannel",
-                transmit_apdu_basic_channel_param_append, transmit_apdu_cb, user_data, user_data_free2)) {
-            user_data_free2(user_data);
+                transmit_apdu_basic_channel_param_append, transmit_apdu_cb, user_data, sim_event_data_free)) {
+            sim_event_data_free(user_data);
             return -EINVAL;
         }
 

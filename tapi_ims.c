@@ -35,20 +35,6 @@
  * Private Function
  ****************************************************************************/
 
-static void ims_data_free(void* user_data)
-{
-    tapi_async_handler* handler = user_data;
-    tapi_async_result* ar;
-
-    if (handler != NULL) {
-        ar = handler->result;
-        if (ar != NULL)
-            free(ar);
-
-        free(handler);
-    }
-}
-
 static int tapi_ims_bitmask(int bit_mask, int bit_field, bool enabled)
 {
     if (enabled)
@@ -223,10 +209,10 @@ int tapi_ims_register_registration_change(tapi_context context, int slot_id, tap
 
     watch_id = g_dbus_add_signal_watch(ctx->connection,
         OFONO_SERVICE, path, OFONO_IMS_INTERFACE, "PropertyChanged",
-        ims_registration_changed, handler, ims_data_free);
+        ims_registration_changed, handler, user_data_free);
 
     if (watch_id == 0) {
-        ims_data_free(handler);
+        user_data_free(handler);
     }
 
     return watch_id;

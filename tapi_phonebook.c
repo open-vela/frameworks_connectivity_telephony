@@ -38,9 +38,8 @@ typedef struct {
  * Private Function Prototypes
  ****************************************************************************/
 
-static void user_data_free(void* user_data);
 /* This method should be called if the data field needs to be recycled. */
-static void user_data_free2(void* user_data);
+static void phonebook_event_data_free(void* user_data);
 static void load_adn_entries_cb(DBusMessage* message, void* user_data);
 static void load_fdn_entries_cb(DBusMessage* message, void* user_data);
 static void insert_fdn_record_append(DBusMessageIter* iter, void* user_data);
@@ -53,22 +52,8 @@ static void method_call_complete(DBusMessage* message, void* user_data);
  * Private Functions
  ****************************************************************************/
 
-static void user_data_free(void* user_data)
-{
-    tapi_async_handler* handler = user_data;
-    tapi_async_result* ar;
-
-    if (handler != NULL) {
-        ar = handler->result;
-        if (ar != NULL)
-            free(ar);
-
-        free(handler);
-    }
-}
-
 /* This method should be called if the data field needs to be recycled. */
-static void user_data_free2(void* user_data)
+static void phonebook_event_data_free(void* user_data)
 {
     tapi_async_handler* handler = user_data;
     tapi_async_result* ar;
@@ -463,8 +448,8 @@ int tapi_phonebook_insert_fdn_entry(tapi_context context, int slot_id,
     user_data->result = ar;
 
     if (!g_dbus_proxy_method_call(proxy, "InsertFdn", insert_fdn_record_append,
-            insert_fdn_record_cb, user_data, user_data_free2)) {
-        user_data_free2(user_data);
+            insert_fdn_record_cb, user_data, phonebook_event_data_free)) {
+        phonebook_event_data_free(user_data);
         return -EINVAL;
     }
 
@@ -517,8 +502,8 @@ int tapi_phonebook_delete_fdn_entry(tapi_context context, int slot_id,
     user_data->result = ar;
 
     if (!g_dbus_proxy_method_call(proxy, "DeleteFdn", delete_fdn_record_append,
-            method_call_complete, user_data, user_data_free2)) {
-        user_data_free2(user_data);
+            method_call_complete, user_data, phonebook_event_data_free)) {
+        phonebook_event_data_free(user_data);
         return -EINVAL;
     }
 
@@ -574,8 +559,8 @@ int tapi_phonebook_update_fdn_entry(tapi_context context, int slot_id, int event
     user_data->result = ar;
 
     if (!g_dbus_proxy_method_call(proxy, "UpdateFdn", update_fdn_record_append,
-            method_call_complete, user_data, user_data_free2)) {
-        user_data_free2(user_data);
+            method_call_complete, user_data, phonebook_event_data_free)) {
+        phonebook_event_data_free(user_data);
         return -EINVAL;
     }
 

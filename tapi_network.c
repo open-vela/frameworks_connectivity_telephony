@@ -479,19 +479,6 @@ static int nitz_state_changed(DBusConnection* connection,
     return 1;
 }
 
-static void user_data_free(void* user_data)
-{
-    tapi_async_handler* handler = user_data;
-    tapi_async_result* ar;
-
-    if (handler != NULL) {
-        ar = handler->result;
-        if (ar != NULL)
-            free(ar);
-        free(handler);
-    }
-}
-
 static void network_register_cb(DBusMessage* message, void* user_data)
 {
     tapi_async_handler* handler = user_data;

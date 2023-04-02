@@ -468,3 +468,16 @@ const char* tapi_sim_state_to_string(tapi_sim_state sim_state)
         return "SIM_UNKNOWN";
     }
 }
+
+void user_data_free(void* user_data)
+{
+    tapi_async_handler* handler = user_data;
+    tapi_async_result* ar;
+
+    if (handler != NULL) {
+        ar = handler->result;
+        if (ar != NULL)
+            free(ar);
+        free(handler);
+    }
+}

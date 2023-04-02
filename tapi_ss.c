@@ -452,20 +452,6 @@ done:
     cb(ar);
 }
 
-static void user_data_free(void* user_data)
-{
-    tapi_async_handler* handler;
-    tapi_async_result* ar;
-
-    handler = user_data;
-    if (handler) {
-        ar = handler->result;
-        if (ar)
-            free(ar);
-        free(handler);
-    }
-}
-
 static void user_data_free2(void* user_data)
 {
     tapi_async_handler* handler;
