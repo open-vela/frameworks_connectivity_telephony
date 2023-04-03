@@ -3877,7 +3877,7 @@ static void* read_stdin(pthread_addr_t pvarg)
     char *cmd, *arg, *buffer;
     tapi_context context = (void*)pvarg;
 
-    buffer = malloc(MAX_INPUT_ARGS_LEN);
+    buffer = malloc(CONFIG_NSH_LINELEN);
     if (buffer == NULL) {
         return NULL;
     }
@@ -3886,7 +3886,7 @@ static void* read_stdin(pthread_addr_t pvarg)
         printf("telephonytool> ");
         fflush(stdout);
 
-        len = readline(buffer, MAX_INPUT_ARGS_LEN, stdin, stdout);
+        len = readline(buffer, CONFIG_NSH_LINELEN, stdin, stdout);
         buffer[len] = '\0';
         if (len < 0)
             continue;
