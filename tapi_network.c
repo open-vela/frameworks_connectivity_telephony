@@ -815,8 +815,8 @@ int tapi_network_select_auto(tapi_context context,
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy,
-            "Register", NULL, network_register_cb, handler, user_data_free)) {
-        user_data_free(handler);
+            "Register", NULL, network_register_cb, handler, handler_free)) {
+        handler_free(handler);
         return -EINVAL;
     }
 
@@ -857,8 +857,8 @@ int tapi_network_select_manual(tapi_context context,
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy, "RegisterManual",
-            register_param_append, network_register_cb, handler, user_data_free)) {
-        user_data_free(handler);
+            register_param_append, network_register_cb, handler, handler_free)) {
+        handler_free(handler);
         return -EINVAL;
     }
 
@@ -899,8 +899,8 @@ int tapi_network_scan(tapi_context context,
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy,
-            "Scan", NULL, operator_scan_complete, handler, user_data_free)) {
-        user_data_free(handler);
+            "Scan", NULL, operator_scan_complete, handler, handler_free)) {
+        handler_free(handler);
         return -EINVAL;
     }
 
@@ -941,8 +941,8 @@ int tapi_network_get_serving_cellinfos(tapi_context context,
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy, "GetServingCellInformation", NULL,
-            cell_list_request_complete, handler, user_data_free)) {
-        user_data_free(handler);
+            cell_list_request_complete, handler, handler_free)) {
+        handler_free(handler);
         return -EINVAL;
     }
 
@@ -984,8 +984,8 @@ int tapi_network_get_neighbouring_cellinfos(tapi_context context,
 
     if (!g_dbus_proxy_method_call(proxy,
             "GetNeighbouringCellInformation", NULL, cell_list_request_complete,
-            handler, user_data_free)) {
-        user_data_free(handler);
+            handler, handler_free)) {
+        handler_free(handler);
         return -EINVAL;
     }
 
@@ -1134,8 +1134,8 @@ int tapi_network_get_registration_info(tapi_context context,
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy,
-            "GetProperties", NULL, registration_info_query_done, handler, user_data_free)) {
-        user_data_free(handler);
+            "GetProperties", NULL, registration_info_query_done, handler, handler_free)) {
+        handler_free(handler);
         return -EINVAL;
     }
 
@@ -1179,8 +1179,8 @@ int tapi_network_set_cell_info_list_rate(tapi_context context, int slot_id,
 
     if (!g_dbus_proxy_method_call(proxy,
             "CellInfoUpdateRate", cell_info_list_rate_param_append,
-            NULL, handler, user_data_free)) {
-        user_data_free(handler);
+            NULL, handler, handler_free)) {
+        handler_free(handler);
         return -EINVAL;
     }
 
@@ -1188,7 +1188,7 @@ int tapi_network_set_cell_info_list_rate(tapi_context context, int slot_id,
 }
 
 int tapi_network_register(tapi_context context,
-    int slot_id, tapi_indication_msg msg, tapi_async_function p_handle)
+    int slot_id, tapi_indication_msg msg, void* user_obj, tapi_async_function p_handle)
 {
     dbus_context* ctx = context;
     tapi_async_handler* handler;
@@ -1220,34 +1220,35 @@ int tapi_network_register(tapi_context context,
     handler->result = ar;
     ar->msg_id = msg;
     ar->arg1 = slot_id;
+    ar->user_obj = user_obj;
 
     switch (msg) {
     case MSG_NETWORK_STATE_CHANGE_IND:
         watch_id = g_dbus_add_signal_watch(ctx->connection,
             OFONO_SERVICE, modem_path, OFONO_NETWORK_REGISTRATION_INTERFACE,
-            "PropertyChanged", network_state_changed, handler, user_data_free);
+            "PropertyChanged", network_state_changed, handler, handler_free);
         break;
     case MSG_CELLINFO_CHANGE_IND:
         watch_id = g_dbus_add_signal_watch(ctx->connection,
             OFONO_SERVICE, modem_path, OFONO_NETMON_INTERFACE,
-            "PropertyChanged", cellinfo_list_changed, handler, user_data_free);
+            "PropertyChanged", cellinfo_list_changed, handler, handler_free);
         break;
     case MSG_SIGNAL_STRENGTH_CHANGE_IND:
         watch_id = g_dbus_add_signal_watch(ctx->connection,
             OFONO_SERVICE, modem_path, OFONO_NETWORK_REGISTRATION_INTERFACE,
-            "PropertyChanged", signal_strength_changed, handler, user_data_free);
+            "PropertyChanged", signal_strength_changed, handler, handler_free);
         break;
     case MSG_NITZ_STATE_CHANGE_IND:
         watch_id = g_dbus_add_signal_watch(ctx->connection,
             OFONO_SERVICE, modem_path, OFONO_NETWORK_REGISTRATION_INTERFACE,
-            "PropertyChanged", nitz_state_changed, handler, user_data_free);
+            "PropertyChanged", nitz_state_changed, handler, handler_free);
         break;
     default:
         break;
     }
 
     if (watch_id == 0) {
-        user_data_free(handler);
+        handler_free(handler);
         return -EINVAL;
     }
 

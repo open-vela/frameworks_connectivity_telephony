@@ -722,7 +722,7 @@ int tapi_sim_get_subscriber_id(tapi_context context, int slot_id, char** out)
 }
 
 int tapi_sim_register(tapi_context context, int slot_id,
-    tapi_indication_msg msg, tapi_async_function p_handle)
+    tapi_indication_msg msg, void* user_obj, tapi_async_function p_handle)
 {
     dbus_context* ctx = context;
     tapi_async_handler* handler;
@@ -754,24 +754,25 @@ int tapi_sim_register(tapi_context context, int slot_id,
     handler->result = ar;
     ar->msg_id = msg;
     ar->arg1 = slot_id;
+    ar->user_obj = user_obj;
 
     switch (msg) {
     case MSG_SIM_STATE_CHANGE_IND:
         watch_id = g_dbus_add_signal_watch(ctx->connection,
             OFONO_SERVICE, modem_path, OFONO_SIM_MANAGER_INTERFACE,
-            "PropertyChanged", sim_state_changed, handler, user_data_free);
+            "PropertyChanged", sim_state_changed, handler, handler_free);
         break;
     case MSG_SIM_UICC_APP_ENABLED_CHANGE_IND:
         watch_id = g_dbus_add_signal_watch(ctx->connection,
             OFONO_SERVICE, modem_path, OFONO_SIM_MANAGER_INTERFACE,
-            "PropertyChanged", sim_uicc_app_enabled_changed, handler, user_data_free);
+            "PropertyChanged", sim_uicc_app_enabled_changed, handler, handler_free);
         break;
     default:
         break;
     }
 
     if (watch_id == 0) {
-        user_data_free(handler);
+        handler_free(handler);
         return -EINVAL;
     }
 
@@ -1144,8 +1145,8 @@ int tapi_sim_open_logical_channel(tapi_context context, int slot_id,
         user_data->result = ar;
 
         if (!g_dbus_proxy_method_call(proxy, "OpenLogicalChannel", open_channel_param_append,
-                open_logical_channel_cb, user_data, user_data_free)) {
-            user_data_free(user_data);
+                open_logical_channel_cb, user_data, handler_free)) {
+            handler_free(user_data);
             return -EINVAL;
         }
 
@@ -1195,8 +1196,8 @@ int tapi_sim_close_logical_channel(tapi_context context, int slot_id,
         user_data->result = ar;
 
         if (!g_dbus_proxy_method_call(proxy, "CloseLogicalChannel", close_channel_param_append,
-                method_call_complete, user_data, user_data_free)) {
-            user_data_free(user_data);
+                method_call_complete, user_data, handler_free)) {
+            handler_free(user_data);
             return -EINVAL;
         }
 
@@ -1403,8 +1404,8 @@ int tapi_sim_set_uicc_enablement(tapi_context context,
         handler->cb_function = p_handle;
 
         if (!g_dbus_proxy_set_property_basic(proxy, "UiccActive", DBUS_TYPE_INT32,
-                &value, property_set_done, handler, user_data_free)) {
-            user_data_free(handler);
+                &value, property_set_done, handler, handler_free)) {
+            handler_free(handler);
             return -EINVAL;
         }
 

@@ -99,7 +99,7 @@ void no_operate_callback(DBusMessage* message, void* user_data);
 bool is_call_signal_message(DBusMessage* message, DBusMessageIter* iter, int msg_type);
 const char* get_call_signal_member(tapi_indication_msg msg);
 void property_set_done(const DBusError* error, void* user_data);
-void user_data_free(void* user_data);
+void handler_free(void* obj);
 
 #ifdef __cplusplus
 }

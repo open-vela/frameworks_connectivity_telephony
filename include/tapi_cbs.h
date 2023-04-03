@@ -93,10 +93,12 @@ int tapi_sms_get_cell_broadcast_topics(tapi_context context, int slot_id, char**
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[in] msg            indicate unsol message type.
+ * @param[in] user_obj       User data.
  * @param[in] p_handle       Event callback.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_cbs_register(tapi_context context, int slot_id, tapi_indication_msg msg, tapi_async_function p_handle);
+int tapi_cbs_register(tapi_context context, int slot_id, tapi_indication_msg msg,
+    void* user_obj, tapi_async_function p_handle);
 
 #ifdef __cplusplus
 }

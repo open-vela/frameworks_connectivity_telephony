@@ -649,8 +649,9 @@ static int decode_voice_call_info(DBusMessageIter* iter, tapi_call_info* call_in
     return true;
 }
 
-static int tapi_register_call_signal(tapi_context context, int slot_id, char* path, char* interface,
-    tapi_indication_msg msg, tapi_async_function p_handle, GDBusSignalFunction function)
+static int tapi_register_call_signal(tapi_context context, int slot_id,
+    char* path, char* interface, tapi_indication_msg msg,
+    void* user_obj, tapi_async_function p_handle, GDBusSignalFunction function)
 {
     tapi_async_handler* handler;
     dbus_context* ctx = context;
@@ -679,6 +680,7 @@ static int tapi_register_call_signal(tapi_context context, int slot_id, char* pa
     }
     ar->msg_id = msg;
     ar->arg1 = slot_id;
+    ar->user_obj = user_obj;
 
     handler = malloc(sizeof(tapi_async_handler));
     if (handler == NULL) {
@@ -689,9 +691,9 @@ static int tapi_register_call_signal(tapi_context context, int slot_id, char* pa
     handler->result = ar;
 
     watch_id = g_dbus_add_signal_watch(ctx->connection,
-        OFONO_SERVICE, path, interface, member, function, handler, user_data_free);
+        OFONO_SERVICE, path, interface, member, function, handler, handler_free);
     if (watch_id == 0) {
-        user_data_free(handler);
+        handler_free(handler);
         return -EINVAL;
     }
 
@@ -699,7 +701,8 @@ static int tapi_register_call_signal(tapi_context context, int slot_id, char* pa
 }
 
 static int tapi_register_manager_call_signal(tapi_context context, int slot_id, char* interface,
-    tapi_indication_msg msg, tapi_async_function p_handle, GDBusSignalFunction function)
+    tapi_indication_msg msg, void* user_obj, tapi_async_function p_handle,
+    GDBusSignalFunction function)
 {
     tapi_async_handler* handler;
     dbus_context* ctx = context;
@@ -730,6 +733,7 @@ static int tapi_register_manager_call_signal(tapi_context context, int slot_id, 
     }
     ar->msg_id = msg;
     ar->arg1 = slot_id;
+    ar->user_obj = user_obj;
 
     handler = malloc(sizeof(tapi_async_handler));
     if (handler == NULL) {
@@ -740,9 +744,9 @@ static int tapi_register_manager_call_signal(tapi_context context, int slot_id, 
     handler->result = ar;
 
     watch_id = g_dbus_add_signal_watch(ctx->connection,
-        OFONO_SERVICE, modem_path, interface, member, function, handler, user_data_free);
+        OFONO_SERVICE, modem_path, interface, member, function, handler, handler_free);
     if (watch_id == 0) {
-        user_data_free(handler);
+        handler_free(handler);
         return -EINVAL;
     }
 
@@ -1027,8 +1031,8 @@ int tapi_call_get_all_calls(tapi_context context, int slot_id,
     handler->result = ar;
 
     if (!g_dbus_proxy_method_call(proxy, "GetCalls", NULL,
-            call_list_query_complete, handler, user_data_free)) {
-        user_data_free(handler);
+            call_list_query_complete, handler, handler_free)) {
+        handler_free(handler);
         return -EINVAL;
     }
 
@@ -1149,8 +1153,8 @@ int tapi_call_merge_call(tapi_context context,
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy, "CreateMultiparty", NULL,
-            merge_call_complete, handler, user_data_free)) {
-        user_data_free(handler);
+            merge_call_complete, handler, handler_free)) {
+        handler_free(handler);
         return -EINVAL;
     }
 
@@ -1192,8 +1196,8 @@ int tapi_call_separate_call(tapi_context context,
     handler->result = ar;
 
     if (!g_dbus_proxy_method_call(proxy, "PrivateChat",
-            separate_param_append, merge_call_complete, handler, user_data_free)) {
-        user_data_free(handler);
+            separate_param_append, merge_call_complete, handler, handler_free)) {
+        handler_free(handler);
         return -EINVAL;
     }
 
@@ -1289,14 +1293,14 @@ bool tapi_call_is_emergency_number(tapi_context context, char* number)
 }
 
 int tapi_call_register_managercall_change(tapi_context context, int slot_id,
-    tapi_indication_msg msg, tapi_async_function p_handle)
+    tapi_indication_msg msg, void* user_obj, tapi_async_function p_handle)
 {
     if (context == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
     }
 
     return tapi_register_manager_call_signal(context, slot_id,
-        OFONO_VOICECALL_MANAGER_INTERFACE, msg,
+        OFONO_VOICECALL_MANAGER_INTERFACE, msg, user_obj,
         p_handle, call_manager_property_changed);
 }
 
@@ -1313,17 +1317,17 @@ int tapi_call_release_voice_call_proxy(tapi_context context, int slot_id, char* 
 }
 
 int tapi_call_register_call_info_change(tapi_context context, int slot_id, char* call_id,
-    tapi_indication_msg msg, tapi_async_function p_handle)
+    tapi_indication_msg msg, void* user_obj, tapi_async_function p_handle)
 {
     if (context == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
     }
 
     return tapi_register_call_signal(context, slot_id, call_id, OFONO_VOICECALL_INTERFACE,
-        msg, p_handle, call_property_changed);
+        msg, user_obj, p_handle, call_property_changed);
 }
 
-int tapi_call_register_emergencylist_change(tapi_context context, int slot_id,
+int tapi_call_register_emergencylist_change(tapi_context context, int slot_id, void* user_obj,
     tapi_async_function p_handle)
 {
     if (context == NULL || !tapi_is_valid_slotid(slot_id)) {
@@ -1331,11 +1335,11 @@ int tapi_call_register_emergencylist_change(tapi_context context, int slot_id,
     }
 
     return tapi_register_manager_call_signal(context, slot_id,
-        OFONO_VOICECALL_MANAGER_INTERFACE, MSG_ECC_LIST_CHANGE_IND,
+        OFONO_VOICECALL_MANAGER_INTERFACE, MSG_ECC_LIST_CHANGE_IND, user_obj,
         p_handle, call_manager_property_changed);
 }
 
-int tapi_call_register_ring_back_tone_change(tapi_context context, int slot_id,
+int tapi_call_register_ring_back_tone_change(tapi_context context, int slot_id, void* user_obj,
     tapi_async_function p_handle)
 {
     if (context == NULL || !tapi_is_valid_slotid(slot_id)) {
@@ -1343,7 +1347,7 @@ int tapi_call_register_ring_back_tone_change(tapi_context context, int slot_id,
     }
 
     return tapi_register_manager_call_signal(context, slot_id,
-        OFONO_VOICECALL_MANAGER_INTERFACE, MSG_CALL_RING_BACK_TONE_IND,
+        OFONO_VOICECALL_MANAGER_INTERFACE, MSG_CALL_RING_BACK_TONE_IND, user_obj,
         p_handle, call_manager_property_changed);
 }
 
