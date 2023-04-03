@@ -98,7 +98,7 @@
 #define EVENT_UPDATE_FDN_ENTRIES_DONE 0x64
 #define EVENT_DELETE_FDN_ENTRIES_DONE 0x65
 
-#define MAX_INPUT_ARGS_LEN 32
+#define MAX_INPUT_ARGS_LEN 128
 
 /****************************************************************************
  * Public Type Declarations
