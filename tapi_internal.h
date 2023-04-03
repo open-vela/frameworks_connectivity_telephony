@@ -26,6 +26,7 @@
  ****************************************************************************/
 
 #include <gdbus.h>
+#include <nuttx/list.h>
 #include <ofono/dbus.h>
 #include <stdbool.h>
 #include <syslog.h>
@@ -42,7 +43,7 @@
 #define tapi_log_debug(format, ...) syslog(LOG_DEBUG, format, ##__VA_ARGS__)
 
 #define MAX_CONTEXT_NAME_LENGTH 256
-#define MAX_VOICE_CALL_PROXY_COUNT 10
+#define MAX_VOICE_CALL_PROXY_COUNT 99
 
 /****************************************************************************
  * Public Types
@@ -69,13 +70,19 @@ enum dbus_proxy_type {
 };
 
 typedef struct {
+    int call_id;
+    GDBusProxy* dbus_proxy;
+    struct list_node node;
+} tapi_dbus_call_proxy;
+
+typedef struct {
     char name[MAX_CONTEXT_NAME_LENGTH + 1];
     DBusConnection* connection;
     DBusMessage* pending;
     GDBusClient* client;
     GDBusProxy* dbus_proxy_manager;
     GDBusProxy* dbus_proxy[CONFIG_ACTIVE_MODEM_COUNT][DBUS_PROXY_MAX_COUNT];
-    GDBusProxy* dbus_voice_call_proxy[CONFIG_ACTIVE_MODEM_COUNT][MAX_VOICE_CALL_PROXY_COUNT];
+    struct list_node call_proxy_list[CONFIG_ACTIVE_MODEM_COUNT];
 } dbus_context;
 
 typedef struct {
