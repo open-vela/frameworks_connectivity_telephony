@@ -172,7 +172,8 @@ int tapi_ims_set_service_status(tapi_context context, int slot_id, int capabilit
     return OK;
 }
 
-int tapi_ims_register_registration_change(tapi_context context, int slot_id, tapi_async_function p_handle)
+int tapi_ims_register_registration_change(tapi_context context, int slot_id, void* user_obj,
+    tapi_async_function p_handle)
 {
     tapi_async_handler* handler;
     dbus_context* ctx = context;
@@ -206,13 +207,14 @@ int tapi_ims_register_registration_change(tapi_context context, int slot_id, tap
 
     ar->msg_id = MSG_IMS_REGISTRATION_MESSAGE_IND;
     ar->arg1 = slot_id;
+    ar->user_obj = user_obj;
 
     watch_id = g_dbus_add_signal_watch(ctx->connection,
         OFONO_SERVICE, path, OFONO_IMS_INTERFACE, "PropertyChanged",
-        ims_registration_changed, handler, user_data_free);
+        ims_registration_changed, handler, handler_free);
 
     if (watch_id == 0) {
-        user_data_free(handler);
+        handler_free(handler);
     }
 
     return watch_id;

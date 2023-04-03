@@ -646,8 +646,8 @@ int tapi_query_modem_list(tapi_context context, int event_id, tapi_async_functio
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy,
-            "GetModems", NULL, modem_list_query_done, handler, user_data_free)) {
-        user_data_free(handler);
+            "GetModems", NULL, modem_list_query_done, handler, handler_free)) {
+        handler_free(handler);
         return -EINVAL;
     }
 
@@ -710,8 +710,8 @@ int tapi_set_pref_net_mode(tapi_context context,
 
     if (!g_dbus_proxy_set_property_basic(proxy,
             "TechnologyPreference", DBUS_TYPE_STRING, &rat,
-            property_set_done, handler, user_data_free)) {
-        user_data_free(handler);
+            property_set_done, handler, handler_free)) {
+        handler_free(handler);
         return -EINVAL;
     }
 
@@ -947,8 +947,8 @@ int tapi_set_radio_power(tapi_context context,
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_set_property_basic(proxy, "Online", DBUS_TYPE_BOOLEAN,
-            &value, property_set_done, handler, user_data_free)) {
-        user_data_free(handler);
+            &value, property_set_done, handler, handler_free)) {
+        handler_free(handler);
         return -EINVAL;
     }
 
@@ -1076,8 +1076,8 @@ int tapi_get_modem_activity_info(tapi_context context, int slot_id,
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy, "GetModemActivityInfo", NULL,
-            modem_activity_info_query_done, handler, user_data_free)) {
-        user_data_free(handler);
+            modem_activity_info_query_done, handler, handler_free)) {
+        handler_free(handler);
         return -EINVAL;
     }
 
@@ -1130,8 +1130,8 @@ int tapi_invoke_oem_ril_request_raw(tapi_context context, int slot_id, int event
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy, "OemRequestRaw", oem_ril_request_raw_param_append,
-            oem_ril_request_raw_cb, handler, user_data_free)) {
-        user_data_free(handler);
+            oem_ril_request_raw_cb, handler, handler_free)) {
+        handler_free(handler);
         free(oem_ril_req);
         return -EINVAL;
     }
@@ -1185,8 +1185,8 @@ int tapi_invoke_oem_ril_request_strings(tapi_context context, int slot_id, int e
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy, "OemRequestStrings", oem_ril_request_strings_param_append,
-            oem_ril_request_strings_cb, handler, user_data_free)) {
-        user_data_free(handler);
+            oem_ril_request_strings_cb, handler, handler_free)) {
+        handler_free(handler);
         free(oem_ril_req_param);
         return -EINVAL;
     }
@@ -1228,8 +1228,8 @@ int tapi_enable_modem(tapi_context context, int slot_id,
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy, enable ? "EnableModem" : "DisableModem",
-            NULL, enable_or_disable_modem_done, handler, user_data_free)) {
-        user_data_free(handler);
+            NULL, enable_or_disable_modem_done, handler, handler_free)) {
+        handler_free(handler);
         return -EINVAL;
     }
 
@@ -1270,8 +1270,8 @@ int tapi_get_modem_status(tapi_context context, int slot_id,
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy, "GetModemStatus", NULL,
-            modem_status_query_done, handler, user_data_free)) {
-        user_data_free(handler);
+            modem_status_query_done, handler, handler_free)) {
+        handler_free(handler);
         return -EINVAL;
     }
 
@@ -1279,7 +1279,7 @@ int tapi_get_modem_status(tapi_context context, int slot_id,
 }
 
 int tapi_register(tapi_context context,
-    int slot_id, tapi_indication_msg msg, tapi_async_function p_handle)
+    int slot_id, tapi_indication_msg msg, void* user_obj, tapi_async_function p_handle)
 {
     dbus_context* ctx = context;
     const char* modem_path;
@@ -1311,34 +1311,35 @@ int tapi_register(tapi_context context,
     handler->result = ar;
     ar->msg_id = msg;
     ar->arg1 = slot_id;
+    ar->user_obj = user_obj;
 
     switch (msg) {
     case MSG_RADIO_STATE_CHANGE_IND:
         watch_id = g_dbus_add_signal_watch(ctx->connection,
             OFONO_SERVICE, modem_path, OFONO_MODEM_INTERFACE,
-            "PropertyChanged", radio_state_changed, handler, user_data_free);
+            "PropertyChanged", radio_state_changed, handler, handler_free);
         break;
     case MSG_PHONE_STATE_CHANGE_IND:
         watch_id = g_dbus_add_signal_watch(ctx->connection,
             OFONO_SERVICE, modem_path, OFONO_VOICECALL_MANAGER_INTERFACE,
-            "PhoneStatusChanged", phone_state_changed, handler, user_data_free);
+            "PhoneStatusChanged", phone_state_changed, handler, handler_free);
         break;
     case MSG_OEM_HOOK_RAW_IND:
         watch_id = g_dbus_add_signal_watch(ctx->connection,
             OFONO_SERVICE, modem_path, OFONO_MODEM_INTERFACE,
-            "OemHookIndication", process_oem_hook_raw_indication, handler, user_data_free);
+            "OemHookIndication", process_oem_hook_raw_indication, handler, handler_free);
         break;
     case MSG_MODEM_RESTART_IND:
         watch_id = g_dbus_add_signal_watch(ctx->connection,
             OFONO_SERVICE, modem_path, OFONO_MODEM_INTERFACE,
-            "ModemRestart", modem_restart, handler, user_data_free);
+            "ModemRestart", modem_restart, handler, handler_free);
         break;
     default:
         break;
     }
 
     if (watch_id == 0) {
-        user_data_free(handler);
+        handler_free(handler);
         return -EINVAL;
     }
 

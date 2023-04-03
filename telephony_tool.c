@@ -113,7 +113,9 @@ enum cmd_type {
     NETWORK_CMD,
     SS_CMD,
     IMS_CMD,
-    PHONEBOOK_CMD
+    PHONEBOOK_CMD,
+    QUIT_CMD,
+    HELP_CMD
 };
 
 typedef int (*telephonytool_cmd_func)(tapi_context context, char* pargs);
@@ -935,36 +937,36 @@ static int telephonytool_cmd_listen_call_manager_change(tapi_context context, ch
 
     syslog(LOG_DEBUG, "%s, cnt : %d\n", __func__, cnt);
     watch_id = tapi_call_register_managercall_change(context, slot_id, MSG_CALL_ADD_MESSAGE_IND,
-        tele_call_manager_call_async_fun);
+        NULL, tele_call_manager_call_async_fun);
     syslog(LOG_DEBUG, "retister call add change, return watch id: %d\n", watch_id);
     if (watch_id < 0)
         return watch_id;
 
     watch_id = tapi_call_register_managercall_change(context, slot_id, MSG_CALL_REMOVE_MESSAGE_IND,
-        tele_call_manager_call_async_fun);
+        NULL, tele_call_manager_call_async_fun);
     syslog(LOG_DEBUG, "reitster call remove change, return watch id: %d\n", watch_id);
     if (watch_id < 0)
         return watch_id;
 
     watch_id = tapi_call_register_managercall_change(context, slot_id,
-        MSG_CALL_FORWARDED_MESSAGE_IND, tele_call_manager_call_async_fun);
+        MSG_CALL_FORWARDED_MESSAGE_IND, NULL, tele_call_manager_call_async_fun);
     syslog(LOG_DEBUG, "reitster call forwared change, return watch id: %d\n", watch_id);
     if (watch_id < 0)
         return watch_id;
 
     watch_id = tapi_call_register_managercall_change(context, slot_id,
-        MSG_CALL_BARRING_ACTIVE_MESSAGE_IND, tele_call_manager_call_async_fun);
+        MSG_CALL_BARRING_ACTIVE_MESSAGE_IND, NULL, tele_call_manager_call_async_fun);
     syslog(LOG_DEBUG, "reitster call barring change, return watch id: %d\n", watch_id);
     if (watch_id < 0)
         return watch_id;
 
-    watch_id = tapi_call_register_emergencylist_change(context, slot_id,
+    watch_id = tapi_call_register_emergencylist_change(context, slot_id, NULL,
         tele_call_ecc_list_async_fun);
     syslog(LOG_DEBUG, "retister ecc list change, return watch id: %d\n", watch_id);
     if (watch_id < 0)
         return watch_id;
 
-    watch_id = tapi_call_register_ring_back_tone_change(context, slot_id,
+    watch_id = tapi_call_register_ring_back_tone_change(context, slot_id, NULL,
         tele_call_manager_call_async_fun);
     syslog(LOG_DEBUG, "retister ring back tone change, return watch id: %d\n", watch_id);
 
@@ -1037,13 +1039,13 @@ static int telephonytool_cmd_listen_call_info_change(tapi_context context, char*
     syslog(LOG_DEBUG, "%s, cnt : %d\n", __func__, cnt);
 
     watch_id = tapi_call_register_call_info_change(context, slot_id, call_id,
-        MSG_CALL_PROPERTY_CHANGED_MESSAGE_IND, tele_call_info_call_async_fun);
+        MSG_CALL_PROPERTY_CHANGED_MESSAGE_IND, NULL, tele_call_info_call_async_fun);
     syslog(LOG_DEBUG, "register call info change, return watch id: %d\n", watch_id);
     if (watch_id < 0)
         return watch_id;
 
     watch_id = tapi_call_register_call_info_change(context, slot_id, call_id,
-        MSG_CALL_DISCONNECTED_REASON_MESSAGE_IND, tele_call_info_call_async_fun);
+        MSG_CALL_DISCONNECTED_REASON_MESSAGE_IND, NULL, tele_call_info_call_async_fun);
     syslog(LOG_DEBUG, "register call disconnected reason change, return watch id: %d\n", watch_id);
     return watch_id;
 }
@@ -1219,7 +1221,7 @@ static int telephonytool_cmd_modem_register(tapi_context context, char* pargs)
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
-    watch_id = tapi_register(context, atoi(slot_id), atoi(target_state), radio_signal_change);
+    watch_id = tapi_register(context, atoi(slot_id), atoi(target_state), NULL, radio_signal_change);
     syslog(LOG_DEBUG, "start to watch radio event : %d , return watch_id : %d \n",
         atoi(target_state), watch_id);
 
@@ -2005,7 +2007,8 @@ static int telephonytool_cmd_data_register(tapi_context context, char* pargs)
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
-    watch_id = tapi_data_register(context, atoi(slot_id), atoi(target_state), data_signal_change);
+    watch_id = tapi_data_register(context, atoi(slot_id), atoi(target_state),
+        NULL, data_signal_change);
     syslog(LOG_DEBUG, "start to watch data event : %d , return watch_id : %d \n",
         atoi(target_state), watch_id);
 
@@ -2472,7 +2475,8 @@ static int telephonytool_cmd_listen_sim(tapi_context context, char* pargs)
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
-    watch_id = tapi_sim_register(context, atoi(slot_id), atoi(target_state), tele_sim_async_fun);
+    watch_id = tapi_sim_register(context, atoi(slot_id), atoi(target_state),
+        NULL, tele_sim_async_fun);
     syslog(LOG_DEBUG, "start to watch sim event : %d , return watch_id : %d \n",
         atoi(target_state), watch_id);
 
@@ -2610,8 +2614,8 @@ static int telephonytool_tapi_sms_register(tapi_context context, char* pargs)
         return -EINVAL;
 
     syslog(LOG_DEBUG, "%s, slotId : %s \n", __func__, slot_id);
-    tapi_sms_register(context, atoi(slot_id), MSG_INCOMING_MESSAGE_IND, tele_sms_async_fun);
-    tapi_sms_register(context, atoi(slot_id), MSG_IMMEDIATE_MESSAGE_IND, tele_sms_async_fun);
+    tapi_sms_register(context, atoi(slot_id), MSG_INCOMING_MESSAGE_IND, NULL, tele_sms_async_fun);
+    tapi_sms_register(context, atoi(slot_id), MSG_IMMEDIATE_MESSAGE_IND, NULL, tele_sms_async_fun);
 
     return 0;
 }
@@ -2715,8 +2719,8 @@ static int telephonytool_tapi_cbs_register(tapi_context context, char* pargs)
         return -EINVAL;
 
     syslog(LOG_DEBUG, "%s, slotId : %s \n", __func__, slot_id);
-    tapi_cbs_register(context, atoi(slot_id), MSG_INCOMING_CBS_IND, tele_cbs_async_fun);
-    tapi_cbs_register(context, atoi(slot_id), MSG_EMERGENCY_CBS_IND, tele_cbs_async_fun);
+    tapi_cbs_register(context, atoi(slot_id), MSG_INCOMING_CBS_IND, NULL, tele_cbs_async_fun);
+    tapi_cbs_register(context, atoi(slot_id), MSG_EMERGENCY_CBS_IND, NULL, tele_cbs_async_fun);
 
     return 0;
 }
@@ -2795,7 +2799,7 @@ static int telephonytool_cmd_network_listen(tapi_context context, char* pargs)
         return -EINVAL;
 
     watch_id = tapi_network_register(context,
-        atoi(slot_id), atoi(target_state), network_signal_change);
+        atoi(slot_id), atoi(target_state), NULL, network_signal_change);
     syslog(LOG_DEBUG, "start to watch network event : %d , return watch_id : %d \n",
         atoi(target_state), watch_id);
 
@@ -3548,7 +3552,7 @@ static int telephonytool_cmd_ss_listen(tapi_context context, char* pargs)
         return -EINVAL;
 
     watch_id = tapi_ss_register(context,
-        atoi(slot_id), atoi(target_state), ss_signal_change);
+        atoi(slot_id), atoi(target_state), NULL, ss_signal_change);
     syslog(LOG_DEBUG, "start to watch ss event : %d , return watch_id : %d \n",
         atoi(target_state), watch_id);
 
@@ -3636,7 +3640,7 @@ static int telephonytool_cmd_ims_register(tapi_context context, char* pargs)
 
     slot_id = atoi(dst[0]);
 
-    watch_id = tapi_ims_register_registration_change(context, slot_id, tele_ims_async_fun);
+    watch_id = tapi_ims_register_registration_change(context, slot_id, NULL, tele_ims_async_fun);
     syslog(LOG_DEBUG, "%s: slot_id: %d, watch_id: %d\n", __func__, slot_id, watch_id);
 
     return watch_id;
@@ -4402,8 +4406,8 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         "delete fdn entry (enter example : delete-fdn 0 1 1234"
         "[slot_id][fdn_idx][pin2])" },
 
-    { "q", 10, NULL, "Quit (pls enter : q)" },
-    { "help", 11, telephonytool_cmd_help,
+    { "q", QUIT_CMD, NULL, "Quit (pls enter : q)" },
+    { "help", HELP_CMD, telephonytool_cmd_help,
         "Show this message (pls enter : help)" },
     { 0 },
 };

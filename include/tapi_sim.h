@@ -130,11 +130,12 @@ int tapi_sim_get_subscriber_id(tapi_context context, int slot_id, char** out);
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[in] msg            Sim Message ID.
+ * @param[in] user_obj       User data.
  * @param[in] p_handle       Event callback.
  * @return Positive value as watch_id on success; a negated errno value on failure.
  */
 int tapi_sim_register(tapi_context context,
-    int slot_id, tapi_indication_msg msg, tapi_async_function p_handle);
+    int slot_id, tapi_indication_msg msg, void* user_obj, tapi_async_function p_handle);
 
 /**
  * Unregister sim state changed event callback.

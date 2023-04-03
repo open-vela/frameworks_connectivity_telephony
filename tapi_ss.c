@@ -452,7 +452,7 @@ done:
     cb(ar);
 }
 
-static void user_data_free2(void* user_data)
+static void ss_event_data_free(void* user_data)
 {
     tapi_async_handler* handler;
     tapi_async_result* ar;
@@ -800,9 +800,9 @@ int tapi_ss_initiate_service(tapi_context context, int slot_id, int event_id,
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy, "Initiate", ss_initiate_param_append,
-            ss_initiate_complete, handler, user_data_free)) {
+            ss_initiate_complete, handler, handler_free)) {
         tapi_log_error("failed to initiate service \n");
-        user_data_free(handler);
+        handler_free(handler);
         return -EINVAL;
     }
 
@@ -882,9 +882,9 @@ int tapi_ss_request_call_barring(tapi_context context, int slot_id, int event_id
     ar->data = param;
 
     if (!g_dbus_proxy_method_call(proxy, "SetProperty", cb_request_param_append,
-            method_call_complete, handler, user_data_free2)) {
+            method_call_complete, handler, ss_event_data_free)) {
         tapi_log_error("failed to set callbarring \n");
-        user_data_free2(handler);
+        ss_event_data_free(handler);
         return -EINVAL;
     }
 
@@ -962,9 +962,9 @@ int tapi_ss_change_call_barring_password(tapi_context context, int slot_id, int 
     ar->data = param;
 
     if (!g_dbus_proxy_method_call(proxy, "ChangePassword", cb_change_passwd_append,
-            method_call_complete, handler, user_data_free2)) {
+            method_call_complete, handler, ss_event_data_free)) {
         tapi_log_error("failed to change callbarring passward \n");
-        user_data_free2(handler);
+        ss_event_data_free(handler);
         return -EINVAL;
     }
 
@@ -1006,9 +1006,9 @@ int tapi_ss_disable_all_call_barrings(tapi_context context, int slot_id, int eve
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy, "DisableAll", disable_all_cb_param_append,
-            method_call_complete, handler, user_data_free)) {
+            method_call_complete, handler, handler_free)) {
         tapi_log_error("failed to disable all callbarring \n");
-        user_data_free(handler);
+        handler_free(handler);
         return -EINVAL;
     }
 
@@ -1050,9 +1050,9 @@ int tapi_ss_disable_all_incoming(tapi_context context, int slot_id,
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy, "DisableAllIncoming",
-            disable_all_incoming_param_append, method_call_complete, handler, user_data_free)) {
+            disable_all_incoming_param_append, method_call_complete, handler, handler_free)) {
         tapi_log_error("failed to disable all incoming \n");
-        user_data_free(handler);
+        handler_free(handler);
         return -EINVAL;
     }
 
@@ -1094,9 +1094,9 @@ int tapi_ss_disable_all_outgoing(tapi_context context, int slot_id,
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy, "DisableAllOutgoing",
-            disable_all_outgoing_param_append, method_call_complete, handler, user_data_free)) {
+            disable_all_outgoing_param_append, method_call_complete, handler, handler_free)) {
         tapi_log_error("failed to disable all outgoing \n");
-        user_data_free(handler);
+        handler_free(handler);
         return -EINVAL;
     }
 
@@ -1147,8 +1147,8 @@ int tapi_ss_request_call_forwarding(tapi_context context, int slot_id, int event
         value_type = DBUS_TYPE_STRING;
 
     if (!g_dbus_proxy_set_property_basic(proxy, cf_type, value_type,
-            &value, property_set_done, handler, user_data_free)) {
-        user_data_free(handler);
+            &value, property_set_done, handler, handler_free)) {
+        handler_free(handler);
         return -EINVAL;
     }
 
@@ -1215,9 +1215,9 @@ int tapi_ss_disable_call_forwarding(tapi_context context, int slot_id, int event
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy, "DisableAll",
-            disable_cf_param_append, method_call_complete, handler, user_data_free)) {
+            disable_cf_param_append, method_call_complete, handler, handler_free)) {
         tapi_log_error("failed to disable all callforwarding \n");
-        user_data_free(handler);
+        handler_free(handler);
         return -EINVAL;
     }
 
@@ -1284,9 +1284,9 @@ int tapi_ss_send_ussd(tapi_context context, int slot_id, int event_id, char* rep
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy, "Respond", send_ussd_param_append,
-            ss_send_ussd_cb, handler, user_data_free)) {
+            ss_send_ussd_cb, handler, handler_free)) {
         tapi_log_error("failed to send ussd \n");
-        user_data_free(handler);
+        handler_free(handler);
         return -EINVAL;
     }
 
@@ -1327,9 +1327,9 @@ int tapi_ss_cancel_ussd(tapi_context context, int slot_id, int event_id,
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy, "Cancel", NULL,
-            method_call_complete, handler, user_data_free)) {
+            method_call_complete, handler, handler_free)) {
         tapi_log_error("failed to cancel ussd \n");
-        user_data_free(handler);
+        handler_free(handler);
         return -EINVAL;
     }
 
@@ -1372,8 +1372,8 @@ int tapi_ss_request_call_wating(tapi_context context, int slot_id, int event_id,
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_set_property_basic(proxy, "VoiceCallWaiting", DBUS_TYPE_STRING,
-            &state, property_set_done, handler, user_data_free)) {
-        user_data_free(handler);
+            &state, property_set_done, handler, handler_free)) {
+        handler_free(handler);
         return -EINVAL;
     }
 
@@ -1466,8 +1466,8 @@ int tapi_ss_request_calling_line_restriction(tapi_context context, int slot_id, 
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_set_property_basic(proxy, "HideCallerId", DBUS_TYPE_STRING,
-            &state, property_set_done, handler, user_data_free)) {
-        user_data_free(handler);
+            &state, property_set_done, handler, handler_free)) {
+        handler_free(handler);
         return -EINVAL;
     }
 
@@ -1534,9 +1534,9 @@ int tapi_ss_enable_fdn(tapi_context context, int slot_id, int event_id,
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy, enable ? "EnableFdn" : "DisableFdn",
-            enable_fdn_param_append, method_call_complete, handler, user_data_free)) {
+            enable_fdn_param_append, method_call_complete, handler, handler_free)) {
         tapi_log_error("failed to enable fdn \n");
-        user_data_free(handler);
+        handler_free(handler);
         return -EINVAL;
     }
 
@@ -1577,9 +1577,9 @@ int tapi_ss_query_fdn(tapi_context context, int slot_id, int event_id,
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy, "QueryFdn", NULL,
-            query_fdn_cb, handler, user_data_free)) {
+            query_fdn_cb, handler, handler_free)) {
         tapi_log_error("failed to query fdn \n");
-        user_data_free(handler);
+        handler_free(handler);
         return -EINVAL;
     }
 
@@ -1587,7 +1587,7 @@ int tapi_ss_query_fdn(tapi_context context, int slot_id, int event_id,
 }
 
 int tapi_ss_register(tapi_context context,
-    int slot_id, tapi_indication_msg msg, tapi_async_function p_handle)
+    int slot_id, tapi_indication_msg msg, void* user_obj, tapi_async_function p_handle)
 {
     dbus_context* ctx = context;
     tapi_async_handler* handler;
@@ -1620,39 +1620,40 @@ int tapi_ss_register(tapi_context context,
     handler->result = ar;
     ar->msg_id = msg;
     ar->arg1 = slot_id;
+    ar->user_obj = user_obj;
 
     switch (msg) {
     case MSG_CALL_BARRING_PROPERTY_CHANGE_IND:
         watch_id = g_dbus_add_signal_watch(ctx->connection,
             OFONO_SERVICE, modem_path, OFONO_CALL_BARRING_INTERFACE,
-            "PropertyChanged", call_barring_property_changed, handler, user_data_free);
+            "PropertyChanged", call_barring_property_changed, handler, handler_free);
         break;
     case MSG_CALL_FORWARDING_PROPERTY_CHANGE_IND:
         watch_id = g_dbus_add_signal_watch(ctx->connection,
             OFONO_SERVICE, modem_path, OFONO_CALL_FORWARDING_INTERFACE,
-            "PropertyChanged", call_forwarding_property_changed, handler, user_data_free);
+            "PropertyChanged", call_forwarding_property_changed, handler, handler_free);
         break;
     case MSG_USSD_PROPERTY_CHANGE_IND:
         watch_id = g_dbus_add_signal_watch(ctx->connection,
             OFONO_SERVICE, modem_path, OFONO_SUPPLEMENTARY_SERVICES_INTERFACE,
-            "PropertyChanged", ussd_state_changed, handler, user_data_free);
+            "PropertyChanged", ussd_state_changed, handler, handler_free);
         break;
     case MSG_USSD_NOTIFICATION_RECEIVED_IND:
         watch_id = g_dbus_add_signal_watch(ctx->connection,
             OFONO_SERVICE, modem_path, OFONO_SUPPLEMENTARY_SERVICES_INTERFACE,
-            "NotificationReceived", ussd_notification_received, handler, user_data_free);
+            "NotificationReceived", ussd_notification_received, handler, handler_free);
         break;
     case MSG_USSD_REQUEST_RECEIVED_IND:
         watch_id = g_dbus_add_signal_watch(ctx->connection,
             OFONO_SERVICE, modem_path, OFONO_SUPPLEMENTARY_SERVICES_INTERFACE,
-            "RequestReceived", ussd_request_received, handler, user_data_free);
+            "RequestReceived", ussd_request_received, handler, handler_free);
         break;
     default:
         break;
     }
 
     if (watch_id == 0) {
-        user_data_free(handler);
+        handler_free(handler);
         return -EINVAL;
     }
 

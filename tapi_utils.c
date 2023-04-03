@@ -469,9 +469,9 @@ const char* tapi_sim_state_to_string(tapi_sim_state sim_state)
     }
 }
 
-void user_data_free(void* user_data)
+void handler_free(void* obj)
 {
-    tapi_async_handler* handler = user_data;
+    tapi_async_handler* handler = obj;
     tapi_async_result* ar;
 
     if (handler != NULL) {

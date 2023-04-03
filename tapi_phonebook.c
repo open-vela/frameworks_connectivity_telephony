@@ -351,8 +351,8 @@ int tapi_phonebook_load_adn_entries(tapi_context context,
     user_data->result = ar;
 
     if (!g_dbus_proxy_method_call(proxy, "Import", NULL,
-            load_adn_entries_cb, user_data, user_data_free)) {
-        user_data_free(user_data);
+            load_adn_entries_cb, user_data, handler_free)) {
+        handler_free(user_data);
         return -EINVAL;
     }
 
@@ -393,8 +393,8 @@ int tapi_phonebook_load_fdn_entries(tapi_context context,
     user_data->result = ar;
 
     if (!g_dbus_proxy_method_call(proxy, "ImportFdn", NULL,
-            load_fdn_entries_cb, user_data, user_data_free)) {
-        user_data_free(user_data);
+            load_fdn_entries_cb, user_data, handler_free)) {
+        handler_free(user_data);
         return -EINVAL;
     }
 

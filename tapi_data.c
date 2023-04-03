@@ -607,8 +607,8 @@ int tapi_data_load_apn_contexts(tapi_context context,
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy,
-            "GetContexts", NULL, apn_list_loaded, handler, user_data_free)) {
-        user_data_free(handler);
+            "GetContexts", NULL, apn_list_loaded, handler, handler_free)) {
+        handler_free(handler);
         return -EINVAL;
     }
 
@@ -656,8 +656,8 @@ int tapi_data_save_apn_context(tapi_context context,
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy,
-            "AddContext", apn_context_append, apn_list_changed, handler, user_data_free)) {
-        user_data_free(handler);
+            "AddContext", apn_context_append, apn_list_changed, handler, handler_free)) {
+        handler_free(handler);
         return -EINVAL;
     }
 
@@ -700,8 +700,8 @@ int tapi_data_remove_apn_context(tapi_context context,
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy,
-            "RemoveContext", apn_context_remove, apn_list_changed, handler, user_data_free)) {
-        user_data_free(handler);
+            "RemoveContext", apn_context_remove, apn_list_changed, handler, handler_free)) {
+        handler_free(handler);
         return -EINVAL;
     }
 
@@ -743,8 +743,8 @@ int tapi_data_reset_apn_contexts(tapi_context context,
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy,
-            "ResetContexts", NULL, apn_list_changed, handler, user_data_free)) {
-        user_data_free(handler);
+            "ResetContexts", NULL, apn_list_changed, handler, handler_free)) {
+        handler_free(handler);
         return -EINVAL;
     }
 
@@ -1111,8 +1111,8 @@ int tapi_data_set_data_allow(tapi_context context, int slot_id,
     ar->arg1 = slot_id;
 
     if (!g_dbus_proxy_set_property_basic(proxy, "DataAllowed", DBUS_TYPE_BOOLEAN, &value,
-            property_set_done, handler, user_data_free)) {
-        user_data_free(handler);
+            property_set_done, handler, handler_free)) {
+        handler_free(handler);
         return -EINVAL;
     }
 
@@ -1120,7 +1120,7 @@ int tapi_data_set_data_allow(tapi_context context, int slot_id,
 }
 
 int tapi_data_register(tapi_context context,
-    int slot_id, tapi_indication_msg msg, tapi_async_function p_handle)
+    int slot_id, tapi_indication_msg msg, void* user_obj, tapi_async_function p_handle)
 {
     dbus_context* ctx = context;
     const char* modem_path;
@@ -1152,6 +1152,7 @@ int tapi_data_register(tapi_context context,
     handler->result = ar;
     ar->msg_id = msg;
     ar->arg1 = slot_id;
+    ar->user_obj = user_obj;
 
     switch (msg) {
     case MSG_DATA_ENABLED_CHANGE_IND:
@@ -1159,24 +1160,24 @@ int tapi_data_register(tapi_context context,
     case MSG_DATA_NETWORK_TYPE_CHANGE_IND:
         watch_id = g_dbus_add_signal_watch(ctx->connection,
             OFONO_SERVICE, modem_path, OFONO_CONNECTION_MANAGER_INTERFACE,
-            "PropertyChanged", data_property_changed, handler, user_data_free);
+            "PropertyChanged", data_property_changed, handler, handler_free);
         break;
     case MSG_DEFAULT_DATA_SLOT_CHANGE_IND:
         watch_id = g_dbus_add_signal_watch(ctx->connection,
             OFONO_SERVICE, OFONO_MANAGER_PATH, OFONO_MANAGER_INTERFACE,
-            "PropertyChanged", data_property_changed, handler, user_data_free);
+            "PropertyChanged", data_property_changed, handler, handler_free);
         break;
     case MSG_DATA_CONNECTION_STATE_CHANGE_IND:
         watch_id = g_dbus_add_signal_watch(ctx->connection,
             OFONO_SERVICE, modem_path, OFONO_CONNECTION_MANAGER_INTERFACE,
-            "ContextChanged", data_connection_changed, handler, user_data_free);
+            "ContextChanged", data_connection_changed, handler, handler_free);
         break;
     default:
         break;
     }
 
     if (watch_id == 0) {
-        user_data_free(handler);
+        handler_free(handler);
         return -EINVAL;
     }
 
