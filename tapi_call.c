@@ -73,35 +73,54 @@ static int call_strcpy(char* dst, const char* src, int dst_size)
 static int decode_voice_call_path(char* call_path, int slot_id)
 {
     // /phonesim/voicecall01
-    char sub_path[256] = { 0 };
+    const char* voicecall_sub_path = "/voicecall";
+    char full_voicecall_path[128] = { 0 };
     const char* modem_path;
+    char* call_id_str;
     int call_id = -1;
+    char* endptr;
     char* token;
 
     modem_path = tapi_utils_get_modem_path(slot_id);
     if (modem_path == NULL)
         return -EIO;
 
-    snprintf(sub_path, sizeof(sub_path), "%s/voicecall", modem_path);
-    token = strstr(call_path, sub_path);
-    if (token != NULL) {
-        call_id = atoi(call_path + strlen(sub_path));
-    }
+    snprintf(full_voicecall_path, sizeof(full_voicecall_path), "%s%s",
+        modem_path, voicecall_sub_path);
 
-    tapi_log_debug("decode_voice_call_path call_id: %d\n", call_id);
-
-    if (call_id < 0 || call_id > MAX_VOICE_CALL_PROXY_COUNT) {
-        tapi_log_error("new voice call proxy error, call_id:%d Out of range", call_id);
+    token = strstr(call_path, voicecall_sub_path);
+    if (token == NULL) {
         return -EIO;
     }
 
+    call_id_str = token + strlen(voicecall_sub_path);
+    if (strlen(call_id_str) == 0) {
+        tapi_log_error("decode call id error: non character found");
+        return -EIO;
+    }
+
+    call_id = strtol(call_id_str, &endptr, 10);
+    if (*endptr != '\0') {
+        tapi_log_error("decode call id error: non-digit character found");
+        return -EIO;
+    }
+
+    if (call_id < 0 || call_id > MAX_VOICE_CALL_PROXY_COUNT) {
+        tapi_log_error("decode call id error, call_id:%d Out of range", call_id);
+        return -EIO;
+    }
+
+    tapi_log_debug("decode_voice_call_path call_id: %d\n", call_id);
     return call_id;
 }
 
 static int manager_voice_call_dbus_proxy(tapi_context context, int slot_id, char* call_id, int action)
 {
+    tapi_dbus_call_proxy* call_proxy;
+    tapi_dbus_call_proxy* tmp;
     dbus_context* ctx = context;
-    GDBusProxy* voice_proxy;
+    GDBusProxy* dbus_proxy;
+
     int ret = ERROR;
     int call_index;
 
@@ -117,25 +136,66 @@ static int manager_voice_call_dbus_proxy(tapi_context context, int slot_id, char
 
     if (action == NEW_VOICE_CALL_DBUS_PROXY) {
         //new proxy
-        voice_proxy = g_dbus_proxy_new(
-            ctx->client, call_id, OFONO_VOICECALL_INTERFACE);
-        if (voice_proxy != NULL) {
+        call_proxy = malloc(sizeof(tapi_dbus_call_proxy));
+        if (call_proxy == NULL)
+            return -ENOMEM;
 
-            ctx->dbus_voice_call_proxy[slot_id][call_index] = voice_proxy;
-            ret = OK;
+        dbus_proxy = g_dbus_proxy_new(ctx->client, call_id, OFONO_VOICECALL_INTERFACE);
+        if (dbus_proxy == NULL) {
+            free(call_proxy);
+            return -ENOMEM;
         }
+
+        call_proxy->call_id = call_index;
+        call_proxy->dbus_proxy = dbus_proxy;
+        list_add_tail(&ctx->call_proxy_list[slot_id], &call_proxy->node);
+
+        ret = OK;
     } else if (action == RELEASE_VOICE_CALL_DBUS_PROXY) {
         //release proxy
-        voice_proxy = ctx->dbus_voice_call_proxy[slot_id][call_index];
-        if (voice_proxy != NULL) {
-            g_dbus_proxy_unref(voice_proxy);
+        list_for_every_entry_safe(&ctx->call_proxy_list[slot_id], call_proxy, tmp,
+            tapi_dbus_call_proxy, node)
+        {
 
-            ctx->dbus_voice_call_proxy[slot_id][call_index] = NULL;
+            tapi_log_debug("release proxy: id:%d  index:%d", call_index, call_proxy->call_id);
+            if (call_proxy->call_id == call_index) {
+                g_dbus_proxy_unref(call_proxy->dbus_proxy);
+                tapi_log_debug("release proxy OK");
+                list_delete(&call_proxy->node);
+                free(call_proxy);
+            }
             ret = OK;
         }
     }
 
+    tapi_log_debug("call_proxy legth: %d", list_length(&ctx->call_proxy_list[slot_id]));
     return ret;
+}
+
+static GDBusProxy* get_call_proxy(tapi_context context, int slot_id, char* call_id)
+{
+    tapi_dbus_call_proxy* call_proxy;
+    dbus_context* ctx = context;
+    int call_index;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || call_id == NULL) {
+        return NULL;
+    }
+
+    call_index = decode_voice_call_path(call_id, slot_id);
+    if (call_index < 0) {
+        tapi_log_error("decode voice call id error");
+        return NULL;
+    }
+
+    list_for_every_entry(&ctx->call_proxy_list[slot_id], call_proxy, tapi_dbus_call_proxy, node)
+    {
+        if (call_proxy->call_id == call_index) {
+            return call_proxy->dbus_proxy;
+        }
+    }
+
+    return NULL;
 }
 
 static void call_param_append(DBusMessageIter* iter, void* user_data)
@@ -844,19 +904,12 @@ int tapi_call_hangup_call(tapi_context context, int slot_id, char* call_id)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    int call_index;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || call_id == NULL) {
         return -EINVAL;
     }
 
-    call_index = decode_voice_call_path(call_id, slot_id);
-    if (call_index < 0) {
-        tapi_log_error("new voice call id error");
-        return -EIO;
-    }
-
-    proxy = ctx->dbus_voice_call_proxy[slot_id][call_index];
+    proxy = get_call_proxy(ctx, slot_id, call_id);
     if (proxy == NULL) {
         tapi_log_error("ERROR to initialize GDBusProxy for " OFONO_VOICECALL_INTERFACE);
         return -ENODEV;
@@ -888,7 +941,6 @@ int tapi_call_answer_call(tapi_context context, int slot_id, char* call_id, int 
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    int call_index;
     int error;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
@@ -899,13 +951,7 @@ int tapi_call_answer_call(tapi_context context, int slot_id, char* call_id, int 
         if (call_id == NULL)
             return -EINVAL;
 
-        call_index = decode_voice_call_path(call_id, slot_id);
-        if (call_index < 0) {
-            tapi_log_error("new voice call id error");
-            return -EIO;
-        }
-
-        proxy = ctx->dbus_voice_call_proxy[slot_id][call_index];
+        proxy = get_call_proxy(ctx, slot_id, call_id);
         if (proxy == NULL) {
             tapi_log_error("ERROR to initialize GDBusProxy for " OFONO_VOICECALL_INTERFACE);
             return -ENODEV;
@@ -945,19 +991,12 @@ int tapi_call_deflect_call(tapi_context context, int slot_id, char* call_id, cha
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    int call_index;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || call_id == NULL || number == NULL) {
         return -EINVAL;
     }
 
-    call_index = decode_voice_call_path(call_id, slot_id);
-    if (call_index < 0) {
-        tapi_log_error("new voice call id error");
-        return -EIO;
-    }
-
-    proxy = ctx->dbus_voice_call_proxy[slot_id][call_index];
+    proxy = get_call_proxy(ctx, slot_id, call_id);
     if (proxy == NULL) {
         tapi_log_error("ERROR to initialize GDBusProxy for " OFONO_VOICECALL_MANAGER_INTERFACE);
         return -ENODEV;
@@ -1045,7 +1084,7 @@ int tapi_call_get_call_info(tapi_context context, int slot_id,
     dbus_context* ctx = context;
     DBusMessageIter iter;
     GDBusProxy* proxy;
-    int call_index, ret;
+    int ret;
     unsigned char val;
     char* result;
 
@@ -1053,13 +1092,7 @@ int tapi_call_get_call_info(tapi_context context, int slot_id,
         return -EINVAL;
     }
 
-    call_index = decode_voice_call_path(call_id, slot_id);
-    if (call_index < 0) {
-        tapi_log_error("call path error...\n");
-        return -EIO;
-    }
-
-    proxy = ctx->dbus_voice_call_proxy[slot_id][call_index];
+    proxy = get_call_proxy(ctx, slot_id, call_id);
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
         return -EIO;
