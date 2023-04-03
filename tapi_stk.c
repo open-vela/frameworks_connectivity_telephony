@@ -1405,7 +1405,7 @@ int tapi_stk_agent_interface_register(tapi_context context, int slot_id,
 
     tapi_log_debug("starting stk agent interface slot : %d, agent id : %s\n", slot_id, agent_id);
     if (!g_dbus_register_interface(ctx->connection, agent_id, OFONO_SIM_APP_INTERFACE,
-            stk_agent_methods, NULL, NULL, user_data, user_data_free)) {
+            stk_agent_methods, NULL, NULL, user_data, handler_free)) {
         tapi_log_error("Unable to register stk agent %s\n", agent_id);
         return -EINVAL;
     }
@@ -1506,9 +1506,9 @@ int tapi_stk_agent_register(tapi_context context, int slot_id,
     user_data->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy, "RegisterAgent", stk_agent_register_param_append,
-            method_call_complete, user_data, user_data_free)) {
+            method_call_complete, user_data, handler_free)) {
         tapi_log_error("failed to register agent\n");
-        user_data_free(user_data);
+        handler_free(user_data);
         return -EINVAL;
     }
 
@@ -1552,9 +1552,9 @@ int tapi_stk_agent_unregister(tapi_context context, int slot_id,
     user_data->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy, "UnregisterAgent", stk_agent_register_param_append,
-            method_call_complete, user_data, user_data_free)) {
+            method_call_complete, user_data, handler_free)) {
         tapi_log_error("failed to unregister agent\n");
-        user_data_free(user_data);
+        handler_free(user_data);
         return -EINVAL;
     }
 

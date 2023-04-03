@@ -158,6 +158,7 @@ typedef struct {
     int arg1;
     int arg2;
     void* data;
+    void* user_obj;
 } tapi_async_result;
 
 typedef void (*tapi_async_function)(tapi_async_result* result);

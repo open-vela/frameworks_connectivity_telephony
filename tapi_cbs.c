@@ -217,7 +217,7 @@ int tapi_sms_get_cell_broadcast_topics(tapi_context context, int slot_id, char**
     return OK;
 }
 
-int tapi_cbs_register(tapi_context context, int slot_id, tapi_indication_msg msg,
+int tapi_cbs_register(tapi_context context, int slot_id, tapi_indication_msg msg, void* user_obj,
     tapi_async_function p_handle)
 {
     dbus_context* ctx = context;
@@ -250,24 +250,25 @@ int tapi_cbs_register(tapi_context context, int slot_id, tapi_indication_msg msg
     user_data->result = ar;
     ar->msg_id = msg;
     ar->arg1 = slot_id;
+    ar->user_obj = user_obj;
 
     switch (msg) {
     case MSG_INCOMING_CBS_IND:
         watch_id = g_dbus_add_signal_watch(ctx->connection, OFONO_SERVICE, path,
             OFONO_CELL_BROADCAST_INTERFACE, "IncomingBroadcast",
-            unsol_cbs_message, user_data, user_data_free);
+            unsol_cbs_message, user_data, handler_free);
         break;
     case MSG_EMERGENCY_CBS_IND:
         watch_id = g_dbus_add_signal_watch(ctx->connection, OFONO_SERVICE, path,
             OFONO_CELL_BROADCAST_INTERFACE, "EmergencyBroadcast",
-            unsol_cbs_message, user_data, user_data_free);
+            unsol_cbs_message, user_data, handler_free);
         break;
     default:
         break;
     }
 
     if (watch_id == 0) {
-        user_data_free(user_data);
+        handler_free(user_data);
         return -EINVAL;
     }
 
