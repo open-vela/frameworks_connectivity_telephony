@@ -137,10 +137,11 @@ int tapi_sms_delete_message_from_sim(tapi_context context, int slot_id, int inde
  * @param[in] slot_id        Slot id of current sim.
  * @param[in] msg            message type.
  * @param[in] p_handle       Event callback.
+ * @param[in] user_obj       User data.
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_sms_register(tapi_context context, int slot_id,
-    tapi_indication_msg msg, tapi_async_function p_handle);
+    tapi_indication_msg msg, void* user_obj, tapi_async_function p_handle);
 
 /**
  * Unregister telephony sms event callback.

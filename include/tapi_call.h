@@ -258,11 +258,12 @@ int tapi_call_get_call_by_state(tapi_context context, int slot_id,
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[in] msg            Call state change event.
+ * @param[in] user_obj       User data.
  * @param[in] p_handle       Event callback.
  * @return Positive value as watch_id on success; a negated errno value on failure.
  */
 int tapi_call_register_managercall_change(tapi_context context, int slot_id,
-    tapi_indication_msg msg, tapi_async_function p_handle);
+    tapi_indication_msg msg, void* user_obj, tapi_async_function p_handle);
 
 /**
  * Register call info change event
@@ -270,11 +271,12 @@ int tapi_call_register_managercall_change(tapi_context context, int slot_id,
  * @param[in] slot_id        Slot id of current sim.
  * @param[in] msg            Call info change event.
  * @param[in] call_id        Call id of current call.
+ * @param[in] user_obj       User data.
  * @param[in] p_handle       Event callback.
  * @return Positive value as watch_id on success; a negated errno value on failure.
  */
 int tapi_call_register_call_info_change(tapi_context context, int slot_id, char* call_id,
-    tapi_indication_msg msg, tapi_async_function p_handle);
+    tapi_indication_msg msg, void* user_obj, tapi_async_function p_handle);
 
 /**
  * New voice call proxy
@@ -315,20 +317,23 @@ bool tapi_call_is_emergency_number(tapi_context context, char* number);
  * Register ecc list change callback.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
+ * @param[in] user_obj       User data.
  * @param[in] p_handle       Event callback.
  * @return Positive value as watch_id on success; a negated errno value on failure.
  */
-int tapi_call_register_emergencylist_change(tapi_context context, int slot_id, tapi_async_function p_handle);
+int tapi_call_register_emergencylist_change(tapi_context context, int slot_id,
+    void* user_obj, tapi_async_function p_handle);
 
 /**
  * Register ring back tone change callback.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
+ * @param[in] user_obj       User data.
  * @param[in] p_handle       Event callback.
  * @return Positive value as watch_id on success; a negated errno value on failure.
  */
 int tapi_call_register_ring_back_tone_change(tapi_context context, int slot_id,
-    tapi_async_function p_handle);
+    void* user_obj, tapi_async_function p_handle);
 
 /**
  * Initiates an IMS conferenca call.
