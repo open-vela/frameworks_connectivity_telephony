@@ -169,6 +169,51 @@ static int split_input(char dst[][MAX_INPUT_ARGS_LEN], int size, char* str, cons
     return n;
 }
 
+static int hex_string_to_byte_array(char* hex_str, unsigned char* byte_arr, int arr_len)
+{
+    char* str;
+    int len;
+    int i, j;
+
+    if (hex_str == NULL)
+        return -EINVAL;
+
+    len = strlen(hex_str);
+    if (!len || (len % 2) != 0 || len > arr_len * 2)
+        return -EINVAL;
+
+    str = strdup(hex_str);
+
+    for (i = 0, j = 0; i < len; i += 2, j++) {
+        // uppercase char 'a'~'f'
+        if (str[i] >= 'a' && str[i] <= 'f')
+            str[i] = str[i] & ~0x20;
+
+        if (str[i + 1] >= 'a' && str[i + 1] <= 'f')
+            str[i + 1] = str[i + 1] & ~0x20;
+
+        // convert the first character to decimal.
+        if (str[i] >= 'A' && str[i] <= 'F')
+            byte_arr[j] = (str[i] - 'A' + 10) << 4;
+        else if (str[i] >= '0' && str[i] <= '9')
+            byte_arr[j] = (str[i] & ~0x30) << 4;
+        else
+            return -EINVAL;
+
+        // convert the second character to decimal
+        // and combine with the previous decimal.
+        if (str[i + 1] >= 'A' && str[i + 1] <= 'F')
+            byte_arr[j] |= (str[i + 1] - 'A' + 10);
+        else if (str[i + 1] >= '0' && str[i + 1] <= '9')
+            byte_arr[j] |= (str[i + 1] & ~0x30);
+        else
+            return -EINVAL;
+    }
+
+    free(str);
+    return 0;
+}
+
 static void tele_call_async_fun(tapi_async_result* result)
 {
     syslog(LOG_DEBUG, "%s : \n", __func__);
@@ -1196,9 +1241,8 @@ static int telephonytool_cmd_query_modem_list(tapi_context context, char* pargs)
     if (strlen(pargs) > 0)
         return -EINVAL;
 
-    tapi_query_modem_list(context,
+    return tapi_query_modem_list(context,
         EVENT_MODEM_LIST_QUERY_DONE, modem_list_query_complete);
-    return 0;
 }
 
 static int telephonytool_cmd_modem_register(tapi_context context, char* pargs)
@@ -1286,10 +1330,8 @@ static int telephonytool_cmd_set_radio_power(tapi_context context, char* pargs)
         return -EINVAL;
 
     syslog(LOG_DEBUG, "%s, slotId : %s target_state: %s \n", __func__, slot_id, target_state);
-    tapi_set_radio_power(context, atoi(slot_id),
+    return tapi_set_radio_power(context, atoi(slot_id),
         EVENT_RADIO_STATE_SET_DONE, (bool)atoi(target_state), tele_call_async_fun);
-
-    return 0;
 }
 
 static int telephonytool_cmd_get_radio_power(tapi_context context, char* pargs)
@@ -1331,10 +1373,8 @@ static int telephonytool_cmd_set_rat_mode(tapi_context context, char* pargs)
         return -EINVAL;
 
     syslog(LOG_DEBUG, "%s, slotId : %s target_state: %s \n", __func__, slot_id, target_state);
-    tapi_set_pref_net_mode(context, atoi(slot_id),
+    return tapi_set_pref_net_mode(context, atoi(slot_id),
         EVENT_RAT_MODE_SET_DONE, (tapi_pref_net_mode)atoi(target_state), tele_call_async_fun);
-
-    return 0;
 }
 
 static int telephonytool_cmd_get_rat_mode(tapi_context context, char* pargs)
@@ -1534,10 +1574,8 @@ static int telephonytool_cmd_get_modem_activity_info(tapi_context context, char*
         return -EINVAL;
 
     syslog(LOG_DEBUG, "%s, slotId : %s  \n", __func__, slot_id);
-    tapi_get_modem_activity_info(context, atoi(slot_id),
+    return tapi_get_modem_activity_info(context, atoi(slot_id),
         EVENT_MODEM_ACTIVITY_INFO_QUERY_DONE, tele_call_async_fun);
-
-    return 0;
 }
 
 static int telephonytool_cmd_enable_modem(tapi_context context, char* pargs)
@@ -1560,10 +1598,8 @@ static int telephonytool_cmd_enable_modem(tapi_context context, char* pargs)
         return -EINVAL;
 
     syslog(LOG_DEBUG, "%s, slotId : %s target_state: %s \n", __func__, slot_id, target_state);
-    tapi_enable_modem(context, atoi(slot_id),
+    return tapi_enable_modem(context, atoi(slot_id),
         EVENT_MODEM_ENABLE_DONE, (bool)atoi(target_state), tele_call_async_fun);
-
-    return 0;
 }
 
 static int telephonytool_cmd_get_modem_status(tapi_context context, char* pargs)
@@ -1578,16 +1614,15 @@ static int telephonytool_cmd_get_modem_status(tapi_context context, char* pargs)
         return -EINVAL;
 
     syslog(LOG_DEBUG, "%s, slotId : %s  \n", __func__, slot_id);
-    tapi_get_modem_status(context, atoi(slot_id),
+    return tapi_get_modem_status(context, atoi(slot_id),
         EVENT_MODEM_STATUS_QUERY_DONE, tele_call_async_fun);
-
-    return 0;
 }
 
 static int telephonytool_cmd_oem_ril_req_raw(tapi_context context, char* pargs)
 {
     char dst[3][MAX_INPUT_ARGS_LEN];
-    unsigned char* oem_req;
+    unsigned char req_data[MAX_INPUT_ARGS_LEN];
+    char* oem_req;
     char* slot_id;
     char* length;
     int cnt;
@@ -1600,17 +1635,21 @@ static int telephonytool_cmd_oem_ril_req_raw(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = dst[0];
-    oem_req = (unsigned char*)dst[1];
+    oem_req = dst[1];
     length = dst[2];
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
-    tapi_invoke_oem_ril_request_raw(context, atoi(slot_id),
-        EVENT_OEM_RIL_REQUEST_RAW_DONE, oem_req, atoi(length), tele_call_async_fun);
+    if (atoi(length) != strlen(oem_req) / 2)
+        return -EINVAL;
+
+    if (hex_string_to_byte_array(oem_req, req_data, MAX_INPUT_ARGS_LEN) != 0)
+        return -EINVAL;
+
     syslog(LOG_DEBUG, "%s, slot_id: %s oem_req: %s length: %s \n", __func__,
         slot_id, oem_req, length);
-
-    return 0;
+    return tapi_invoke_oem_ril_request_raw(context, atoi(slot_id),
+        EVENT_OEM_RIL_REQUEST_RAW_DONE, req_data, atoi(length), tele_call_async_fun);
 }
 
 static int telephonytool_cmd_oem_ril_req_strings(tapi_context context, char* pargs)
@@ -1621,8 +1660,9 @@ static int telephonytool_cmd_oem_ril_req_strings(tapi_context context, char* par
     char* req_data;
     char* slot_id;
     char* length;
+    char* result;
     int cnt;
-    int i;
+    int count = 0;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
@@ -1634,21 +1674,24 @@ static int telephonytool_cmd_oem_ril_req_strings(tapi_context context, char* par
     slot_id = dst[0];
     req_data = dst[1];
     length = dst[2];
-    if (!is_valid_slot_id_str(slot_id))
+    if (!is_valid_slot_id_str(slot_id) || atoi(length) > MAX_OEM_RIL_RESP_STRINGS_LENTH)
         return -EINVAL;
 
-    for (i = 0; i < atoi(length); i++) {
-        oem_req[i] = strtok_r(req_data, ",", &ptr);
-        syslog(LOG_DEBUG, "oem request data : %s ", oem_req[i]);
-        req_data = ptr;
-        ptr = NULL;
+    result = strtok_r(req_data, ",", &ptr);
+    while (result != NULL) {
+        if (count < atoi(length))
+            oem_req[count] = result;
+
+        count++;
+        result = strtok_r(NULL, ",", &ptr);
     }
 
-    tapi_invoke_oem_ril_request_strings(context, atoi(slot_id),
-        EVENT_OEM_RIL_REQUEST_STRINGS_DONE, oem_req, atoi(length), tele_call_async_fun);
-    syslog(LOG_DEBUG, "%s, slot_id: %s length: %s \n", __func__, slot_id, length);
+    if (count != atoi(length))
+        return -EINVAL;
 
-    return 0;
+    syslog(LOG_DEBUG, "%s, slot_id: %s length: %s \n", __func__, slot_id, length);
+    return tapi_invoke_oem_ril_request_strings(context, atoi(slot_id),
+        EVENT_OEM_RIL_REQUEST_STRINGS_DONE, oem_req, atoi(length), tele_call_async_fun);
 }
 
 static int telephonytool_cmd_load_apns(tapi_context context, char* pargs)
@@ -2317,11 +2360,9 @@ static int telephonytool_cmd_open_logical_channel(tapi_context context, char* pa
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
-    tapi_sim_open_logical_channel(context, atoi(slot_id),
-        EVENT_OPEN_LOGICAL_CHANNEL_DONE, aid, tele_call_async_fun);
     syslog(LOG_DEBUG, "%s, slot_id: %s aid: %s \n", __func__, slot_id, aid);
-
-    return 0;
+    return tapi_sim_open_logical_channel(context, atoi(slot_id),
+        EVENT_OPEN_LOGICAL_CHANNEL_DONE, aid, tele_call_async_fun);
 }
 
 static int telephonytool_cmd_close_logical_channel(tapi_context context, char* pargs)
@@ -2343,11 +2384,10 @@ static int telephonytool_cmd_close_logical_channel(tapi_context context, char* p
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
-    tapi_sim_close_logical_channel(context, atoi(slot_id),
-        EVENT_CLOSE_LOGICAL_CHANNEL_DONE, atoi(sessionid), tele_call_async_fun);
     syslog(LOG_DEBUG, "%s, slot_id: %s aid: %s \n", __func__, slot_id, sessionid);
 
-    return 0;
+    return tapi_sim_close_logical_channel(context, atoi(slot_id),
+        EVENT_CLOSE_LOGICAL_CHANNEL_DONE, atoi(sessionid), tele_call_async_fun);
 }
 
 static int telephonytool_cmd_transmit_apdu_logical_channel(tapi_context context, char* pargs)
@@ -2373,13 +2413,12 @@ static int telephonytool_cmd_transmit_apdu_logical_channel(tapi_context context,
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
-    tapi_sim_transmit_apdu_logical_channel(context, atoi(slot_id),
-        EVENT_TRANSMIT_APDU_LOGICAL_CHANNEL_DONE, atoi(sessionid),
-        pdu, atoi(len), tele_sim_async_fun);
     syslog(LOG_DEBUG, "%s, slot_id: %s sessionid: %s pdu: %s len: %s \n",
         __func__, slot_id, sessionid, pdu, len);
 
-    return 0;
+    return tapi_sim_transmit_apdu_logical_channel(context, atoi(slot_id),
+        EVENT_TRANSMIT_APDU_LOGICAL_CHANNEL_DONE, atoi(sessionid),
+        pdu, atoi(len), tele_sim_async_fun);
 }
 
 static int telephonytool_cmd_transmit_apdu_basic_channel(tapi_context context, char* pargs)
@@ -2403,12 +2442,11 @@ static int telephonytool_cmd_transmit_apdu_basic_channel(tapi_context context, c
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
-    tapi_sim_transmit_apdu_basic_channel(context, atoi(slot_id),
-        EVENT_TRANSMIT_APDU_BASIC_CHANNEL_DONE, pdu, atoi(len), tele_sim_async_fun);
     syslog(LOG_DEBUG, "%s, slot_id: %s pdu: %s len: %s \n",
         __func__, slot_id, pdu, len);
 
-    return 0;
+    return tapi_sim_transmit_apdu_basic_channel(context, atoi(slot_id),
+        EVENT_TRANSMIT_APDU_BASIC_CHANNEL_DONE, pdu, atoi(len), tele_sim_async_fun);
 }
 
 static int telephonytool_cmd_get_uicc_enablement(tapi_context context, char* pargs)
@@ -2448,11 +2486,9 @@ static int telephonytool_cmd_set_uicc_enablement(tapi_context context, char* par
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
-    tapi_sim_set_uicc_enablement(context, atoi(slot_id),
-        EVENT_UICC_ENABLEMENT_SET_DONE, atoi(target_state), tele_sim_async_fun);
     syslog(LOG_DEBUG, "%s, slotId : %s target_state: %s \n", __func__, slot_id, target_state);
-
-    return 0;
+    return tapi_sim_set_uicc_enablement(context, atoi(slot_id),
+        EVENT_UICC_ENABLEMENT_SET_DONE, atoi(target_state), tele_sim_async_fun);
 }
 
 static int telephonytool_cmd_listen_sim(tapi_context context, char* pargs)
@@ -2532,24 +2568,21 @@ static int telephonytool_tapi_sms_send_message(tapi_context context, char* pargs
 
 static int telephonytool_tapi_sms_send_data_message(tapi_context context, char* pargs)
 {
-    char dst[3][MAX_INPUT_ARGS_LEN];
     char* slot_id;
     char* to;
+    char* temp;
     char* text;
     int ret;
-    int cnt;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
 
-    cnt = split_input(dst, 3, pargs, " ");
-    if (cnt != 3)
+    slot_id = strtok_r(pargs, " ", &temp);
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
-    slot_id = dst[0];
-    to = dst[1];
-    text = dst[2];
-    if (!is_valid_slot_id_str(slot_id))
+    to = strtok_r(temp, " ", &text);
+    if (to == NULL)
         return -EINVAL;
 
     syslog(LOG_DEBUG, "%s, slotId : %s  number : %s text: %s port 0 \n",
@@ -2596,9 +2629,7 @@ static int telephonytool_tapi_sms_set_service_center_number(tapi_context context
         return -EINVAL;
 
     syslog(LOG_DEBUG, "%s, slotId : %s smsc_addr: %s \n", __func__, slot_id, smsc_addr);
-    tapi_sms_set_service_center_address(context, atoi(slot_id), smsc_addr);
-
-    return 0;
+    return tapi_sms_set_service_center_address(context, atoi(slot_id), smsc_addr);
 }
 
 static int telephonytool_tapi_sms_register(tapi_context context, char* pargs)
@@ -2659,9 +2690,7 @@ static int telephonytool_tapi_sms_set_cell_broadcast_power(tapi_context context,
         return -EINVAL;
 
     syslog(LOG_DEBUG, "%s, slotId : %s state: %s \n", __func__, slot_id, state);
-    tapi_sms_set_cell_broadcast_power_on(context, atoi(slot_id), atoi(state));
-
-    return 0;
+    return tapi_sms_set_cell_broadcast_power_on(context, atoi(slot_id), atoi(state));
 }
 
 static int telephonytool_tapi_sms_get_cell_broadcast_topics(tapi_context context, char* pargs)
@@ -2702,9 +2731,7 @@ static int telephonytool_tapi_sms_set_cell_broadcast_topics(tapi_context context
         return -EINVAL;
 
     syslog(LOG_DEBUG, "%s, slotId : %s cbs_topics: %s \n", __func__, slot_id, cbs_topics);
-    tapi_sms_set_cell_broadcast_topics(context, atoi(slot_id), cbs_topics);
-
-    return 0;
+    return tapi_sms_set_cell_broadcast_topics(context, atoi(slot_id), cbs_topics);
 }
 
 static int telephonytool_tapi_cbs_register(tapi_context context, char* pargs)
@@ -2772,10 +2799,8 @@ static int telephonytool_tapi_sms_delete_message_from_sim(tapi_context context, 
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
-    tapi_sms_delete_message_from_sim(context, atoi(slot_id), atoi(index));
     syslog(LOG_DEBUG, "%s, slotId : %s index: %s \n", __func__, slot_id, index);
-
-    return 0;
+    return tapi_sms_delete_message_from_sim(context, atoi(slot_id), atoi(index));
 }
 
 static int telephonytool_cmd_network_listen(tapi_context context, char* pargs)
@@ -2942,10 +2967,8 @@ static int telephonytool_cmd_get_net_registration_info(tapi_context context, cha
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
-    tapi_network_get_registration_info(context, atoi(slot_id),
+    return tapi_network_get_registration_info(context, atoi(slot_id),
         EVENT_QUERY_REGISTRATION_INFO_DONE, network_event_callback);
-
-    return 0;
 }
 
 static int telephonytool_cmd_get_voice_networktype(tapi_context context, char* pargs)
@@ -3051,10 +3074,8 @@ static int telephonytool_cmd_set_cell_info_list_rate(tapi_context context, char*
 
     syslog(LOG_DEBUG, "%s, slot_id: %s period: %s \n", __func__, slot_id, period);
 
-    tapi_network_set_cell_info_list_rate(context, atoi(slot_id),
+    return tapi_network_set_cell_info_list_rate(context, atoi(slot_id),
         EVENT_NETWORK_SET_CELL_INFO_LIST_RATE_DONE, atoi(period), tele_call_async_fun);
-
-    return 0;
 }
 
 static int telephonytool_cmd_set_call_barring(tapi_context context, char* pargs)
@@ -3078,10 +3099,9 @@ static int telephonytool_cmd_set_call_barring(tapi_context context, char* pargs)
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
-    tapi_ss_request_call_barring(context, atoi(slot_id), EVENT_REQUEST_CALL_BARRING_DONE, fac, pin2, tele_call_async_fun);
     syslog(LOG_DEBUG, "%s, slot_id : %s fac : %s  pin2 : %s \n", __func__, slot_id, fac, pin2);
-
-    return 0;
+    return tapi_ss_request_call_barring(context, atoi(slot_id),
+        EVENT_REQUEST_CALL_BARRING_DONE, fac, pin2, tele_call_async_fun);
 }
 
 static int telephonytool_cmd_get_call_barring(tapi_context context, char* pargs)
@@ -3131,12 +3151,10 @@ static int telephonytool_cmd_change_call_barring_passwd(tapi_context context, ch
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
-    tapi_ss_change_call_barring_password(context, atoi(slot_id),
-        EVENT_CALL_BARRING_PASSWD_CHANGE_DONE, old_passwd, new_passwd, tele_call_async_fun);
     syslog(LOG_DEBUG, "%s, slotId : %s old_passwd : %s new_passwd : %s \n", __func__,
         slot_id, old_passwd, new_passwd);
-
-    return 0;
+    return tapi_ss_change_call_barring_password(context, atoi(slot_id),
+        EVENT_CALL_BARRING_PASSWD_CHANGE_DONE, old_passwd, new_passwd, tele_call_async_fun);
 }
 
 static int telephonytool_cmd_disable_all_call_barrings(tapi_context context, char* pargs)
@@ -3158,11 +3176,9 @@ static int telephonytool_cmd_disable_all_call_barrings(tapi_context context, cha
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
-    tapi_ss_disable_all_call_barrings(context, atoi(slot_id),
-        EVENT_DISABLE_ALL_CALL_BARRINGS_DONE, passwd, tele_call_async_fun);
     syslog(LOG_DEBUG, "%s, slotId : %s passwd : %s \n", __func__, slot_id, passwd);
-
-    return 0;
+    return tapi_ss_disable_all_call_barrings(context, atoi(slot_id),
+        EVENT_DISABLE_ALL_CALL_BARRINGS_DONE, passwd, tele_call_async_fun);
 }
 
 static int telephonytool_cmd_disable_all_incoming(tapi_context context, char* pargs)
@@ -3184,11 +3200,9 @@ static int telephonytool_cmd_disable_all_incoming(tapi_context context, char* pa
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
-    tapi_ss_disable_all_incoming(context, atoi(slot_id),
-        EVENT_DISABLE_ALL_INCOMING_DONE, passwd, tele_call_async_fun);
     syslog(LOG_DEBUG, "%s, slotId : %s passwd : %s \n", __func__, slot_id, passwd);
-
-    return 0;
+    return tapi_ss_disable_all_incoming(context, atoi(slot_id),
+        EVENT_DISABLE_ALL_INCOMING_DONE, passwd, tele_call_async_fun);
 }
 
 static int telephonytool_cmd_disable_all_outgoing(tapi_context context, char* pargs)
@@ -3210,11 +3224,9 @@ static int telephonytool_cmd_disable_all_outgoing(tapi_context context, char* pa
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
-    tapi_ss_disable_all_outgoing(context, atoi(slot_id),
-        EVENT_DISABLE_ALL_OUTGOING_DONE, passwd, tele_call_async_fun);
     syslog(LOG_DEBUG, "%s, slotId : %s passwd : %s \n", __func__, slot_id, passwd);
-
-    return 0;
+    return tapi_ss_disable_all_outgoing(context, atoi(slot_id),
+        EVENT_DISABLE_ALL_OUTGOING_DONE, passwd, tele_call_async_fun);
 }
 
 static int telephonytool_cmd_set_call_forwarding(tapi_context context, char* pargs)
@@ -3238,12 +3250,10 @@ static int telephonytool_cmd_set_call_forwarding(tapi_context context, char* par
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
-    tapi_ss_request_call_forwarding(context, atoi(slot_id),
-        EVENT_REQUEST_CALL_FORWARDING_DONE, cf_type, value, tele_call_async_fun);
     syslog(LOG_DEBUG, "%s, slot_id : %s cf_type : %s  value : %s \n", __func__,
         slot_id, cf_type, value);
-
-    return 0;
+    return tapi_ss_request_call_forwarding(context, atoi(slot_id),
+        EVENT_REQUEST_CALL_FORWARDING_DONE, cf_type, value, tele_call_async_fun);
 }
 
 static int telephonytool_cmd_get_call_forwarding(tapi_context context, char* pargs)
@@ -3291,11 +3301,9 @@ static int telephonytool_cmd_disable_call_forwarding(tapi_context context, char*
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
-    tapi_ss_disable_call_forwarding(context, atoi(slot_id),
-        EVENT_DISABLE_CALL_FORWARDING_DONE, type, tele_call_async_fun);
     syslog(LOG_DEBUG, "%s, slotId : %s type : %s \n", __func__, slot_id, type);
-
-    return 0;
+    return tapi_ss_disable_call_forwarding(context, atoi(slot_id),
+        EVENT_DISABLE_CALL_FORWARDING_DONE, type, tele_call_async_fun);
 }
 
 static int telephonytool_cmd_initiate_ss_service(tapi_context context, char* pargs)
@@ -3317,11 +3325,9 @@ static int telephonytool_cmd_initiate_ss_service(tapi_context context, char* par
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
-    tapi_ss_initiate_service(context, atoi(slot_id),
-        EVENT_INITIATE_SERVICE_DONE, ss_control_string, ss_event_response);
     syslog(LOG_DEBUG, "%s, slotId : %s ss_control_string : %s \n", __func__, slot_id, ss_control_string);
-
-    return 0;
+    return tapi_ss_initiate_service(context, atoi(slot_id),
+        EVENT_INITIATE_SERVICE_DONE, ss_control_string, ss_event_response);
 }
 
 static int telephonytool_cmd_get_ussd_state(tapi_context context, char* pargs)
@@ -3361,11 +3367,9 @@ static int telephonytool_cmd_send_ussd(tapi_context context, char* pargs)
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
-    tapi_ss_send_ussd(context, atoi(slot_id),
-        EVENT_SEND_USSD_DONE, response_msg, ss_event_response);
     syslog(LOG_DEBUG, "%s, slotId : %s response_msg : %s \n", __func__, slot_id, response_msg);
-
-    return 0;
+    return tapi_ss_send_ussd(context, atoi(slot_id),
+        EVENT_SEND_USSD_DONE, response_msg, ss_event_response);
 }
 
 static int telephonytool_cmd_cancel_ussd(tapi_context context, char* pargs)
@@ -3401,11 +3405,9 @@ static int telephonytool_cmd_set_call_waiting(tapi_context context, char* pargs)
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
-    tapi_ss_request_call_wating(context, atoi(slot_id),
-        EVENT_REQUEST_CALL_WAITING_DONE, value, tele_call_async_fun);
     syslog(LOG_DEBUG, "%s, slot_id : %s value : %s \n", __func__, slot_id, value);
-
-    return 0;
+    return tapi_ss_request_call_wating(context, atoi(slot_id),
+        EVENT_REQUEST_CALL_WAITING_DONE, value, tele_call_async_fun);
 }
 
 static int telephonytool_cmd_get_call_waiting(tapi_context context, char* pargs)
@@ -3463,11 +3465,9 @@ static int telephonytool_cmd_set_clir(tapi_context context, char* pargs)
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
-    tapi_ss_request_calling_line_restriction(context, atoi(slot_id),
-        EVENT_REQUEST_CLIR_DONE, value, tele_call_async_fun);
     syslog(LOG_DEBUG, "%s, slot_id : %s value : %s \n", __func__, slot_id, value);
-
-    return 0;
+    return tapi_ss_request_calling_line_restriction(context, atoi(slot_id),
+        EVENT_REQUEST_CLIR_DONE, value, tele_call_async_fun);
 }
 
 static int telephonytool_cmd_get_clir(tapi_context context, char* pargs)
@@ -3509,12 +3509,11 @@ static int telephonytool_cmd_enable_fdn(tapi_context context, char* pargs)
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
-    tapi_ss_enable_fdn(context, atoi(slot_id), EVENT_ENABLE_FDN_DONE,
-        (bool)atoi(enable_fdn), passwd, tele_call_async_fun);
     syslog(LOG_DEBUG, "%s, slotId : %s enable_fdn : %s passwd : %s \n",
         __func__, slot_id, enable_fdn, passwd);
 
-    return 0;
+    return tapi_ss_enable_fdn(context, atoi(slot_id), EVENT_ENABLE_FDN_DONE,
+        (bool)atoi(enable_fdn), passwd, tele_call_async_fun);
 }
 
 static int telephonytool_cmd_query_fdn(tapi_context context, char* pargs)
@@ -4000,7 +3999,7 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         "get modem status (enter example : get-modem-status 0 [slot_id])" },
     { "oem-req-raw", RADIO_CMD,
         telephonytool_cmd_oem_ril_req_raw,
-        "oem request raw (enter example : oem-req-raw 0 0x10,0x01 2 "
+        "oem request raw (enter example : oem-req-raw 0 01A0B023 4 "
         "[slot_id][request_data][data_length])" },
     { "oem-req-strings", RADIO_CMD,
         telephonytool_cmd_oem_ril_req_strings,
