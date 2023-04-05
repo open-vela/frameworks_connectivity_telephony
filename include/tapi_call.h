@@ -103,9 +103,12 @@ extern "C" {
  * @param[in] slot_id        Slot id of current sim.
  * @param[in] number         Dialing number.
  * @param[in] hide_callerid  Flag about whether to hide calling number.
+ * @param[in] event_id       Async event identifier.
+ * @param[in] p_handle       Event callback.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_call_dial(tapi_context context, int slot_id, char* number, int hide_callerid);
+int tapi_call_dial(tapi_context context, int slot_id, char* number, int hide_callerid,
+    int event_id, tapi_async_function p_handle);
 
 /**
  * Hangup one active call.
