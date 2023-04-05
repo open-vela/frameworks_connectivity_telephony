@@ -76,7 +76,7 @@
 #define EVENT_QUERY_NEIGHBOURING_CELL_DONE 0x36
 #define EVENT_NETWORK_SET_CELL_INFO_LIST_RATE_DONE 0x37
 
-// Call Callback Event
+// SS Callback Event
 #define EVENT_REQUEST_CALL_BARRING_DONE 0x41
 #define EVENT_CALL_BARRING_PASSWD_CHANGE_DONE 0x42
 #define EVENT_DISABLE_ALL_CALL_BARRINGS_DONE 0x43
@@ -98,6 +98,9 @@
 #define EVENT_INSERT_FDN_ENTRIES_DONE 0x63
 #define EVENT_UPDATE_FDN_ENTRIES_DONE 0x64
 #define EVENT_DELETE_FDN_ENTRIES_DONE 0x65
+
+// Call CallBack Event
+#define EVENT_REQUEST_DIAL_DONE 0x71
 
 #define MAX_INPUT_ARGS_LEN 128
 
@@ -244,6 +247,13 @@ static void tele_call_async_fun(tapi_async_result* result)
         syslog(LOG_DEBUG, "response strings data length : %d\n", result->arg2);
         for (int i = 0; i < result->arg2; i++) {
             syslog(LOG_DEBUG, "response strings data : %s\n", response[i]);
+        }
+    } else if (result->msg_id == EVENT_REQUEST_DIAL_DONE) {
+
+        if (result->status == OK) {
+            syslog(LOG_DEBUG, "dial successed, call id : %s\n", (char*)result->data);
+        } else {
+            syslog(LOG_DEBUG, "dial failed");
         }
     }
 }
@@ -830,7 +840,8 @@ static int telephonytool_cmd_dial(tapi_context context, char* pargs)
 
     syslog(LOG_DEBUG, "%s, slot_id: %s number: %s  hide_callerid: %s \n", __func__,
         slot_id, number, hide_callerid);
-    return tapi_call_dial(context, atoi(slot_id), number, atoi(hide_callerid));
+    return tapi_call_dial(context, atoi(slot_id), number, atoi(hide_callerid),
+        EVENT_REQUEST_DIAL_DONE, tele_call_async_fun);
 }
 
 static int telephonytool_cmd_answer_call(tapi_context context, char* pargs)
