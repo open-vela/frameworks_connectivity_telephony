@@ -200,14 +200,17 @@ static GDBusProxy* get_call_proxy(tapi_context context, int slot_id, char* call_
 
 static void call_param_append(DBusMessageIter* iter, void* user_data)
 {
-    call_param* param = user_data;
+    tapi_async_handler* handler = user_data;
     char* hide_callerid_str;
+    call_param* param;
     char* number;
 
-    if (param == NULL) {
+    if (handler == NULL || handler->result == NULL || handler->result->data == NULL) {
         tapi_log_error("invalid dial request argument !!");
         return;
     }
+
+    param = (call_param*)handler->result->data;
 
     switch (param->hide_callerid) {
     case 1:
@@ -224,6 +227,8 @@ static void call_param_append(DBusMessageIter* iter, void* user_data)
     number = param->number;
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &number);
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &hide_callerid_str);
+
+    free(param);
 }
 
 static void deflect_param_append(DBusMessageIter* iter, void* user_data)
@@ -414,6 +419,49 @@ static int call_property_changed(DBusConnection* connection, DBusMessage* messag
         cb(ar);
 
     return true;
+}
+
+static void dial_call_callback(DBusMessage* message, void* user_data)
+{
+    tapi_async_handler* handler = user_data;
+    tapi_async_function cb;
+    tapi_async_result* ar;
+    DBusMessageIter iter;
+    DBusError err;
+    char* call_id;
+
+    if (handler == NULL)
+        return;
+
+    ar = handler->result;
+    if (ar == NULL)
+        return;
+
+    cb = handler->cb_function;
+    if (cb == NULL)
+        return;
+
+    dbus_error_init(&err);
+    if (dbus_set_error_from_message(&err, message) == true) {
+        tapi_log_error("%s: %s\n", err.name, err.message);
+        dbus_error_free(&err);
+        ar->status = ERROR;
+        goto done;
+    }
+
+    if (dbus_message_iter_init(message, &iter) == false) {
+        ar->status = ERROR;
+        goto done;
+    }
+
+    if (dbus_message_iter_get_arg_type(&iter) == DBUS_TYPE_OBJECT_PATH) {
+        dbus_message_iter_get_basic(&iter, &call_id);
+        ar->data = call_id;
+        ar->status = OK;
+    }
+
+done:
+    cb(ar);
 }
 
 static void merge_call_complete(DBusMessage* message, void* user_data)
@@ -867,9 +915,12 @@ static int manager_conference(tapi_context context, int slot_id,
  * Public Functions
  ****************************************************************************/
 
-int tapi_call_dial(tapi_context context, int slot_id, char* number, int hide_callerid)
+int tapi_call_dial(tapi_context context, int slot_id, char* number, int hide_callerid,
+    int event_id, tapi_async_function p_handle)
 {
+    tapi_async_handler* handler;
     dbus_context* ctx = context;
+    tapi_async_result* ar;
     call_param* param;
     GDBusProxy* proxy;
 
@@ -891,9 +942,28 @@ int tapi_call_dial(tapi_context context, int slot_id, char* number, int hide_cal
     snprintf(param->number, sizeof(param->number), "%s", number);
     param->hide_callerid = hide_callerid;
 
-    if (!g_dbus_proxy_method_call(proxy, "Dial", call_param_append,
-            no_operate_callback, param, free)) {
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
         free(param);
+        return -ENOMEM;
+    }
+    ar->msg_id = event_id;
+    ar->arg1 = slot_id;
+    ar->data = param;
+
+    handler = malloc(sizeof(tapi_async_handler));
+    if (handler == NULL) {
+        free(param);
+        free(ar);
+        return -ENOMEM;
+    }
+    handler->result = ar;
+    handler->cb_function = p_handle;
+
+    if (!g_dbus_proxy_method_call(proxy, "Dial", call_param_append,
+            dial_call_callback, handler, handler_free)) {
+        free(param);
+        handler_free(handler);
         return -EINVAL;
     }
 
