@@ -39,6 +39,7 @@
 #define MAX_IP_INTERFACE_NAME_LENGTH 128
 #define MAX_IP_STRING_LENGTH 128
 #define MAX_DATA_DNS_COUNT 10
+#define MAX_DATA_CALL_LIST_SIZE 10
 
 /****************************************************************************
  * Public Types
@@ -53,15 +54,15 @@ typedef enum {
 } tapi_data_state;
 
 typedef enum {
-    APN_CONTEXT_TYPE_ANY = 0,
-    APN_CONTEXT_TYPE_INTERNET,
-    APN_CONTEXT_TYPE_HIPRI,
-    APN_CONTEXT_TYPE_SUPL,
-    APN_CONTEXT_TYPE_MMS,
-    APN_CONTEXT_TYPE_WAP,
-    APN_CONTEXT_TYPE_IMS,
-    APN_CONTEXT_TYPE_EMERGENCY,
-} tapi_apn_context_type;
+    DATA_CONTEXT_TYPE_ANY = 0,
+    DATA_CONTEXT_TYPE_INTERNET,
+    DATA_CONTEXT_TYPE_HIPRI,
+    DATA_CONTEXT_TYPE_SUPL,
+    DATA_CONTEXT_TYPE_MMS,
+    DATA_CONTEXT_TYPE_WAP,
+    DATA_CONTEXT_TYPE_IMS,
+    DATA_CONTEXT_TYPE_EMERGENCY,
+} tapi_data_context_type;
 
 typedef enum {
     DATA_PROTO_IP = 0,
@@ -101,7 +102,7 @@ typedef struct {
 typedef struct {
     char* id;
     char name[MAX_APN_DOMAIN_LENGTH + 1];
-    tapi_apn_context_type type;
+    tapi_data_context_type type;
     bool active;
     bool preferred;
     char username[MAX_APN_DOMAIN_LENGTH + 1];
@@ -112,7 +113,7 @@ typedef struct {
     tapi_data_proto protocol;
     tapi_data_auth_method auth_method;
     tapi_ip_settings* ip_settings;
-} tapi_apn_context;
+} tapi_data_context;
 
 /****************************************************************************
  * Public Function Prototypes
@@ -134,7 +135,7 @@ int tapi_data_load_apn_contexts(tapi_context context,
     int slot_id, int event_id, tapi_async_function p_handle);
 
 /**
- * Add Save Item to Apn Storage.
+ * Add Apn to Apn Storage.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[in] event_id       Async event identifier.
@@ -142,8 +143,8 @@ int tapi_data_load_apn_contexts(tapi_context context,
  * @param[in] p_handle       Event callback.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_data_save_apn_context(tapi_context context,
-    int slot_id, int event_id, tapi_apn_context* apn, tapi_async_function p_handle);
+int tapi_data_add_apn_context(tapi_context context,
+    int slot_id, int event_id, tapi_data_context* apn, tapi_async_function p_handle);
 
 /**
  * Remove Apn Item from Apn Storage.
@@ -155,7 +156,7 @@ int tapi_data_save_apn_context(tapi_context context,
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_data_remove_apn_context(tapi_context context,
-    int slot_id, int event_id, tapi_apn_context* apn, tapi_async_function p_handle);
+    int slot_id, int event_id, tapi_data_context* apn, tapi_async_function p_handle);
 
 /**
  * Reset Apn Storage.
@@ -169,16 +170,16 @@ int tapi_data_reset_apn_contexts(tapi_context context,
     int slot_id, int event_id, tapi_async_function p_handle);
 
 /**
- * Check if PS attached or not.
+ * Check if Packet switched domain is registered or not.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[out] out           Return value.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_data_is_ps_attached(tapi_context context, int slot_id, bool* out);
+int tapi_data_is_registered(tapi_context context, int slot_id, bool* out);
 
 /**
- * Get radio tech in PS domain.
+ * Get radio tech in Packet switched domain.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[out] out           Return value.
@@ -187,7 +188,7 @@ int tapi_data_is_ps_attached(tapi_context context, int slot_id, bool* out);
 int tapi_data_get_network_type(tapi_context context, int slot_id, tapi_network_type* out);
 
 /**
- * Check if roaming in PS domain.
+ * Check if roaming in Packet switched domain.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[out] out           Return value.
@@ -214,13 +215,23 @@ int tapi_data_request_network(tapi_context context, int slot_id, const char* typ
 int tapi_data_release_network(tapi_context context, int slot_id, const char* type);
 
 /**
+ * Get active data connection list.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] p_handle       Event callback.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_data_get_data_connection_list(tapi_context context, int slot_id, int event_id,
+    tapi_async_function p_handle);
+
+/**
  * Set preferred apn for internet.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[in] apn            Apn item.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_data_set_preferred_apn(tapi_context context, int slot_id, tapi_apn_context* apn);
+int tapi_data_set_preferred_apn(tapi_context context, int slot_id, tapi_data_context* apn);
 
 /**
  * Get preferred apn.
@@ -237,7 +248,7 @@ int tapi_data_get_preferred_apn(tapi_context context, int slot_id, char** out);
  * @param[in] enabled        Data switch status.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_data_enable(tapi_context context, bool enabled);
+int tapi_data_enable_data(tapi_context context, bool enabled);
 
 /**
  * Get data switch status.

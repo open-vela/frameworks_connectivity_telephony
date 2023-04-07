@@ -268,51 +268,51 @@ tapi_call_disconnect_reason tapi_utils_call_disconnected_reason(const char* str_
     return ret;
 }
 
-const char* tapi_utils_apn_type_to_string(tapi_apn_context_type type)
+const char* tapi_utils_apn_type_to_string(tapi_data_context_type type)
 {
     switch (type) {
-    case APN_CONTEXT_TYPE_ANY:
+    case DATA_CONTEXT_TYPE_ANY:
         return "";
-    case APN_CONTEXT_TYPE_INTERNET:
+    case DATA_CONTEXT_TYPE_INTERNET:
         return "internet";
-    case APN_CONTEXT_TYPE_HIPRI:
+    case DATA_CONTEXT_TYPE_HIPRI:
         return "hipri";
-    case APN_CONTEXT_TYPE_SUPL:
+    case DATA_CONTEXT_TYPE_SUPL:
         return "supl";
-    case APN_CONTEXT_TYPE_MMS:
+    case DATA_CONTEXT_TYPE_MMS:
         return "mms";
-    case APN_CONTEXT_TYPE_WAP:
+    case DATA_CONTEXT_TYPE_WAP:
         return "wap";
-    case APN_CONTEXT_TYPE_IMS:
+    case DATA_CONTEXT_TYPE_IMS:
         return "ims";
-    case APN_CONTEXT_TYPE_EMERGENCY:
+    case DATA_CONTEXT_TYPE_EMERGENCY:
         return "emergency";
     }
 
     return NULL;
 }
 
-tapi_apn_context_type tapi_utils_apn_type_from_string(const char* type)
+tapi_data_context_type tapi_utils_apn_type_from_string(const char* type)
 {
     if (type == NULL)
-        return APN_CONTEXT_TYPE_ANY;
+        return DATA_CONTEXT_TYPE_ANY;
 
     if (strcmp(type, "internet") == 0)
-        return APN_CONTEXT_TYPE_INTERNET;
+        return DATA_CONTEXT_TYPE_INTERNET;
     else if (strcmp(type, "hipri") == 0)
-        return APN_CONTEXT_TYPE_HIPRI;
+        return DATA_CONTEXT_TYPE_HIPRI;
     else if (strcmp(type, "supl") == 0)
-        return APN_CONTEXT_TYPE_SUPL;
+        return DATA_CONTEXT_TYPE_SUPL;
     else if (strcmp(type, "mms") == 0)
-        return APN_CONTEXT_TYPE_MMS;
+        return DATA_CONTEXT_TYPE_MMS;
     else if (strcmp(type, "wap") == 0)
-        return APN_CONTEXT_TYPE_WAP;
+        return DATA_CONTEXT_TYPE_WAP;
     else if (strcmp(type, "ims") == 0)
-        return APN_CONTEXT_TYPE_IMS;
+        return DATA_CONTEXT_TYPE_IMS;
     else if (strcmp(type, "emergency") == 0)
-        return APN_CONTEXT_TYPE_EMERGENCY;
+        return DATA_CONTEXT_TYPE_EMERGENCY;
 
-    return APN_CONTEXT_TYPE_ANY;
+    return DATA_CONTEXT_TYPE_ANY;
 }
 
 const char* tapi_utils_apn_auth_to_string(tapi_data_auth_method auth)
