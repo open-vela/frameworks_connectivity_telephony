@@ -49,10 +49,11 @@
 
 // Data Callback Event
 #define EVENT_APN_LOADED_DONE 0x11
-#define EVENT_APN_SAVE_DONE 0x12
+#define EVENT_APN_ADD_DONE 0x12
 #define EVENT_APN_REMOVAL_DONE 0x13
 #define EVENT_APN_RESTORE_DONE 0x14
 #define EVENT_DATA_ALLOWED_DONE 0x15
+#define EVENT_DATA_CALL_LIST_QUERY_DONE 0x16
 
 // SIM Callback Event
 #define EVENT_CHANGE_SIM_PIN_DONE 0x21
@@ -700,22 +701,22 @@ static void network_signal_change(tapi_async_result* result)
 static void data_event_response(tapi_async_result* result)
 {
     int event = result->msg_id;
-    int apn_capacity;
-    tapi_apn_context** apn_list;
-    tapi_apn_context* apn_item;
+    int dc_count;
+    tapi_data_context** dc_list;
+    tapi_data_context* dc_item;
 
     switch (event) {
     case EVENT_APN_LOADED_DONE:
-        apn_capacity = result->arg2;
-        apn_list = result->data;
+        dc_count = result->arg2;
+        dc_list = result->data;
 
-        while (--apn_capacity >= 0) {
-            apn_item = apn_list[apn_capacity];
+        while (--dc_count >= 0) {
+            dc_item = dc_list[dc_count];
             syslog(LOG_DEBUG, "id : %s, name : %s, type : %d, apn : %s \n",
-                apn_item->id, apn_item->name, apn_item->type, apn_item->accesspointname);
+                dc_item->id, dc_item->name, dc_item->type, dc_item->accesspointname);
         }
         break;
-    case EVENT_APN_SAVE_DONE:
+    case EVENT_APN_ADD_DONE:
         syslog(LOG_DEBUG, "apn saved with error code : %d \n", result->status);
         break;
     case EVENT_APN_REMOVAL_DONE:
@@ -727,6 +728,29 @@ static void data_event_response(tapi_async_result* result)
     case EVENT_DATA_ALLOWED_DONE:
         syslog(LOG_DEBUG, "data allowed with error code : %d \n", result->status);
         break;
+    case EVENT_DATA_CALL_LIST_QUERY_DONE:
+        dc_count = result->arg2;
+        dc_list = result->data;
+
+        while (--dc_count >= 0) {
+            dc_item = dc_list[dc_count];
+            syslog(LOG_DEBUG, "type : %d, apn : %s, active : %d \n",
+                dc_item->type, dc_item->accesspointname, dc_item->active);
+
+            if (dc_item->ip_settings == NULL)
+                break;
+
+            if (dc_item->ip_settings->ipv4 != NULL) {
+                syslog(LOG_DEBUG, "[ipv4] interface : %s,  ip : %s \n",
+                    dc_item->ip_settings->ipv4->interface, dc_item->ip_settings->ipv4->ip);
+            }
+
+            if (dc_item->ip_settings->ipv6 != NULL) {
+                syslog(LOG_DEBUG, "[ipv6] interface : %s,  ip : %s \n",
+                    dc_item->ip_settings->ipv6->interface, dc_item->ip_settings->ipv6->ip);
+            }
+        }
+        break;
     default:
         break;
     }
@@ -734,7 +758,7 @@ static void data_event_response(tapi_async_result* result)
 
 static void data_signal_change(tapi_async_result* result)
 {
-    tapi_apn_context* dc;
+    tapi_data_context* dc;
     tapi_ipv4_settings* ipv4;
     tapi_ipv6_settings* ipv6;
     int signal = result->msg_id;
@@ -753,26 +777,26 @@ static void data_signal_change(tapi_async_result* result)
         break;
     case MSG_DATA_CONNECTION_STATE_CHANGE_IND:
         dc = result->data;
-        if (dc != NULL) {
-            syslog(LOG_DEBUG, "id (apn_path) = %s \n", dc->id);
-            syslog(LOG_DEBUG, "name = %s \n", dc->name);
-            syslog(LOG_DEBUG, "accesspointname = %s \n", dc->accesspointname);
-            syslog(LOG_DEBUG, "type = %d \n", dc->type);
-            syslog(LOG_DEBUG, "active = %d \n", dc->active);
+        if (dc == NULL)
+            break;
 
-            if (dc->ip_settings != NULL) {
-                ipv4 = dc->ip_settings->ipv4;
-                if (ipv4 != NULL) {
-                    syslog(LOG_DEBUG, "ipv4-interface = %s; ip = %s; gateway = %s; dns = %s; \n",
-                        ipv4->interface, ipv4->ip, ipv4->gateway, ipv4->dns[0]);
-                }
+        syslog(LOG_DEBUG, "id (apn_path) = %s \n", dc->id);
+        syslog(LOG_DEBUG, "type = %s \n", tapi_utils_apn_type_to_string(dc->type));
+        syslog(LOG_DEBUG, "active = %d \n", dc->active);
 
-                ipv6 = dc->ip_settings->ipv6;
-                if (ipv6 != NULL) {
-                    syslog(LOG_DEBUG, "ipv6-interface = %s; ip = %s; gateway = %s; dns = %s; \n",
-                        ipv6->interface, ipv6->ip, ipv6->gateway, ipv6->dns[0]);
-                }
-            }
+        if (dc->ip_settings == NULL)
+            break;
+
+        ipv4 = dc->ip_settings->ipv4;
+        if (ipv4 != NULL) {
+            syslog(LOG_DEBUG, "ipv4-interface = %s; ip = %s; gateway = %s; dns = %s; \n",
+                ipv4->interface, ipv4->ip, ipv4->gateway, ipv4->dns[0]);
+        }
+
+        ipv6 = dc->ip_settings->ipv6;
+        if (ipv6 != NULL) {
+            syslog(LOG_DEBUG, "ipv6-interface = %s; ip = %s; gateway = %s; dns = %s; \n",
+                ipv6->interface, ipv6->ip, ipv6->gateway, ipv6->dns[0]);
         }
         break;
     case MSG_DEFAULT_DATA_SLOT_CHANGE_IND:
@@ -1709,12 +1733,12 @@ static int telephonytool_cmd_load_apns(tapi_context context, char* pargs)
         atoi(slot_id), EVENT_APN_LOADED_DONE, data_event_response);
 }
 
-static int telephonytool_cmd_save_apn(tapi_context context, char* pargs)
+static int telephonytool_cmd_add_apn(tapi_context context, char* pargs)
 {
     char dst[6][MAX_INPUT_ARGS_LEN];
     char* slot_id;
     char *type, *name, *apn, *proto, *auth;
-    tapi_apn_context* apn_context;
+    tapi_data_context* apn_context;
     int cnt;
 
     if (strlen(pargs) == 0)
@@ -1733,7 +1757,7 @@ static int telephonytool_cmd_save_apn(tapi_context context, char* pargs)
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
-    apn_context = malloc(sizeof(tapi_apn_context));
+    apn_context = malloc(sizeof(tapi_data_context));
     if (apn_context == NULL)
         return -EINVAL;
 
@@ -1750,8 +1774,8 @@ static int telephonytool_cmd_save_apn(tapi_context context, char* pargs)
     strcpy(apn_context->username, "");
     strcpy(apn_context->password, "");
 
-    tapi_data_save_apn_context(context,
-        atoi(slot_id), EVENT_APN_SAVE_DONE, apn_context, data_event_response);
+    tapi_data_add_apn_context(context,
+        atoi(slot_id), EVENT_APN_ADD_DONE, apn_context, data_event_response);
     free(apn_context);
 
     return 0;
@@ -1762,7 +1786,7 @@ static int telephonytool_cmd_remove_apn(tapi_context context, char* pargs)
     char dst[2][MAX_INPUT_ARGS_LEN];
     char* slot_id;
     char* target_state;
-    tapi_apn_context* apn;
+    tapi_data_context* apn;
     int cnt;
 
     if (strlen(pargs) == 0)
@@ -1777,7 +1801,7 @@ static int telephonytool_cmd_remove_apn(tapi_context context, char* pargs)
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
-    apn = malloc(sizeof(tapi_apn_context));
+    apn = malloc(sizeof(tapi_data_context));
     if (apn == NULL)
         return -EINVAL;
     apn->id = target_state;
@@ -1848,6 +1872,21 @@ static int telephonytool_cmd_release_network(tapi_context context, char* pargs)
     return tapi_data_release_network(context, atoi(slot_id), target_state);
 }
 
+static int telephonytool_cmd_get_data_call_list(tapi_context context, char* pargs)
+{
+    char* slot_id;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", NULL);
+    if (!is_valid_slot_id_str(slot_id))
+        return -EINVAL;
+
+    return tapi_data_get_data_connection_list(context,
+        atoi(slot_id), EVENT_DATA_CALL_LIST_QUERY_DONE, data_event_response);
+}
+
 static int telephonytool_cmd_set_data_roaming(tapi_context context, char* pargs)
 {
     char* status;
@@ -1883,7 +1922,7 @@ static int telephonytool_cmd_set_data_enabled(tapi_context context, char* pargs)
     if (value == NULL)
         return -EINVAL;
 
-    return tapi_data_enable(context, atoi(value));
+    return tapi_data_enable_data(context, atoi(value));
 }
 
 static int telephonytool_cmd_get_data_enabled(tapi_context context, char* pargs)
@@ -1909,7 +1948,7 @@ static int telephonytool_cmd_get_ps_attached(tapi_context context, char* pargs)
         return -EINVAL;
 
     result = false;
-    tapi_data_is_ps_attached(context, atoi(slot_id), &result);
+    tapi_data_is_registered(context, atoi(slot_id), &result);
     syslog(LOG_DEBUG, "%s, slotId : %s result : %d \n", __func__, slot_id, result);
 
     return 0;
@@ -1938,7 +1977,7 @@ static int telephonytool_cmd_set_pref_apn(tapi_context context, char* pargs)
     char dst[2][MAX_INPUT_ARGS_LEN];
     char* slot_id;
     char* target_state;
-    tapi_apn_context* apn;
+    tapi_data_context* apn;
     int cnt;
 
     if (strlen(pargs) == 0)
@@ -1953,7 +1992,7 @@ static int telephonytool_cmd_set_pref_apn(tapi_context context, char* pargs)
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
-    apn = malloc(sizeof(tapi_apn_context));
+    apn = malloc(sizeof(tapi_data_context));
     if (apn == NULL)
         return -EINVAL;
     apn->id = target_state;
@@ -4079,9 +4118,9 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     { "load-apns", DATA_CMD,
         telephonytool_cmd_load_apns,
         "load apn settings (enter example : load-apns 0 [slot_id])" },
-    { "save-apn", DATA_CMD,
-        telephonytool_cmd_save_apn,
-        "save apn (enter example : save-apn 0 1 cmcc cmnet 2 2 "
+    { "add-apn", DATA_CMD,
+        telephonytool_cmd_add_apn,
+        "add apn (enter example : add-apn 0 1 cmcc cmnet 2 2 "
         "[slot_id][type][name][apn][proto][auth])" },
     { "remove-apn", DATA_CMD,
         telephonytool_cmd_remove_apn,
@@ -4095,6 +4134,9 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     { "release-network", DATA_CMD,
         telephonytool_cmd_release_network,
         "release network (enter example : release-network 0 internet [slot_id][apn_type_string])" },
+    { "get-data-calls", DATA_CMD,
+        telephonytool_cmd_get_data_call_list,
+        "query active data call list (enter example : get-data-calls 0 [slot_id])" },
     { "set-data-roaming", DATA_CMD,
         telephonytool_cmd_set_data_roaming,
         "set data roaming (enter example : set-data-roaming 1[state])" },
@@ -4107,9 +4149,9 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     { "is-data-on", DATA_CMD,
         telephonytool_cmd_get_data_enabled,
         "get data enabled (enter example : is-data-on)" },
-    { "is-ps-attached", DATA_CMD,
+    { "get-data-registered", DATA_CMD,
         telephonytool_cmd_get_ps_attached,
-        "checki if ps attached (enter example : is-ps-attached 0 [slot_id])" },
+        "checki if ps attached (enter example : get-data-registered 0 [slot_id])" },
     { "get-ps-nwtype", DATA_CMD,
         telephonytool_cmd_get_ps_network_type,
         "get ps network type (enter example : get-ps-nwtype 0 [slot_id])" },
