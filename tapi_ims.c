@@ -46,7 +46,7 @@ static int tapi_ims_bitmask(int bit_mask, int bit_field, bool enabled)
 static void set_ss_param_append(DBusMessageIter* iter, void* user_data)
 {
     int* param = user_data;
-    dbus_message_iter_append_basic(iter, DBUS_TYPE_INT16, &param);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, param);
 }
 
 static int tapi_ims_enable(tapi_context context, int slot_id, int state)
@@ -86,7 +86,7 @@ static int ims_registration_changed(DBusConnection* connection, DBusMessage* mes
     tapi_async_function cb;
     tapi_async_result* ar;
     handler = user_data;
-    unsigned char val;
+    int val;
     int msg_id;
     char* key;
 
@@ -165,7 +165,7 @@ int tapi_ims_set_service_status(tapi_context context, int slot_id, int capabilit
         return -EIO;
     }
 
-    if (!g_dbus_proxy_method_call(proxy, "ServiceStatus", set_ss_param_append,
+    if (!g_dbus_proxy_method_call(proxy, "SetCapability", set_ss_param_append,
             no_operate_callback, &capability, NULL))
         return -EIO;
 
@@ -226,7 +226,7 @@ int tapi_ims_get_registration(tapi_context context, int slot_id,
     dbus_context* ctx = context;
     DBusMessageIter iter;
     GDBusProxy* proxy;
-    unsigned char val;
+    int val;
     int cap_value = 0;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || ims_reg == NULL) {
