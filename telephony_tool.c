@@ -387,6 +387,7 @@ static void tele_sim_async_fun(tapi_async_result* result)
 {
     sim_lock_state* sim_lock = NULL;
     sim_state_result* ss;
+    unsigned char* apdu_data;
     int i;
 
     syslog(LOG_DEBUG, "%s : \n", __func__);
@@ -395,36 +396,37 @@ static void tele_sim_async_fun(tapi_async_result* result)
     syslog(LOG_DEBUG, "result->arg1 : %d\n", result->arg1);
     syslog(LOG_DEBUG, "result->arg2 : %d\n", result->arg2);
 
-    if (result->msg_id == EVENT_TRANSMIT_APDU_LOGICAL_CHANNEL_DONE
-        || result->msg_id == EVENT_TRANSMIT_APDU_BASIC_CHANNEL_DONE) {
-        syslog(LOG_DEBUG, "apdu data : %s \n", (char*)result->data);
-    } else if (result->msg_id == MSG_SIM_STATE_CHANGE_IND) {
-        if (result->status != OK)
-            return;
-
-        ss = result->data;
-        if (ss != NULL) {
-            syslog(LOG_DEBUG, "response strings name : %s\n", ss->name);
-            if (strcmp(ss->name, "Present") == 0) {
-                syslog(LOG_DEBUG, "response is sim present : %d\n", ss->value);
-            } else if (strcmp(ss->name, "PinRequired") == 0) {
-                syslog(LOG_DEBUG, "response pin required type : %s\n", (char*)ss->data);
-            } else if (strcmp(ss->name, "LockedPins") == 0) {
-                sim_lock = ss->data;
-                if (sim_lock != NULL && sim_lock->sim_pwd_type != NULL) {
-                    for (i = 0; i < result->arg2; ++i) {
-                        syslog(LOG_DEBUG, "response locked pins type : %s\n",
-                            sim_lock->sim_pwd_type[i]);
+    if (result->status == OK) {
+        if (result->msg_id == EVENT_TRANSMIT_APDU_LOGICAL_CHANNEL_DONE
+            || result->msg_id == EVENT_TRANSMIT_APDU_BASIC_CHANNEL_DONE) {
+            apdu_data = (unsigned char*)result->data;
+            for (i = 0; i < result->arg2; i++)
+                syslog(LOG_DEBUG, "apdu data %d : %d ", i, apdu_data[i]);
+        } else if (result->msg_id == MSG_SIM_STATE_CHANGE_IND) {
+            ss = result->data;
+            if (ss != NULL) {
+                syslog(LOG_DEBUG, "response strings name : %s\n", ss->name);
+                if (strcmp(ss->name, "Present") == 0) {
+                    syslog(LOG_DEBUG, "response is sim present : %d\n", ss->value);
+                } else if (strcmp(ss->name, "PinRequired") == 0) {
+                    syslog(LOG_DEBUG, "response pin required type : %s\n", (char*)ss->data);
+                } else if (strcmp(ss->name, "LockedPins") == 0) {
+                    sim_lock = ss->data;
+                    if (sim_lock != NULL && sim_lock->sim_pwd_type != NULL) {
+                        for (i = 0; i < result->arg2; ++i) {
+                            syslog(LOG_DEBUG, "response locked pins type : %s\n",
+                                sim_lock->sim_pwd_type[i]);
+                        }
                     }
-                }
-            } else if (strcmp(ss->name, "Retries") == 0) {
-                sim_lock = ss->data;
-                if (sim_lock != NULL && sim_lock->sim_pwd_type != NULL) {
-                    for (i = 0; i < result->arg2; ++i) {
-                        syslog(LOG_DEBUG, "response locked pins type : %s\n",
-                            sim_lock->sim_pwd_type[i]);
-                        syslog(LOG_DEBUG, "response locked pins retries : %d\n",
-                            sim_lock->retry_count[i]);
+                } else if (strcmp(ss->name, "Retries") == 0) {
+                    sim_lock = ss->data;
+                    if (sim_lock != NULL && sim_lock->sim_pwd_type != NULL) {
+                        for (i = 0; i < result->arg2; ++i) {
+                            syslog(LOG_DEBUG, "response locked pins type : %s\n",
+                                sim_lock->sim_pwd_type[i]);
+                            syslog(LOG_DEBUG, "response locked pins retries : %d\n",
+                                sim_lock->retry_count[i]);
+                        }
                     }
                 }
             }
@@ -2393,26 +2395,35 @@ static int telephonytool_cmd_unlock_sim_pin(tapi_context context, char* pargs)
 
 static int telephonytool_cmd_open_logical_channel(tapi_context context, char* pargs)
 {
-    char dst[2][MAX_INPUT_ARGS_LEN];
+    char dst[3][MAX_INPUT_ARGS_LEN];
+    unsigned char aid[32];
     char* slot_id;
-    char* aid;
+    char* data;
+    char* len;
     int cnt;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
 
-    cnt = split_input(dst, 2, pargs, " ");
-    if (cnt != 2)
+    cnt = split_input(dst, 3, pargs, " ");
+    if (cnt != 3)
         return -EINVAL;
 
     slot_id = dst[0];
-    aid = dst[1];
+    data = dst[1];
+    len = dst[2];
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
-    syslog(LOG_DEBUG, "%s, slot_id: %s aid: %s \n", __func__, slot_id, aid);
+    if (!atoi(len) || atoi(len) > 16 || atoi(len) != strlen(data) / 2)
+        return -EINVAL;
+
+    if (hex_string_to_byte_array(data, aid, 32) != 0)
+        return -EINVAL;
+
+    syslog(LOG_DEBUG, "%s, slot_id: %s aid: %s len: %s \n", __func__, slot_id, data, len);
     return tapi_sim_open_logical_channel(context, atoi(slot_id),
-        EVENT_OPEN_LOGICAL_CHANNEL_DONE, aid, tele_call_async_fun);
+        EVENT_OPEN_LOGICAL_CHANNEL_DONE, aid, atoi(len), tele_call_async_fun);
 }
 
 static int telephonytool_cmd_close_logical_channel(tapi_context context, char* pargs)
@@ -2443,9 +2454,10 @@ static int telephonytool_cmd_close_logical_channel(tapi_context context, char* p
 static int telephonytool_cmd_transmit_apdu_logical_channel(tapi_context context, char* pargs)
 {
     char dst[4][MAX_INPUT_ARGS_LEN];
+    unsigned char pdu[MAX_INPUT_ARGS_LEN];
     char* slot_id;
     char* sessionid;
-    char* pdu;
+    char* data;
     char* len;
     int cnt;
 
@@ -2458,13 +2470,19 @@ static int telephonytool_cmd_transmit_apdu_logical_channel(tapi_context context,
 
     slot_id = dst[0];
     sessionid = dst[1];
-    pdu = dst[2];
+    data = dst[2];
     len = dst[3];
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
+    if (atoi(len) != strlen(data) / 2)
+        return -EINVAL;
+
+    if (hex_string_to_byte_array(data, pdu, MAX_INPUT_ARGS_LEN) != 0)
+        return -EINVAL;
+
     syslog(LOG_DEBUG, "%s, slot_id: %s sessionid: %s pdu: %s len: %s \n",
-        __func__, slot_id, sessionid, pdu, len);
+        __func__, slot_id, sessionid, data, len);
 
     return tapi_sim_transmit_apdu_logical_channel(context, atoi(slot_id),
         EVENT_TRANSMIT_APDU_LOGICAL_CHANNEL_DONE, atoi(sessionid),
@@ -2474,8 +2492,9 @@ static int telephonytool_cmd_transmit_apdu_logical_channel(tapi_context context,
 static int telephonytool_cmd_transmit_apdu_basic_channel(tapi_context context, char* pargs)
 {
     char dst[3][MAX_INPUT_ARGS_LEN];
+    unsigned char pdu[MAX_INPUT_ARGS_LEN];
     char* slot_id;
-    char* pdu;
+    char* data;
     char* len;
     int cnt;
 
@@ -2487,13 +2506,19 @@ static int telephonytool_cmd_transmit_apdu_basic_channel(tapi_context context, c
         return -EINVAL;
 
     slot_id = dst[0];
-    pdu = dst[1];
+    data = dst[1];
     len = dst[2];
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
+    if (atoi(len) != strlen(data) / 2)
+        return -EINVAL;
+
+    if (hex_string_to_byte_array(data, pdu, MAX_INPUT_ARGS_LEN) != 0)
+        return -EINVAL;
+
     syslog(LOG_DEBUG, "%s, slot_id: %s pdu: %s len: %s \n",
-        __func__, slot_id, pdu, len);
+        __func__, slot_id, data, len);
 
     return tapi_sim_transmit_apdu_basic_channel(context, atoi(slot_id),
         EVENT_TRANSMIT_APDU_BASIC_CHANNEL_DONE, pdu, atoi(len), tele_sim_async_fun);
@@ -4232,7 +4257,7 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     { "open-logical-channel", SIM_CMD,
         telephonytool_cmd_open_logical_channel,
         "open logical channel (enter example : "
-        "open-logical-channel 0 A0000000871002FF86FFFF89FFFFFFFF "
+        "open-logical-channel 0 A0000000871002FF86FFFF89FFFFFFFF 16"
         "[slot_id][aid_str])" },
     { "close-logical-channel", SIM_CMD,
         telephonytool_cmd_close_logical_channel,
@@ -4241,12 +4266,12 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     { "transmit-apdu-logical-channel", SIM_CMD,
         telephonytool_cmd_transmit_apdu_logical_channel,
         "transmit apdu logical channel (enter example : "
-        "transmit-apdu-logical-channel 0 20 A0B000010473656E669000 8 "
+        "transmit-apdu-logical-channel 0 20 A0B000010473656E669000 11 "
         "[slot_id][session_id][pdu][len])" },
     { "transmit-apdu-basic-channel", SIM_CMD,
         telephonytool_cmd_transmit_apdu_basic_channel,
         "transmit apdu basic channel (enter example : "
-        "transmit-apdu-basic-channel 0 A0B000010473656E669000 8 "
+        "transmit-apdu-basic-channel 0 A0B000010473656E669000 11 "
         "[slot_id][pdu][len])" },
     { "get-uicc-enablement", SIM_CMD,
         telephonytool_cmd_get_uicc_enablement,

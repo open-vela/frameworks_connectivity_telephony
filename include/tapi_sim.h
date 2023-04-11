@@ -224,11 +224,12 @@ int tapi_sim_unlock_pin(tapi_context context, int slot_id,
  * @param[in] slot_id        Slot id of current sim.
  * @param[in] event_id       Async event identifier.
  * @param[in] aid            Aid value.
+ * @param[in] len            The length of aid.
  * @param[in] p_handle       Event callback.
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_sim_open_logical_channel(tapi_context context, int slot_id,
-    int event_id, char* aid, tapi_async_function p_handle);
+    int event_id, unsigned char aid[], int len, tapi_async_function p_handle);
 
 /**
  * Close a previously opened logical channel given by
@@ -255,7 +256,8 @@ int tapi_sim_close_logical_channel(tapi_context context, int slot_id,
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_sim_transmit_apdu_logical_channel(tapi_context context, int slot_id,
-    int event_id, int session_id, char* pdu, unsigned int len, tapi_async_function p_handle);
+    int event_id, int session_id, unsigned char pdu[], int len,
+    tapi_async_function p_handle);
 
 /**
  * Transmit an APDU to the ICC card over the basic channel.
@@ -268,7 +270,7 @@ int tapi_sim_transmit_apdu_logical_channel(tapi_context context, int slot_id,
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_sim_transmit_apdu_basic_channel(tapi_context context, int slot_id,
-    int event_id, char* pdu, unsigned int len, tapi_async_function p_handle);
+    int event_id, unsigned char pdu[], int len, tapi_async_function p_handle);
 
 /**
  * Get uicc applications state.
