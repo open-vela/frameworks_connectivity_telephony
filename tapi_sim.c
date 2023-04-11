@@ -41,7 +41,7 @@ typedef struct {
 
 typedef struct {
     int session_id;
-    char* pdu;
+    void* apdu_data;
     unsigned int len;
 } sim_transmit_apdu_param;
 
@@ -333,12 +333,13 @@ done:
 
 static void transmit_apdu_cb(DBusMessage* message, void* user_data)
 {
-    DBusMessageIter iter;
+    DBusMessageIter iter, array;
     tapi_async_handler* handler;
     tapi_async_result* ar;
     tapi_async_function cb;
     DBusError err;
-    char* response;
+    unsigned char* response;
+    int len;
 
     handler = user_data;
     if (handler == NULL)
@@ -360,9 +361,11 @@ static void transmit_apdu_cb(DBusMessage* message, void* user_data)
         goto done;
     }
 
-    dbus_message_iter_get_basic(&iter, &response);
+    dbus_message_iter_recurse(&iter, &array);
+    dbus_message_iter_get_fixed_array(&array, &response, &len);
 
     ar->data = response;
+    ar->arg2 = len;
     ar->status = OK;
 
 done:
@@ -455,15 +458,28 @@ static void unlock_pin_param_append(DBusMessageIter* iter, void* user_data)
 static void open_channel_param_append(DBusMessageIter* iter, void* user_data)
 {
     tapi_async_handler* param = user_data;
-    char* aid;
+    sim_transmit_apdu_param* open_channel_param;
+    DBusMessageIter array;
+    unsigned char* aid;
+    int len;
+    int i;
 
     if (param == NULL || param->result == NULL) {
         tapi_log_error("invalid argument!");
         return;
     }
 
-    aid = param->result->data;
-    dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &aid);
+    open_channel_param = param->result->data;
+    aid = (unsigned char*)open_channel_param->apdu_data;
+    len = open_channel_param->len;
+
+    dbus_message_iter_open_container(iter, DBUS_TYPE_ARRAY, DBUS_TYPE_BYTE_AS_STRING, &array);
+    for (i = 0; i < len; i++) {
+        dbus_message_iter_append_basic(&array, DBUS_TYPE_BYTE, &aid[i]);
+    }
+    dbus_message_iter_close_container(iter, &array);
+
+    free(open_channel_param);
 }
 
 static void close_channel_param_append(DBusMessageIter* iter, void* user_data)
@@ -484,9 +500,11 @@ static void transmit_apdu_param_append(DBusMessageIter* iter, void* user_data)
 {
     tapi_async_handler* param = user_data;
     sim_transmit_apdu_param* transmit_apdu_param;
+    DBusMessageIter array;
     int session_id;
     unsigned int len;
-    char* pdu;
+    unsigned char* pdu;
+    int i;
 
     if (param == NULL || param->result == NULL) {
         tapi_log_error("invalid argument!");
@@ -495,20 +513,28 @@ static void transmit_apdu_param_append(DBusMessageIter* iter, void* user_data)
 
     transmit_apdu_param = param->result->data;
     session_id = transmit_apdu_param->session_id;
-    pdu = transmit_apdu_param->pdu;
+    pdu = (unsigned char*)transmit_apdu_param->apdu_data;
     len = transmit_apdu_param->len;
 
     dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &session_id);
-    dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &pdu);
-    dbus_message_iter_append_basic(iter, DBUS_TYPE_UINT32, &len);
+
+    dbus_message_iter_open_container(iter, DBUS_TYPE_ARRAY, DBUS_TYPE_BYTE_AS_STRING, &array);
+    for (i = 0; i < len; i++) {
+        dbus_message_iter_append_basic(&array, DBUS_TYPE_BYTE, &pdu[i]);
+    }
+    dbus_message_iter_close_container(iter, &array);
+
+    free(transmit_apdu_param);
 }
 
 static void transmit_apdu_basic_channel_param_append(DBusMessageIter* iter, void* user_data)
 {
     tapi_async_handler* param = user_data;
     sim_transmit_apdu_param* transmit_apdu_param;
+    DBusMessageIter array;
     unsigned int len;
-    char* pdu;
+    unsigned char* pdu;
+    int i;
 
     if (param == NULL || param->result == NULL) {
         tapi_log_error("invalid argument!");
@@ -516,11 +542,16 @@ static void transmit_apdu_basic_channel_param_append(DBusMessageIter* iter, void
     }
 
     transmit_apdu_param = param->result->data;
-    pdu = transmit_apdu_param->pdu;
+    pdu = (unsigned char*)transmit_apdu_param->apdu_data;
     len = transmit_apdu_param->len;
 
-    dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &pdu);
-    dbus_message_iter_append_basic(iter, DBUS_TYPE_UINT32, &len);
+    dbus_message_iter_open_container(iter, DBUS_TYPE_ARRAY, DBUS_TYPE_BYTE_AS_STRING, &array);
+    for (i = 0; i < len; i++) {
+        dbus_message_iter_append_basic(&array, DBUS_TYPE_BYTE, &pdu[i]);
+    }
+    dbus_message_iter_close_container(iter, &array);
+
+    free(transmit_apdu_param);
 }
 
 /****************************************************************************
@@ -1105,8 +1136,9 @@ int tapi_sim_unlock_pin(tapi_context context, int slot_id,
 }
 
 int tapi_sim_open_logical_channel(tapi_context context, int slot_id,
-    int event_id, char* aid, tapi_async_function p_handle)
+    int event_id, unsigned char aid[], int len, tapi_async_function p_handle)
 {
+    sim_transmit_apdu_param* open_channel_param;
     tapi_async_handler* user_data;
     dbus_context* ctx = context;
     tapi_async_result* ar;
@@ -1128,16 +1160,25 @@ int tapi_sim_open_logical_channel(tapi_context context, int slot_id,
             return -EIO;
         }
 
+        open_channel_param = malloc(sizeof(sim_transmit_apdu_param));
+        if (open_channel_param == NULL) {
+            return -ENOMEM;
+        }
+        open_channel_param->apdu_data = aid;
+        open_channel_param->len = len;
+
         ar = malloc(sizeof(tapi_async_result));
         if (ar == NULL) {
+            free(open_channel_param);
             return -ENOMEM;
         }
         ar->msg_id = event_id;
         ar->arg1 = slot_id;
-        ar->data = aid;
+        ar->data = open_channel_param;
 
         user_data = malloc(sizeof(tapi_async_handler));
         if (user_data == NULL) {
+            free(open_channel_param);
             free(ar);
             return -ENOMEM;
         }
@@ -1147,6 +1188,7 @@ int tapi_sim_open_logical_channel(tapi_context context, int slot_id,
         if (!g_dbus_proxy_method_call(proxy, "OpenLogicalChannel", open_channel_param_append,
                 open_logical_channel_cb, user_data, handler_free)) {
             handler_free(user_data);
+            free(open_channel_param);
             return -EINVAL;
         }
 
@@ -1208,7 +1250,8 @@ int tapi_sim_close_logical_channel(tapi_context context, int slot_id,
 }
 
 int tapi_sim_transmit_apdu_logical_channel(tapi_context context, int slot_id,
-    int event_id, int session_id, char* pdu, unsigned int len, tapi_async_function p_handle)
+    int event_id, int session_id, unsigned char pdu[], int len,
+    tapi_async_function p_handle)
 {
     sim_transmit_apdu_param* transmit_apdu_param;
     tapi_async_handler* user_data;
@@ -1237,7 +1280,7 @@ int tapi_sim_transmit_apdu_logical_channel(tapi_context context, int slot_id,
             return -ENOMEM;
         }
         transmit_apdu_param->session_id = session_id;
-        transmit_apdu_param->pdu = pdu;
+        transmit_apdu_param->apdu_data = pdu;
         transmit_apdu_param->len = len;
 
         ar = malloc(sizeof(tapi_async_result));
@@ -1259,8 +1302,9 @@ int tapi_sim_transmit_apdu_logical_channel(tapi_context context, int slot_id,
         user_data->result = ar;
 
         if (!g_dbus_proxy_method_call(proxy, "TransmitApduLogicalChannel",
-                transmit_apdu_param_append, transmit_apdu_cb, user_data, sim_event_data_free)) {
-            sim_event_data_free(user_data);
+                transmit_apdu_param_append, transmit_apdu_cb, user_data, handler_free)) {
+            handler_free(user_data);
+            free(transmit_apdu_param);
             return -EINVAL;
         }
 
@@ -1271,7 +1315,7 @@ int tapi_sim_transmit_apdu_logical_channel(tapi_context context, int slot_id,
 }
 
 int tapi_sim_transmit_apdu_basic_channel(tapi_context context, int slot_id,
-    int event_id, char* pdu, unsigned int len, tapi_async_function p_handle)
+    int event_id, unsigned char pdu[], int len, tapi_async_function p_handle)
 {
     sim_transmit_apdu_param* transmit_apdu_param;
     tapi_async_handler* user_data;
@@ -1298,7 +1342,7 @@ int tapi_sim_transmit_apdu_basic_channel(tapi_context context, int slot_id,
         if (transmit_apdu_param == NULL) {
             return -ENOMEM;
         }
-        transmit_apdu_param->pdu = pdu;
+        transmit_apdu_param->apdu_data = pdu;
         transmit_apdu_param->len = len;
 
         ar = malloc(sizeof(tapi_async_result));
@@ -1320,8 +1364,10 @@ int tapi_sim_transmit_apdu_basic_channel(tapi_context context, int slot_id,
         user_data->result = ar;
 
         if (!g_dbus_proxy_method_call(proxy, "TransmitApduBasicChannel",
-                transmit_apdu_basic_channel_param_append, transmit_apdu_cb, user_data, sim_event_data_free)) {
-            sim_event_data_free(user_data);
+                transmit_apdu_basic_channel_param_append, transmit_apdu_cb,
+                user_data, handler_free)) {
+            handler_free(user_data);
+            free(transmit_apdu_param);
             return -EINVAL;
         }
 
