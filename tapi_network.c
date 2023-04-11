@@ -178,10 +178,11 @@ static void fill_cell_identity(const char* prop, DBusMessageIter* iter,
 static void fill_signal_strength(const char* prop, DBusMessageIter* iter, tapi_signal_strength* ss)
 {
     int value;
+    unsigned char value_byte;
 
     if (strcmp(prop, "Strength") == 0) {
-        dbus_message_iter_get_basic(iter, &value);
-        ss->rssi = value;
+        dbus_message_iter_get_basic(iter, &value_byte);
+        ss->rssi = value_byte;
     } else if (strcmp(prop, "SingalToNoiseRatio") == 0) {
         dbus_message_iter_get_basic(iter, &value);
         ss->rssnr = value;
@@ -394,7 +395,7 @@ static int signal_strength_changed(DBusConnection* connection,
     tapi_async_function cb;
     DBusMessageIter iter, var;
     const char* property;
-    int strength;
+    unsigned char strength;
 
     if (handler == NULL)
         return 0;
@@ -1077,7 +1078,7 @@ int tapi_network_get_signalstrength(tapi_context context, int slot_id, tapi_sign
     dbus_context* ctx = context;
     GDBusProxy* proxy;
     DBusMessageIter iter;
-    int value;
+    unsigned char value;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
