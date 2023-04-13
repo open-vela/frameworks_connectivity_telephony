@@ -852,6 +852,7 @@ int tapi_network_select_manual(tapi_context context,
         return -ENOMEM;
     }
 
+    ar->msg_id = event_id;
     ar->arg1 = slot_id;
     ar->data = network;
     handler->result = ar;
