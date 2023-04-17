@@ -138,6 +138,9 @@ int tapi_sms_set_cell_broadcast_power_on(tapi_context context, int slot_id, bool
         return -EINVAL;
     }
 
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CBS];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
@@ -179,6 +182,9 @@ int tapi_sms_set_cell_broadcast_topics(tapi_context context, int slot_id, char* 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
     }
+
+    if (!ctx->client_ready)
+        return -EAGAIN;
 
     if (topics == NULL) {
         return -EINVAL;
