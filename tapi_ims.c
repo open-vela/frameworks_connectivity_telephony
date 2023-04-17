@@ -245,17 +245,15 @@ int tapi_ims_get_registration(tapi_context context, int slot_id,
     dbus_message_iter_get_basic(&iter, &val);
     ims_reg->reg_info = val;
 
-    if (!g_dbus_proxy_get_property(proxy, "VoiceCapable", &iter))
-        return -EIO;
+    if (g_dbus_proxy_get_property(proxy, "VoiceCapable", &iter)) {
+        dbus_message_iter_get_basic(&iter, &val);
+        cap_value = tapi_ims_bitmask(cap_value, VOICE_CAPABLE_FLAG, val);
+    }
 
-    dbus_message_iter_get_basic(&iter, &val);
-    cap_value = tapi_ims_bitmask(cap_value, VOICE_CAPABLE_FLAG, val);
-
-    if (!g_dbus_proxy_get_property(proxy, "SmsCapable", &iter))
-        return -EIO;
-
-    dbus_message_iter_get_basic(&iter, &val);
-    cap_value = tapi_ims_bitmask(cap_value, SMS_CAPABLE_FLAG, val);
+    if (g_dbus_proxy_get_property(proxy, "SmsCapable", &iter)) {
+        dbus_message_iter_get_basic(&iter, &val);
+        cap_value = tapi_ims_bitmask(cap_value, SMS_CAPABLE_FLAG, val);
+    }
 
     ims_reg->ext_info = cap_value;
 
@@ -267,7 +265,7 @@ int tapi_ims_is_registered(tapi_context context, int slot_id)
     dbus_context* ctx = context;
     DBusMessageIter iter;
     GDBusProxy* proxy;
-    unsigned char val;
+    int val;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
@@ -291,7 +289,7 @@ int tapi_ims_is_registered(tapi_context context, int slot_id)
 int tapi_ims_is_volte_available(tapi_context context, int slot_id)
 {
     dbus_context* ctx = context;
-    unsigned char reg, cap;
+    int reg, cap;
     DBusMessageIter iter;
     GDBusProxy* proxy;
 
