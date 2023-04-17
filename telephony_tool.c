@@ -3744,17 +3744,15 @@ static int telephonytool_cmd_ims_get_registration(tapi_context context, char* pa
         if (ret == OK) {
             syslog(LOG_DEBUG, "%s: ret_info: %d, ext_info: %d\n", __func__,
                 info.reg_info, info.ext_info);
+        } else {
+            syslog(LOG_DEBUG, "%s: ims_get_registration error: %d\n", __func__, ret);
         }
     } else if (action_type == 1) {
         ret = tapi_ims_is_registered(context, slot_id);
-        if (ret == OK) {
-            syslog(LOG_DEBUG, "%s: ims_registered: %d\n", __func__, ret);
-        }
+        syslog(LOG_DEBUG, "%s: ims_registered: %d\n", __func__, ret);
     } else if (action_type == 2) {
         ret = tapi_ims_is_volte_available(context, slot_id);
-        if (ret == OK) {
-            syslog(LOG_DEBUG, "%s: ims_volte_enabled: %d\n", __func__, ret);
-        }
+        syslog(LOG_DEBUG, "%s: ims_volte_enabled: %d\n", __func__, ret);
     }
 
     return ret;
