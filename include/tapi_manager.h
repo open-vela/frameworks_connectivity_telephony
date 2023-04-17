@@ -50,9 +50,12 @@ extern "C" {
  * Init telephony library.
  * @param[in] client_name        Calling context name.
  * Must contain one dot character at least. For example, miot.app
+ * @param[in] user_data          user data pointer
+ * @param[in] callback           callback function one tapi is ready.
  * @return Pointer to created context or NULL on failure.
  */
-tapi_context tapi_open(const char* client_name);
+tapi_context tapi_open(const char* client_name,
+    tapi_client_ready_function callback, void* user_data);
 
 /**
  * Close telephony library.

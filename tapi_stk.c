@@ -1666,6 +1666,9 @@ int tapi_stk_get_idle_mode_text(tapi_context context, int slot_id, char** text)
         return -EINVAL;
     }
 
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_STK];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
@@ -1689,6 +1692,9 @@ int tapi_stk_get_idle_mode_icon(tapi_context context, int slot_id, char** icon)
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
     }
+
+    if (!ctx->client_ready)
+        return -EAGAIN;
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_STK];
     if (proxy == NULL) {
@@ -1717,6 +1723,9 @@ int tapi_stk_get_main_menu(tapi_context context, int slot_id, int length, tapi_s
         || length <= 0) {
         return -EINVAL;
     }
+
+    if (!ctx->client_ready)
+        return -EAGAIN;
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_STK];
     if (proxy == NULL) {
@@ -1767,6 +1776,9 @@ int tapi_stk_get_main_menu_title(tapi_context context, int slot_id, char** title
         return -EINVAL;
     }
 
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_STK];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
@@ -1790,6 +1802,9 @@ int tapi_stk_get_main_menu_icon(tapi_context context, int slot_id, char** icon)
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
     }
+
+    if (!ctx->client_ready)
+        return -EAGAIN;
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_STK];
     if (proxy == NULL) {

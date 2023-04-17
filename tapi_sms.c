@@ -406,6 +406,9 @@ bool tapi_sms_set_service_center_address(tapi_context context, int slot_id, char
         return -EINVAL;
     }
 
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
     if (number == NULL) {
         return -EINVAL;
     }

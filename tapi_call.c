@@ -1162,6 +1162,9 @@ int tapi_call_get_call_info(tapi_context context, int slot_id,
         return -EINVAL;
     }
 
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
     proxy = get_call_proxy(ctx, slot_id, call_id);
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
@@ -1345,6 +1348,9 @@ int tapi_call_get_ecc_list(tapi_context context, int slot_id, char** out)
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
     }
+
+    if (!ctx->client_ready)
+        return -EAGAIN;
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
     if (proxy == NULL) {

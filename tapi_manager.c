@@ -28,6 +28,13 @@
  ****************************************************************************/
 
 typedef struct {
+    dbus_context* context;
+    const char* client_name;
+    void* user_data;
+    tapi_client_ready_function callback;
+} client_ready_cb_data;
+
+typedef struct {
     int length;
     void* oem_req;
 } oem_ril_request_data;
@@ -554,11 +561,33 @@ done:
     cb(ar);
 }
 
+static void on_dbus_client_ready(GDBusClient* client, void* user_data)
+{
+    client_ready_cb_data* cbd = user_data;
+    dbus_context* ctx;
+    tapi_client_ready_function cb;
+
+    if (cbd == NULL)
+        return;
+
+    ctx = cbd->context;
+    if (ctx != NULL) {
+        ctx->client_ready = true;
+    }
+
+    cb = cbd->callback;
+    if (cb != NULL)
+        cb(cbd->client_name, cbd->user_data);
+
+    free(cbd);
+}
+
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
 
-tapi_context tapi_open(const char* client_name)
+tapi_context tapi_open(const char* client_name,
+    tapi_client_ready_function callback, void* user_data)
 {
     DBusConnection* connection;
     GDBusClient* client;
@@ -591,8 +620,25 @@ tapi_context tapi_open(const char* client_name)
 
     g_dbus_client_set_proxy_handlers(client, object_add, object_remove, NULL, NULL);
 
+    client_ready_cb_data* cbd = malloc(sizeof(client_ready_cb_data));
+    if (cbd == NULL) {
+        g_dbus_client_unref(client);
+        goto error;
+    }
+
+    cbd->client_name = client_name;
+    cbd->context = ctx;
+    cbd->user_data = user_data;
+    cbd->callback = callback;
+    if (!g_dbus_client_set_ready_watch(client, on_dbus_client_ready, cbd)) {
+        g_dbus_client_unref(client);
+        free(cbd);
+        goto error;
+    }
+
     ctx->connection = connection;
     ctx->client = client;
+    ctx->client_ready = false;
     snprintf(ctx->name, sizeof(ctx->name), "%s", client_name);
     get_dbus_proxy(ctx);
 
@@ -691,6 +737,9 @@ int tapi_set_pref_net_mode(tapi_context context,
         return -EINVAL;
     }
 
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_RADIO];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
@@ -735,6 +784,9 @@ int tapi_get_pref_net_mode(tapi_context context, int slot_id, tapi_pref_net_mode
         return -EINVAL;
     }
 
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_RADIO];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
@@ -761,6 +813,9 @@ int tapi_send_modem_power(tapi_context context, int slot_id, bool state)
         return -EINVAL;
     }
 
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
@@ -783,6 +838,9 @@ int tapi_get_imei(tapi_context context, int slot_id, char** out)
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
     }
+
+    if (!ctx->client_ready)
+        return -EAGAIN;
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
     if (proxy == NULL) {
@@ -808,6 +866,9 @@ int tapi_get_imeisv(tapi_context context, int slot_id, char** out)
         return -EINVAL;
     }
 
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
@@ -831,6 +892,9 @@ int tapi_get_modem_manufacturer(tapi_context context, int slot_id, char** out)
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
     }
+
+    if (!ctx->client_ready)
+        return -EAGAIN;
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
     if (proxy == NULL) {
@@ -856,6 +920,9 @@ int tapi_get_modem_model(tapi_context context, int slot_id, char** out)
         return -EINVAL;
     }
 
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
@@ -880,6 +947,9 @@ int tapi_get_modem_revision(tapi_context context, int slot_id, char** out)
         return -EINVAL;
     }
 
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
@@ -903,6 +973,9 @@ int tapi_get_phone_state(tapi_context context, int slot_id, tapi_phone_state* st
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
     }
+
+    if (!ctx->client_ready)
+        return -EAGAIN;
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
     if (proxy == NULL) {
@@ -930,6 +1003,9 @@ int tapi_set_radio_power(tapi_context context,
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
     }
+
+    if (!ctx->client_ready)
+        return -EAGAIN;
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
     if (proxy == NULL) {
@@ -972,6 +1048,9 @@ int tapi_get_radio_power(tapi_context context, int slot_id, bool* out)
         return -EINVAL;
     }
 
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
@@ -999,6 +1078,9 @@ int tapi_get_radio_state(tapi_context context, int slot_id, tapi_radio_state* ou
         return -EINVAL;
     }
 
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
@@ -1022,6 +1104,9 @@ int tapi_get_msisdn_number(tapi_context context, int slot_id, char** out)
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
     }
+
+    if (!ctx->client_ready)
+        return -EAGAIN;
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
     if (proxy == NULL) {

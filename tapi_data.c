@@ -863,6 +863,9 @@ int tapi_data_is_registered(tapi_context context, int slot_id, bool* out)
         return -EINVAL;
     }
 
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_DATA];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
@@ -890,6 +893,9 @@ int tapi_data_get_network_type(tapi_context context, int slot_id, tapi_network_t
         return -EINVAL;
     }
 
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_DATA];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
@@ -916,6 +922,9 @@ int tapi_data_is_data_roaming(tapi_context context, int slot_id, bool* out)
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
     }
+
+    if (!ctx->client_ready)
+        return -EAGAIN;
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_DATA];
     if (proxy == NULL) {
@@ -1033,6 +1042,9 @@ int tapi_data_set_preferred_apn(tapi_context context,
         return -EINVAL;
     }
 
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_DATA];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
@@ -1058,6 +1070,9 @@ int tapi_data_get_preferred_apn(tapi_context context, int slot_id, char** out)
         return -EINVAL;
     }
 
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_DATA];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
@@ -1082,6 +1097,9 @@ int tapi_data_enable_data(tapi_context context, bool enabled)
     if (ctx == NULL) {
         return -EINVAL;
     }
+
+    if (!ctx->client_ready)
+        return -EAGAIN;
 
     value = enabled;
     for (int i = 0; i < CONFIG_ACTIVE_MODEM_COUNT; i++) {
@@ -1111,6 +1129,9 @@ int tapi_data_get_enabled(tapi_context context, bool* out)
         return -EINVAL;
     }
 
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
     proxy = ctx->dbus_proxy[DEFAULT_SLOT_ID][DBUS_PROXY_DATA];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
@@ -1137,6 +1158,9 @@ int tapi_data_enable_roaming(tapi_context context, bool enabled)
     if (ctx == NULL) {
         return -EINVAL;
     }
+
+    if (!ctx->client_ready)
+        return -EAGAIN;
 
     value = enabled;
     for (int i = 0; i < CONFIG_ACTIVE_MODEM_COUNT; i++) {
@@ -1166,6 +1190,9 @@ int tapi_data_get_roaming_enabled(tapi_context context, bool* out)
         return -EINVAL;
     }
 
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
     proxy = ctx->dbus_proxy[DEFAULT_SLOT_ID][DBUS_PROXY_DATA];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
@@ -1193,6 +1220,9 @@ int tapi_data_set_default_data_slot(tapi_context context, int slot_id)
         return -EIO;
     }
 
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
     if (!g_dbus_proxy_set_property_basic(proxy,
             "DataSlot", DBUS_TYPE_INT32, &slot_id, NULL, NULL, NULL)) {
         return -EINVAL;
@@ -1212,6 +1242,9 @@ int tapi_data_get_default_data_slot(tapi_context context, int* out)
         tapi_log_error("no available proxy ...\n");
         return -EIO;
     }
+
+    if (!ctx->client_ready)
+        return -EAGAIN;
 
     if (g_dbus_proxy_get_property(proxy, "DataSlot", &iter)) {
         dbus_message_iter_get_basic(&iter, out);
@@ -1233,6 +1266,9 @@ int tapi_data_set_data_allow(tapi_context context, int slot_id,
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
     }
+
+    if (!ctx->client_ready)
+        return -EAGAIN;
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_DATA];
     if (proxy == NULL) {

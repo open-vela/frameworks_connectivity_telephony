@@ -1005,6 +1005,9 @@ int tapi_network_get_voice_network_type(tapi_context context, int slot_id, tapi_
         return -EINVAL;
     }
 
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_NETREG];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
@@ -1033,6 +1036,9 @@ int tapi_network_is_voice_roaming(tapi_context context, int slot_id, bool* out)
         return -EINVAL;
     }
 
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_NETREG];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
@@ -1060,6 +1066,9 @@ int tapi_network_get_display_name(tapi_context context, int slot_id, char** out)
         return -EINVAL;
     }
 
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_NETREG];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
@@ -1084,6 +1093,9 @@ int tapi_network_get_signalstrength(tapi_context context, int slot_id, tapi_sign
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
     }
+
+    if (!ctx->client_ready)
+        return -EAGAIN;
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_NETREG];
     if (proxy == NULL) {
