@@ -233,6 +233,9 @@ int tapi_ims_get_registration(tapi_context context, int slot_id,
         return -EINVAL;
     }
 
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_IMS];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
@@ -271,6 +274,9 @@ int tapi_ims_is_registered(tapi_context context, int slot_id)
         return -EINVAL;
     }
 
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_IMS];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
@@ -296,6 +302,9 @@ int tapi_ims_is_volte_available(tapi_context context, int slot_id)
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
     }
+
+    if (!ctx->client_ready)
+        return -EAGAIN;
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_IMS];
     if (proxy == NULL) {

@@ -144,6 +144,12 @@ static void* read_stdin(pthread_addr_t pvarg);
  * Private Function
  ****************************************************************************/
 
+static void on_tapi_client_ready(const char* client_name, void* user_data)
+{
+    if (client_name != NULL)
+        syslog(LOG_DEBUG, "tapi is ready for %s\n", client_name);
+}
+
 static bool is_valid_slot_id_str(char* slot_id_str)
 {
     if (slot_id_str == NULL
@@ -4509,7 +4515,7 @@ int main(int argc, char* argv[])
     if (argc == 2)
         dbus_name = argv[1];
 
-    context = tapi_open(dbus_name);
+    context = tapi_open(dbus_name, on_tapi_client_ready, NULL);
     if (context == NULL) {
         return 0;
     }

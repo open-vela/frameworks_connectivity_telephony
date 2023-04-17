@@ -162,6 +162,7 @@ typedef struct {
 } tapi_async_result;
 
 typedef void (*tapi_async_function)(tapi_async_result* result);
+typedef void (*tapi_client_ready_function)(const char* client_name, void* user_data);
 
 typedef enum {
     // Generic Indication Message

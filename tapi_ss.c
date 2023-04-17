@@ -901,6 +901,9 @@ int tapi_ss_query_call_barring_info(tapi_context context, int slot_id, const cha
         return -EINVAL;
     }
 
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_BARRING];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
@@ -1118,6 +1121,9 @@ int tapi_ss_request_call_forwarding(tapi_context context, int slot_id, int event
         return -EINVAL;
     }
 
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_FORWARDING];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
@@ -1165,6 +1171,9 @@ int tapi_ss_query_call_forwarding_info(tapi_context context, int slot_id,
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || service_type == NULL) {
         return -EINVAL;
     }
+
+    if (!ctx->client_ready)
+        return -EAGAIN;
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_FORWARDING];
     if (proxy == NULL) {
@@ -1234,6 +1243,9 @@ int tapi_get_ussd_state(tapi_context context, int slot_id, char** out)
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
     }
+
+    if (!ctx->client_ready)
+        return -EAGAIN;
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SS];
     if (proxy == NULL) {
@@ -1350,6 +1362,9 @@ int tapi_ss_request_call_wating(tapi_context context, int slot_id, int event_id,
         return -EINVAL;
     }
 
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_SETTING];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
@@ -1390,6 +1405,9 @@ int tapi_ss_query_call_wating(tapi_context context, int slot_id, char** out)
         return -EINVAL;
     }
 
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_SETTING];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
@@ -1415,6 +1433,9 @@ int tapi_ss_query_calling_line_presentation_info(tapi_context context, int slot_
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
     }
+
+    if (!ctx->client_ready)
+        return -EAGAIN;
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_SETTING];
     if (proxy == NULL) {
@@ -1443,6 +1464,9 @@ int tapi_ss_request_calling_line_restriction(tapi_context context, int slot_id, 
         || state == NULL) {
         return -EINVAL;
     }
+
+    if (!ctx->client_ready)
+        return -EAGAIN;
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_SETTING];
     if (proxy == NULL) {
@@ -1484,6 +1508,9 @@ int tapi_ss_query_calling_line_restriction_info(tapi_context context, int slot_i
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
     }
+
+    if (!ctx->client_ready)
+        return -EAGAIN;
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_SETTING];
     if (proxy == NULL) {
