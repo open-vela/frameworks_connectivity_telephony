@@ -83,6 +83,7 @@ typedef struct {
     GDBusProxy* dbus_proxy_manager;
     GDBusProxy* dbus_proxy[CONFIG_ACTIVE_MODEM_COUNT][DBUS_PROXY_MAX_COUNT];
     struct list_node call_proxy_list[CONFIG_ACTIVE_MODEM_COUNT];
+    bool client_ready;
 } dbus_context;
 
 typedef struct {

@@ -569,6 +569,9 @@ int tapi_sim_has_icc_card(tapi_context context, int slot_id, bool* out)
         return -EINVAL;
     }
 
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
@@ -595,6 +598,9 @@ int tapi_sim_get_sim_state(tapi_context context, int slot_id, int* out)
         return -EINVAL;
     }
 
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
     if (proxy == NULL) {
         tapi_log_error("no available proxy ...\n");
@@ -620,6 +626,9 @@ int tapi_sim_get_sim_iccid(tapi_context context, int slot_id, char** out)
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
     }
+
+    if (!ctx->client_ready)
+        return -EAGAIN;
 
     has_icc_card = false;
     tapi_sim_has_icc_card(context, slot_id, &has_icc_card);
@@ -652,6 +661,9 @@ int tapi_sim_get_sim_operator(tapi_context context, int slot_id, int length, cha
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
     }
+
+    if (!ctx->client_ready)
+        return -EAGAIN;
 
     if (out == NULL || length < (MAX_MCC_LENGTH + MAX_MNC_LENGTH + 1)) {
         return -EINVAL;
@@ -703,6 +715,9 @@ int tapi_sim_get_sim_operator_name(tapi_context context, int slot_id, char** out
         return -EINVAL;
     }
 
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
     has_icc_card = false;
     tapi_sim_has_icc_card(context, slot_id, &has_icc_card);
 
@@ -732,6 +747,9 @@ int tapi_sim_get_subscriber_id(tapi_context context, int slot_id, char** out)
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
     }
+
+    if (!ctx->client_ready)
+        return -EAGAIN;
 
     has_icc_card = false;
     tapi_sim_has_icc_card(context, slot_id, &has_icc_card);
@@ -1389,6 +1407,9 @@ int tapi_sim_get_uicc_enablement(tapi_context context, int slot_id, tapi_sim_uic
         return -EINVAL;
     }
 
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
     has_icc_card = false;
     tapi_sim_has_icc_card(context, slot_id, &has_icc_card);
 
@@ -1423,6 +1444,9 @@ int tapi_sim_set_uicc_enablement(tapi_context context,
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
     }
+
+    if (!ctx->client_ready)
+        return -EAGAIN;
 
     has_icc_card = false;
     tapi_sim_has_icc_card(context, slot_id, &has_icc_card);
