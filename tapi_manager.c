@@ -28,13 +28,6 @@
  ****************************************************************************/
 
 typedef struct {
-    dbus_context* context;
-    const char* client_name;
-    void* user_data;
-    tapi_client_ready_function callback;
-} client_ready_cb_data;
-
-typedef struct {
     int length;
     void* oem_req;
 } oem_ril_request_data;
@@ -561,27 +554,6 @@ done:
     cb(ar);
 }
 
-static void on_dbus_client_ready(GDBusClient* client, void* user_data)
-{
-    client_ready_cb_data* cbd = user_data;
-    dbus_context* ctx;
-    tapi_client_ready_function cb;
-
-    if (cbd == NULL)
-        return;
-
-    ctx = cbd->context;
-    if (ctx != NULL) {
-        ctx->client_ready = true;
-    }
-
-    cb = cbd->callback;
-    if (cb != NULL)
-        cb(cbd->client_name, cbd->user_data);
-
-    free(cbd);
-}
-
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
@@ -620,25 +592,9 @@ tapi_context tapi_open(const char* client_name,
 
     g_dbus_client_set_proxy_handlers(client, object_add, object_remove, NULL, NULL);
 
-    client_ready_cb_data* cbd = malloc(sizeof(client_ready_cb_data));
-    if (cbd == NULL) {
-        g_dbus_client_unref(client);
-        goto error;
-    }
-
-    cbd->client_name = client_name;
-    cbd->context = ctx;
-    cbd->user_data = user_data;
-    cbd->callback = callback;
-    if (!g_dbus_client_set_ready_watch(client, on_dbus_client_ready, cbd)) {
-        g_dbus_client_unref(client);
-        free(cbd);
-        goto error;
-    }
-
     ctx->connection = connection;
     ctx->client = client;
-    ctx->client_ready = false;
+    ctx->client_ready = true;
     snprintf(ctx->name, sizeof(ctx->name), "%s", client_name);
     get_dbus_proxy(ctx);
 
