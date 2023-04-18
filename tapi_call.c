@@ -52,6 +52,8 @@ typedef struct {
 static int decode_voice_call_info(DBusMessageIter* iter, tapi_call_info* call_info);
 static int call_manager_property_changed(DBusConnection* connection, DBusMessage* message,
     void* user_data);
+static int call_state_changed(DBusConnection* connection, DBusMessage* message,
+    void* user_data);
 static int tapi_call_signal_call_added(DBusMessage* message, tapi_async_handler* handler);
 static int tapi_call_signal_normal(DBusMessage* message, tapi_async_handler* handler, int msg_type);
 static int tapi_call_signal_ecc_list_change(DBusMessage* message, tapi_async_handler* handler);
@@ -346,6 +348,38 @@ call_manager_property_changed(DBusConnection* connection, DBusMessage* message,
     return true;
 }
 
+static int call_state_changed(DBusConnection* connection, DBusMessage* message, void* user_data)
+{
+    tapi_async_handler* handler = user_data;
+    tapi_async_result* ar;
+    tapi_async_function cb;
+    DBusMessageIter iter;
+    tapi_call_info voicecall;
+
+    if (handler == NULL)
+        return 0;
+
+    ar = handler->result;
+    if (ar == NULL)
+        return 0;
+
+    cb = handler->cb_function;
+    if (cb == NULL)
+        return 0;
+
+    if (!dbus_message_iter_init(message, &iter))
+        return 0;
+
+    if (decode_voice_call_info(&iter, &voicecall)) {
+        ar->data = &voicecall;
+        ar->status = OK;
+        cb(ar);
+        return 1;
+    }
+
+    return 0;
+}
+
 static int call_property_changed(DBusConnection* connection, DBusMessage* message,
     void* user_data)
 {
@@ -587,15 +621,15 @@ static int tapi_call_signal_call_added(DBusMessage* message, tapi_async_handler*
     DBusMessageIter iter;
 
     if (handler == NULL)
-        return false;
+        return 0;
 
     ar = handler->result;
     if (ar == NULL)
-        return false;
+        return 0;
 
     cb = handler->cb_function;
     if (cb == NULL)
-        return false;
+        return 0;
 
     if (is_call_signal_message(message, &iter, DBUS_TYPE_OBJECT_PATH)) {
 
@@ -606,7 +640,7 @@ static int tapi_call_signal_call_added(DBusMessage* message, tapi_async_handler*
         }
     }
 
-    return true;
+    return 1;
 }
 
 static int tapi_call_signal_normal(DBusMessage* message, tapi_async_handler* handler, int msg_type)
@@ -1505,4 +1539,49 @@ int tapi_call_invite_participants(tapi_context context, int slot_id,
     }
 
     return ret;
+}
+
+int tapi_call_register_call_state_change(tapi_context context, int slot_id,
+    void* user_obj, tapi_async_function p_handle)
+{
+    dbus_context* ctx = context;
+    const char* modem_path;
+    int watch_id;
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+        return -EINVAL;
+    }
+
+    modem_path = tapi_utils_get_modem_path(slot_id);
+    if (modem_path == NULL) {
+        tapi_log_error("no available modem ...\n");
+        return -EIO;
+    }
+
+    handler = malloc(sizeof(tapi_async_handler));
+    if (handler == NULL)
+        return -ENOMEM;
+
+    handler->cb_function = p_handle;
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        free(handler);
+        return -ENOMEM;
+    }
+    handler->result = ar;
+    ar->arg1 = slot_id;
+    ar->user_obj = user_obj;
+
+    watch_id = g_dbus_add_signal_watch(ctx->connection,
+        OFONO_SERVICE, modem_path, OFONO_VOICECALL_MANAGER_INTERFACE,
+        "CallChanged", call_state_changed, handler, handler_free);
+
+    if (watch_id == 0) {
+        handler_free(handler);
+        return -EINVAL;
+    }
+
+    return watch_id;
 }

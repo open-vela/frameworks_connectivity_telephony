@@ -297,6 +297,27 @@ static void tele_call_manager_call_async_fun(tapi_async_result* result)
     }
 }
 
+static void call_state_change_cb(tapi_async_result* result)
+{
+    tapi_call_info* call_info;
+
+    syslog(LOG_DEBUG, "%s : %d\n", __func__, result->status);
+    call_info = (tapi_call_info*)result->data;
+
+    syslog(LOG_DEBUG, "call changed call_id : %s\n", call_info->call_id);
+    syslog(LOG_DEBUG, "call state: %d \n", call_info->state);
+    syslog(LOG_DEBUG, "call LineIdentification: %s \n", call_info->lineIdentification);
+    syslog(LOG_DEBUG, "call IncomingLine: %s \n", call_info->incoming_line);
+    syslog(LOG_DEBUG, "call Name: %s \n", call_info->name);
+    syslog(LOG_DEBUG, "call StartTime: %s \n", call_info->start_time);
+    syslog(LOG_DEBUG, "call Multiparty: %d \n", call_info->multiparty);
+    syslog(LOG_DEBUG, "call RemoteHeld: %d \n", call_info->remote_held);
+    syslog(LOG_DEBUG, "call RemoteMultiparty: %d \n", call_info->remote_multiparty);
+    syslog(LOG_DEBUG, "call Information: %s \n", call_info->info);
+    syslog(LOG_DEBUG, "call Icon: %d \n", call_info->icon);
+    syslog(LOG_DEBUG, "call Emergency: %d \n\n", call_info->is_emergency_number);
+}
+
 static void tele_call_info_call_async_fun(tapi_async_result* result)
 {
     syslog(LOG_DEBUG, "tele_call_info_call_async_fun msg id: %d\n", result->msg_id);
@@ -1083,6 +1104,21 @@ static int telephonytool_cmd_unlisten_call_singal(tapi_context context, char* pa
     syslog(LOG_DEBUG, "stop to watch call event with watch_id : "
                       "%s with return value : %d \n",
         dst[0], ret);
+
+    return ret;
+}
+
+static int telephonytool_cmd_listen_call_state_change(tapi_context context, char* pargs)
+{
+    char dst[1][MAX_INPUT_ARGS_LEN];
+    int cnt = split_input(dst, 1, pargs, " ");
+    int ret;
+
+    if (cnt != 1)
+        return -EINVAL;
+
+    ret = tapi_call_register_call_state_change(context, atoi(dst[0]), NULL, call_state_change_cb);
+    syslog(LOG_DEBUG, "listen call state change in slot : %s with watch_id : %d \n", dst[0], ret);
 
     return ret;
 }
@@ -4112,6 +4148,9 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         telephonytool_cmd_unlisten_call_singal,
         "call unlisten event callback (enter example : unlisten-call [watch_id] "
         "[watch_id, one uint value returned from \"listen-call\"]" },
+    { "listen-call-state", CALL_CMD,
+        telephonytool_cmd_listen_call_state_change,
+        "call state change event callback (enter example : listen-call-state 0 [slot_id] " },
     { "call-proxy", CALL_CMD,
         telephonytool_cmd_call_proxy,
         "new/release call proxy (enter example : "
