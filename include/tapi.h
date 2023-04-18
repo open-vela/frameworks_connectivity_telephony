@@ -236,7 +236,13 @@ typedef enum {
     MSG_USSD_PROPERTY_CHANGE_IND,
 
     // IMS Indication Message
-    MSG_IMS_REGISTRATION_MESSAGE_IND
+    MSG_IMS_REGISTRATION_MESSAGE_IND,
+
+    // tapi indication msg value max.
+    MSG_IND_MASK,
+
+    // tapi indication msg user custom start.
+    MSG_IND_USER_CUSTOM_FIRST,
 } tapi_indication_msg;
 
 typedef void* tapi_context;
