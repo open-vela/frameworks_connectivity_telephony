@@ -359,6 +359,17 @@ int tapi_call_dial_conferece(tapi_context context, int slot_id, char* participan
 int tapi_call_invite_participants(tapi_context context, int slot_id, char* participants[],
     int size);
 
+/**
+ * Register call event callback.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] user_obj       User data.
+ * @param[in] p_handle       Event callback.
+ * @return Positive value as watch_id on success; a negated errno value on failure.
+ */
+int tapi_call_register_call_state_change(tapi_context context, int slot_id,
+    void* user_obj, tapi_async_function p_handle);
+
 #ifdef __cplusplus
 }
 #endif
