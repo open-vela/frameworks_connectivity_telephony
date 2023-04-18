@@ -91,23 +91,23 @@ static int ims_registration_changed(DBusConnection* connection, DBusMessage* mes
     char* key;
 
     if (handler == NULL)
-        return -EINVAL;
+        return false;
 
     ar = handler->result;
     if (ar == NULL)
-        return -EINVAL;
+        return false;
 
     cb = handler->cb_function;
     if (cb == NULL)
-        return -EINVAL;
+        return false;
 
     msg_id = handler->result->msg_id;
-    if (dbus_message_is_signal(message, OFONO_VOICECALL_MANAGER_INTERFACE,
+    if (dbus_message_is_signal(message, OFONO_IMS_INTERFACE,
             "PropertyChanged")
         && msg_id == MSG_IMS_REGISTRATION_MESSAGE_IND) {
 
         if (dbus_message_iter_init(message, &iter) == FALSE) {
-            handler->result->status = FALSE;
+            handler->result->status = ERROR;
             goto done;
         }
 
@@ -133,7 +133,7 @@ static int ims_registration_changed(DBusConnection* connection, DBusMessage* mes
     }
 
 done:
-    return OK;
+    return true;
 }
 
 /****************************************************************************
@@ -215,6 +215,7 @@ int tapi_ims_register_registration_change(tapi_context context, int slot_id, voi
 
     if (watch_id == 0) {
         handler_free(handler);
+        return -EINVAL;
     }
 
     return watch_id;

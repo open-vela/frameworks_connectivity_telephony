@@ -340,15 +340,24 @@ static void tele_call_ecc_list_async_fun(tapi_async_result* result)
 static void tele_ims_async_fun(tapi_async_result* result)
 {
     int status = result->status;
-    tapi_ims_registration_info* info;
 
     syslog(LOG_DEBUG, "%s : \n", __func__);
     syslog(LOG_DEBUG, "msg_id : %d\n", result->msg_id);
 
     if (status == OK) {
-        info = result->data;
-        syslog(LOG_DEBUG, "%s: ret_info: %d, ext_info: %d\n", __func__,
-            info->reg_info, info->ext_info);
+        switch (result->arg1) {
+        case IMS_REG:
+            syslog(LOG_DEBUG, "IMS_REG change : %d", result->arg2);
+            break;
+        case VOICE_CAP:
+            syslog(LOG_DEBUG, "VOICE_CAP change : %d", result->arg2);
+            break;
+        case SMS_CAP:
+            syslog(LOG_DEBUG, "SMS_CAP : %d", result->arg2);
+            break;
+        default:
+            break;
+        }
     }
 }
 
