@@ -81,6 +81,7 @@ typedef struct {
     char info[MAX_CALL_INFO_LENGTH + 1];
     unsigned char icon;
     bool is_emergency_number;
+    tapi_call_disconnect_reason disconnect_reason;
 } tapi_call_info;
 
 typedef struct {

@@ -783,6 +783,9 @@ static int decode_voice_call_info(DBusMessageIter* iter, tapi_call_info* call_in
         } else if (strcmp(key, "Emergency") == 0) {
             dbus_message_iter_get_basic(&value, &ret);
             call_info->is_emergency_number = ret;
+        } else if (strcmp(key, "DisconnectReason") == 0) {
+            dbus_message_iter_get_basic(&value, &ret);
+            call_info->disconnect_reason = ret;
         }
 
         dbus_message_iter_next(&subArrayIter);
@@ -1253,6 +1256,10 @@ int tapi_call_get_call_info(tapi_context context, int slot_id,
     if (g_dbus_proxy_get_property(proxy, "Emergency", &iter)) {
         dbus_message_iter_get_basic(&iter, &ret);
         info->is_emergency_number = ret;
+    }
+    if (g_dbus_proxy_get_property(proxy, "DisconnectReason", &iter)) {
+        dbus_message_iter_get_basic(&iter, &ret);
+        info->disconnect_reason = ret;
     }
 
     return OK;
