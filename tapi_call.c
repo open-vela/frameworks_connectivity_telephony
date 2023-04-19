@@ -45,6 +45,11 @@ typedef struct {
     void* participants;
 } ims_conference_param;
 
+typedef struct {
+    char* path;
+    char* number;
+} call_deflect_param;
+
 /****************************************************************************
  * Private Function Prototypes
  ****************************************************************************/
@@ -229,6 +234,37 @@ static void call_param_append(DBusMessageIter* iter, void* user_data)
     number = param->number;
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &number);
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &hide_callerid_str);
+
+    free(param);
+}
+
+static void answer_hangup_param_append(DBusMessageIter* iter, void* user_data)
+{
+    char* path = user_data;
+
+    if (path == NULL) {
+        tapi_log_error("invalid answer_hangup request argument !!");
+        return;
+    }
+
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_OBJECT_PATH, &path);
+}
+
+static void deflect_param_append_0(DBusMessageIter* iter, void* user_data)
+{
+    call_deflect_param* param = user_data;
+    char *path, *number;
+
+    if (param == NULL) {
+        tapi_log_error("invalid deflect request argument !!");
+        return;
+    }
+
+    path = param->path;
+    number = param->number;
+
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_OBJECT_PATH, &path);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &number);
 
     free(param);
 }
@@ -1591,4 +1627,83 @@ int tapi_call_register_call_state_change(tapi_context context, int slot_id,
     }
 
     return watch_id;
+}
+
+int tapi_call_answer_by_id(tapi_context context, int slot_id, char* call_id)
+{
+    dbus_context* ctx = context;
+    GDBusProxy* proxy;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || call_id == NULL) {
+        return -EINVAL;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    if (!g_dbus_proxy_method_call(proxy, "Answer", answer_hangup_param_append,
+            no_operate_callback, call_id, NULL)) {
+        return -EINVAL;
+    }
+
+    return OK;
+}
+
+int tapi_call_hangup_by_id(tapi_context context, int slot_id, char* call_id)
+{
+    dbus_context* ctx = context;
+    GDBusProxy* proxy;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || call_id == NULL) {
+        return -EINVAL;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    if (!g_dbus_proxy_method_call(proxy, "Hangup", answer_hangup_param_append,
+            no_operate_callback, call_id, NULL)) {
+        return -EINVAL;
+    }
+
+    return OK;
+}
+
+int tapi_call_deflect_by_id(tapi_context context, int slot_id, char* call_id, char* number)
+{
+    dbus_context* ctx = context;
+    GDBusProxy* proxy;
+    call_deflect_param* param;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
+        || call_id == NULL || number == NULL) {
+        return -EINVAL;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    param = malloc(sizeof(call_deflect_param));
+    if (param == NULL)
+        return -ENOMEM;
+
+    param->path = call_id;
+    param->number = number;
+
+    if (!g_dbus_proxy_method_call(proxy, "Deflect", deflect_param_append_0,
+            no_operate_callback, param, free)) {
+        free(param);
+        return -EINVAL;
+    }
+
+    return OK;
 }
