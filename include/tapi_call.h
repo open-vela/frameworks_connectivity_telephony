@@ -371,6 +371,34 @@ int tapi_call_invite_participants(tapi_context context, int slot_id, char* parti
 int tapi_call_register_call_state_change(tapi_context context, int slot_id,
     void* user_obj, tapi_async_function p_handle);
 
+/**
+ * Answer one call.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] call_id        Call id of current call.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_call_answer_by_id(tapi_context context, int slot_id, char* call_id);
+
+/**
+ * Hanup one call.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] call_id        Call id of current call.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_call_hangup_by_id(tapi_context context, int slot_id, char* call_id);
+
+/**
+ * Deflect one call.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] call_id        Call id of current call.
+ * @param[in] number         Number to be deflected.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_call_deflect_by_id(tapi_context context, int slot_id, char* call_id, char* number);
+
 #ifdef __cplusplus
 }
 #endif
