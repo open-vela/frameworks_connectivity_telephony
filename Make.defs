@@ -18,9 +18,7 @@ ifneq ($(CONFIG_TELEPHONY),)
 
 CONFIGURED_APPS += $(APPDIR)/frameworks/telephony
 
-CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" \
-	$(APPDIR)/frameworks/telephony/include}
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" \
-	$(APPDIR)/frameworks/telephony/include}
+CFLAGS += ${INCDIR_PREFIX}$(APPDIR)/frameworks/telephony/include
+CXXFLAGS += ${INCDIR_PREFIX}$(APPDIR)/frameworks/telephony/include
 
 endif
