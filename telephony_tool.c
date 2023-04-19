@@ -919,6 +919,23 @@ static int telephonytool_cmd_answer_call(tapi_context context, char* pargs)
     return ret;
 }
 
+static int telephonytool_cmd_answer_by_id(tapi_context context, char* pargs)
+{
+    char dst[2][MAX_INPUT_ARGS_LEN];
+    int cnt = split_input(dst, 2, pargs, " ");
+    char* slot_id;
+
+    if (cnt != 2)
+        return -EINVAL;
+
+    slot_id = dst[0];
+    if (!is_valid_slot_id_str(dst[0]))
+        return -EINVAL;
+
+    syslog(LOG_DEBUG, "%s, slotId : %s\n", __func__, dst[0]);
+    return tapi_call_answer_by_id(context, atoi(slot_id), (char*)dst[1]);
+}
+
 static int telephonytool_cmd_hangup_all(tapi_context context, char* pargs)
 {
     char* slot_id;
@@ -950,6 +967,23 @@ static int telephonytool_cmd_hangup_call(tapi_context context, char* pargs)
     syslog(LOG_DEBUG, "%s, slotId : %s\n", __func__, dst[0]);
 
     return tapi_call_hangup_call(context, atoi(slot_id), (char*)dst[1]);
+}
+
+static int telephonytool_cmd_hangup_by_id(tapi_context context, char* pargs)
+{
+    char dst[2][MAX_INPUT_ARGS_LEN];
+    int cnt = split_input(dst, 2, pargs, " ");
+    char* slot_id;
+
+    if (cnt != 2)
+        return -EINVAL;
+
+    slot_id = dst[0];
+    if (!is_valid_slot_id_str(dst[0]))
+        return -EINVAL;
+
+    syslog(LOG_DEBUG, "%s, slotId : %s\n", __func__, dst[0]);
+    return tapi_call_hangup_by_id(context, atoi(slot_id), (char*)dst[1]);
 }
 
 static int telephonytool_cmd_release_and_swap(tapi_context context, char* pargs)
@@ -4193,6 +4227,12 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     { "is-ecc", CALL_CMD,
         telephonytool_cmd_is_emergency_number,
         "is emergency number  (enter example : is-ecc 110 [number])" },
+    { "hangup_0", CALL_CMD,
+        telephonytool_cmd_hangup_by_id,
+        "hangup (enter example : hangup_0 0 [call_id] /phonesim/voicecall01)" },
+    { "answer_0", CALL_CMD,
+        telephonytool_cmd_answer_by_id,
+        "answer (enter example : answer_0 0 [call_id] /phonesim/voicecall01)" },
 
     /* Data Command */
     { "listen-data", DATA_CMD,
