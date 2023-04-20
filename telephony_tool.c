@@ -2728,26 +2728,31 @@ static int telephonytool_tapi_sms_send_message(tapi_context context, char* pargs
 
 static int telephonytool_tapi_sms_send_data_message(tapi_context context, char* pargs)
 {
+    char dst[4][MAX_INPUT_ARGS_LEN];
     char* slot_id;
     char* to;
-    char* temp;
     char* text;
+    char* port;
     int ret;
+    int cnt;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
 
-    slot_id = strtok_r(pargs, " ", &temp);
+    cnt = split_input(dst, 4, pargs, " ");
+    if (cnt != 4)
+        return -EINVAL;
+
+    slot_id = dst[0];
+    to = dst[1];
+    text = dst[2];
+    port = dst[3];
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
-    to = strtok_r(temp, " ", &text);
-    if (to == NULL)
-        return -EINVAL;
-
-    syslog(LOG_DEBUG, "%s, slotId : %s  number : %s text: %s port 0 \n",
-        __func__, slot_id, to, text);
-    ret = tapi_sms_send_data_message(context, atoi(slot_id), to, 0, text);
+    syslog(LOG_DEBUG, "%s, slotId: %s  number: %s text: %s port: %s \n",
+        __func__, slot_id, to, text, port);
+    ret = tapi_sms_send_data_message(context, atoi(slot_id), to, atoi(port), text);
     return ret;
 }
 
@@ -4379,7 +4384,7 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         "send message (enter example : send-sms 0 10086 hello)" },
     { "send-data-sms", SMS_AND_CBS_CMD,
         telephonytool_tapi_sms_send_data_message,
-        "send message (enter example : send-data-sms 0 10086 hello)" },
+        "send message (enter example : send-data-sms 0 10086 hello 0)" },
     { "get-service-center-number", SMS_AND_CBS_CMD,
         telephonytool_tapi_sms_get_service_center_number,
         "get service center number ? (enter example : get-service-center-number 0)" },
