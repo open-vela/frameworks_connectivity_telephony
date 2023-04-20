@@ -35,7 +35,7 @@ typedef struct {
 
 typedef struct {
     char* dest_addr;
-    unsigned char port;
+    unsigned int port;
     char* data;
 } data_message_param;
 
@@ -68,7 +68,7 @@ static void send_data_message_param_append(DBusMessageIter* iter, void* user_dat
     data_message_param* message = user_data;
 
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &message->dest_addr);
-    dbus_message_iter_append_basic(iter, DBUS_TYPE_BYTE, &message->port);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_UINT32, &message->port);
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &message->data);
 }
 
@@ -360,7 +360,7 @@ int tapi_sms_send_message(tapi_context context, int slot_id,
 }
 
 int tapi_sms_send_data_message(tapi_context context, int slot_id,
-    char* dest_addr, unsigned char port, char* text)
+    char* dest_addr, unsigned int port, char* text)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
