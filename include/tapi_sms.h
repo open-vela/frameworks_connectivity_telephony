@@ -80,7 +80,7 @@ int tapi_sms_send_message(tapi_context context, int slot_id, char* number, char*
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_sms_send_data_message(tapi_context context, int slot_id, char* dest_addr,
-    unsigned char port, char* text);
+    unsigned int port, char* text);
 
 /**
  * set service center number.
