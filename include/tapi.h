@@ -119,7 +119,6 @@ typedef enum {
     NETWORK_PREF_NET_TYPE_LTE_GSM_WCDMA = 9,
     NETWORK_PREF_NET_TYPE_LTE_WCDMA = 12,
     NETWORK_PREF_NET_TYPE_LTE_ONLY = 14,
-    NETWORK_PREF_NET_TYPE_LTE_TDSCDMA_GSM = 17,
 } tapi_pref_net_mode;
 
 typedef enum {
