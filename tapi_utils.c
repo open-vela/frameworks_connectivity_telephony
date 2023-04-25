@@ -46,8 +46,6 @@ const char* tapi_utils_network_mode_to_string(tapi_pref_net_mode mode)
         return "umts,gsm";
     case NETWORK_PREF_NET_TYPE_LTE_WCDMA:
         return "lte,umts";
-    case NETWORK_PREF_NET_TYPE_LTE_TDSCDMA_GSM:
-        return "lte,gsm";
     case NETWORK_PREF_NET_TYPE_LTE_GSM_WCDMA:
         return "lte,umts,gsm";
     }
@@ -73,8 +71,6 @@ tapi_pref_net_mode tapi_utils_network_mode_from_string(const char* mode)
         return NETWORK_PREF_NET_TYPE_UMTS;
     } else if (strcmp(mode, "lte,umts") == 0) {
         return NETWORK_PREF_NET_TYPE_LTE_WCDMA;
-    } else if (strcmp(mode, "lte,gsm") == 0) {
-        return NETWORK_PREF_NET_TYPE_LTE_TDSCDMA_GSM;
     } else if (strcmp(mode, "lte,umts,gsm") == 0) {
         return NETWORK_PREF_NET_TYPE_LTE_GSM_WCDMA;
     }
