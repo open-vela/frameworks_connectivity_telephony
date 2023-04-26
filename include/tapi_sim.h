@@ -249,7 +249,7 @@ int tapi_sim_close_logical_channel(tapi_context context, int slot_id,
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[in] event_id       Async event identifier.
- * @param[in] sessionid      The logical channel's session id.
+ * @param[in] sessionid      Indicates which logical channel to send. Support channel 1 to 3.
  * @param[in] pdu            Package Data Units.
  * @param[in] len            The length of pdu.
  * @param[in] p_handle       Event callback.
