@@ -363,6 +363,11 @@ static int cellinfo_list_changed(DBusConnection* connection,
         if (cell_identity == NULL)
             break;
 
+        cell_identity->mcc_str[0] = '\0';
+        cell_identity->mnc_str[0] = '\0';
+        cell_identity->alpha_long[0] = '\0';
+        cell_identity->alpha_short[0] = '\0';
+
         dbus_message_iter_recurse(&list, &entry);
         dbus_message_iter_recurse(&entry, &dict);
 
@@ -567,6 +572,11 @@ static void cell_list_request_complete(DBusMessage* message, void* user_data)
         if (cell_identity == NULL)
             break;
 
+        cell_identity->mcc_str[0] = '\0';
+        cell_identity->mnc_str[0] = '\0';
+        cell_identity->alpha_long[0] = '\0';
+        cell_identity->alpha_short[0] = '\0';
+
         dbus_message_iter_recurse(&list, &entry);
         dbus_message_iter_recurse(&entry, &dict);
 
@@ -614,6 +624,12 @@ static void registration_info_query_done(DBusMessage* message, void* user_data)
     registration_info = malloc(sizeof(tapi_registration_info));
     if (registration_info == NULL)
         return;
+
+    registration_info->technology[0] = '\0';
+    registration_info->operator_name[0] = '\0';
+    registration_info->mcc[0] = '\0';
+    registration_info->mnc[0] = '\0';
+    registration_info->station[0] = '\0';
 
     dbus_error_init(&err);
     if (dbus_set_error_from_message(&err, message) == true) {
@@ -733,6 +749,12 @@ static void operator_scan_complete(DBusMessage* message, void* user_data)
         operator= malloc(sizeof(tapi_operator_info));
         if (operator== NULL)
             break;
+
+        operator->id[0] = '\0';
+        operator->name[0] = '\0';
+        operator->mcc[0] = '\0';
+        operator->mnc[0] = '\0';
+        operator->technology[0] = '\0';
 
         dbus_message_iter_recurse(&list, &entry);
         dbus_message_iter_get_basic(&entry, &path);
