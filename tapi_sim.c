@@ -115,6 +115,8 @@ static int sim_state_changed(DBusConnection* connection,
             return 0;
         }
 
+        sim_lock->sim_pwd_type[0] = '\0';
+
         index = 0;
         dbus_message_iter_recurse(&var, &arr);
         while (dbus_message_iter_get_arg_type(&arr) == DBUS_TYPE_STRING) {
