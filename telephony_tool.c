@@ -3279,7 +3279,7 @@ static int telephonytool_cmd_get_call_barring(tapi_context context, char* pargs)
     char dst[2][MAX_INPUT_ARGS_LEN];
     char* slot_id;
     char* key;
-    char* cb_info;
+    char* cb_info = NULL;
     int cnt;
 
     if (strlen(pargs) == 0)
@@ -3431,7 +3431,7 @@ static int telephonytool_cmd_get_call_forwarding(tapi_context context, char* par
     char dst[2][MAX_INPUT_ARGS_LEN];
     char* slot_id;
     char* key;
-    char* cf_info;
+    char* cf_info = NULL;
     int cnt;
 
     if (strlen(pargs) == 0)
@@ -3503,7 +3503,7 @@ static int telephonytool_cmd_initiate_ss_service(tapi_context context, char* par
 static int telephonytool_cmd_get_ussd_state(tapi_context context, char* pargs)
 {
     char* slot_id;
-    char* ussd_state;
+    char* ussd_state = NULL;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
@@ -3577,13 +3577,13 @@ static int telephonytool_cmd_set_call_waiting(tapi_context context, char* pargs)
 
     syslog(LOG_DEBUG, "%s, slot_id : %s value : %s \n", __func__, slot_id, value);
     return tapi_ss_request_call_wating(context, atoi(slot_id),
-        EVENT_REQUEST_CALL_WAITING_DONE, value, tele_call_async_fun);
+        EVENT_REQUEST_CALL_WAITING_DONE, (bool)atoi(value), tele_call_async_fun);
 }
 
 static int telephonytool_cmd_get_call_waiting(tapi_context context, char* pargs)
 {
     char* slot_id;
-    char* cw_info;
+    bool cw_info;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
@@ -3592,8 +3592,9 @@ static int telephonytool_cmd_get_call_waiting(tapi_context context, char* pargs)
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
+    cw_info = false;
     tapi_ss_query_call_wating(context, atoi(slot_id), &cw_info);
-    syslog(LOG_DEBUG, "%s, slotId : %s cw_info : %s \n", __func__, slot_id, cw_info);
+    syslog(LOG_DEBUG, "%s, slotId : %s cw_info : %d \n", __func__, slot_id, cw_info);
 
     return 0;
 }
@@ -3601,7 +3602,7 @@ static int telephonytool_cmd_get_call_waiting(tapi_context context, char* pargs)
 static int telephonytool_cmd_get_clip(tapi_context context, char* pargs)
 {
     char* slot_id;
-    char* clip_status;
+    char* clip_status = NULL;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
@@ -3643,7 +3644,7 @@ static int telephonytool_cmd_set_clir(tapi_context context, char* pargs)
 static int telephonytool_cmd_get_clir(tapi_context context, char* pargs)
 {
     char* slot_id;
-    char* clir_status;
+    char* clir_status = NULL;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
@@ -4501,7 +4502,7 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         "[slot_id][passwd])" },
     { "set-callforwarding", SS_CMD,
         telephonytool_cmd_set_call_forwarding,
-        "set callforwarding (enter example : set-callforwarding 0 VoiceUnconditional 10086 "
+        "set callforwarding (enter example : set-callforwarding 0 VoiceUnconditional 183XXX (real number) "
         "[slot_id][call forwarding type][value])" },
     { "get-callforwarding", SS_CMD,
         telephonytool_cmd_get_call_forwarding,
@@ -4526,7 +4527,7 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         "cancel ussd (enter example : cancel-ussd 0 [slot_id])" },
     { "set-callwaiting", SS_CMD,
         telephonytool_cmd_set_call_waiting,
-        "set callwaiting (enter example : set-callwaiting 0 enabled "
+        "set callwaiting (enter example : set-callwaiting 0 1 "
         "[slot_id][call waiting value])" },
     { "get-callwaiting", SS_CMD,
         telephonytool_cmd_get_call_waiting,

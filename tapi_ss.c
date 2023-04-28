@@ -1354,13 +1354,14 @@ int tapi_ss_cancel_ussd(tapi_context context, int slot_id, int event_id,
 }
 
 // Call Waiting
-int tapi_ss_request_call_wating(tapi_context context, int slot_id, int event_id, char* state,
+int tapi_ss_request_call_wating(tapi_context context, int slot_id, int event_id, bool enable,
     tapi_async_function p_handle)
 {
     dbus_context* ctx = context;
     tapi_async_handler* handler;
     tapi_async_result* ar;
     GDBusProxy* proxy;
+    char* state;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
         || state == NULL) {
@@ -1391,6 +1392,7 @@ int tapi_ss_request_call_wating(tapi_context context, int slot_id, int event_id,
     ar->msg_id = event_id;
     handler->cb_function = p_handle;
 
+    state = enable ? "enabled" : "disabled";
     if (!g_dbus_proxy_set_property_basic(proxy, "VoiceCallWaiting", DBUS_TYPE_STRING,
             &state, property_set_done, handler, handler_free)) {
         handler_free(handler);
@@ -1400,11 +1402,12 @@ int tapi_ss_request_call_wating(tapi_context context, int slot_id, int event_id,
     return OK;
 }
 
-int tapi_ss_query_call_wating(tapi_context context, int slot_id, char** out)
+int tapi_ss_query_call_wating(tapi_context context, int slot_id, bool* out)
 {
     dbus_context* ctx = context;
     DBusMessageIter iter;
     GDBusProxy* proxy;
+    char* result = NULL;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
@@ -1420,7 +1423,13 @@ int tapi_ss_query_call_wating(tapi_context context, int slot_id, char** out)
     }
 
     if (g_dbus_proxy_get_property(proxy, "VoiceCallWaiting", &iter)) {
-        dbus_message_iter_get_basic(&iter, out);
+        dbus_message_iter_get_basic(&iter, &result);
+        if (result == NULL) {
+            tapi_log_info("%s : result is null.", __func__);
+            *out = 0;
+            return -EINVAL;
+        }
+        *out = (strcmp(result, "enabled") == 0) ? 1 : 0;
         return OK;
     }
 
