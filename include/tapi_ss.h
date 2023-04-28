@@ -243,21 +243,21 @@ int tapi_ss_cancel_ussd(tapi_context context, int slot_id, int event_id,
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[in] event_id       Async event identifier.
- * @param[in] state          Call Waiting property value.
+ * @param[in] enable         Enable or disable Call Waiting service.
  * @param[in] p_handle       Event callback.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_ss_request_call_wating(tapi_context context, int slot_id, int event_id, char* state,
+int tapi_ss_request_call_wating(tapi_context context, int slot_id, int event_id, bool enable,
     tapi_async_function p_handle);
 
 /**
  * Gets Call Waiting info.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
- * @param[out] out           The value of Call Waiting service.
+ * @param[out] out           Whether to enable or disable Call Waiting service.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_ss_query_call_wating(tapi_context context, int slot_id, char** out);
+int tapi_ss_query_call_wating(tapi_context context, int slot_id, bool* out);
 
 /**
  * Gets Calling Line Presentation info.
