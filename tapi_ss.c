@@ -596,6 +596,11 @@ static int call_forwarding_property_changed(DBusConnection* connection,
         goto done;
     }
 
+    info->phone_number[0] = '\0';
+    info->voice_busy[0] = '\0';
+    info->voice_no_reply[0] = '\0';
+    info->voice_not_reachable[0] = '\0';
+
     while (dbus_message_iter_get_arg_type(&list) == DBUS_TYPE_DICT_ENTRY) {
         DBusMessageIter entry, value;
         const char* key;
