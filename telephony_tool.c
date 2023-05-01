@@ -3638,13 +3638,13 @@ static int telephonytool_cmd_set_clir(tapi_context context, char* pargs)
 
     syslog(LOG_DEBUG, "%s, slot_id : %s value : %s \n", __func__, slot_id, value);
     return tapi_ss_request_calling_line_restriction(context, atoi(slot_id),
-        EVENT_REQUEST_CLIR_DONE, value, tele_call_async_fun);
+        EVENT_REQUEST_CLIR_DONE, (tapi_clir_status)atoi(value), tele_call_async_fun);
 }
 
 static int telephonytool_cmd_get_clir(tapi_context context, char* pargs)
 {
     char* slot_id;
-    char* clir_status = NULL;
+    tapi_clir_status clir_status;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
@@ -3654,7 +3654,7 @@ static int telephonytool_cmd_get_clir(tapi_context context, char* pargs)
         return -EINVAL;
 
     tapi_ss_query_calling_line_restriction_info(context, atoi(slot_id), &clir_status);
-    syslog(LOG_DEBUG, "%s, slotId : %s clir_status : %s \n", __func__, slot_id, clir_status);
+    syslog(LOG_DEBUG, "%s, slotId : %s clir_status : %d \n", __func__, slot_id, clir_status);
 
     return 0;
 }
@@ -4537,7 +4537,7 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         "get clip (enter example : get-clip 0 [slot_id])" },
     { "set-clir", SS_CMD,
         telephonytool_cmd_set_clir,
-        "set clir (enter example : set-clir 0 enabled [slot_id])" },
+        "set clir (enter example : set-clir 0 2 [slot_id][0-default 1-disabled 2-enabled])" },
     { "get-clir", SS_CMD,
         telephonytool_cmd_get_clir,
         "get clir (enter example : get-clir 0 [slot_id])" },
