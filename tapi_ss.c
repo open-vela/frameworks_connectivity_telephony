@@ -1467,15 +1467,15 @@ int tapi_ss_query_calling_line_presentation_info(tapi_context context, int slot_
 
 // Calling Line Restriction
 int tapi_ss_request_calling_line_restriction(tapi_context context, int slot_id, int event_id,
-    char* state, tapi_async_function p_handle)
+    tapi_clir_status state, tapi_async_function p_handle)
 {
     dbus_context* ctx = context;
     tapi_async_handler* handler;
     tapi_async_result* ar;
     GDBusProxy* proxy;
+    const char* clir_status;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
-        || state == NULL) {
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
     }
 
@@ -1503,8 +1503,9 @@ int tapi_ss_request_calling_line_restriction(tapi_context context, int slot_id, 
     ar->msg_id = event_id;
     handler->cb_function = p_handle;
 
+    clir_status = tapi_utils_clir_status_to_string(state);
     if (!g_dbus_proxy_set_property_basic(proxy, "HideCallerId", DBUS_TYPE_STRING,
-            &state, property_set_done, handler, handler_free)) {
+            &clir_status, property_set_done, handler, handler_free)) {
         handler_free(handler);
         return -EINVAL;
     }
@@ -1513,11 +1514,12 @@ int tapi_ss_request_calling_line_restriction(tapi_context context, int slot_id, 
 }
 
 int tapi_ss_query_calling_line_restriction_info(tapi_context context, int slot_id,
-    char** out)
+    tapi_clir_status* out)
 {
     dbus_context* ctx = context;
     DBusMessageIter iter;
     GDBusProxy* proxy;
+    char* result = NULL;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
@@ -1533,7 +1535,8 @@ int tapi_ss_query_calling_line_restriction_info(tapi_context context, int slot_i
     }
 
     if (g_dbus_proxy_get_property(proxy, "HideCallerId", &iter)) {
-        dbus_message_iter_get_basic(&iter, out);
+        dbus_message_iter_get_basic(&iter, &result);
+        *out = tapi_utils_clir_status_from_string(result);
         return OK;
     }
 

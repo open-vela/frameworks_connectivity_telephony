@@ -406,6 +406,36 @@ tapi_cell_type tapi_utils_cell_type_from_string(const char* name)
     return TYPE_NONE;
 }
 
+const char* tapi_utils_clir_status_to_string(tapi_clir_status status)
+{
+    switch (status) {
+    case CLIR_DEFAULT:
+        return "default";
+    case CLIR_DISABLED:
+        return "disabled";
+    case CLIR_ENABLED:
+        return "enabled";
+    }
+
+    return "default";
+}
+
+tapi_clir_status tapi_utils_clir_status_from_string(const char* status)
+{
+    if (status == NULL)
+        return CLIR_DEFAULT;
+
+    if (strcmp(status, "default") == 0) {
+        return CLIR_DEFAULT;
+    } else if (strcmp(status, "disabled") == 0) {
+        return CLIR_DISABLED;
+    } else if (strcmp(status, "enabled") == 0) {
+        return CLIR_ENABLED;
+    }
+
+    return CLIR_DEFAULT;
+}
+
 bool is_call_signal_message(DBusMessage* message, DBusMessageIter* iter, int msg_type)
 {
     bool ret = false;

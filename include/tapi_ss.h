@@ -78,6 +78,12 @@ typedef struct {
     char* append_service_value;
 } tapi_ss_initiate_info;
 
+typedef enum {
+    CLIR_DEFAULT = 0,
+    CLIR_DISABLED,
+    CLIR_ENABLED,
+} tapi_clir_status;
+
 /****************************************************************************
  * Public Function Prototypes
  ****************************************************************************/
@@ -279,7 +285,7 @@ int tapi_ss_query_calling_line_presentation_info(tapi_context context, int slot_
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_ss_request_calling_line_restriction(tapi_context context, int slot_id, int event_id,
-    char* state, tapi_async_function p_handle);
+    tapi_clir_status state, tapi_async_function p_handle);
 
 /**
  * Gets Connected Line Restriction info.
@@ -289,7 +295,7 @@ int tapi_ss_request_calling_line_restriction(tapi_context context, int slot_id, 
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_ss_query_calling_line_restriction_info(tapi_context context, int slot_id,
-    char** out);
+    tapi_clir_status* out);
 
 /**
  * Sets the ICC fdn enabled or disabled.

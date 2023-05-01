@@ -276,5 +276,7 @@ const char* tapi_utils_cell_type_to_string(tapi_cell_type type);
 tapi_cell_type tapi_utils_cell_type_from_string(const char* name);
 const char* tapi_utils_get_modem_path(int slot_id);
 const char* tapi_sim_state_to_string(tapi_sim_state sim_state);
+const char* tapi_utils_clir_status_to_string(tapi_clir_status status);
+tapi_clir_status tapi_utils_clir_status_from_string(const char* status);
 
 #endif /* __TELEPHONY_APIS_H */
