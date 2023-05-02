@@ -91,6 +91,9 @@
 #define EVENT_ENABLE_FDN_DONE 0x4C
 #define EVENT_QUERY_FDN_DONE 0x4D
 #define EVENT_REQUEST_CLIR_DONE 0x4E
+#define EVENT_QUERY_ALL_CALL_BARRING_DONE 0x4F
+#define EVENT_QUERY_ALL_CALL_FORWARDING_DONE 0x50
+#define EVENT_QUERY_ALL_CALL_SETTING_DONE 0x51
 
 // PhoneBook Callback Event
 #define EVENT_LOAD_ADN_ENTRIES_DONE 0x61
@@ -3248,6 +3251,20 @@ static int telephonytool_cmd_set_cell_info_list_rate(tapi_context context, char*
         EVENT_NETWORK_SET_CELL_INFO_LIST_RATE_DONE, atoi(period), tele_call_async_fun);
 }
 
+static int telephonytool_cmd_request_call_barring(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", NULL);
+    if (!is_valid_slot_id_str(slot_id))
+        return -EINVAL;
+
+    return tapi_ss_request_call_barring(context, atoi(slot_id),
+        EVENT_QUERY_ALL_CALL_BARRING_DONE, tele_call_async_fun);
+}
+
 static int telephonytool_cmd_set_call_barring(tapi_context context, char* pargs)
 {
     char dst[3][MAX_INPUT_ARGS_LEN];
@@ -3270,7 +3287,7 @@ static int telephonytool_cmd_set_call_barring(tapi_context context, char* pargs)
         return -EINVAL;
 
     syslog(LOG_DEBUG, "%s, slot_id : %s fac : %s  pin2 : %s \n", __func__, slot_id, fac, pin2);
-    return tapi_ss_request_call_barring(context, atoi(slot_id),
+    return tapi_ss_set_call_barring_option(context, atoi(slot_id),
         EVENT_REQUEST_CALL_BARRING_DONE, fac, pin2, tele_call_async_fun);
 }
 
@@ -3294,7 +3311,7 @@ static int telephonytool_cmd_get_call_barring(tapi_context context, char* pargs)
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
-    tapi_ss_query_call_barring_info(context, atoi(slot_id), key, &cb_info);
+    tapi_ss_get_call_barring_option(context, atoi(slot_id), key, &cb_info);
     syslog(LOG_DEBUG, "%s, slotId : %s key : %s cb_info : %s \n", __func__, slot_id, key, cb_info);
 
     return 0;
@@ -3399,6 +3416,20 @@ static int telephonytool_cmd_disable_all_outgoing(tapi_context context, char* pa
         EVENT_DISABLE_ALL_OUTGOING_DONE, passwd, tele_call_async_fun);
 }
 
+static int telephonytool_cmd_request_call_forwarding(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", NULL);
+    if (!is_valid_slot_id_str(slot_id))
+        return -EINVAL;
+
+    return tapi_ss_request_call_forwarding(context, atoi(slot_id),
+        EVENT_QUERY_ALL_CALL_FORWARDING_DONE, tele_call_async_fun);
+}
+
 static int telephonytool_cmd_set_call_forwarding(tapi_context context, char* pargs)
 {
     char dst[3][MAX_INPUT_ARGS_LEN];
@@ -3422,7 +3453,7 @@ static int telephonytool_cmd_set_call_forwarding(tapi_context context, char* par
 
     syslog(LOG_DEBUG, "%s, slot_id : %s cf_type : %s  value : %s \n", __func__,
         slot_id, cf_type, value);
-    return tapi_ss_request_call_forwarding(context, atoi(slot_id),
+    return tapi_ss_set_call_forwarding_option(context, atoi(slot_id),
         EVENT_REQUEST_CALL_FORWARDING_DONE, cf_type, value, tele_call_async_fun);
 }
 
@@ -3446,7 +3477,7 @@ static int telephonytool_cmd_get_call_forwarding(tapi_context context, char* par
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
-    tapi_ss_query_call_forwarding_info(context, atoi(slot_id), key, &cf_info);
+    tapi_ss_get_call_forwarding_option(context, atoi(slot_id), key, &cf_info);
     syslog(LOG_DEBUG, "%s, slotId : %s key : %s cf_info : %s \n", __func__, slot_id, key, cf_info);
 
     return 0;
@@ -3556,6 +3587,20 @@ static int telephonytool_cmd_cancel_ussd(tapi_context context, char* pargs)
     return tapi_ss_cancel_ussd(context, atoi(slot_id), EVENT_CANCEL_USSD_DONE, tele_call_async_fun);
 }
 
+static int telephonytool_cmd_request_call_setting(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", NULL);
+    if (!is_valid_slot_id_str(slot_id))
+        return -EINVAL;
+
+    return tapi_ss_request_call_setting(context, atoi(slot_id),
+        EVENT_QUERY_ALL_CALL_SETTING_DONE, tele_call_async_fun);
+}
+
 static int telephonytool_cmd_set_call_waiting(tapi_context context, char* pargs)
 {
     char dst[2][MAX_INPUT_ARGS_LEN];
@@ -3576,7 +3621,7 @@ static int telephonytool_cmd_set_call_waiting(tapi_context context, char* pargs)
         return -EINVAL;
 
     syslog(LOG_DEBUG, "%s, slot_id : %s value : %s \n", __func__, slot_id, value);
-    return tapi_ss_request_call_wating(context, atoi(slot_id),
+    return tapi_ss_set_call_wating(context, atoi(slot_id),
         EVENT_REQUEST_CALL_WAITING_DONE, (bool)atoi(value), tele_call_async_fun);
 }
 
@@ -3593,7 +3638,7 @@ static int telephonytool_cmd_get_call_waiting(tapi_context context, char* pargs)
         return -EINVAL;
 
     cw_info = false;
-    tapi_ss_query_call_wating(context, atoi(slot_id), &cw_info);
+    tapi_ss_get_call_wating(context, atoi(slot_id), &cw_info);
     syslog(LOG_DEBUG, "%s, slotId : %s cw_info : %d \n", __func__, slot_id, cw_info);
 
     return 0;
@@ -3611,7 +3656,7 @@ static int telephonytool_cmd_get_clip(tapi_context context, char* pargs)
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
-    tapi_ss_query_calling_line_presentation_info(context, atoi(slot_id), &clip_status);
+    tapi_ss_get_calling_line_presentation_info(context, atoi(slot_id), &clip_status);
     syslog(LOG_DEBUG, "%s, slotId : %s clip_status : %s \n", __func__, slot_id, clip_status);
 
     return 0;
@@ -3637,7 +3682,7 @@ static int telephonytool_cmd_set_clir(tapi_context context, char* pargs)
         return -EINVAL;
 
     syslog(LOG_DEBUG, "%s, slot_id : %s value : %s \n", __func__, slot_id, value);
-    return tapi_ss_request_calling_line_restriction(context, atoi(slot_id),
+    return tapi_ss_set_calling_line_restriction(context, atoi(slot_id),
         EVENT_REQUEST_CLIR_DONE, (tapi_clir_status)atoi(value), tele_call_async_fun);
 }
 
@@ -3653,7 +3698,7 @@ static int telephonytool_cmd_get_clir(tapi_context context, char* pargs)
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
-    tapi_ss_query_calling_line_restriction_info(context, atoi(slot_id), &clir_status);
+    tapi_ss_get_calling_line_restriction_info(context, atoi(slot_id), &clir_status);
     syslog(LOG_DEBUG, "%s, slotId : %s clir_status : %d \n", __func__, slot_id, clir_status);
 
     return 0;
@@ -4476,6 +4521,9 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         telephonytool_cmd_ss_unlisten,
         "Deregister ss event (enter example : unlisten-ss [watch_id] "
         "[watch_id, one uint value returned from \"listen-ss\"])" },
+    { "request-callbarring", SS_CMD,
+        telephonytool_cmd_request_call_barring,
+        "request callbarring (enter example : request-callbarring 0 )" },
     { "set-callbarring", SS_CMD,
         telephonytool_cmd_set_call_barring,
         "set callbarring (enter example : set-callbarring 0 AI 1234 "
@@ -4500,6 +4548,9 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         telephonytool_cmd_disable_all_outgoing,
         "disable all outgoing (enter example : disable-all-outgoing 0 2345 "
         "[slot_id][passwd])" },
+    { "request-callforwarding", SS_CMD,
+        telephonytool_cmd_request_call_forwarding,
+        "request callforwarding (enter example : request-callforwarding 0 )" },
     { "set-callforwarding", SS_CMD,
         telephonytool_cmd_set_call_forwarding,
         "set callforwarding (enter example : set-callforwarding 0 VoiceUnconditional 183XXX (real number) "
@@ -4525,6 +4576,9 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     { "cancel-ussd", SS_CMD,
         telephonytool_cmd_cancel_ussd,
         "cancel ussd (enter example : cancel-ussd 0 [slot_id])" },
+    { "request-callsetting", SS_CMD,
+        telephonytool_cmd_request_call_setting,
+        "request callsetting (enter example : request-callsetting 0 )" },
     { "set-callwaiting", SS_CMD,
         telephonytool_cmd_set_call_waiting,
         "set callwaiting (enter example : set-callwaiting 0 1 "
