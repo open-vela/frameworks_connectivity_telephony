@@ -816,6 +816,49 @@ int tapi_ss_initiate_service(tapi_context context, int slot_id, int event_id,
 
 // Call Barring
 int tapi_ss_request_call_barring(tapi_context context, int slot_id, int event_id,
+    tapi_async_function p_handle)
+{
+    dbus_context* ctx = context;
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
+    GDBusProxy* proxy;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+        return -EINVAL;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_BARRING];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    handler = malloc(sizeof(tapi_async_handler));
+    if (handler == NULL)
+        return -ENOMEM;
+
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        free(handler);
+        return -ENOMEM;
+    }
+
+    handler->result = ar;
+    ar->arg1 = slot_id;
+    ar->msg_id = event_id;
+    handler->cb_function = p_handle;
+
+    if (!g_dbus_proxy_method_call(proxy, "GetProperties",
+            NULL, method_call_complete, handler, handler_free)) {
+        tapi_log_error("failed to request callbarring \n");
+        handler_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
+}
+
+int tapi_ss_set_call_barring_option(tapi_context context, int slot_id, int event_id,
     char* facility, char* pin2, tapi_async_function p_handle)
 {
     dbus_context* ctx = context;
@@ -896,7 +939,7 @@ int tapi_ss_request_call_barring(tapi_context context, int slot_id, int event_id
     return OK;
 }
 
-int tapi_ss_query_call_barring_info(tapi_context context, int slot_id, const char* service_type, char** out)
+int tapi_ss_get_call_barring_option(tapi_context context, int slot_id, const char* service_type, char** out)
 {
     dbus_context* ctx = context;
     DBusMessageIter iter;
@@ -1113,6 +1156,49 @@ int tapi_ss_disable_all_outgoing(tapi_context context, int slot_id,
 
 // Call Forwarding
 int tapi_ss_request_call_forwarding(tapi_context context, int slot_id, int event_id,
+    tapi_async_function p_handle)
+{
+    dbus_context* ctx = context;
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
+    GDBusProxy* proxy;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+        return -EINVAL;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_FORWARDING];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    handler = malloc(sizeof(tapi_async_handler));
+    if (handler == NULL)
+        return -ENOMEM;
+
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        free(handler);
+        return -ENOMEM;
+    }
+
+    handler->result = ar;
+    ar->arg1 = slot_id;
+    ar->msg_id = event_id;
+    handler->cb_function = p_handle;
+
+    if (!g_dbus_proxy_method_call(proxy, "GetProperties",
+            NULL, method_call_complete, handler, handler_free)) {
+        tapi_log_error("failed to request callforwarding \n");
+        handler_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
+}
+
+int tapi_ss_set_call_forwarding_option(tapi_context context, int slot_id, int event_id,
     const char* cf_type, char* value, tapi_async_function p_handle)
 {
     dbus_context* ctx = context;
@@ -1166,7 +1252,7 @@ int tapi_ss_request_call_forwarding(tapi_context context, int slot_id, int event
     return OK;
 }
 
-int tapi_ss_query_call_forwarding_info(tapi_context context, int slot_id,
+int tapi_ss_get_call_forwarding_option(tapi_context context, int slot_id,
     const char* service_type, char** out)
 {
     dbus_context* ctx = context;
@@ -1354,7 +1440,50 @@ int tapi_ss_cancel_ussd(tapi_context context, int slot_id, int event_id,
 }
 
 // Call Waiting
-int tapi_ss_request_call_wating(tapi_context context, int slot_id, int event_id, bool enable,
+int tapi_ss_request_call_setting(tapi_context context, int slot_id, int event_id,
+    tapi_async_function p_handle)
+{
+    dbus_context* ctx = context;
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
+    GDBusProxy* proxy;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+        return -EINVAL;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_SETTING];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    handler = malloc(sizeof(tapi_async_handler));
+    if (handler == NULL)
+        return -ENOMEM;
+
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        free(handler);
+        return -ENOMEM;
+    }
+
+    handler->result = ar;
+    ar->arg1 = slot_id;
+    ar->msg_id = event_id;
+    handler->cb_function = p_handle;
+
+    if (!g_dbus_proxy_method_call(proxy, "GetProperties",
+            NULL, method_call_complete, handler, handler_free)) {
+        tapi_log_error("failed to request callsetting \n");
+        handler_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
+}
+
+int tapi_ss_set_call_wating(tapi_context context, int slot_id, int event_id, bool enable,
     tapi_async_function p_handle)
 {
     dbus_context* ctx = context;
@@ -1402,7 +1531,7 @@ int tapi_ss_request_call_wating(tapi_context context, int slot_id, int event_id,
     return OK;
 }
 
-int tapi_ss_query_call_wating(tapi_context context, int slot_id, bool* out)
+int tapi_ss_get_call_wating(tapi_context context, int slot_id, bool* out)
 {
     dbus_context* ctx = context;
     DBusMessageIter iter;
@@ -1437,7 +1566,7 @@ int tapi_ss_query_call_wating(tapi_context context, int slot_id, bool* out)
 }
 
 // Calling Line Presentation
-int tapi_ss_query_calling_line_presentation_info(tapi_context context, int slot_id,
+int tapi_ss_get_calling_line_presentation_info(tapi_context context, int slot_id,
     char** out)
 {
     dbus_context* ctx = context;
@@ -1466,7 +1595,7 @@ int tapi_ss_query_calling_line_presentation_info(tapi_context context, int slot_
 }
 
 // Calling Line Restriction
-int tapi_ss_request_calling_line_restriction(tapi_context context, int slot_id, int event_id,
+int tapi_ss_set_calling_line_restriction(tapi_context context, int slot_id, int event_id,
     tapi_clir_status state, tapi_async_function p_handle)
 {
     dbus_context* ctx = context;
@@ -1513,7 +1642,7 @@ int tapi_ss_request_calling_line_restriction(tapi_context context, int slot_id, 
     return OK;
 }
 
-int tapi_ss_query_calling_line_restriction_info(tapi_context context, int slot_id,
+int tapi_ss_get_calling_line_restriction_info(tapi_context context, int slot_id,
     tapi_clir_status* out)
 {
     dbus_context* ctx = context;
