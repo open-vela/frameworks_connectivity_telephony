@@ -36,6 +36,22 @@ typedef struct {
  * Private Functions
  ****************************************************************************/
 
+static int object_filter(GDBusProxy* proxy)
+{
+    const char* interface = g_dbus_proxy_get_interface(proxy);
+    if (interface == NULL)
+        return false;
+
+    // ss related interface skip get properties
+    if ((strcmp(interface, OFONO_CALL_BARRING_INTERFACE) == 0)
+        || (strcmp(interface, OFONO_CALL_FORWARDING_INTERFACE) == 0)
+        || (strcmp(interface, OFONO_CALL_SETTINGS_INTERFACE) == 0)) {
+        return true;
+    }
+
+    return false;
+}
+
 static void object_add(GDBusProxy* proxy, void* user_data)
 {
 }
@@ -590,7 +606,8 @@ tapi_context tapi_open(const char* client_name,
         goto error;
     }
 
-    g_dbus_client_set_proxy_handlers(client, object_add, object_remove, NULL, NULL);
+    g_dbus_client_set_proxy_handlers(client, object_add, object_remove,
+        object_filter, NULL, NULL);
 
     ctx->connection = connection;
     ctx->client = client;
