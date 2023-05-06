@@ -2709,24 +2709,21 @@ static int telephonytool_cmd_unlisten_sim(tapi_context context, char* pargs)
 
 static int telephonytool_tapi_sms_send_message(tapi_context context, char* pargs)
 {
-    char dst[3][MAX_INPUT_ARGS_LEN];
     char* slot_id;
     char* to;
     char* text;
+    char* temp;
     int ret;
-    int cnt;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
 
-    cnt = split_input(dst, 3, pargs, " ");
-    if (cnt != 3)
+    slot_id = strtok_r(pargs, " ", &temp);
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
-    slot_id = dst[0];
-    to = dst[1];
-    text = dst[2];
-    if (!is_valid_slot_id_str(slot_id))
+    to = strtok_r(temp, " ", &text);
+    if (to == NULL)
         return -EINVAL;
 
     syslog(LOG_DEBUG, "%s, slotId : %s  number : %s text: %s \n", __func__, slot_id, to, text);
@@ -2736,26 +2733,26 @@ static int telephonytool_tapi_sms_send_message(tapi_context context, char* pargs
 
 static int telephonytool_tapi_sms_send_data_message(tapi_context context, char* pargs)
 {
-    char dst[4][MAX_INPUT_ARGS_LEN];
     char* slot_id;
     char* to;
     char* text;
     char* port;
+    char *temp, *temp1;
     int ret;
-    int cnt;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
 
-    cnt = split_input(dst, 4, pargs, " ");
-    if (cnt != 4)
+    slot_id = strtok_r(pargs, " ", &temp);
+    if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
-    slot_id = dst[0];
-    to = dst[1];
-    text = dst[2];
-    port = dst[3];
-    if (!is_valid_slot_id_str(slot_id))
+    to = strtok_r(temp, " ", &temp1);
+    if (to == NULL)
+        return -EINVAL;
+
+    text = strtok_r(temp1, " ", &port);
+    if (text == NULL)
         return -EINVAL;
 
     syslog(LOG_DEBUG, "%s, slotId: %s  number: %s text: %s port: %s \n",
