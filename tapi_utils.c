@@ -50,7 +50,7 @@ const char* tapi_utils_network_mode_to_string(tapi_pref_net_mode mode)
         return "lte,umts,gsm";
     }
 
-    return NULL;
+    return "";
 }
 
 tapi_pref_net_mode tapi_utils_network_mode_from_string(const char* mode)
