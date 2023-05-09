@@ -4170,7 +4170,7 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     { "set-rat-mode", RADIO_CMD,
         telephonytool_cmd_set_rat_mode,
         "set rat mode (enter example : set-rat-mode 0 9 [slot_id] "
-        "[mode: 0-any 1-gsm_only 2-wcdma_only 3-umts 9-lte_gsm_wcdma 12-lte_wcdma 14-lte_only])" },
+        "[mode: 0-umts 1-gsm_only 2-wcdma_only 9-lte_gsm_wcdma 11-lte_only 12-lte_wcdma])" },
     { "get-rat-mode", RADIO_CMD,
         telephonytool_cmd_get_rat_mode,
         "get rat mode (enter example : get-rat-mode 0 [slot_id])" },
