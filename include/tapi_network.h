@@ -84,12 +84,22 @@ typedef struct {
     void* extra;
 } tapi_operator_info;
 
+typedef enum {
+	SIGNAL_STRENGTH_UNKNOWN = 0,
+	SIGNAL_STRENGTH_POOR,
+	SIGNAL_STRENGTH_MODERATE,
+	SIGNAL_STRENGTH_GOOD,
+	SIGNAL_STRENGTH_GREATE,
+	SIGNAL_STRENGTH_EXCELLENT,
+} tapi_signal_strength_level;
+
 typedef struct {
     int rssi;
     int rsrp;
     int rsrq;
     int rssnr;
-    int level;
+    int cqi;
+    tapi_signal_strength_level level;
 } tapi_signal_strength;
 
 typedef struct {

@@ -398,9 +398,9 @@ static int signal_strength_changed(DBusConnection* connection,
     tapi_async_handler* handler = user_data;
     tapi_async_result* ar;
     tapi_async_function cb;
-    DBusMessageIter iter, var;
+    DBusMessageIter iter, var, dict;
     const char* property;
-    unsigned char strength;
+    tapi_signal_strength* ss = NULL;
 
     if (handler == NULL)
         return 0;
@@ -424,11 +424,45 @@ static int signal_strength_changed(DBusConnection* connection,
     dbus_message_iter_next(&iter);
 
     dbus_message_iter_recurse(&iter, &var);
-    if (strcmp(property, "Strength") == 0) {
-        dbus_message_iter_get_basic(&var, &strength);
+
+    if (strcmp(property, "SignalStrength") == 0) {
+        dbus_message_iter_recurse(&var, &dict);
+
+        ss = malloc(sizeof(tapi_signal_strength));
+        if (ss == NULL)
+            return 0;
+
+        while (dbus_message_iter_get_arg_type(&dict) == DBUS_TYPE_DICT_ENTRY) {
+            DBusMessageIter entry, value;
+            const char* key;
+
+            dbus_message_iter_recurse(&dict, &entry);
+            dbus_message_iter_get_basic(&entry, &key);
+
+            dbus_message_iter_next(&entry);
+            dbus_message_iter_recurse(&entry, &value);
+
+            if (strcmp(key, "ReceivedSignalStrengthIndicator") == 0) {
+                dbus_message_iter_get_basic(&value, &ss->rssi);
+            } else if (strcmp(key, "ReferenceSignalReceivedPower") == 0) {
+                dbus_message_iter_get_basic(&value, &ss->rsrp);
+            } else if (strcmp(key, "ReferenceSignalReceivedQuality") == 0) {
+                dbus_message_iter_get_basic(&value, &ss->rsrq);
+            } else if (strcmp(key, "SingalToNoiseRatio") == 0) {
+                dbus_message_iter_get_basic(&value, &ss->rssnr);
+            } else if (strcmp(key, "ChannelQualityIndicator") == 0) {
+                dbus_message_iter_get_basic(&value, &ss->cqi);
+            } else if (strcmp(key, "Level") == 0) {
+                dbus_message_iter_get_basic(&value, &ss->level);
+            }
+
+            dbus_message_iter_next(&dict);
+        }
+
         ar->status = OK;
-        ar->arg2 = strength;
+        ar->data = ss;
         cb(ar);
+        free(ss);
     }
 
     return 1;
@@ -1110,7 +1144,6 @@ int tapi_network_get_signalstrength(tapi_context context, int slot_id, tapi_sign
     dbus_context* ctx = context;
     GDBusProxy* proxy;
     DBusMessageIter iter;
-    unsigned char value;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
@@ -1125,14 +1158,45 @@ int tapi_network_get_signalstrength(tapi_context context, int slot_id, tapi_sign
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property(proxy, "Strength", &iter)) {
-        dbus_message_iter_get_basic(&iter, &value);
-
-        out->rsrp = value;
-        return OK;
+    if (!g_dbus_proxy_get_property(proxy, "SignalStrength", &iter)) {
+        return -EINVAL;
     }
 
-    return -EINVAL;
+    if (dbus_message_iter_get_arg_type(&iter) != DBUS_TYPE_ARRAY) {
+        return -EINVAL;
+    }
+
+    DBusMessageIter var_elem;
+    dbus_message_iter_recurse(&iter, &var_elem);
+
+    while (dbus_message_iter_get_arg_type(&var_elem) == DBUS_TYPE_DICT_ENTRY) {
+        DBusMessageIter entry, value;
+        const char* key;
+
+        dbus_message_iter_recurse(&var_elem, &entry);
+        dbus_message_iter_get_basic(&entry, &key);
+
+        dbus_message_iter_next(&entry);
+        dbus_message_iter_recurse(&entry, &value);
+
+        if (strcmp(key, "ReceivedSignalStrengthIndicator") == 0) {
+            dbus_message_iter_get_basic(&value, &out->rssi);
+        } else if (strcmp(key, "ReferenceSignalReceivedPower") == 0) {
+            dbus_message_iter_get_basic(&value, &out->rsrp);
+        } else if (strcmp(key, "ReferenceSignalReceivedQuality") == 0) {
+            dbus_message_iter_get_basic(&value, &out->rsrq);
+        } else if (strcmp(key, "SingalToNoiseRatio") == 0) {
+            dbus_message_iter_get_basic(&value, &out->rssnr);
+        } else if (strcmp(key, "ChannelQualityIndicator") == 0) {
+            dbus_message_iter_get_basic(&value, &out->cqi);
+        } else if (strcmp(key, "Level") == 0) {
+            dbus_message_iter_get_basic(&value, &out->level);
+        }
+
+        dbus_message_iter_next(&var_elem);
+    }
+
+    return OK;
 }
 
 int tapi_network_get_registration_info(tapi_context context,
