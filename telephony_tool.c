@@ -318,7 +318,8 @@ static void call_state_change_cb(tapi_async_result* result)
     syslog(LOG_DEBUG, "call RemoteMultiparty: %d \n", call_info->remote_multiparty);
     syslog(LOG_DEBUG, "call Information: %s \n", call_info->info);
     syslog(LOG_DEBUG, "call Icon: %d \n", call_info->icon);
-    syslog(LOG_DEBUG, "call Emergency: %d \n\n", call_info->is_emergency_number);
+    syslog(LOG_DEBUG, "call Emergency: %d \n", call_info->is_emergency_number);
+    syslog(LOG_DEBUG, "call disconnect_reason: %d \n\n", call_info->disconnect_reason);
 }
 
 static void tele_call_info_call_async_fun(tapi_async_result* result)
@@ -716,6 +717,7 @@ static void network_signal_change(tapi_async_result* result)
     tapi_cell_identity** cell_list;
     tapi_cell_identity* cell;
     tapi_network_time* nitz;
+    tapi_signal_strength* ss;
     int signal = result->msg_id;
     int slot_id = result->arg1;
     int param = result->arg2;
@@ -738,7 +740,11 @@ static void network_signal_change(tapi_async_result* result)
         }
         break;
     case MSG_SIGNAL_STRENGTH_CHANGE_IND:
-        syslog(LOG_DEBUG, "signal strength changed to %d in slot[%d] \n", param, slot_id);
+        ss = result->data;
+        if (ss != NULL)
+                syslog(LOG_DEBUG, "signal strength changed "
+                    "-- rssi : %d, rsrp : %d, rsrq : %d, rssnr : %d, cqi : %d, level: %d \n",
+                    ss->rssi, ss->rsrp, ss->rsrq, ss->rssnr, ss->cqi, ss->level);
         break;
     case MSG_NITZ_STATE_CHANGE_IND:
         nitz = result->data;
@@ -3103,7 +3109,9 @@ static int telephonytool_cmd_query_signalstrength(tapi_context context, char* pa
         return -EINVAL;
 
     tapi_network_get_signalstrength(context, atoi(slot_id), &ss);
-    syslog(LOG_DEBUG, "%s, slotId : %s RSRP value :%d \n", __func__, slot_id, ss.rsrp);
+    syslog(LOG_DEBUG, "%s, slotId : %s"
+        " rssi :%d rsrp :%d rsrq :%d rssnr :%d cqi : %d level :%d \n", __func__, slot_id,
+            ss.rssi, ss.rsrp, ss.rsrq, ss.rssnr, ss.cqi, ss.level);
 
     return 0;
 }
