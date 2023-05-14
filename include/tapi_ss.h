@@ -38,28 +38,6 @@
  ****************************************************************************/
 
 typedef struct {
-    char* old_passwd;
-    char* new_passwd;
-} cb_change_passwd_param;
-
-typedef struct {
-    char* name;
-    char* value;
-    char* fac;
-} tapi_call_barring_lock;
-
-typedef struct {
-    char* key;
-    char* value;
-    char* pin2;
-} cb_request_param;
-
-typedef struct {
-    char* service_type;
-    char* value;
-} cb_service_value;
-
-typedef struct {
     char phone_number[MAX_SS_CALL_FORWARD_NUM_LEN + 1];
     char voice_busy[MAX_SS_CALL_FORWARD_NUM_LEN + 1];
     char voice_no_reply[MAX_SS_CALL_FORWARD_NUM_LEN + 1];
@@ -78,11 +56,38 @@ typedef struct {
     char* append_service_value;
 } tapi_ss_initiate_info;
 
+typedef struct {
+    char* service_type;
+    char* value;
+} tapi_call_barring_info;
+
 typedef enum {
     CLIR_DEFAULT = 0,
     CLIR_DISABLED,
     CLIR_ENABLED,
 } tapi_clir_status;
+
+typedef enum {
+    CF_REASON_UNCONDITIONAL = 0,
+    CF_REASON_BUSY = 1,
+    CF_REASON_NO_REPLY = 2,
+    CF_REASON_NOT_REACHABLE = 3,
+} tapi_call_forward_option;
+
+typedef enum {
+    BEARER_CLASS_VOICE = 1,
+    BEARER_CLASS_DATA = 2,
+    BEARER_CLASS_FAX = 4,
+    BEARER_CLASS_DEFAULT = 7,
+    BEARER_CLASS_SMS = 8,
+} tapi_call_forward_class;
+
+typedef struct {
+    int status;
+    int cls;
+    tapi_phone_number phone_number;
+    int time;
+} tapi_call_forward_info;
 
 /****************************************************************************
  * Public Function Prototypes
@@ -189,17 +194,32 @@ int tapi_ss_request_call_forwarding(tapi_context context, int slot_id, int event
     tapi_async_function p_handle);
 
 /**
+ * Query call forwarding option.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] event_id       Async event identifier.
+ * @param[in] option         Call forward option.
+ * @param[in] cls            Call forward bear class.
+ * @param[in] p_handle       Event callback.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_ss_query_call_forwarding_option(tapi_context context, int slot_id, int event_id,
+    tapi_call_forward_option option, tapi_call_forward_class cls, tapi_async_function p_handle);
+
+/**
  * Sets a Call Forwarding option.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[in] event_id       Async event identifier.
- * @param[in] cf_type        Different Call Forwarding services.
- * @param[in] value          The value of Call Forwarding service.
+ * @param[in] option         Call forward option.
+ * @param[in] cls            Call forward bear class.
+ * @param[in] number         Phone number to forwarded.
  * @param[in] p_handle       Event callback.
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_ss_set_call_forwarding_option(tapi_context context, int slot_id, int event_id,
-    const char* cf_type, char* value, tapi_async_function p_handle);
+    tapi_call_forward_option option, tapi_call_forward_class cls,
+    char* number, tapi_async_function p_handle);
 
 /**
  * Gets the Call Forwarding info.

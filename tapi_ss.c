@@ -24,8 +24,68 @@
 #include "tapi_ss.h"
 
 /****************************************************************************
+ * Private Type Declarations
+ ****************************************************************************/
+
+typedef struct {
+    char* old_passwd;
+    char* new_passwd;
+} cb_change_passwd_param;
+
+typedef struct {
+    char* name;
+    char* value;
+    char* fac;
+} call_barring_lock;
+
+typedef struct {
+    char* key;
+    char* value;
+    char* pin2;
+} cb_request_param;
+
+/****************************************************************************
  * Private Functions
  ****************************************************************************/
+
+static void query_call_forwarding_option_append(DBusMessageIter* iter, void* user_data)
+{
+    tapi_async_handler* param = user_data;
+    int option;
+    int cls;
+
+    if (param == NULL || param->result == NULL) {
+        tapi_log_error("invalid call forwarding option !!");
+        return;
+    }
+
+    option = param->result->arg1;
+    cls = param->result->arg2;
+
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &option);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &cls);
+}
+
+static void set_call_forwarding_option_append(DBusMessageIter* iter, void* user_data)
+{
+    tapi_async_handler* param = user_data;
+    int option;
+    int cls;
+    char* number;
+
+    if (param == NULL || param->result == NULL) {
+        tapi_log_error("invalid call forwarding option !!");
+        return;
+    }
+
+    option = param->result->arg1;
+    cls = param->result->arg2;
+    number = param->result->data;
+
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &option);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &cls);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &number);
+}
 
 static void cb_request_param_append(DBusMessageIter* iter, void* user_data)
 {
@@ -303,6 +363,83 @@ done:
     cb(ar);
 }
 
+static void fill_cf_condition_info(const char* prop, DBusMessageIter* iter,
+    tapi_call_forward_info* cf)
+{
+    const char* value_str;
+
+    if (strcmp(prop, "Status") == 0) {
+        dbus_message_iter_get_basic(iter, &cf->status);
+    } else if (strcmp(prop, "Cls") == 0) {
+        dbus_message_iter_get_basic(iter, &cf->cls);
+    } else if (strcmp(prop, "Number") == 0) {
+        dbus_message_iter_get_basic(iter, &value_str);
+
+        if (strlen(value_str) <= MAX_PHONE_NUMBER_LENGTH)
+            strcpy(cf->phone_number.number, value_str);
+    } else if (strcmp(prop, "Time") == 0) {
+        dbus_message_iter_get_basic(iter, &cf->time);
+    }
+}
+
+static void call_forwarding_query_complete(DBusMessage* message, void* user_data)
+{
+    tapi_async_handler* handler = user_data;
+    tapi_async_result* ar;
+    tapi_async_function cb;
+    DBusMessageIter args, list;
+    DBusError err;
+    tapi_call_forward_info* cf_condition;
+
+    if (handler == NULL)
+        return;
+
+    ar = handler->result;
+    if (ar == NULL)
+        return;
+
+    cb = handler->cb_function;
+    if (cb == NULL)
+        return;
+
+    cf_condition = malloc(sizeof(tapi_call_forward_info));
+    if (cf_condition == NULL)
+        return;
+
+    dbus_error_init(&err);
+    if (dbus_set_error_from_message(&err, message) == true) {
+        tapi_log_error("%s error %s: %s \n", __func__, err.name, err.message);
+        dbus_error_free(&err);
+        ar->status = ERROR;
+        goto done;
+    }
+
+    if (dbus_message_iter_init(message, &args) == false)
+        goto done;
+    dbus_message_iter_recurse(&args, &list);
+
+    while (dbus_message_iter_get_arg_type(&list) == DBUS_TYPE_DICT_ENTRY) {
+        DBusMessageIter entry, value;
+        const char* name;
+
+        dbus_message_iter_recurse(&list, &entry);
+        dbus_message_iter_get_basic(&entry, &name);
+        dbus_message_iter_next(&entry);
+
+        dbus_message_iter_recurse(&entry, &value);
+        fill_cf_condition_info(name, &value, cf_condition);
+
+        dbus_message_iter_next(&list);
+    }
+
+    ar->status = OK;
+    ar->data = cf_condition;
+
+done:
+    cb(ar);
+    free(cf_condition);
+}
+
 static void ss_initiate_complete(DBusMessage* message, void* user_data)
 {
     tapi_ss_initiate_info* info = NULL;
@@ -474,7 +611,7 @@ static int call_barring_property_changed(DBusConnection* connection,
     DBusMessage* message, void* user_data)
 {
     DBusMessageIter iter, list, entry, value;
-    cb_service_value* cb_value = NULL;
+    tapi_call_barring_info* cb_value = NULL;
     tapi_async_handler* handler;
     tapi_async_function cb;
     tapi_async_result* ar;
@@ -511,7 +648,7 @@ static int call_barring_property_changed(DBusConnection* connection,
 
     dbus_message_iter_recurse(&iter, &list);
 
-    cb_value = malloc(sizeof(cb_service_value));
+    cb_value = malloc(sizeof(tapi_call_barring_info));
     if (cb_value == NULL) {
         tapi_log_error("no memory ... \n");
         ar->status = ERROR;
@@ -903,7 +1040,7 @@ int tapi_ss_set_call_barring_option(tapi_context context, int slot_id, int event
     ar->msg_id = event_id;
     handler->cb_function = p_handle;
 
-    tapi_call_barring_lock tapi_call_barring_info[] = {
+    call_barring_lock call_barring_info[] = {
         { "AllOutgoing", "all", "AO" },
         { "InternationalOutgoing", "international", "OI" },
         { "InternationalOutgoingExceptHome", "internationalnothome", "OX" },
@@ -911,9 +1048,9 @@ int tapi_ss_set_call_barring_option(tapi_context context, int slot_id, int event
         { "IncomingWhenRoaming", "whenroaming", "IR" },
     };
 
-    len = sizeof(tapi_call_barring_info) / sizeof(tapi_call_barring_lock);
+    len = sizeof(call_barring_info) / sizeof(call_barring_lock);
     for (temp = 0; temp < len; temp++) {
-        if (strcmp(tapi_call_barring_info[temp].fac, facility) == 0) {
+        if (strcmp(call_barring_info[temp].fac, facility) == 0) {
             break;
         }
     }
@@ -925,7 +1062,7 @@ int tapi_ss_set_call_barring_option(tapi_context context, int slot_id, int event
     }
 
     param->key = key;
-    param->value = tapi_call_barring_info[temp].value;
+    param->value = call_barring_info[temp].value;
     param->pin2 = pin2;
     ar->data = param;
 
@@ -1198,17 +1335,69 @@ int tapi_ss_request_call_forwarding(tapi_context context, int slot_id, int event
     return OK;
 }
 
-int tapi_ss_set_call_forwarding_option(tapi_context context, int slot_id, int event_id,
-    const char* cf_type, char* value, tapi_async_function p_handle)
+int tapi_ss_query_call_forwarding_option(tapi_context context, int slot_id, int event_id,
+    tapi_call_forward_option option, tapi_call_forward_class cls, tapi_async_function p_handle)
 {
     dbus_context* ctx = context;
     tapi_async_handler* handler;
     tapi_async_result* ar;
     GDBusProxy* proxy;
-    int value_type;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
-        || cf_type == NULL || value == NULL) {
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+        return -EINVAL;
+    }
+
+    if (option < CF_REASON_UNCONDITIONAL || option > CF_REASON_NOT_REACHABLE) {
+        return -EINVAL;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_FORWARDING];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    handler = malloc(sizeof(tapi_async_handler));
+    if (handler == NULL)
+        return -ENOMEM;
+
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        free(handler);
+        return -ENOMEM;
+    }
+
+    handler->result = ar;
+    ar->arg1 = option;
+    ar->arg2 = cls;
+    ar->msg_id = event_id;
+    handler->cb_function = p_handle;
+
+    if (!g_dbus_proxy_method_call(proxy, "GetCallForwarding",
+            query_call_forwarding_option_append, call_forwarding_query_complete,
+            handler, handler_free)) {
+        tapi_log_error("failed to request callforwarding \n");
+        handler_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
+}
+
+int tapi_ss_set_call_forwarding_option(tapi_context context, int slot_id, int event_id,
+    tapi_call_forward_option option, tapi_call_forward_class cls, char* number,
+    tapi_async_function p_handle)
+{
+    dbus_context* ctx = context;
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
+    GDBusProxy* proxy;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || number == NULL) {
+        return -EINVAL;
+    }
+
+    if (option < CF_REASON_UNCONDITIONAL || option > CF_REASON_NOT_REACHABLE) {
         return -EINVAL;
     }
 
@@ -1232,19 +1421,14 @@ int tapi_ss_set_call_forwarding_option(tapi_context context, int slot_id, int ev
     }
 
     handler->result = ar;
-    ar->arg1 = slot_id;
+    ar->arg1 = option;
+    ar->arg2 = cls;
     ar->msg_id = event_id;
+    ar->data = number;
     handler->cb_function = p_handle;
 
-    if (strcmp(cf_type, "VoiceNoReplyTimeout") == 0)
-        value_type = DBUS_TYPE_UINT32;
-    else if (strcmp(cf_type, "ForwardingFlagOnSim") == 0)
-        value_type = DBUS_TYPE_BOOLEAN;
-    else
-        value_type = DBUS_TYPE_STRING;
-
-    if (!g_dbus_proxy_set_property_basic(proxy, cf_type, value_type,
-            &value, property_set_done, handler, handler_free)) {
+    if (!g_dbus_proxy_method_call(proxy, "SetCallForwarding",
+            set_call_forwarding_option_append, method_call_complete, handler, handler_free)) {
         handler_free(handler);
         return -EINVAL;
     }
