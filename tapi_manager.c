@@ -677,7 +677,6 @@ int tapi_close(tapi_context context)
     }
 
     release_dbus_proxy(ctx);
-    g_dbus_remove_all_watches(ctx->connection);
     g_dbus_client_unref(ctx->client);
     dbus_connection_close(ctx->connection);
     dbus_connection_unref(ctx->connection);
