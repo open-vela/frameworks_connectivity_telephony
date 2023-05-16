@@ -92,9 +92,8 @@
 #define EVENT_QUERY_FDN_DONE 0x4D
 #define EVENT_REQUEST_CLIR_DONE 0x4E
 #define EVENT_QUERY_ALL_CALL_BARRING_DONE 0x4F
-#define EVENT_QUERY_ALL_CALL_FORWARDING_DONE 0x50
-#define EVENT_QUERY_ALL_CALL_SETTING_DONE 0x51
-#define EVENT_QUERY_CALL_FORWARDING_DONE 0x52
+#define EVENT_QUERY_ALL_CALL_SETTING_DONE 0x50
+#define EVENT_QUERY_CALL_FORWARDING_DONE 0x51
 
 // PhoneBook Callback Event
 #define EVENT_LOAD_ADN_ENTRIES_DONE 0x61
@@ -495,7 +494,6 @@ static void tele_phonebook_async_fun(tapi_async_result* result)
 
 static void ss_signal_change(tapi_async_result* result)
 {
-    tapi_call_forwarding_info* cf_info;
     tapi_call_barring_info* cb_value;
     int signal = result->msg_id;
     int slot_id = result->arg1;
@@ -505,16 +503,6 @@ static void ss_signal_change(tapi_async_result* result)
         cb_value = result->data;
         syslog(LOG_DEBUG, "call barring service %s changed to %s in slot[%d] \n",
             cb_value->service_type, cb_value->value, slot_id);
-        break;
-    case MSG_CALL_FORWARDING_PROPERTY_CHANGE_IND:
-        cf_info = (tapi_call_forwarding_info*)result->data;
-        syslog(LOG_DEBUG, "call forwarding number: %s \n", cf_info->phone_number);
-        syslog(LOG_DEBUG, "call forwarding voice busy: %s \n", cf_info->voice_busy);
-        syslog(LOG_DEBUG, "call forwarding voice no reply: %s \n", cf_info->voice_no_reply);
-        syslog(LOG_DEBUG, "call forwarding voice not reachable: %s \n",
-            cf_info->voice_not_reachable);
-        syslog(LOG_DEBUG, "call forwarding reply timeout: %d \n", cf_info->voice_no_reply_timeout);
-        syslog(LOG_DEBUG, "call forwarding flag on sim: %d \n", cf_info->forwarding_flag_on_sim);
         break;
     case MSG_USSD_PROPERTY_CHANGE_IND:
         syslog(LOG_DEBUG, "ussd state changed to %s in slot[%d] \n", (char*)result->data, slot_id);
@@ -3389,20 +3377,6 @@ static int telephonytool_cmd_disable_all_outgoing(tapi_context context, char* pa
         EVENT_DISABLE_ALL_OUTGOING_DONE, passwd, tele_call_async_fun);
 }
 
-static int telephonytool_cmd_request_call_forwarding(tapi_context context, char* pargs)
-{
-    char* slot_id;
-    if (strlen(pargs) == 0)
-        return -EINVAL;
-
-    slot_id = strtok_r(pargs, " ", NULL);
-    if (!is_valid_slot_id_str(slot_id))
-        return -EINVAL;
-
-    return tapi_ss_request_call_forwarding(context, atoi(slot_id),
-        EVENT_QUERY_ALL_CALL_FORWARDING_DONE, tele_call_async_fun);
-}
-
 static int telephonytool_cmd_set_call_forwarding_option(tapi_context context, char* pargs)
 {
     char dst[3][MAX_INPUT_ARGS_LEN];
@@ -3433,32 +3407,6 @@ static int telephonytool_cmd_set_call_forwarding_option(tapi_context context, ch
         EVENT_REQUEST_CALL_FORWARDING_DONE, atoi(cf_type), BEARER_CLASS_VOICE, value, ss_event_response);
 }
 
-static int telephonytool_cmd_get_call_forwarding(tapi_context context, char* pargs)
-{
-    char dst[2][MAX_INPUT_ARGS_LEN];
-    char* slot_id;
-    char* key;
-    char* cf_info = NULL;
-    int cnt;
-
-    if (strlen(pargs) == 0)
-        return -EINVAL;
-
-    cnt = split_input(dst, 2, pargs, " ");
-    if (cnt != 2)
-        return -EINVAL;
-
-    slot_id = dst[0];
-    key = dst[1];
-    if (!is_valid_slot_id_str(slot_id))
-        return -EINVAL;
-
-    tapi_ss_get_call_forwarding_option(context, atoi(slot_id), key, &cf_info);
-    syslog(LOG_DEBUG, "%s, slotId : %s key : %s cf_info : %s \n", __func__, slot_id, key, cf_info);
-
-    return 0;
-}
-
 static int telephonytool_cmd_get_call_forwarding_option(tapi_context context, char* pargs)
 {
     char dst[2][MAX_INPUT_ARGS_LEN];
@@ -3483,30 +3431,6 @@ static int telephonytool_cmd_get_call_forwarding_option(tapi_context context, ch
     syslog(LOG_DEBUG, "%s, slotId : %s option : %s \n", __func__, slot_id, option);
 
     return 0;
-}
-
-static int telephonytool_cmd_disable_call_forwarding(tapi_context context, char* pargs)
-{
-    char dst[2][MAX_INPUT_ARGS_LEN];
-    char* slot_id;
-    char* type;
-    int cnt;
-
-    if (strlen(pargs) == 0)
-        return -EINVAL;
-
-    cnt = split_input(dst, 2, pargs, " ");
-    if (cnt != 2)
-        return -EINVAL;
-
-    slot_id = dst[0];
-    type = dst[1];
-    if (!is_valid_slot_id_str(slot_id))
-        return -EINVAL;
-
-    syslog(LOG_DEBUG, "%s, slotId : %s type : %s \n", __func__, slot_id, type);
-    return tapi_ss_disable_call_forwarding(context, atoi(slot_id),
-        EVENT_DISABLE_CALL_FORWARDING_DONE, type, tele_call_async_fun);
 }
 
 static int telephonytool_cmd_initiate_ss_service(tapi_context context, char* pargs)
@@ -4549,25 +4473,14 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         telephonytool_cmd_disable_all_outgoing,
         "disable all outgoing (enter example : disable-all-outgoing 0 2345 "
         "[slot_id][passwd])" },
-    { "request-callforwarding", SS_CMD,
-        telephonytool_cmd_request_call_forwarding,
-        "request callforwarding (enter example : request-callforwarding 0 )" },
-    { "get-callforwarding", SS_CMD,
-        telephonytool_cmd_get_call_forwarding,
-        "get callforwarding (enter example : get-callforwarding 0 VoiceUnconditional "
-        "[slot_id][call forwarding type])" },
     { "set-callforwarding-option", SS_CMD,
         telephonytool_cmd_set_call_forwarding_option,
         "set callforwarding option (enter example : set-callforwarding-option 0 1 183XXX "
-        "[slot_id][call forwarding type][number])" },
+        "[slot_id][call forwarding type: 0-unconditional 1-busy 2-noreply 3-notreachable][number])" },
     { "get-callforwarding-option", SS_CMD,
         telephonytool_cmd_get_call_forwarding_option,
         "get callforwarding option (enter example : get-callforwarding-option 0 1 "
-        "[slot_id][call forwarding type])" },
-    { "disable-callforwarding", SS_CMD,
-        telephonytool_cmd_disable_call_forwarding,
-        "disable callforwarding (enter example : disable-callforwarding 0 all "
-        "[slot_id][type])" },
+        "[slot_id][call forwarding type: 0-unconditional 1-busy 2-noreply 3-notreachable])" },
     { "initiate-ss", SS_CMD,
         telephonytool_cmd_initiate_ss_service,
         "initiate supplementary service (enter example : initiate-ss 0 *#06# "
@@ -4587,7 +4500,7 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     { "set-callwaiting", SS_CMD,
         telephonytool_cmd_set_call_waiting,
         "set callwaiting (enter example : set-callwaiting 0 1 "
-        "[slot_id][call waiting value])" },
+        "[slot_id][call waiting value: 0-disabled 1-enabled])" },
     { "get-callwaiting", SS_CMD,
         telephonytool_cmd_get_call_waiting,
         "get callwaiting (enter example : get-callwaiting 0 [slot_id])" },

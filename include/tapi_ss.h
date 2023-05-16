@@ -182,18 +182,6 @@ int tapi_ss_disable_all_outgoing(tapi_context context, int slot_id,
     int event_id, char* passwd, tapi_async_function p_handle);
 
 /**
- * Initiates call forwarding option requests. After these requests are processed,
- * then could be through tapi_ss_get_call_forwarding_option to get cf info.
- * @param[in] context        Telephony api context.
- * @param[in] slot_id        Slot id of current sim.
- * @param[in] event_id       Async event identifier.
- * @param[in] p_handle       Event callback.
- * @return Zero on success; a negated errno value on failure.
- */
-int tapi_ss_request_call_forwarding(tapi_context context, int slot_id, int event_id,
-    tapi_async_function p_handle);
-
-/**
  * Query call forwarding option.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
@@ -220,28 +208,6 @@ int tapi_ss_query_call_forwarding_option(tapi_context context, int slot_id, int 
 int tapi_ss_set_call_forwarding_option(tapi_context context, int slot_id, int event_id,
     tapi_call_forward_option option, tapi_call_forward_class cls,
     char* number, tapi_async_function p_handle);
-
-/**
- * Gets the Call Forwarding info.
- * @param[in] context        Telephony api context.
- * @param[in] slot_id        Slot id of current sim.
- * @param[in] service_type   Call Forwarding services.
- * @param[out] out           The Call Forwarding services value.
- * @return Zero on success; a negated errno value on failure.
- */
-int tapi_ss_get_call_forwarding_option(tapi_context context, int slot_id, const char* service_type, char** out);
-
-/**
- * Disables all Call Forwarding rules for type.
- * @param[in] context        Telephony api context.
- * @param[in] slot_id        Slot id of current sim.
- * @param[in] event_id       Async event identifier.
- * @param[in] cf_type        Call Forwarding services type.
- * @param[in] p_handle       Event callback.
- * @return Zero on success; a negated errno value on failure.
- */
-int tapi_ss_disable_call_forwarding(tapi_context context, int slot_id, int event_id,
-    char* cf_type, tapi_async_function p_handle);
 
 /**
  * If the command is a recognized supplementary service control string,

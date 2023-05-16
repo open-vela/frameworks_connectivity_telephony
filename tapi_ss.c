@@ -165,19 +165,6 @@ static void disable_all_outgoing_param_append(DBusMessageIter* iter, void* user_
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &disable_all_outgoing_param);
 }
 
-static void disable_cf_param_append(DBusMessageIter* iter, void* user_data)
-{
-    tapi_async_handler* param;
-    char* disable_cf_param;
-
-    param = user_data;
-    if (param == NULL || param->result == NULL)
-        return;
-
-    disable_cf_param = param->result->data;
-    dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &disable_cf_param);
-}
-
 static void ss_initiate_param_append(DBusMessageIter* iter, void* user_data)
 {
     tapi_async_handler* param;
@@ -215,29 +202,6 @@ static void enable_fdn_param_append(DBusMessageIter* iter, void* user_data)
 
     passwd = param->result->data;
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &passwd);
-}
-
-static void fill_call_forwarding(const char* prop,
-    DBusMessageIter* iter, tapi_call_forwarding_info* cf)
-{
-    const char* value;
-    if (strcmp(prop, "VoiceUnconditional") == 0) {
-        dbus_message_iter_get_basic(iter, &value);
-        snprintf(cf->phone_number, sizeof(cf->phone_number), "%s", value);
-    } else if (strcmp(prop, "VoiceBusy") == 0) {
-        dbus_message_iter_get_basic(iter, &value);
-        snprintf(cf->voice_busy, sizeof(cf->voice_busy), "%s", value);
-    } else if (strcmp(prop, "VoiceNoReply") == 0) {
-        dbus_message_iter_get_basic(iter, &value);
-        snprintf(cf->voice_no_reply, sizeof(cf->voice_no_reply), "%s", value);
-    } else if (strcmp(prop, "VoiceNoReplyTimeout") == 0) {
-        dbus_message_iter_get_basic(iter, &cf->voice_no_reply_timeout);
-    } else if (strcmp(prop, "VoiceNotReachable") == 0) {
-        dbus_message_iter_get_basic(iter, &value);
-        snprintf(cf->voice_not_reachable, sizeof(cf->voice_not_reachable), "%s", value);
-    } else if (strcmp(prop, "ForwardingFlagOnSim") == 0) {
-        dbus_message_iter_get_basic(iter, &cf->forwarding_flag_on_sim);
-    }
 }
 
 static void fill_ss_cb_cf_response_info(DBusMessageIter* iter,
@@ -681,85 +645,6 @@ done:
     cb(ar);
     if (cb_value != NULL)
         free(cb_value);
-
-    return true;
-}
-
-static int call_forwarding_property_changed(DBusConnection* connection,
-    DBusMessage* message, void* user_data)
-{
-    tapi_call_forwarding_info* info = NULL;
-    tapi_async_handler* handler;
-    DBusMessageIter iter, list;
-    tapi_async_function cb;
-    tapi_async_result* ar;
-    DBusError err;
-
-    handler = user_data;
-    if (handler == NULL)
-        return false;
-
-    ar = handler->result;
-    if (ar == NULL)
-        return false;
-
-    cb = handler->cb_function;
-    if (cb == NULL)
-        return false;
-
-    if (ar->msg_id != MSG_CALL_FORWARDING_PROPERTY_CHANGE_IND) {
-        return false;
-    }
-
-    dbus_error_init(&err);
-    if (dbus_set_error_from_message(&err, message) == true) {
-        tapi_log_error("%s: %s\n", err.name, err.message);
-        dbus_error_free(&err);
-        ar->status = ERROR;
-        goto done;
-    }
-
-    if (dbus_message_iter_init(message, &iter) == false) {
-        ar->status = ERROR;
-        goto done;
-    }
-
-    dbus_message_iter_recurse(&iter, &list);
-
-    info = malloc(sizeof(tapi_call_forwarding_info));
-    if (info == NULL) {
-        tapi_log_error("no memory ... \n");
-        ar->status = ERROR;
-        goto done;
-    }
-
-    info->phone_number[0] = '\0';
-    info->voice_busy[0] = '\0';
-    info->voice_no_reply[0] = '\0';
-    info->voice_not_reachable[0] = '\0';
-
-    while (dbus_message_iter_get_arg_type(&list) == DBUS_TYPE_DICT_ENTRY) {
-        DBusMessageIter entry, value;
-        const char* key;
-
-        dbus_message_iter_recurse(&list, &entry);
-        dbus_message_iter_get_basic(&entry, &key);
-
-        dbus_message_iter_next(&entry);
-        dbus_message_iter_recurse(&entry, &value);
-
-        fill_call_forwarding(key, &value, info);
-
-        dbus_message_iter_next(&list);
-    }
-
-    ar->data = info;
-    ar->status = OK;
-
-done:
-    cb(ar);
-    if (info != NULL)
-        free(info);
 
     return true;
 }
@@ -1292,49 +1177,6 @@ int tapi_ss_disable_all_outgoing(tapi_context context, int slot_id,
 }
 
 // Call Forwarding
-int tapi_ss_request_call_forwarding(tapi_context context, int slot_id, int event_id,
-    tapi_async_function p_handle)
-{
-    dbus_context* ctx = context;
-    tapi_async_handler* handler;
-    tapi_async_result* ar;
-    GDBusProxy* proxy;
-
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
-        return -EINVAL;
-    }
-
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_FORWARDING];
-    if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
-        return -EIO;
-    }
-
-    handler = malloc(sizeof(tapi_async_handler));
-    if (handler == NULL)
-        return -ENOMEM;
-
-    ar = malloc(sizeof(tapi_async_result));
-    if (ar == NULL) {
-        free(handler);
-        return -ENOMEM;
-    }
-
-    handler->result = ar;
-    ar->arg1 = slot_id;
-    ar->msg_id = event_id;
-    handler->cb_function = p_handle;
-
-    if (!g_dbus_proxy_method_call(proxy, "GetProperties",
-            NULL, method_call_complete, handler, handler_free)) {
-        tapi_log_error("failed to request callforwarding \n");
-        handler_free(handler);
-        return -EINVAL;
-    }
-
-    return OK;
-}
-
 int tapi_ss_query_call_forwarding_option(tapi_context context, int slot_id, int event_id,
     tapi_call_forward_option option, tapi_call_forward_class cls, tapi_async_function p_handle)
 {
@@ -1429,78 +1271,6 @@ int tapi_ss_set_call_forwarding_option(tapi_context context, int slot_id, int ev
 
     if (!g_dbus_proxy_method_call(proxy, "SetCallForwarding",
             set_call_forwarding_option_append, method_call_complete, handler, handler_free)) {
-        handler_free(handler);
-        return -EINVAL;
-    }
-
-    return OK;
-}
-
-int tapi_ss_get_call_forwarding_option(tapi_context context, int slot_id,
-    const char* service_type, char** out)
-{
-    dbus_context* ctx = context;
-    DBusMessageIter iter;
-    GDBusProxy* proxy;
-
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || service_type == NULL) {
-        return -EINVAL;
-    }
-
-    if (!ctx->client_ready)
-        return -EAGAIN;
-
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_FORWARDING];
-    if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
-        return -EIO;
-    }
-
-    if (g_dbus_proxy_get_property(proxy, service_type, &iter)) {
-        dbus_message_iter_get_basic(&iter, out);
-        return OK;
-    }
-
-    return -EINVAL;
-}
-
-int tapi_ss_disable_call_forwarding(tapi_context context, int slot_id, int event_id,
-    char* cf_type, tapi_async_function p_handle)
-{
-    dbus_context* ctx = context;
-    tapi_async_handler* handler;
-    tapi_async_result* ar;
-    GDBusProxy* proxy;
-
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || cf_type == NULL) {
-        return -EINVAL;
-    }
-
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_FORWARDING];
-    if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
-        return -EIO;
-    }
-
-    handler = malloc(sizeof(tapi_async_handler));
-    if (handler == NULL)
-        return -ENOMEM;
-
-    ar = malloc(sizeof(tapi_async_result));
-    if (ar == NULL) {
-        free(handler);
-        return -ENOMEM;
-    }
-
-    handler->result = ar;
-    ar->arg1 = slot_id;
-    ar->msg_id = event_id;
-    ar->data = cf_type;
-    handler->cb_function = p_handle;
-
-    if (!g_dbus_proxy_method_call(proxy, "DisableAll",
-            disable_cf_param_append, method_call_complete, handler, handler_free)) {
-        tapi_log_error("failed to disable all callforwarding \n");
         handler_free(handler);
         return -EINVAL;
     }
@@ -1984,11 +1754,6 @@ int tapi_ss_register(tapi_context context,
         watch_id = g_dbus_add_signal_watch(ctx->connection,
             OFONO_SERVICE, modem_path, OFONO_CALL_BARRING_INTERFACE,
             "PropertyChanged", call_barring_property_changed, handler, handler_free);
-        break;
-    case MSG_CALL_FORWARDING_PROPERTY_CHANGE_IND:
-        watch_id = g_dbus_add_signal_watch(ctx->connection,
-            OFONO_SERVICE, modem_path, OFONO_CALL_FORWARDING_INTERFACE,
-            "PropertyChanged", call_forwarding_property_changed, handler, handler_free);
         break;
     case MSG_USSD_PROPERTY_CHANGE_IND:
         watch_id = g_dbus_add_signal_watch(ctx->connection,
