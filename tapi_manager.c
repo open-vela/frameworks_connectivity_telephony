@@ -106,6 +106,7 @@ static void release_dbus_proxy(dbus_context* ctx)
     tapi_dbus_call_proxy* call_proxy;
     tapi_dbus_call_proxy* tmp;
 
+    g_dbus_proxy_unref(ctx->dbus_proxy_manager);
     for (int i = 0; i < CONFIG_ACTIVE_MODEM_COUNT; i++) {
         for (int j = 0; j < DBUS_PROXY_MAX_COUNT; j++) {
             g_dbus_proxy_unref(ctx->dbus_proxy[i][j]);
