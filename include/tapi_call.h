@@ -113,6 +113,7 @@ int tapi_call_dial(tapi_context context, int slot_id, char* number, int hide_cal
 
 /**
  * Hangup one active call.
+ * @deprecated - use tapi_call_hangup_by_id instead.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[in] call_id        Call Id.
@@ -130,6 +131,7 @@ int tapi_call_hangup_all_calls(tapi_context context, int slot_id);
 
 /**
  * Answer one incoming call.
+ * @deprecated - use tapi_call_answer_by_id instead.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[in] call_id        Call Id.
@@ -145,6 +147,14 @@ int tapi_call_answer_call(tapi_context context, int slot_id, char* call_id, int 
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_call_release_and_answer(tapi_context context, int slot_id);
+
+/**
+ * Hold one active call and answer another waiting call.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_call_hold_and_answer(tapi_context context, int slot_id);
 
 /**
  * Hangup one active call and active hold call.
@@ -180,6 +190,7 @@ int tapi_call_transfer(tapi_context context, int slot_id);
 
 /**
  * Deflect one incoming/waiting call to one specified number.
+ * @deprecated - use tapi_call_deflect_by_id instead.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[in] call_id        Call id to be deflected.
@@ -284,6 +295,7 @@ int tapi_call_register_call_info_change(tapi_context context, int slot_id, char*
 
 /**
  * New voice call proxy
+ * @deprecated not mandatory for now.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[in] call_id        Call id of current call.
@@ -293,6 +305,7 @@ int tapi_call_new_voice_call_proxy(tapi_context context, int slot_id, char* call
 
 /**
  * release voice call proxy
+ * @deprecated not mandatory for now.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[in] call_id        Call id of current call.
