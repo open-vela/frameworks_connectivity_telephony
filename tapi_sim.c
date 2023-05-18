@@ -635,17 +635,20 @@ int tapi_sim_get_sim_iccid(tapi_context context, int slot_id, char** out)
     has_icc_card = false;
     tapi_sim_has_icc_card(context, slot_id, &has_icc_card);
 
-    if (has_icc_card) {
-        proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
-        if (proxy == NULL) {
-            tapi_log_error("no available proxy ...\n");
-            return -EIO;
-        }
+    if (!has_icc_card) {
+        tapi_log_error("Error: no sim, return!!! \n");
+        return -EINVAL;
+    }
 
-        if (g_dbus_proxy_get_property(proxy, "CardIdentifier", &iter)) {
-            dbus_message_iter_get_basic(&iter, out);
-            return OK;
-        }
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    if (g_dbus_proxy_get_property(proxy, "CardIdentifier", &iter)) {
+        dbus_message_iter_get_basic(&iter, out);
+        return OK;
     }
 
     return -EINVAL;
@@ -674,36 +677,37 @@ int tapi_sim_get_sim_operator(tapi_context context, int slot_id, int length, cha
     has_icc_card = false;
     tapi_sim_has_icc_card(context, slot_id, &has_icc_card);
 
-    if (has_icc_card) {
-        proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
-        if (proxy == NULL) {
-            tapi_log_error("no available proxy ...\n");
-            return -EIO;
-        }
-
-        mcc = NULL;
-        if (g_dbus_proxy_get_property(proxy, "MobileCountryCode", &iter)) {
-            dbus_message_iter_get_basic(&iter, &mcc);
-        }
-
-        mnc = NULL;
-        if (g_dbus_proxy_get_property(proxy, "MobileNetworkCode", &iter)) {
-            dbus_message_iter_get_basic(&iter, &mnc);
-        }
-
-        if (mcc == NULL || mnc == NULL)
-            return -EIO;
-
-        for (int i = 0; i < MAX_MCC_LENGTH; i++)
-            *out++ = *mcc++;
-        for (int j = 0; j < MAX_MNC_LENGTH; j++)
-            *out++ = *mnc++;
-        *out = '\0';
-
-        return OK;
+    if (!has_icc_card) {
+        tapi_log_error("Error: no sim, return!!! \n");
+        return -EINVAL;
     }
 
-    return -EINVAL;
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    mcc = NULL;
+    if (g_dbus_proxy_get_property(proxy, "MobileCountryCode", &iter)) {
+        dbus_message_iter_get_basic(&iter, &mcc);
+    }
+
+    mnc = NULL;
+    if (g_dbus_proxy_get_property(proxy, "MobileNetworkCode", &iter)) {
+        dbus_message_iter_get_basic(&iter, &mnc);
+    }
+
+    if (mcc == NULL || mnc == NULL)
+        return -EIO;
+
+    for (int i = 0; i < MAX_MCC_LENGTH; i++)
+        *out++ = *mcc++;
+    for (int j = 0; j < MAX_MNC_LENGTH; j++)
+        *out++ = *mnc++;
+    *out = '\0';
+
+    return OK;
 }
 
 int tapi_sim_get_sim_operator_name(tapi_context context, int slot_id, char** out)
@@ -723,17 +727,20 @@ int tapi_sim_get_sim_operator_name(tapi_context context, int slot_id, char** out
     has_icc_card = false;
     tapi_sim_has_icc_card(context, slot_id, &has_icc_card);
 
-    if (has_icc_card) {
-        proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
-        if (proxy == NULL) {
-            tapi_log_error("no available proxy ...\n");
-            return -EIO;
-        }
+    if (!has_icc_card) {
+        tapi_log_error("Error: no sim, return!!! \n");
+        return -EINVAL;
+    }
 
-        if (g_dbus_proxy_get_property(proxy, "ServiceProviderName", &iter)) {
-            dbus_message_iter_get_basic(&iter, out);
-            return OK;
-        }
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    if (g_dbus_proxy_get_property(proxy, "ServiceProviderName", &iter)) {
+        dbus_message_iter_get_basic(&iter, out);
+        return OK;
     }
 
     return -EINVAL;
@@ -756,17 +763,20 @@ int tapi_sim_get_subscriber_id(tapi_context context, int slot_id, char** out)
     has_icc_card = false;
     tapi_sim_has_icc_card(context, slot_id, &has_icc_card);
 
-    if (has_icc_card) {
-        proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
-        if (proxy == NULL) {
-            tapi_log_error("no available proxy ...\n");
-            return -EIO;
-        }
+    if (!has_icc_card) {
+        tapi_log_error("Error: no sim, return!!! \n");
+        return -EINVAL;
+    }
 
-        if (g_dbus_proxy_get_property(proxy, "SubscriberIdentity", &iter)) {
-            dbus_message_iter_get_basic(&iter, out);
-            return OK;
-        }
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    if (g_dbus_proxy_get_property(proxy, "SubscriberIdentity", &iter)) {
+        dbus_message_iter_get_basic(&iter, out);
+        return OK;
     }
 
     return -EINVAL;
@@ -861,49 +871,50 @@ int tapi_sim_change_pin(tapi_context context, int slot_id,
     has_icc_card = false;
     tapi_sim_has_icc_card(context, slot_id, &has_icc_card);
 
-    if (has_icc_card) {
-        proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
-        if (proxy == NULL) {
-            tapi_log_error("no available proxy ...\n");
-            return -EIO;
-        }
-
-        change_pin_param = malloc(sizeof(sim_pin_param));
-        if (change_pin_param == NULL) {
-            return -ENOMEM;
-        }
-        change_pin_param->pin_type = pin_type;
-        change_pin_param->old_pin = old_pin;
-        change_pin_param->new_pin = new_pin;
-
-        ar = malloc(sizeof(tapi_async_result));
-        if (ar == NULL) {
-            free(change_pin_param);
-            return -ENOMEM;
-        }
-        ar->msg_id = event_id;
-        ar->arg1 = slot_id;
-        ar->data = change_pin_param;
-
-        user_data = malloc(sizeof(tapi_async_handler));
-        if (user_data == NULL) {
-            free(change_pin_param);
-            free(ar);
-            return -ENOMEM;
-        }
-        user_data->cb_function = p_handle;
-        user_data->result = ar;
-
-        if (!g_dbus_proxy_method_call(proxy, "ChangePin",
-                change_pin_param_append, method_call_complete, user_data, sim_event_data_free)) {
-            sim_event_data_free(user_data);
-            return -EINVAL;
-        }
-
-        return OK;
+    if (!has_icc_card) {
+        tapi_log_error("Error: no sim, return!!! \n");
+        return -EINVAL;
     }
 
-    return -EINVAL;
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    change_pin_param = malloc(sizeof(sim_pin_param));
+    if (change_pin_param == NULL) {
+        return -ENOMEM;
+    }
+    change_pin_param->pin_type = pin_type;
+    change_pin_param->old_pin = old_pin;
+    change_pin_param->new_pin = new_pin;
+
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        free(change_pin_param);
+        return -ENOMEM;
+    }
+    ar->msg_id = event_id;
+    ar->arg1 = slot_id;
+    ar->data = change_pin_param;
+
+    user_data = malloc(sizeof(tapi_async_handler));
+    if (user_data == NULL) {
+        free(change_pin_param);
+        free(ar);
+        return -ENOMEM;
+    }
+    user_data->cb_function = p_handle;
+    user_data->result = ar;
+
+    if (!g_dbus_proxy_method_call(proxy, "ChangePin",
+            change_pin_param_append, method_call_complete, user_data, sim_event_data_free)) {
+        sim_event_data_free(user_data);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_sim_enter_pin(tapi_context context, int slot_id,
@@ -924,48 +935,49 @@ int tapi_sim_enter_pin(tapi_context context, int slot_id,
     has_icc_card = false;
     tapi_sim_has_icc_card(context, slot_id, &has_icc_card);
 
-    if (has_icc_card) {
-        proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
-        if (proxy == NULL) {
-            tapi_log_error("no available proxy ...\n");
-            return -EIO;
-        }
-
-        enter_pin_param = malloc(sizeof(sim_pin_param));
-        if (enter_pin_param == NULL) {
-            return -ENOMEM;
-        }
-        enter_pin_param->pin_type = pin_type;
-        enter_pin_param->new_pin = pin;
-
-        ar = malloc(sizeof(tapi_async_result));
-        if (ar == NULL) {
-            free(enter_pin_param);
-            return -ENOMEM;
-        }
-        ar->msg_id = event_id;
-        ar->arg1 = slot_id;
-        ar->data = enter_pin_param;
-
-        user_data = malloc(sizeof(tapi_async_handler));
-        if (user_data == NULL) {
-            free(enter_pin_param);
-            free(ar);
-            return -ENOMEM;
-        }
-        user_data->cb_function = p_handle;
-        user_data->result = ar;
-
-        if (!g_dbus_proxy_method_call(proxy, "EnterPin",
-                enter_pin_param_append, method_call_complete, user_data, sim_event_data_free)) {
-            sim_event_data_free(user_data);
-            return -EINVAL;
-        }
-
-        return OK;
+    if (!has_icc_card) {
+        tapi_log_error("Error: no sim, return!!! \n");
+        return -EINVAL;
     }
 
-    return -EINVAL;
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    enter_pin_param = malloc(sizeof(sim_pin_param));
+    if (enter_pin_param == NULL) {
+        return -ENOMEM;
+    }
+    enter_pin_param->pin_type = pin_type;
+    enter_pin_param->new_pin = pin;
+
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        free(enter_pin_param);
+        return -ENOMEM;
+    }
+    ar->msg_id = event_id;
+    ar->arg1 = slot_id;
+    ar->data = enter_pin_param;
+
+    user_data = malloc(sizeof(tapi_async_handler));
+    if (user_data == NULL) {
+        free(enter_pin_param);
+        free(ar);
+        return -ENOMEM;
+    }
+    user_data->cb_function = p_handle;
+    user_data->result = ar;
+
+    if (!g_dbus_proxy_method_call(proxy, "EnterPin",
+            enter_pin_param_append, method_call_complete, user_data, sim_event_data_free)) {
+        sim_event_data_free(user_data);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_sim_reset_pin(tapi_context context, int slot_id,
@@ -986,49 +998,50 @@ int tapi_sim_reset_pin(tapi_context context, int slot_id,
     has_icc_card = false;
     tapi_sim_has_icc_card(context, slot_id, &has_icc_card);
 
-    if (has_icc_card) {
-        proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
-        if (proxy == NULL) {
-            tapi_log_error("no available proxy ...\n");
-            return -EIO;
-        }
-
-        reset_pin_param = malloc(sizeof(sim_pin_param));
-        if (reset_pin_param == NULL) {
-            return -ENOMEM;
-        }
-        reset_pin_param->puk_type = puk_type;
-        reset_pin_param->puk = puk;
-        reset_pin_param->new_pin = new_pin;
-
-        ar = malloc(sizeof(tapi_async_result));
-        if (ar == NULL) {
-            free(reset_pin_param);
-            return -ENOMEM;
-        }
-        ar->msg_id = event_id;
-        ar->arg1 = slot_id;
-        ar->data = reset_pin_param;
-
-        user_data = malloc(sizeof(tapi_async_handler));
-        if (user_data == NULL) {
-            free(reset_pin_param);
-            free(ar);
-            return -ENOMEM;
-        }
-        user_data->cb_function = p_handle;
-        user_data->result = ar;
-
-        if (!g_dbus_proxy_method_call(proxy, "ResetPin",
-                reset_pin_param_append, method_call_complete, user_data, sim_event_data_free)) {
-            sim_event_data_free(user_data);
-            return -EINVAL;
-        }
-
-        return OK;
+    if (!has_icc_card) {
+        tapi_log_error("Error: no sim, return!!! \n");
+        return -EINVAL;
     }
 
-    return -EINVAL;
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    reset_pin_param = malloc(sizeof(sim_pin_param));
+    if (reset_pin_param == NULL) {
+        return -ENOMEM;
+    }
+    reset_pin_param->puk_type = puk_type;
+    reset_pin_param->puk = puk;
+    reset_pin_param->new_pin = new_pin;
+
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        free(reset_pin_param);
+        return -ENOMEM;
+    }
+    ar->msg_id = event_id;
+    ar->arg1 = slot_id;
+    ar->data = reset_pin_param;
+
+    user_data = malloc(sizeof(tapi_async_handler));
+    if (user_data == NULL) {
+        free(reset_pin_param);
+        free(ar);
+        return -ENOMEM;
+    }
+    user_data->cb_function = p_handle;
+    user_data->result = ar;
+
+    if (!g_dbus_proxy_method_call(proxy, "ResetPin",
+            reset_pin_param_append, method_call_complete, user_data, sim_event_data_free)) {
+        sim_event_data_free(user_data);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_sim_lock_pin(tapi_context context, int slot_id,
@@ -1049,48 +1062,49 @@ int tapi_sim_lock_pin(tapi_context context, int slot_id,
     has_icc_card = false;
     tapi_sim_has_icc_card(context, slot_id, &has_icc_card);
 
-    if (has_icc_card) {
-        proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
-        if (proxy == NULL) {
-            tapi_log_error("no available proxy ...\n");
-            return -EIO;
-        }
-
-        lock_pin_param = malloc(sizeof(sim_pin_param));
-        if (lock_pin_param == NULL) {
-            return -ENOMEM;
-        }
-        lock_pin_param->pin_type = pin_type;
-        lock_pin_param->new_pin = pin;
-
-        ar = malloc(sizeof(tapi_async_result));
-        if (ar == NULL) {
-            free(lock_pin_param);
-            return -ENOMEM;
-        }
-        ar->msg_id = event_id;
-        ar->arg1 = slot_id;
-        ar->data = lock_pin_param;
-
-        user_data = malloc(sizeof(tapi_async_handler));
-        if (user_data == NULL) {
-            free(lock_pin_param);
-            free(ar);
-            return -ENOMEM;
-        }
-        user_data->cb_function = p_handle;
-        user_data->result = ar;
-
-        if (!g_dbus_proxy_method_call(proxy, "LockPin",
-                lock_pin_param_append, method_call_complete, user_data, sim_event_data_free)) {
-            sim_event_data_free(user_data);
-            return -EINVAL;
-        }
-
-        return OK;
+    if (!has_icc_card) {
+        tapi_log_error("Error: no sim, return!!! \n");
+        return -EINVAL;
     }
 
-    return -EINVAL;
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    lock_pin_param = malloc(sizeof(sim_pin_param));
+    if (lock_pin_param == NULL) {
+        return -ENOMEM;
+    }
+    lock_pin_param->pin_type = pin_type;
+    lock_pin_param->new_pin = pin;
+
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        free(lock_pin_param);
+        return -ENOMEM;
+    }
+    ar->msg_id = event_id;
+    ar->arg1 = slot_id;
+    ar->data = lock_pin_param;
+
+    user_data = malloc(sizeof(tapi_async_handler));
+    if (user_data == NULL) {
+        free(lock_pin_param);
+        free(ar);
+        return -ENOMEM;
+    }
+    user_data->cb_function = p_handle;
+    user_data->result = ar;
+
+    if (!g_dbus_proxy_method_call(proxy, "LockPin",
+            lock_pin_param_append, method_call_complete, user_data, sim_event_data_free)) {
+        sim_event_data_free(user_data);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_sim_unlock_pin(tapi_context context, int slot_id,
@@ -1111,48 +1125,49 @@ int tapi_sim_unlock_pin(tapi_context context, int slot_id,
     has_icc_card = false;
     tapi_sim_has_icc_card(context, slot_id, &has_icc_card);
 
-    if (has_icc_card) {
-        proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
-        if (proxy == NULL) {
-            tapi_log_error("no available proxy ...\n");
-            return -EIO;
-        }
-
-        unlock_pin_param = malloc(sizeof(sim_pin_param));
-        if (unlock_pin_param == NULL) {
-            return -ENOMEM;
-        }
-        unlock_pin_param->pin_type = pin_type;
-        unlock_pin_param->new_pin = pin;
-
-        ar = malloc(sizeof(tapi_async_result));
-        if (ar == NULL) {
-            free(unlock_pin_param);
-            return -ENOMEM;
-        }
-        ar->msg_id = event_id;
-        ar->arg1 = slot_id;
-        ar->data = unlock_pin_param;
-
-        user_data = malloc(sizeof(tapi_async_handler));
-        if (user_data == NULL) {
-            free(unlock_pin_param);
-            free(ar);
-            return -ENOMEM;
-        }
-        user_data->cb_function = p_handle;
-        user_data->result = ar;
-
-        if (!g_dbus_proxy_method_call(proxy, "UnlockPin",
-                unlock_pin_param_append, method_call_complete, user_data, sim_event_data_free)) {
-            sim_event_data_free(user_data);
-            return -EINVAL;
-        }
-
-        return OK;
+    if (!has_icc_card) {
+        tapi_log_error("Error: no sim, return!!! \n");
+        return -EINVAL;
     }
 
-    return -EINVAL;
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    unlock_pin_param = malloc(sizeof(sim_pin_param));
+    if (unlock_pin_param == NULL) {
+        return -ENOMEM;
+    }
+    unlock_pin_param->pin_type = pin_type;
+    unlock_pin_param->new_pin = pin;
+
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        free(unlock_pin_param);
+        return -ENOMEM;
+    }
+    ar->msg_id = event_id;
+    ar->arg1 = slot_id;
+    ar->data = unlock_pin_param;
+
+    user_data = malloc(sizeof(tapi_async_handler));
+    if (user_data == NULL) {
+        free(unlock_pin_param);
+        free(ar);
+        return -ENOMEM;
+    }
+    user_data->cb_function = p_handle;
+    user_data->result = ar;
+
+    if (!g_dbus_proxy_method_call(proxy, "UnlockPin",
+            unlock_pin_param_append, method_call_complete, user_data, sim_event_data_free)) {
+        sim_event_data_free(user_data);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_sim_open_logical_channel(tapi_context context, int slot_id,
@@ -1173,49 +1188,50 @@ int tapi_sim_open_logical_channel(tapi_context context, int slot_id,
     has_icc_card = false;
     tapi_sim_has_icc_card(context, slot_id, &has_icc_card);
 
-    if (has_icc_card) {
-        proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
-        if (proxy == NULL) {
-            tapi_log_error("no available proxy ...\n");
-            return -EIO;
-        }
-
-        open_channel_param = malloc(sizeof(sim_transmit_apdu_param));
-        if (open_channel_param == NULL) {
-            return -ENOMEM;
-        }
-        open_channel_param->apdu_data = aid;
-        open_channel_param->len = len;
-
-        ar = malloc(sizeof(tapi_async_result));
-        if (ar == NULL) {
-            free(open_channel_param);
-            return -ENOMEM;
-        }
-        ar->msg_id = event_id;
-        ar->arg1 = slot_id;
-        ar->data = open_channel_param;
-
-        user_data = malloc(sizeof(tapi_async_handler));
-        if (user_data == NULL) {
-            free(open_channel_param);
-            free(ar);
-            return -ENOMEM;
-        }
-        user_data->cb_function = p_handle;
-        user_data->result = ar;
-
-        if (!g_dbus_proxy_method_call(proxy, "OpenLogicalChannel", open_channel_param_append,
-                open_logical_channel_cb, user_data, handler_free)) {
-            handler_free(user_data);
-            free(open_channel_param);
-            return -EINVAL;
-        }
-
-        return OK;
+    if (!has_icc_card) {
+        tapi_log_error("Error: no sim, return!!! \n");
+        return -EINVAL;
     }
 
-    return -EINVAL;
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    open_channel_param = malloc(sizeof(sim_transmit_apdu_param));
+    if (open_channel_param == NULL) {
+        return -ENOMEM;
+    }
+    open_channel_param->apdu_data = aid;
+    open_channel_param->len = len;
+
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        free(open_channel_param);
+        return -ENOMEM;
+    }
+    ar->msg_id = event_id;
+    ar->arg1 = slot_id;
+    ar->data = open_channel_param;
+
+    user_data = malloc(sizeof(tapi_async_handler));
+    if (user_data == NULL) {
+        free(open_channel_param);
+        free(ar);
+        return -ENOMEM;
+    }
+    user_data->cb_function = p_handle;
+    user_data->result = ar;
+
+    if (!g_dbus_proxy_method_call(proxy, "OpenLogicalChannel", open_channel_param_append,
+            open_logical_channel_cb, user_data, handler_free)) {
+        handler_free(user_data);
+        free(open_channel_param);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_sim_close_logical_channel(tapi_context context, int slot_id,
@@ -1234,39 +1250,40 @@ int tapi_sim_close_logical_channel(tapi_context context, int slot_id,
     has_icc_card = false;
     tapi_sim_has_icc_card(context, slot_id, &has_icc_card);
 
-    if (has_icc_card) {
-        proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
-        if (proxy == NULL) {
-            tapi_log_error("no available proxy ...\n");
-            return -EIO;
-        }
-
-        ar = malloc(sizeof(tapi_async_result));
-        if (ar == NULL) {
-            return -ENOMEM;
-        }
-        ar->msg_id = event_id;
-        ar->arg1 = slot_id;
-        ar->arg2 = session_id;
-
-        user_data = malloc(sizeof(tapi_async_handler));
-        if (user_data == NULL) {
-            free(ar);
-            return -ENOMEM;
-        }
-        user_data->cb_function = p_handle;
-        user_data->result = ar;
-
-        if (!g_dbus_proxy_method_call(proxy, "CloseLogicalChannel", close_channel_param_append,
-                method_call_complete, user_data, handler_free)) {
-            handler_free(user_data);
-            return -EINVAL;
-        }
-
-        return OK;
+    if (!has_icc_card) {
+        tapi_log_error("Error: no sim, return!!! \n");
+        return -EINVAL;
     }
 
-    return -EINVAL;
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        return -ENOMEM;
+    }
+    ar->msg_id = event_id;
+    ar->arg1 = slot_id;
+    ar->arg2 = session_id;
+
+    user_data = malloc(sizeof(tapi_async_handler));
+    if (user_data == NULL) {
+        free(ar);
+        return -ENOMEM;
+    }
+    user_data->cb_function = p_handle;
+    user_data->result = ar;
+
+    if (!g_dbus_proxy_method_call(proxy, "CloseLogicalChannel", close_channel_param_append,
+            method_call_complete, user_data, handler_free)) {
+        handler_free(user_data);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_sim_transmit_apdu_logical_channel(tapi_context context, int slot_id,
@@ -1288,50 +1305,51 @@ int tapi_sim_transmit_apdu_logical_channel(tapi_context context, int slot_id,
     has_icc_card = false;
     tapi_sim_has_icc_card(context, slot_id, &has_icc_card);
 
-    if (has_icc_card) {
-        proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
-        if (proxy == NULL) {
-            tapi_log_error("no available proxy ...\n");
-            return -EIO;
-        }
-
-        transmit_apdu_param = malloc(sizeof(sim_transmit_apdu_param));
-        if (transmit_apdu_param == NULL) {
-            return -ENOMEM;
-        }
-        transmit_apdu_param->session_id = session_id;
-        transmit_apdu_param->apdu_data = pdu;
-        transmit_apdu_param->len = len;
-
-        ar = malloc(sizeof(tapi_async_result));
-        if (ar == NULL) {
-            free(transmit_apdu_param);
-            return -ENOMEM;
-        }
-        ar->msg_id = event_id;
-        ar->arg1 = slot_id;
-        ar->data = transmit_apdu_param;
-
-        user_data = malloc(sizeof(tapi_async_handler));
-        if (user_data == NULL) {
-            free(transmit_apdu_param);
-            free(ar);
-            return -ENOMEM;
-        }
-        user_data->cb_function = p_handle;
-        user_data->result = ar;
-
-        if (!g_dbus_proxy_method_call(proxy, "TransmitApduLogicalChannel",
-                transmit_apdu_param_append, transmit_apdu_cb, user_data, handler_free)) {
-            handler_free(user_data);
-            free(transmit_apdu_param);
-            return -EINVAL;
-        }
-
-        return OK;
+    if (!has_icc_card) {
+        tapi_log_error("Error: no sim, return!!! \n");
+        return -EINVAL;
     }
 
-    return -EINVAL;
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    transmit_apdu_param = malloc(sizeof(sim_transmit_apdu_param));
+    if (transmit_apdu_param == NULL) {
+        return -ENOMEM;
+    }
+    transmit_apdu_param->session_id = session_id;
+    transmit_apdu_param->apdu_data = pdu;
+    transmit_apdu_param->len = len;
+
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        free(transmit_apdu_param);
+        return -ENOMEM;
+    }
+    ar->msg_id = event_id;
+    ar->arg1 = slot_id;
+    ar->data = transmit_apdu_param;
+
+    user_data = malloc(sizeof(tapi_async_handler));
+    if (user_data == NULL) {
+        free(transmit_apdu_param);
+        free(ar);
+        return -ENOMEM;
+    }
+    user_data->cb_function = p_handle;
+    user_data->result = ar;
+
+    if (!g_dbus_proxy_method_call(proxy, "TransmitApduLogicalChannel",
+            transmit_apdu_param_append, transmit_apdu_cb, user_data, handler_free)) {
+        handler_free(user_data);
+        free(transmit_apdu_param);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_sim_transmit_apdu_basic_channel(tapi_context context, int slot_id,
@@ -1351,50 +1369,51 @@ int tapi_sim_transmit_apdu_basic_channel(tapi_context context, int slot_id,
     has_icc_card = false;
     tapi_sim_has_icc_card(context, slot_id, &has_icc_card);
 
-    if (has_icc_card) {
-        proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
-        if (proxy == NULL) {
-            tapi_log_error("no available proxy ...\n");
-            return -EIO;
-        }
-
-        transmit_apdu_param = malloc(sizeof(sim_transmit_apdu_param));
-        if (transmit_apdu_param == NULL) {
-            return -ENOMEM;
-        }
-        transmit_apdu_param->apdu_data = pdu;
-        transmit_apdu_param->len = len;
-
-        ar = malloc(sizeof(tapi_async_result));
-        if (ar == NULL) {
-            free(transmit_apdu_param);
-            return -ENOMEM;
-        }
-        ar->msg_id = event_id;
-        ar->arg1 = slot_id;
-        ar->data = transmit_apdu_param;
-
-        user_data = malloc(sizeof(tapi_async_handler));
-        if (user_data == NULL) {
-            free(transmit_apdu_param);
-            free(ar);
-            return -ENOMEM;
-        }
-        user_data->cb_function = p_handle;
-        user_data->result = ar;
-
-        if (!g_dbus_proxy_method_call(proxy, "TransmitApduBasicChannel",
-                transmit_apdu_basic_channel_param_append, transmit_apdu_cb,
-                user_data, handler_free)) {
-            handler_free(user_data);
-            free(transmit_apdu_param);
-            return -EINVAL;
-        }
-
-        return OK;
+    if (!has_icc_card) {
+        tapi_log_error("Error: no sim, return!!! \n");
+        return -EINVAL;
     }
 
-    return -EINVAL;
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    transmit_apdu_param = malloc(sizeof(sim_transmit_apdu_param));
+    if (transmit_apdu_param == NULL) {
+        return -ENOMEM;
+    }
+    transmit_apdu_param->apdu_data = pdu;
+    transmit_apdu_param->len = len;
+
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        free(transmit_apdu_param);
+        return -ENOMEM;
+    }
+    ar->msg_id = event_id;
+    ar->arg1 = slot_id;
+    ar->data = transmit_apdu_param;
+
+    user_data = malloc(sizeof(tapi_async_handler));
+    if (user_data == NULL) {
+        free(transmit_apdu_param);
+        free(ar);
+        return -ENOMEM;
+    }
+    user_data->cb_function = p_handle;
+    user_data->result = ar;
+
+    if (!g_dbus_proxy_method_call(proxy, "TransmitApduBasicChannel",
+            transmit_apdu_basic_channel_param_append, transmit_apdu_cb,
+            user_data, handler_free)) {
+        handler_free(user_data);
+        free(transmit_apdu_param);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_sim_get_uicc_enablement(tapi_context context, int slot_id, tapi_sim_uicc_app_state* out)
@@ -1415,22 +1434,23 @@ int tapi_sim_get_uicc_enablement(tapi_context context, int slot_id, tapi_sim_uic
     has_icc_card = false;
     tapi_sim_has_icc_card(context, slot_id, &has_icc_card);
 
-    if (has_icc_card) {
-        proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
-        if (proxy == NULL) {
-            tapi_log_error("no available proxy ...\n");
-            return -EIO;
-        }
-
-        if (!g_dbus_proxy_get_property(proxy, "UiccActive", &iter))
-            return ERROR;
-
-        dbus_message_iter_get_basic(&iter, &result);
-        *out = result;
-        return OK;
+    if (!has_icc_card) {
+        tapi_log_error("Error: no sim, return!!! \n");
+        return -EINVAL;
     }
 
-    return -EINVAL;
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    if (!g_dbus_proxy_get_property(proxy, "UiccActive", &iter))
+        return ERROR;
+
+    dbus_message_iter_get_basic(&iter, &result);
+    *out = result;
+    return OK;
 }
 
 int tapi_sim_set_uicc_enablement(tapi_context context,
@@ -1453,36 +1473,37 @@ int tapi_sim_set_uicc_enablement(tapi_context context,
     has_icc_card = false;
     tapi_sim_has_icc_card(context, slot_id, &has_icc_card);
 
-    if (has_icc_card) {
-        proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
-        if (proxy == NULL) {
-            tapi_log_error("no available proxy ...\n");
-            return -EIO;
-        }
-
-        handler = malloc(sizeof(tapi_async_handler));
-        if (handler == NULL)
-            return -ENOMEM;
-
-        ar = malloc(sizeof(tapi_async_result));
-        if (ar == NULL) {
-            free(handler);
-            return -ENOMEM;
-        }
-        handler->result = ar;
-
-        ar->msg_id = event_id;
-        ar->arg1 = slot_id;
-        handler->cb_function = p_handle;
-
-        if (!g_dbus_proxy_set_property_basic(proxy, "UiccActive", DBUS_TYPE_INT32,
-                &value, property_set_done, handler, handler_free)) {
-            handler_free(handler);
-            return -EINVAL;
-        }
-
-        return OK;
+    if (!has_icc_card) {
+        tapi_log_error("Error: no sim, return!!! \n");
+        return -EINVAL;
     }
 
-    return -EINVAL;
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    handler = malloc(sizeof(tapi_async_handler));
+    if (handler == NULL)
+        return -ENOMEM;
+
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        free(handler);
+        return -ENOMEM;
+    }
+    handler->result = ar;
+
+    ar->msg_id = event_id;
+    ar->arg1 = slot_id;
+    handler->cb_function = p_handle;
+
+    if (!g_dbus_proxy_set_property_basic(proxy, "UiccActive", DBUS_TYPE_INT32,
+            &value, property_set_done, handler, handler_free)) {
+        handler_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
 }
