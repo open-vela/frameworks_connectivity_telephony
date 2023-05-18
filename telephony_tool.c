@@ -236,6 +236,11 @@ static void tele_call_async_fun(tapi_async_result* result)
     syslog(LOG_DEBUG, "result->arg1 : %d\n", result->arg1);
     syslog(LOG_DEBUG, "result->arg2 : %d\n", result->arg2);
 
+    if (result->status != OK) {
+        syslog(LOG_DEBUG, "%s msg id : %d result err, return.\n", __func__, result->msg_id);
+        return;
+    }
+
     if (result->msg_id == MSG_CALL_MERGE_IND || result->msg_id == MSG_CALL_SEPERATE_IND) {
         char** ret = result->data;
 
