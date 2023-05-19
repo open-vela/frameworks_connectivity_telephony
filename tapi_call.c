@@ -31,6 +31,9 @@
 #define NEW_VOICE_CALL_DBUS_PROXY 1
 #define RELEASE_VOICE_CALL_DBUS_PROXY 2
 
+#define START_PLAY_DTMF 1
+#define STOP_PLAY_DTMF 2
+
 /****************************************************************************
  * Private Type Declarations
  ****************************************************************************/
@@ -49,6 +52,11 @@ typedef struct {
     char* path;
     char* number;
 } call_deflect_param;
+
+typedef struct {
+    unsigned char digit;
+    int flag;
+} call_dtmf_param;
 
 /****************************************************************************
  * Private Function Prototypes
@@ -75,6 +83,15 @@ static int call_strcpy(char* dst, const char* src, int dst_size)
 
     strcpy(dst, src);
     return 0;
+}
+
+static bool is_valid_dtmf_char(char c)
+{
+    if ((c >= '0' && c <= '9') || c == '*' || c == '#') {
+        return true;
+    }
+
+    return false;
 }
 
 static int decode_voice_call_path(char* call_path, int slot_id)
@@ -248,6 +265,29 @@ static void answer_hangup_param_append(DBusMessageIter* iter, void* user_data)
     }
 
     dbus_message_iter_append_basic(iter, DBUS_TYPE_OBJECT_PATH, &path);
+}
+
+static void dtmf_param_append(DBusMessageIter* iter, void* user_data)
+{
+    tapi_async_handler* handler = user_data;
+    call_dtmf_param* param;
+    unsigned char digit;
+    int flag;
+
+    if (handler == NULL || handler->result == NULL || handler->result->data == NULL) {
+        tapi_log_error("invalid dtmf request argument !!");
+        return;
+    }
+
+    param = (call_dtmf_param*)handler->result->data;
+
+    digit = param->digit;
+    flag = param->flag;
+
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_BYTE, &digit);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &flag);
+
+    free(param);
 }
 
 static void deflect_param_append_0(DBusMessageIter* iter, void* user_data)
@@ -531,6 +571,35 @@ static void dial_call_callback(DBusMessage* message, void* user_data)
     }
 
 done:
+    cb(ar);
+}
+
+static void play_dtmf_callback(DBusMessage* message, void* user_data)
+{
+    tapi_async_handler* handler = user_data;
+    tapi_async_function cb;
+    tapi_async_result* ar;
+    DBusError err;
+
+    if (handler == NULL)
+        return;
+
+    ar = handler->result;
+    if (ar == NULL)
+        return;
+
+    cb = handler->cb_function;
+    if (cb == NULL)
+        return;
+
+    ar->status = OK;
+    dbus_error_init(&err);
+    if (dbus_set_error_from_message(&err, message) == true) {
+        tapi_log_error("%s: %s\n", err.name, err.message);
+        dbus_error_free(&err);
+        ar->status = ERROR;
+    }
+
     cb(ar);
 }
 
@@ -978,6 +1047,64 @@ static int manager_conference(tapi_context context, int slot_id,
 
     if (!g_dbus_proxy_method_call(proxy, member, conference_param_append,
             no_operate_callback, param, free)) {
+        return -EINVAL;
+    }
+
+    return OK;
+}
+
+static int call_play_dtmf(tapi_context context, int slot_id, unsigned char digit, int flag,
+    int event_id, tapi_async_function p_handle)
+{
+    tapi_async_handler* handler;
+    dbus_context* ctx = context;
+    call_dtmf_param* param;
+    tapi_async_result* ar;
+    GDBusProxy* proxy;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+        return -EINVAL;
+    }
+
+    if (flag == START_PLAY_DTMF && !is_valid_dtmf_char(digit)) {
+        return -EINVAL;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    param = malloc(sizeof(call_dtmf_param));
+    if (param == NULL)
+        return -ENOMEM;
+
+    param->digit = digit;
+    param->flag = flag;
+
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        free(param);
+        return -ENOMEM;
+    }
+    ar->msg_id = event_id;
+    ar->arg1 = slot_id;
+    ar->data = param;
+
+    handler = malloc(sizeof(tapi_async_handler));
+    if (handler == NULL) {
+        free(param);
+        free(ar);
+        return -ENOMEM;
+    }
+    handler->result = ar;
+    handler->cb_function = p_handle;
+
+    if (!g_dbus_proxy_method_call(proxy, "PlayDtmf", dtmf_param_append,
+            play_dtmf_callback, handler, handler_free)) {
+        free(param);
+        handler_free(handler);
         return -EINVAL;
     }
 
@@ -1678,8 +1805,8 @@ int tapi_call_hangup_by_id(tapi_context context, int slot_id, char* call_id)
 int tapi_call_deflect_by_id(tapi_context context, int slot_id, char* call_id, char* number)
 {
     dbus_context* ctx = context;
-    GDBusProxy* proxy;
     call_deflect_param* param;
+    GDBusProxy* proxy;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
         || call_id == NULL || number == NULL) {
@@ -1706,4 +1833,16 @@ int tapi_call_deflect_by_id(tapi_context context, int slot_id, char* call_id, ch
     }
 
     return OK;
+}
+
+int tapi_call_start_dtmf(tapi_context context, int slot_id, unsigned char digit,
+    int event_id, tapi_async_function p_handle)
+{
+    return call_play_dtmf(context, slot_id, digit, START_PLAY_DTMF, event_id, p_handle);
+}
+
+int tapi_call_stop_dtmf(tapi_context context, int slot_id,
+    int event_id, tapi_async_function p_handle)
+{
+    return call_play_dtmf(context, slot_id, 0, STOP_PLAY_DTMF, event_id, p_handle);
 }
