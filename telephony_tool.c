@@ -106,6 +106,8 @@
 
 // Call CallBack Event
 #define EVENT_REQUEST_DIAL_DONE 0x71
+#define EVENT_REQUEST_START_DTMF_DONE 0x72
+#define EVENT_REQUEST_STOP_DTMF_DONE 0x73
 
 #define MAX_INPUT_ARGS_LEN 128
 
@@ -153,6 +155,17 @@ static void on_tapi_client_ready(const char* client_name, void* user_data)
 {
     if (client_name != NULL)
         syslog(LOG_DEBUG, "tapi is ready for %s\n", client_name);
+}
+
+static bool is_valid_dtmf_char(char c)
+{
+    if (c >= '0' && c <= '9') {
+        return true;
+    } else if (c == '*' || c == '#') {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 static bool is_valid_slot_id_str(char* slot_id_str)
@@ -271,6 +284,10 @@ static void tele_call_async_fun(tapi_async_result* result)
         } else {
             syslog(LOG_DEBUG, "dial failed");
         }
+    } else if (result->msg_id == EVENT_REQUEST_START_DTMF_DONE) {
+        syslog(LOG_DEBUG, "start dtmf , state : %d\n", result->status);
+    } else if (result->msg_id == EVENT_REQUEST_STOP_DTMF_DONE) {
+        syslog(LOG_DEBUG, "stop dtmf , state : %d\n", result->status);
     }
 }
 
@@ -1327,6 +1344,48 @@ static int telephonytool_cmd_is_emergency_number(tapi_context context, char* par
     syslog(LOG_DEBUG, "%s, ret : %d\n", __func__, ret);
 
     return 0;
+}
+
+static int telephonytool_cmd_start_dtmf(tapi_context context, char* pargs)
+{
+    char dst[3][MAX_INPUT_ARGS_LEN];
+    int cnt = split_input(dst, 2, pargs, " ");
+    char* slot_id;
+
+    if (cnt != 2)
+        return -EINVAL;
+
+    slot_id = dst[0];
+    if (!is_valid_slot_id_str(dst[0]))
+        return -EINVAL;
+
+    if (strlen(dst[1]) != 1)
+        return -EINVAL;
+
+    if (!is_valid_dtmf_char(dst[1][0]))
+        return -EINVAL;
+
+    syslog(LOG_DEBUG, "%s, slotId : %s dtmf : %s\n", __func__, dst[0], dst[1]);
+    return tapi_call_start_dtmf(context, atoi(slot_id), dst[1][0], EVENT_REQUEST_START_DTMF_DONE,
+        tele_call_async_fun);
+}
+
+static int telephonytool_cmd_stop_dtmf(tapi_context context, char* pargs)
+{
+    char dst[2][MAX_INPUT_ARGS_LEN];
+    int cnt = split_input(dst, 2, pargs, " ");
+    char* slot_id;
+
+    if (cnt != 1)
+        return -EINVAL;
+
+    slot_id = dst[0];
+    if (!is_valid_slot_id_str(dst[0]))
+        return -EINVAL;
+
+    syslog(LOG_DEBUG, "%s, slotId : %s digit : %s\n", __func__, dst[0], dst[1]);
+    return tapi_call_stop_dtmf(context, atoi(slot_id), EVENT_REQUEST_STOP_DTMF_DONE,
+        tele_call_async_fun);
 }
 
 static int telephonytool_cmd_query_modem_list(tapi_context context, char* pargs)
@@ -4247,6 +4306,12 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     { "is-ecc", CALL_CMD,
         telephonytool_cmd_is_emergency_number,
         "is emergency number  (enter example : is-ecc 110 [number])" },
+    { "start-dtmf", CALL_CMD,
+        telephonytool_cmd_start_dtmf,
+        "start play dtmf (enter example : start-dtmf 0 1 [slot_id][dfmf])" },
+    { "stop-dtmf", CALL_CMD,
+        telephonytool_cmd_stop_dtmf,
+        "stop play dtmf (enter example : stop-dtmf 0 [slot_id])" },
 
     /* Data Command */
     { "listen-data", DATA_CMD,
