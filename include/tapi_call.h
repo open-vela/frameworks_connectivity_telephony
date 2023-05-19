@@ -412,6 +412,29 @@ int tapi_call_hangup_by_id(tapi_context context, int slot_id, char* call_id);
  */
 int tapi_call_deflect_by_id(tapi_context context, int slot_id, char* call_id, char* number);
 
+/**
+ * start DTMF request.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] digit          DTMF tone character.
+ * @param[in] event_id       Async event identifier.
+ * @param[in] p_handle       Event callback.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_call_start_dtmf(tapi_context context, int slot_id, unsigned char digit,
+    int event_id, tapi_async_function p_handle);
+
+/**
+ * stop DTMF request.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] event_id       Async event identifier.
+ * @param[in] p_handle       Event callback.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_call_stop_dtmf(tapi_context context, int slot_id, int event_id,
+    tapi_async_function p_handle);
+
 #ifdef __cplusplus
 }
 #endif
