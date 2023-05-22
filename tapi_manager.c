@@ -461,6 +461,16 @@ static void oem_ril_request_raw_param_append(DBusMessageIter* iter, void* user_d
     free(oem_ril_req_raw_param);
 }
 
+static void atom_command_param_append(DBusMessageIter* iter, void* user_data)
+{
+    tapi_async_handler* handler = user_data;
+    int atom = handler->result->arg1;
+    int command = handler->result->arg2;
+
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &atom);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &command);
+}
+
 static void oem_ril_request_raw_cb(DBusMessage* message, void* user_data)
 {
     DBusMessageIter iter, array;
@@ -1462,6 +1472,46 @@ int tapi_unregister(tapi_context context, int watch_id)
 
     if (!g_dbus_remove_watch(ctx->connection, watch_id))
         return -EINVAL;
+
+    return OK;
+}
+
+int tapi_handle_command(tapi_context context, int slot_id, int atom, int command)
+{
+    dbus_context* ctx = context;
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
+    GDBusProxy* proxy;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+        return -EINVAL;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    handler = malloc(sizeof(tapi_async_handler));
+    if (handler == NULL)
+        return -ENOMEM;
+
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        free(handler);
+        return -ENOMEM;
+    }
+
+    ar->arg1 = atom;
+    ar->arg2 = command;
+    handler->result = ar;
+
+    if (!g_dbus_proxy_method_call(proxy, "HandleCommand", atom_command_param_append,
+            no_operate_callback, handler, handler_free)) {
+        handler_free(handler);
+        return -EINVAL;
+    }
 
     return OK;
 }

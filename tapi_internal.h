@@ -108,6 +108,15 @@ bool is_call_signal_message(DBusMessage* message, DBusMessageIter* iter, int msg
 const char* get_call_signal_member(tapi_indication_msg msg);
 void property_set_done(const DBusError* error, void* user_data);
 void handler_free(void* obj);
+/**
+ * @TestApi, only used for internal test.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] atom           Atom id.
+ * @param[in] command        Ril request id.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_handle_command(tapi_context context, int slot_id, int atom, int command);
 
 #ifdef __cplusplus
 }

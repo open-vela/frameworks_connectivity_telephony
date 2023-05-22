@@ -33,6 +33,8 @@
 #include <unistd.h>
 #include <uv.h>
 
+#include "tapi_internal.h"
+
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
@@ -1783,6 +1785,32 @@ static int telephonytool_cmd_oem_ril_req_strings(tapi_context context, char* par
     syslog(LOG_DEBUG, "%s, slot_id: %s length: %s \n", __func__, slot_id, length);
     return tapi_invoke_oem_ril_request_strings(context, atoi(slot_id),
         EVENT_OEM_RIL_REQUEST_STRINGS_DONE, oem_req, atoi(length), tele_call_async_fun);
+}
+
+static int telephonytool_cmd_send_command(tapi_context context, char* pargs)
+{
+    char dst[3][MAX_INPUT_ARGS_LEN];
+    char* slot_id;
+    char* atom;
+    char* command;
+    int cnt;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    cnt = split_input(dst, 3, pargs, " ");
+    if (cnt != 3)
+        return -EINVAL;
+
+    slot_id = dst[0];
+    atom = dst[1];
+    command = dst[2];
+    if (!is_valid_slot_id_str(slot_id))
+        return -EINVAL;
+
+    syslog(LOG_DEBUG, "%s, slot_id: %s atom: %s  command: %s \n", __func__,
+        slot_id, atom, command);
+    return tapi_handle_command(context, atoi(slot_id), atoi(atom), atoi(command));
 }
 
 static int telephonytool_cmd_load_apns(tapi_context context, char* pargs)
@@ -4145,6 +4173,10 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         telephonytool_cmd_oem_ril_req_strings,
         "oem request strings (enter example : oem-req-strings 0 10,22 2 "
         "[slot_id][request_data][data_length])" },
+    { "send-command", RADIO_CMD,
+        telephonytool_cmd_send_command,
+        "send internal ril request (enter example : send-command 0 16 57"
+        "[slot_id][atom id][ril request id])" },
 
     /* Call Command */
     { "listen-call", CALL_CMD,
