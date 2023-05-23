@@ -1770,13 +1770,14 @@ static int telephonytool_cmd_oem_ril_req_strings(tapi_context context, char* par
     if (!is_valid_slot_id_str(slot_id) || atoi(length) > MAX_OEM_RIL_RESP_STRINGS_LENTH)
         return -EINVAL;
 
-    result = strtok_r(req_data, ",", &ptr);
+    // if you need to input more than one parameter, please use the vertical bar to separate.
+    result = strtok_r(req_data, "|", &ptr);
     while (result != NULL) {
         if (count < atoi(length))
             oem_req[count] = result;
 
         count++;
-        result = strtok_r(NULL, ",", &ptr);
+        result = strtok_r(NULL, "|", &ptr);
     }
 
     if (count != atoi(length))
@@ -4171,7 +4172,7 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         "[slot_id][request_data][data_length])" },
     { "oem-req-strings", RADIO_CMD,
         telephonytool_cmd_oem_ril_req_strings,
-        "oem request strings (enter example : oem-req-strings 0 10,22 2 "
+        "oem request strings (enter example : oem-req-strings 0 AT+CPIN? 1 (AT cmd) / oem-req-strings 0 10|22 2 (not AT cmd) "
         "[slot_id][request_data][data_length])" },
     { "send-command", RADIO_CMD,
         telephonytool_cmd_send_command,
