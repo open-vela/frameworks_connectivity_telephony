@@ -1406,7 +1406,7 @@ int tapi_register(tapi_context context,
     tapi_async_result* ar;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
-        || msg < MSG_RADIO_STATE_CHANGE_IND || msg > MSG_PHONE_STATE_CHANGE_IND) {
+        || msg < MSG_RADIO_STATE_CHANGE_IND || msg > MSG_MODEM_RESTART_IND) {
         return -EINVAL;
     }
 
