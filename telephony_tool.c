@@ -1126,7 +1126,8 @@ static int telephonytool_cmd_listen_call_manager_change(tapi_context context, ch
 {
     char dst[2][MAX_INPUT_ARGS_LEN];
     int cnt = split_input(dst, 2, pargs, " ");
-    int slot_id, event_id, watch_id;
+    int slot_id, event_id;
+    int watch_id = -1;
 
     if (cnt != 2)
         return -EINVAL;
@@ -1136,8 +1137,6 @@ static int telephonytool_cmd_listen_call_manager_change(tapi_context context, ch
         return -EINVAL;
 
     event_id = atoi(dst[1]);
-
-    syslog(LOG_DEBUG, "%s, slot_id : %d, event_id : %d \n", __func__, slot_id, event_id);
     switch (event_id) {
     case 0:
         watch_id = tapi_call_register_call_state_change(context, slot_id, NULL,
@@ -1155,6 +1154,8 @@ static int telephonytool_cmd_listen_call_manager_change(tapi_context context, ch
         break;
     }
 
+    syslog(LOG_DEBUG, "%s, slot_id : %d, event_id : %d, watch_id : %d \n",
+        __func__, slot_id, event_id, watch_id);
     return watch_id;
 }
 
