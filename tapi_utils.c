@@ -344,11 +344,11 @@ const char* tapi_utils_apn_proto_to_string(tapi_data_proto proto)
 {
     switch (proto) {
     case DATA_PROTO_IP:
-        return "ip";
+        return "IP";
     case DATA_PROTO_IPV6:
-        return "ipv6";
+        return "IPV6";
     case DATA_PROTO_IPV4V6:
-        return "dual";
+        return "IPV4V6";
     };
 
     return NULL;
@@ -359,11 +359,11 @@ tapi_data_proto tapi_utils_apn_proto_from_string(const char* proto)
     if (proto == NULL)
         return DATA_PROTO_IP;
 
-    if (strcmp(proto, "ip") == 0) {
+    if (strcmp(proto, "IP") == 0) {
         return DATA_PROTO_IP;
-    } else if (strcmp(proto, "ipv6") == 0) {
+    } else if (strcmp(proto, "IPV6") == 0) {
         return DATA_PROTO_IPV6;
-    } else if (strcmp(proto, "dual") == 0) {
+    } else if (strcmp(proto, "IPV4V6") == 0) {
         return DATA_PROTO_IPV4V6;
     }
 
