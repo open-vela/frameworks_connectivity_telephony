@@ -1551,7 +1551,7 @@ static int telephonytool_cmd_get_rat_mode(tapi_context context, char* pargs)
 static int telephonytool_cmd_get_imei(tapi_context context, char* pargs)
 {
     char* slot_id;
-    char* imei;
+    char* imei = NULL;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
@@ -1569,7 +1569,7 @@ static int telephonytool_cmd_get_imei(tapi_context context, char* pargs)
 static int telephonytool_cmd_get_imeisv(tapi_context context, char* pargs)
 {
     char* slot_id;
-    char* imeisv;
+    char* imeisv = NULL;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
@@ -1587,7 +1587,7 @@ static int telephonytool_cmd_get_imeisv(tapi_context context, char* pargs)
 static int telephonytool_cmd_get_modem_revision(tapi_context context, char* pargs)
 {
     char* slot_id;
-    char* value;
+    char* value = NULL;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
@@ -1605,7 +1605,7 @@ static int telephonytool_cmd_get_modem_revision(tapi_context context, char* parg
 static int telephonytool_cmd_get_modem_manufacturer(tapi_context context, char* pargs)
 {
     char* slot_id;
-    char* value;
+    char* value = NULL;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
@@ -1623,7 +1623,7 @@ static int telephonytool_cmd_get_modem_manufacturer(tapi_context context, char* 
 static int telephonytool_cmd_get_modem_model(tapi_context context, char* pargs)
 {
     char* slot_id;
-    char* value;
+    char* value = NULL;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
@@ -1700,7 +1700,7 @@ static int telephonytool_cmd_get_radio_state(tapi_context context, char* pargs)
 static int telephonytool_cmd_get_line_number(tapi_context context, char* pargs)
 {
     char* slot_id;
-    char* number;
+    char* number = NULL;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
@@ -2163,7 +2163,7 @@ static int telephonytool_cmd_set_pref_apn(tapi_context context, char* pargs)
 static int telephonytool_cmd_get_pref_apn(tapi_context context, char* pargs)
 {
     char* slot_id;
-    char* apn;
+    char* apn = NULL;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
@@ -2317,7 +2317,7 @@ static int telephonytool_cmd_get_sim_state(tapi_context context, char* pargs)
 static int telephonytool_cmd_get_sim_iccid(tapi_context context, char* pargs)
 {
     char* slot_id;
-    char* iccid;
+    char* iccid = NULL;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
@@ -2358,7 +2358,7 @@ static int telephonytool_cmd_get_sim_operator(tapi_context context, char* pargs)
 static int telephonytool_cmd_get_sim_operator_name(tapi_context context, char* pargs)
 {
     char* slot_id;
-    char* spn;
+    char* spn = NULL;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
@@ -2378,7 +2378,7 @@ static int telephonytool_cmd_get_sim_operator_name(tapi_context context, char* p
 static int telephonytool_cmd_get_sim_subscriber_id(tapi_context context, char* pargs)
 {
     char* slot_id;
-    char* subscriber_id;
+    char* subscriber_id = NULL;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
@@ -2814,7 +2814,7 @@ static int telephonytool_tapi_sms_send_data_message(tapi_context context, char* 
 static int telephonytool_tapi_sms_get_service_center_number(tapi_context context, char* pargs)
 {
     char* slot_id;
-    char* smsc_addr;
+    char* smsc_addr = NULL;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
@@ -2916,7 +2916,7 @@ static int telephonytool_tapi_sms_set_cell_broadcast_power(tapi_context context,
 static int telephonytool_tapi_sms_get_cell_broadcast_topics(tapi_context context, char* pargs)
 {
     char* slot_id;
-    char* cbs_topics;
+    char* cbs_topics = NULL;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
@@ -3164,7 +3164,7 @@ static int telephonytool_cmd_query_signalstrength(tapi_context context, char* pa
 static int telephonytool_cmd_get_operator_name(tapi_context context, char* pargs)
 {
     char* slot_id;
-    char* operator;
+    char* _operator = NULL;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
@@ -3173,8 +3173,8 @@ static int telephonytool_cmd_get_operator_name(tapi_context context, char* pargs
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
-    tapi_network_get_display_name(context, atoi(slot_id), &operator);
-    syslog(LOG_DEBUG, "%s, slotId : %s value :%s \n", __func__, slot_id, operator);
+    tapi_network_get_display_name(context, atoi(slot_id), &_operator);
+    syslog(LOG_DEBUG, "%s, slotId : %s value :%s \n", __func__, slot_id, _operator);
 
     return 0;
 }
