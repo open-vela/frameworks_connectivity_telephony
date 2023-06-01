@@ -1446,8 +1446,7 @@ int tapi_ss_set_call_wating(tapi_context context, int slot_id, int event_id, boo
     GDBusProxy* proxy;
     char* state;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
-        || state == NULL) {
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
     }
 
