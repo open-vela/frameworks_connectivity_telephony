@@ -157,14 +157,20 @@ static int unsol_sms_message(DBusConnection* connection,
         return 0;
 
     sender = dbus_message_get_sender(message);
-    if (sender == NULL)
+    if (sender == NULL) {
+        ar->status = ERROR;
         goto done;
+    }
 
-    if (!dbus_message_iter_init(message, &iter))
+    if (!dbus_message_iter_init(message, &iter)) {
+        ar->status = ERROR;
         goto done;
+    }
 
-    if (dbus_message_iter_get_arg_type(&iter) != DBUS_TYPE_STRING)
+    if (dbus_message_iter_get_arg_type(&iter) != DBUS_TYPE_STRING) {
+        ar->status = ERROR;
         goto done;
+    }
 
     dbus_message_iter_get_basic(&iter, &text);
     member = dbus_message_get_member(message);
@@ -176,6 +182,7 @@ static int unsol_sms_message(DBusConnection* connection,
 
         message_info = malloc(sizeof(tapi_message_info));
         if (message_info == NULL) {
+            ar->status = ERROR;
             goto done;
         }
         message_info->text = text;
