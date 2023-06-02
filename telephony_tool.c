@@ -394,18 +394,31 @@ static void tele_sms_async_fun(tapi_async_result* result)
 
     syslog(LOG_DEBUG, "%s : %d\n", __func__, result->status);
 
+    if (result->status != OK) {
+        syslog(LOG_DEBUG, "%s msg id : %d result err, return.\n", __func__, result->msg_id);
+        return;
+    }
+
     if (result->msg_id == MSG_INCOMING_MESSAGE_IND) {
         message_info = (tapi_message_info*)result->data;
         syslog(LOG_DEBUG, "receive incoming message tele_sms_async_fun msg: %s\n",
             message_info->text);
         syslog(LOG_DEBUG, "receive incoming message tele_sms_async_fun to: %s\n",
             message_info->sender);
+        syslog(LOG_DEBUG, "tele_sms_async_fun send message at: %s \n",
+            message_info->sent_time);
+        syslog(LOG_DEBUG, "tele_sms_async_fun send message at local time: %s \n",
+            message_info->local_sent_time);
     } else if (result->msg_id == MSG_IMMEDIATE_MESSAGE_IND) {
         message_info = (tapi_message_info*)result->data;
         syslog(LOG_DEBUG, "receive immediate message tele_sms_async_fun msg: %s\n",
             message_info->text);
         syslog(LOG_DEBUG, "receive immediate message tele_sms_async_fun to: %s\n",
             message_info->sender);
+        syslog(LOG_DEBUG, "tele_sms_async_fun send immediate message at: %s \n",
+            message_info->sent_time);
+        syslog(LOG_DEBUG, "tele_sms_async_fun send immediate message at local time: %s \n",
+            message_info->local_sent_time);
     }
 }
 
