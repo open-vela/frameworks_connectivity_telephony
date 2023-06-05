@@ -91,6 +91,12 @@ typedef struct {
     tapi_async_function cb_function;
 } tapi_async_handler;
 
+typedef enum {
+    MODEM_STATE_POWER_OFF,
+    MODEM_STATE_AWARE,
+    MODEM_STATE_ALIVE,
+} modem_state;
+
 /****************************************************************************
  * Public Function Prototypes
  ****************************************************************************/

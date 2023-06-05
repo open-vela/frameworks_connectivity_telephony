@@ -609,6 +609,22 @@ static void on_dbus_client_ready(GDBusClient* client, void* user_data)
     free(cbd);
 }
 
+static void on_modem_property_change(GDBusProxy *proxy, const char *name,
+                    DBusMessageIter *iter, void *user_data)
+{
+    dbus_context* ctx = user_data;
+    u_int32_t state = MODEM_STATE_POWER_OFF;
+
+    if (strcmp("ModemState", name) != 0)
+        return;
+
+    dbus_message_iter_get_basic(iter, &state);
+    tapi_log_info("%s - modem_state : %d", __func__, state);
+
+    if (state == MODEM_STATE_ALIVE)
+        get_dbus_proxy(ctx);
+}
+
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
@@ -670,6 +686,11 @@ tapi_context tapi_open(const char* client_name,
     snprintf(ctx->name, sizeof(ctx->name), "%s", client_name);
     get_dbus_proxy(ctx);
 
+    for (int i = 0; i < CONFIG_ACTIVE_MODEM_COUNT; i++) {
+        g_dbus_proxy_set_property_watch(ctx->dbus_proxy[i][DBUS_PROXY_MODEM],
+                on_modem_property_change, ctx);
+    }
+
     return ctx;
 
 error:
@@ -685,6 +706,10 @@ int tapi_close(tapi_context context)
     if (ctx == NULL) {
         tapi_log_error("dbus connection close error \n");
         return -EINVAL;
+    }
+
+    for (int i = 0; i < CONFIG_ACTIVE_MODEM_COUNT; i++) {
+        g_dbus_proxy_remove_property_watch(ctx->dbus_proxy[i][DBUS_PROXY_MODEM], NULL);
     }
 
     release_dbus_proxy(ctx);
