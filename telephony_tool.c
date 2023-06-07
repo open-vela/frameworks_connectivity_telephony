@@ -202,15 +202,18 @@ static int hex_string_to_byte_array(char* hex_str, unsigned char* byte_arr, int 
     char* str;
     int len;
     int i, j;
+    int ret = -EINVAL;
 
     if (hex_str == NULL)
-        return -EINVAL;
+        return ret;
 
     len = strlen(hex_str);
     if (!len || (len % 2) != 0 || len > arr_len * 2)
-        return -EINVAL;
+        return ret;
 
     str = strdup(hex_str);
+    if (str == NULL)
+        return ret;
 
     for (i = 0, j = 0; i < len; i += 2, j++) {
         // uppercase char 'a'~'f'
@@ -226,7 +229,7 @@ static int hex_string_to_byte_array(char* hex_str, unsigned char* byte_arr, int 
         else if (str[i] >= '0' && str[i] <= '9')
             byte_arr[j] = (str[i] & ~0x30) << 4;
         else
-            return -EINVAL;
+            goto out;
 
         // convert the second character to decimal
         // and combine with the previous decimal.
@@ -235,11 +238,14 @@ static int hex_string_to_byte_array(char* hex_str, unsigned char* byte_arr, int 
         else if (str[i + 1] >= '0' && str[i + 1] <= '9')
             byte_arr[j] |= (str[i + 1] & ~0x30);
         else
-            return -EINVAL;
+            goto out;
     }
 
+    ret = 0;
+out:
     free(str);
-    return 0;
+
+    return ret;
 }
 
 static void tele_call_async_fun(tapi_async_result* result)
@@ -4074,7 +4080,7 @@ static void telephonytool_handle_choice(int num)
 static int telephonytool_cmd_help(tapi_context context, char* pargs)
 {
     int num;
-    char ch;
+    int ch;
 
     telephonytool_menu();
     scanf("%d", &num);
