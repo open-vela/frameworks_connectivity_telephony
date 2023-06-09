@@ -825,14 +825,16 @@ static void data_event_response(tapi_async_result* result)
             if (dc_item->ip_settings == NULL)
                 break;
 
-            if (dc_item->ip_settings->ipv4 != NULL) {
-                syslog(LOG_DEBUG, "[ipv4] interface : %s,  ip : %s \n",
-                    dc_item->ip_settings->ipv4->interface, dc_item->ip_settings->ipv4->ip);
+            tapi_ipv4_settings* ipv4 = dc_item->ip_settings->ipv4;
+            if (ipv4 != NULL) {
+                syslog(LOG_DEBUG, "[ipv4] interface : %s, ip : %s , gateway : %s, dns[0] : %s \n",
+                    ipv4->interface, ipv4->ip, ipv4->gateway, ipv4->dns[0]);
             }
 
-            if (dc_item->ip_settings->ipv6 != NULL) {
-                syslog(LOG_DEBUG, "[ipv6] interface : %s,  ip : %s \n",
-                    dc_item->ip_settings->ipv6->interface, dc_item->ip_settings->ipv6->ip);
+            tapi_ipv6_settings* ipv6 = dc_item->ip_settings->ipv6;
+            if (ipv6 != NULL) {
+                syslog(LOG_DEBUG, "[ipv6] interface : %s, ip : %s , gateway : %s, dns[0] : %s \n",
+                    ipv6->interface, ipv6->ip, ipv6->gateway, ipv6->dns[0]);
             }
         }
         break;
@@ -874,13 +876,13 @@ static void data_signal_change(tapi_async_result* result)
 
         ipv4 = dc->ip_settings->ipv4;
         if (ipv4 != NULL) {
-            syslog(LOG_DEBUG, "ipv4-interface = %s; ip = %s; gateway = %s; dns = %s; \n",
+            syslog(LOG_DEBUG, "ipv4-interface = %s; ip = %s; gateway = %s; dns[0] = %s; \n",
                 ipv4->interface, ipv4->ip, ipv4->gateway, ipv4->dns[0]);
         }
 
         ipv6 = dc->ip_settings->ipv6;
         if (ipv6 != NULL) {
-            syslog(LOG_DEBUG, "ipv6-interface = %s; ip = %s; gateway = %s; dns = %s; \n",
+            syslog(LOG_DEBUG, "ipv6-interface = %s; ip = %s; gateway = %s; dns[0] = %s; \n",
                 ipv6->interface, ipv6->ip, ipv6->gateway, ipv6->dns[0]);
         }
         break;
