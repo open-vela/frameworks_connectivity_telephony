@@ -93,6 +93,11 @@ static void get_dbus_proxy(dbus_context* ctx)
 
     for (int i = 0; i < CONFIG_ACTIVE_MODEM_COUNT; i++) {
         for (int j = 0; j < DBUS_PROXY_MAX_COUNT; j++) {
+            if (!is_interface_supported(dbus_proxy_server[j])) {
+                ctx->dbus_proxy[i][j] = NULL;
+                continue;
+            }
+
             ctx->dbus_proxy[i][j] = g_dbus_proxy_new(
                 ctx->client, tapi_utils_get_modem_path(i), dbus_proxy_server[j]);
         }
