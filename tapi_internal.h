@@ -114,6 +114,8 @@ bool is_call_signal_message(DBusMessage* message, DBusMessageIter* iter, int msg
 const char* get_call_signal_member(tapi_indication_msg msg);
 void property_set_done(const DBusError* error, void* user_data);
 void handler_free(void* obj);
+const char* get_env_interface_support_string(const char* interface);
+bool is_interface_supported(const char* interface);
 
 /**
  * Power on or off modem.
