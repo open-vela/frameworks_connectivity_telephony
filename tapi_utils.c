@@ -31,6 +31,44 @@ void no_operate_callback(DBusMessage* message, void* user_data)
 {
 }
 
+const char* get_env_interface_support_string(const char* interface)
+{
+    if (strcmp(interface, OFONO_MODEM_INTERFACE) == 0)
+        return "OFONO_MODEM_INTERFACE_SUPPORT";
+    else if (strcmp(interface, OFONO_RADIO_SETTINGS_INTERFACE) == 0)
+        return "OFONO_RADIO_SETTINGS_INTERFACE_SUPPORT";
+    else if (strcmp(interface, OFONO_VOICECALL_MANAGER_INTERFACE) == 0)
+        return "OFONO_VOICECALL_MANAGER_INTERFACE_SUPPORT";
+    else if (strcmp(interface, OFONO_SIM_MANAGER_INTERFACE) == 0)
+        return "OFONO_SIM_MANAGER_INTERFACE_SUPPORT";
+    else if (strcmp(interface, OFONO_STK_INTERFACE) == 0)
+        return "OFONO_STK_INTERFACE_SUPPORT";
+    else if (strcmp(interface, OFONO_CONNECTION_MANAGER_INTERFACE) == 0)
+        return "OFONO_CONNECTION_MANAGER_INTERFACE_SUPPORT";
+    else if (strcmp(interface, OFONO_MESSAGE_MANAGER_INTERFACE) == 0)
+        return "OFONO_MESSAGE_MANAGER_INTERFACE_SUPPORT";
+    else if (strcmp(interface, OFONO_CELL_BROADCAST_INTERFACE) == 0)
+        return "OFONO_CELL_BROADCAST_INTERFACE_SUPPORT";
+    else if (strcmp(interface, OFONO_NETWORK_REGISTRATION_INTERFACE) == 0)
+        return "OFONO_NETWORK_REGISTRATION_INTERFACE_SUPPORT";
+    else if (strcmp(interface, OFONO_NETMON_INTERFACE) == 0)
+        return "OFONO_NETMON_INTERFACE_SUPPORT";
+    else if (strcmp(interface, OFONO_CALL_BARRING_INTERFACE) == 0)
+        return "OFONO_CALL_BARRING_INTERFACE_SUPPORT";
+    else if (strcmp(interface, OFONO_CALL_FORWARDING_INTERFACE) == 0)
+        return "OFONO_CALL_FORWARDING_INTERFACE_SUPPORT";
+    else if (strcmp(interface, OFONO_SUPPLEMENTARY_SERVICES_INTERFACE) == 0)
+        return "OFONO_SUPPLEMENTARY_SERVICES_INTERFACE_SUPPORT";
+    else if (strcmp(interface, OFONO_CALL_SETTINGS_INTERFACE) == 0)
+        return "OFONO_CALL_SETTINGS_INTERFACE_SUPPORT";
+    else if (strcmp(interface, OFONO_IMS_INTERFACE) == 0)
+        return "OFONO_IMS_INTERFACE_SUPPORT";
+    else if (strcmp(interface, OFONO_PHONEBOOK_INTERFACE) == 0)
+        return "OFONO_PHONEBOOK_INTERFACE_SUPPORT";
+
+    return NULL;
+}
+
 const char* tapi_utils_network_mode_to_string(tapi_pref_net_mode mode)
 {
     switch (mode) {
@@ -506,4 +544,21 @@ void handler_free(void* obj)
             free(ar);
         free(handler);
     }
+}
+
+bool is_interface_supported(const char* interface)
+{
+    const char* interface_support_str;
+
+    interface_support_str = getenv(get_env_interface_support_string(interface));
+    if (interface_support_str != NULL && *interface_support_str != '\0') {
+        bool interface_cap;
+        char* endp;
+
+        interface_cap = (bool)strtoul(interface_support_str, &endp, 10);
+        if (*endp == '\0')
+            return interface_cap;
+    }
+
+    return true;
 }
