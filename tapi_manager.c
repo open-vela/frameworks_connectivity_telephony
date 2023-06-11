@@ -609,8 +609,8 @@ static void on_dbus_client_ready(GDBusClient* client, void* user_data)
     free(cbd);
 }
 
-static void on_modem_property_change(GDBusProxy *proxy, const char *name,
-                    DBusMessageIter *iter, void *user_data)
+static void on_modem_property_change(GDBusProxy* proxy, const char* name,
+    DBusMessageIter* iter, void* user_data)
 {
     dbus_context* ctx = user_data;
     u_int32_t state = MODEM_STATE_POWER_OFF;
@@ -688,7 +688,7 @@ tapi_context tapi_open(const char* client_name,
 
     for (int i = 0; i < CONFIG_ACTIVE_MODEM_COUNT; i++) {
         g_dbus_proxy_set_property_watch(ctx->dbus_proxy[i][DBUS_PROXY_MODEM],
-                on_modem_property_change, ctx);
+            on_modem_property_change, ctx);
     }
 
     return ctx;
@@ -1534,6 +1534,52 @@ int tapi_handle_command(tapi_context context, int slot_id, int atom, int command
 
     if (!g_dbus_proxy_method_call(proxy, "HandleCommand", atom_command_param_append,
             no_operate_callback, handler, handler_free)) {
+        handler_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
+}
+
+int tapi_set_fast_dormancy(tapi_context context,
+    int slot_id, int event_id, bool state, tapi_async_function p_handle)
+{
+    dbus_context* ctx = context;
+    GDBusProxy* proxy;
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
+    int value = state;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+        return -EINVAL;
+    }
+
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_RADIO];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    handler = malloc(sizeof(tapi_async_handler));
+    if (handler == NULL)
+        return -ENOMEM;
+
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        free(handler);
+        return -ENOMEM;
+    }
+    handler->result = ar;
+
+    ar->msg_id = event_id;
+    ar->arg1 = slot_id;
+    handler->cb_function = p_handle;
+
+    if (!g_dbus_proxy_set_property_basic(proxy, "FastDormancy", DBUS_TYPE_BOOLEAN,
+            &value, property_set_done, handler, handler_free)) {
         handler_free(handler);
         return -EINVAL;
     }
