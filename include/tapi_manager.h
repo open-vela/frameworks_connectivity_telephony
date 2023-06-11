@@ -266,6 +266,18 @@ int tapi_get_modem_status(tapi_context context, int slot_id,
     int event_id, tapi_async_function p_handle);
 
 /**
+ * Set fast dormancy to modem.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] event_id       Async event identifier.
+ * @param[in] state          fast dormancy state to modem.
+ * @param[in] p_handle       Event callback.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_set_fast_dormancy(tapi_context context,
+    int slot_id, int event_id, bool state, tapi_async_function p_handle);
+
+/**
  * Register radio event callback.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
