@@ -48,6 +48,7 @@
 #define EVENT_MODEM_STATUS_QUERY_DONE 0x06
 #define EVENT_OEM_RIL_REQUEST_RAW_DONE 0x07
 #define EVENT_OEM_RIL_REQUEST_STRINGS_DONE 0x08
+#define EVENT_REQUEST_SCREEN_STATE_DONE 0x09
 
 // Data Callback Event
 #define EVENT_APN_LOADED_DONE 0x11
@@ -294,6 +295,8 @@ static void tele_call_async_fun(tapi_async_result* result)
         syslog(LOG_DEBUG, "start dtmf , state : %d\n", result->status);
     } else if (result->msg_id == EVENT_REQUEST_STOP_DTMF_DONE) {
         syslog(LOG_DEBUG, "stop dtmf , state : %d\n", result->status);
+    } else if (result->msg_id == EVENT_REQUEST_SCREEN_STATE_DONE) {
+        syslog(LOG_DEBUG, "send screen , state : %d\n", result->status);
     }
 }
 
@@ -1893,6 +1896,29 @@ static int telephonytool_cmd_send_command(tapi_context context, char* pargs)
     syslog(LOG_DEBUG, "%s, slot_id: %s atom: %s  command: %s \n", __func__,
         slot_id, atom, command);
     return tapi_handle_command(context, atoi(slot_id), atoi(atom), atoi(command));
+}
+
+static int telephonytool_cmd_send_screen_state(tapi_context context, char* pargs)
+{
+    char dst[2][MAX_INPUT_ARGS_LEN];
+    char* slot_id;
+    char* target_state;
+    int cnt;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    cnt = split_input(dst, 2, pargs, " ");
+    if (cnt != 2)
+        return -EINVAL;
+
+    slot_id = dst[0];
+    target_state = dst[1];
+    if (!is_valid_slot_id_str(slot_id))
+        return -EINVAL;
+
+    return tapi_set_fast_dormancy(context, atoi(slot_id),
+        EVENT_REQUEST_SCREEN_STATE_DONE, atoi(target_state), tele_call_async_fun);
 }
 
 static int telephonytool_cmd_load_apns(tapi_context context, char* pargs)
@@ -4259,6 +4285,10 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         telephonytool_cmd_send_command,
         "send internal ril request (enter example : send-command 0 16 57"
         "[slot_id][atom id][ril request id])" },
+    { "send-screen-state", RADIO_CMD,
+        telephonytool_cmd_send_screen_state,
+        "send screen state to modem (enter example : send-screen-state 0 1"
+        "[slot_id][][screen_state])" },
 
     /* Call Command */
     { "listen-call", CALL_CMD,
