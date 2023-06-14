@@ -90,13 +90,30 @@ typedef enum {
     FORBIDDEN,
 } tapi_operator_status;
 
+/*
+ * registration state as follows:
+ * 0 - Not registered, MT is not currently searching a new operator to register.
+ * 1 - Registered, home network.
+ * 2 - Not registered, but MT is currently searching a new operator to register.
+ * 3 - Registration denied.
+ * 4 - Unknown.
+ * 5 - Registered, roaming.
+ * 10 - Same as 0, but indicates that emergency calls are enabled.
+ * 12 - Same as 2, but indicates that emergency calls are enabled.
+ * 13 - Same as 3, but indicates that emergency calls are enabled.
+ * 14 - Same as 4, but indicates that emergency calls are enabled.
+ */
 typedef enum {
-    NETWORK_REGISTRATION_STATUS_UNKNOWN = -1,
     NETWORK_REGISTRATION_STATUS_NOT_REGISTERED = 0,
     NETWORK_REGISTRATION_STATUS_REGISTERED = 1,
     NETWORK_REGISTRATION_STATUS_SEARCHING = 2,
     NETWORK_REGISTRATION_STATUS_DENIED = 3,
+    NETWORK_REGISTRATION_STATUS_UNKNOWN = 4,
     NETWORK_REGISTRATION_STATUS_ROAMING = 5,
+    NETWORK_REGISTRATION_STATUS_NOT_REGISTERED_EM = 10,
+    NETWORK_REGISTRATION_STATUS_SEARCHING_EM = 12,
+    NETWORK_REGISTRATION_STATUS_DENIED_EM = 13,
+    NETWORK_REGISTRATION_STATUS_UNKNOWN_EM = 14,
 } tapi_registration_state;
 
 typedef enum {
@@ -218,12 +235,12 @@ typedef enum {
     MSG_STK_AGENT_RELEASE_IND,
     MSG_STK_AGENT_CANCEL_IND,
 
-    //SMS Indication Message
+    // SMS Indication Message
     MSG_INCOMING_MESSAGE_IND,
     MSG_IMMEDIATE_MESSAGE_IND,
     MSG_STATUS_REPORT_MESSAGE_IND,
 
-    //CBS Indication Message
+    // CBS Indication Message
     MSG_INCOMING_CBS_IND,
     MSG_EMERGENCY_CBS_IND,
 
