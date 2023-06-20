@@ -112,33 +112,12 @@ int tapi_call_dial(tapi_context context, int slot_id, char* number, int hide_cal
     int event_id, tapi_async_function p_handle);
 
 /**
- * Hangup one active call.
- * @deprecated - use tapi_call_hangup_by_id instead.
- * @param[in] context        Telephony api context.
- * @param[in] slot_id        Slot id of current sim.
- * @param[in] call_id        Call Id.
- * @return Zero on success; a negated errno value on failure.
- */
-int tapi_call_hangup_call(tapi_context context, int slot_id, char* call_id);
-
-/**
  * Hangup all calls.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_call_hangup_all_calls(tapi_context context, int slot_id);
-
-/**
- * Answer one incoming call.
- * @deprecated - use tapi_call_answer_by_id instead.
- * @param[in] context        Telephony api context.
- * @param[in] slot_id        Slot id of current sim.
- * @param[in] call_id        Call Id.
- * @param[in] call_count     call count of current sim
- * @return Zero on success; a negated errno value on failure.
- */
-int tapi_call_answer_call(tapi_context context, int slot_id, char* call_id, int call_count);
 
 /**
  * Hangup one active call and answer another waiting call.
@@ -187,17 +166,6 @@ int tapi_call_unhold_call(tapi_context context, int slot_id);
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_call_transfer(tapi_context context, int slot_id);
-
-/**
- * Deflect one incoming/waiting call to one specified number.
- * @deprecated - use tapi_call_deflect_by_id instead.
- * @param[in] context        Telephony api context.
- * @param[in] slot_id        Slot id of current sim.
- * @param[in] call_id        Call id to be deflected.
- * @param[in] number         Number to receive one deflected call.
- * @return Zero on success; a negated errno value on failure.
- */
-int tapi_call_deflect_call(tapi_context context, int slot_id, char* call_id, char* number);
 
 /**
  * Merge multiple calls into one conference call.
@@ -269,18 +237,6 @@ int tapi_call_get_call_by_state(tapi_context context, int slot_id,
     int state, tapi_call_info* call_list, int size, tapi_call_info* out_list);
 
 /**
- * Register call state change event
- * @param[in] context        Telephony api context.
- * @param[in] slot_id        Slot id of current sim.
- * @param[in] msg            Call state change event.
- * @param[in] user_obj       User data.
- * @param[in] p_handle       Event callback.
- * @return Positive value as watch_id on success; a negated errno value on failure.
- */
-int tapi_call_register_managercall_change(tapi_context context, int slot_id,
-    tapi_indication_msg msg, void* user_obj, tapi_async_function p_handle);
-
-/**
  * Register call info change event
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
@@ -292,26 +248,6 @@ int tapi_call_register_managercall_change(tapi_context context, int slot_id,
  */
 int tapi_call_register_call_info_change(tapi_context context, int slot_id, char* call_id,
     tapi_indication_msg msg, void* user_obj, tapi_async_function p_handle);
-
-/**
- * New voice call proxy
- * @deprecated not mandatory for now.
- * @param[in] context        Telephony api context.
- * @param[in] slot_id        Slot id of current sim.
- * @param[in] call_id        Call id of current call.
- * @return Zero on success; a negated errno value on failure.
- */
-int tapi_call_new_voice_call_proxy(tapi_context context, int slot_id, char* call_id);
-
-/**
- * release voice call proxy
- * @deprecated not mandatory for now.
- * @param[in] context        Telephony api context.
- * @param[in] slot_id        Slot id of current sim.
- * @param[in] call_id        Call id of current call.
- * @return Zero on success; a negated errno value on failure.
- */
-int tapi_call_release_voice_call_proxy(tapi_context context, int slot_id, char* call_id);
 
 /**
  * Get all ecc list

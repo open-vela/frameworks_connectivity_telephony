@@ -114,6 +114,16 @@ bool is_call_signal_message(DBusMessage* message, DBusMessageIter* iter, int msg
 const char* get_call_signal_member(tapi_indication_msg msg);
 void property_set_done(const DBusError* error, void* user_data);
 void handler_free(void* obj);
+
+/**
+ * Power on or off modem.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] state          Power state.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_send_modem_power(tapi_context context, int slot_id, bool state);
+
 /**
  * @TestApi, only used for internal test.
  * @param[in] context        Telephony api context.
@@ -123,6 +133,97 @@ void handler_free(void* obj);
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_handle_command(tapi_context context, int slot_id, int atom, int command);
+
+/**
+ * Query availble modem list.
+ * @param[in] context        Telephony api context.
+ * @param[in] event_id       Async event identifier.
+ * @param[in] p_handle       Event callback.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_query_modem_list(tapi_context context, int event_id, tapi_async_function p_handle);
+
+/**
+ * Get modem manufacturer.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[out] out           Manufacturer returned from modem.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_get_modem_manufacturer(tapi_context context, int slot_id, char** out);
+
+/**
+ * Get modem model.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[out] out           Model returned from modem.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_get_modem_model(tapi_context context, int slot_id, char** out);
+
+/**
+ * New voice call proxy
+ * @deprecated not mandatory for now.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] call_id        Call id of current call.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_call_new_voice_call_proxy(tapi_context context, int slot_id, char* call_id);
+
+/**
+ * release voice call proxy
+ * @deprecated not mandatory for now.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] call_id        Call id of current call.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_call_release_voice_call_proxy(tapi_context context, int slot_id, char* call_id);
+
+/**
+ * Hangup one active call.
+ * @deprecated - use tapi_call_hangup_by_id instead.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] call_id        Call Id.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_call_hangup_call(tapi_context context, int slot_id, char* call_id);
+
+/**
+ * Deflect one incoming/waiting call to one specified number.
+ * @deprecated - use tapi_call_deflect_by_id instead.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] call_id        Call id to be deflected.
+ * @param[in] number         Number to receive one deflected call.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_call_deflect_call(tapi_context context, int slot_id, char* call_id, char* number);
+
+/**
+ * Answer one incoming call.
+ * @deprecated - use tapi_call_answer_by_id instead.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] call_id        Call Id.
+ * @param[in] call_count     call count of current sim
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_call_answer_call(tapi_context context, int slot_id, char* call_id, int call_count);
+
+/**
+ * Register call state change event
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] msg            Call state change event.
+ * @param[in] user_obj       User data.
+ * @param[in] p_handle       Event callback.
+ * @return Positive value as watch_id on success; a negated errno value on failure.
+ */
+int tapi_call_register_managercall_change(tapi_context context, int slot_id,
+    tapi_indication_msg msg, void* user_obj, tapi_async_function p_handle);
 
 #ifdef __cplusplus
 }

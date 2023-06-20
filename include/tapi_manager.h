@@ -65,15 +65,6 @@ tapi_context tapi_open(const char* client_name,
 int tapi_close(tapi_context context);
 
 /**
- * Query availble modem list.
- * @param[in] context        Telephony api context.
- * @param[in] event_id       Async event identifier.
- * @param[in] p_handle       Event callback.
- * @return Zero on success; a negated errno value on failure.
- */
-int tapi_query_modem_list(tapi_context context, int event_id, tapi_async_function p_handle);
-
-/**
  * Check whether the specified feature is supported or not.
  * @param[in] feature   Telephony feature type.
  * @return
@@ -134,15 +125,6 @@ int tapi_get_pref_net_mode(tapi_context context, int slot_id, tapi_pref_net_mode
 int tapi_get_radio_state(tapi_context context, int slot_id, tapi_radio_state* out);
 
 /**
- * Power on or off modem.
- * @param[in] context        Telephony api context.
- * @param[in] slot_id        Slot id of current sim.
- * @param[in] state          Power state.
- * @return Zero on success; a negated errno value on failure.
- */
-int tapi_send_modem_power(tapi_context context, int slot_id, bool state);
-
-/**
  * Get device imei.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
@@ -159,24 +141,6 @@ int tapi_get_imei(tapi_context context, int slot_id, char** out);
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_get_imeisv(tapi_context context, int slot_id, char** out);
-
-/**
- * Get modem manufacturer.
- * @param[in] context        Telephony api context.
- * @param[in] slot_id        Slot id of current sim.
- * @param[out] out           Manufacturer returned from modem.
- * @return Zero on success; a negated errno value on failure.
- */
-int tapi_get_modem_manufacturer(tapi_context context, int slot_id, char** out);
-
-/**
- * Get modem model.
- * @param[in] context        Telephony api context.
- * @param[in] slot_id        Slot id of current sim.
- * @param[out] out           Model returned from modem.
- * @return Zero on success; a negated errno value on failure.
- */
-int tapi_get_modem_model(tapi_context context, int slot_id, char** out);
 
 /**
  * Get modem revision.
