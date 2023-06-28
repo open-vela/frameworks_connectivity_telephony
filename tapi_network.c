@@ -1319,6 +1319,7 @@ int tapi_network_register(tapi_context context,
     }
     handler->result = ar;
     ar->msg_id = msg;
+    ar->msg_type = INDICATION;
     ar->arg1 = slot_id;
     ar->user_obj = user_obj;
 
