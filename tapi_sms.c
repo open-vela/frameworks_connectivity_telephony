@@ -594,6 +594,7 @@ int tapi_sms_register(tapi_context context, int slot_id,
 
     user_data->result = ar;
     ar->msg_id = msg_type;
+    ar->msg_type = INDICATION;
     ar->arg1 = slot_id;
     ar->user_obj = user_obj;
 

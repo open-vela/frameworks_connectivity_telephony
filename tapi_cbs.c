@@ -255,6 +255,7 @@ int tapi_cbs_register(tapi_context context, int slot_id, tapi_indication_msg msg
     }
     user_data->result = ar;
     ar->msg_id = msg;
+    ar->msg_type = INDICATION;
     ar->arg1 = slot_id;
     ar->user_obj = user_obj;
 

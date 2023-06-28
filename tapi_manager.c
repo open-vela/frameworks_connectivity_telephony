@@ -317,6 +317,42 @@ done:
     cb(ar);
 }
 
+static int airplane_mode_changed(DBusConnection* connection,
+    DBusMessage* message, void* user_data)
+{
+    tapi_async_handler* handler = user_data;
+    tapi_async_result* ar;
+    tapi_async_function cb;
+    DBusMessageIter iter, var;
+    const char* property;
+
+    if (handler == NULL)
+        return false;
+
+    ar = handler->result;
+    if (ar == NULL)
+        return false;
+
+    cb = handler->cb_function;
+    if (cb == NULL)
+        return false;
+
+    if (dbus_message_iter_init(message, &iter) == false)
+        return false;
+
+    dbus_message_iter_get_basic(&iter, &property);
+    dbus_message_iter_next(&iter);
+
+    dbus_message_iter_recurse(&iter, &var);
+    if (strcmp(property, "Online") == 0) {
+        dbus_message_iter_get_basic(&var, &ar->arg2);
+        ar->status = OK;
+        cb(ar);
+    }
+
+    return true;
+}
+
 static int radio_state_changed(DBusConnection* connection,
     DBusMessage* message, void* user_data)
 {
@@ -1435,8 +1471,7 @@ int tapi_register(tapi_context context,
     tapi_async_handler* handler;
     tapi_async_result* ar;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
-        || msg < MSG_RADIO_STATE_CHANGE_IND || msg > MSG_MODEM_RESTART_IND) {
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
     }
 
@@ -1458,6 +1493,7 @@ int tapi_register(tapi_context context,
     }
     handler->result = ar;
     ar->msg_id = msg;
+    ar->msg_type = INDICATION;
     ar->arg1 = slot_id;
     ar->user_obj = user_obj;
 
@@ -1482,7 +1518,14 @@ int tapi_register(tapi_context context,
             OFONO_SERVICE, modem_path, OFONO_MODEM_INTERFACE,
             "ModemRestart", modem_restart, handler, handler_free);
         break;
+    case MSG_AIRPLANE_MODE_CHANGE_IND:
+        watch_id = g_dbus_add_signal_watch(ctx->connection,
+            OFONO_SERVICE, modem_path, OFONO_MODEM_INTERFACE,
+            "PropertyChanged", airplane_mode_changed, handler, handler_free);
+        break;
     default:
+        handler_free(handler);
+        return -EINVAL;
         break;
     }
 

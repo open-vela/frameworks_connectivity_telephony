@@ -168,8 +168,14 @@ typedef struct {
     int type;
 } tapi_phone_number;
 
+typedef enum {
+    RESPONSE = 0,
+    INDICATION = 1,
+} tapi_message_type;
+
 typedef struct {
     int msg_id;
+    tapi_message_type msg_type;
     int status;
     int arg1;
     int arg2;
@@ -252,6 +258,9 @@ typedef enum {
 
     // IMS Indication Message
     MSG_IMS_REGISTRATION_MESSAGE_IND,
+
+    // airplane mode change Message
+    MSG_AIRPLANE_MODE_CHANGE_IND,
 
     // tapi indication msg value max.
     MSG_IND_MASK,

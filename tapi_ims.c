@@ -206,6 +206,7 @@ int tapi_ims_register_registration_change(tapi_context context, int slot_id, voi
     handler->result = ar;
 
     ar->msg_id = MSG_IMS_REGISTRATION_MESSAGE_IND;
+    ar->msg_type = INDICATION;
     ar->arg1 = slot_id;
     ar->user_obj = user_obj;
 
