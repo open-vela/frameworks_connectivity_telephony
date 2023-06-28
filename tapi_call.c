@@ -159,7 +159,7 @@ static int manager_voice_call_dbus_proxy(tapi_context context, int slot_id, char
     }
 
     if (action == NEW_VOICE_CALL_DBUS_PROXY) {
-        //new proxy
+        // new proxy
         call_proxy = malloc(sizeof(tapi_dbus_call_proxy));
         if (call_proxy == NULL)
             return -ENOMEM;
@@ -176,7 +176,7 @@ static int manager_voice_call_dbus_proxy(tapi_context context, int slot_id, char
 
         ret = OK;
     } else if (action == RELEASE_VOICE_CALL_DBUS_PROXY) {
-        //release proxy
+        // release proxy
         list_for_every_entry_safe(&ctx->call_proxy_list[slot_id], call_proxy, tmp,
             tapi_dbus_call_proxy, node)
         {
@@ -465,7 +465,7 @@ static int call_property_changed(DBusConnection* connection, DBusMessage* messag
     tapi_async_function cb;
     tapi_async_result* ar;
     const char* path;
-    char* reason_str; //local,remote,network
+    char* reason_str; // local,remote,network
     int ret = false;
     int msg_id;
     char* key;
@@ -982,6 +982,7 @@ static int tapi_register_manager_call_signal(tapi_context context, int slot_id, 
         return -ENOMEM;
     }
     ar->msg_id = msg;
+    ar->msg_type = INDICATION;
     ar->arg1 = slot_id;
     ar->user_obj = user_obj;
 
@@ -1743,6 +1744,7 @@ int tapi_call_register_call_state_change(tapi_context context, int slot_id,
     handler->result = ar;
     ar->arg1 = slot_id;
     ar->user_obj = user_obj;
+    ar->msg_type = INDICATION;
 
     watch_id = g_dbus_add_signal_watch(ctx->connection,
         OFONO_SERVICE, modem_path, OFONO_VOICECALL_MANAGER_INTERFACE,
