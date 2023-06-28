@@ -666,6 +666,80 @@ static void on_modem_property_change(GDBusProxy* proxy, const char* name,
         get_dbus_proxy(ctx);
 }
 
+static int tapi_modem_register(tapi_context context,
+    int slot_id, tapi_indication_msg msg, void* user_obj, tapi_async_function p_handle)
+{
+    dbus_context* ctx = context;
+    const char* modem_path;
+    int watch_id;
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+        return -EINVAL;
+    }
+
+    modem_path = tapi_utils_get_modem_path(slot_id);
+    if (modem_path == NULL) {
+        tapi_log_error("no available modem ...\n");
+        return -EIO;
+    }
+
+    handler = malloc(sizeof(tapi_async_handler));
+    if (handler == NULL)
+        return -ENOMEM;
+
+    handler->cb_function = p_handle;
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        free(handler);
+        return -ENOMEM;
+    }
+    handler->result = ar;
+    ar->msg_id = msg;
+    ar->msg_type = INDICATION;
+    ar->arg1 = slot_id;
+    ar->user_obj = user_obj;
+
+    switch (msg) {
+    case MSG_RADIO_STATE_CHANGE_IND:
+        watch_id = g_dbus_add_signal_watch(ctx->connection,
+            OFONO_SERVICE, modem_path, OFONO_MODEM_INTERFACE,
+            "PropertyChanged", radio_state_changed, handler, handler_free);
+        break;
+    case MSG_PHONE_STATE_CHANGE_IND:
+        watch_id = g_dbus_add_signal_watch(ctx->connection,
+            OFONO_SERVICE, modem_path, OFONO_VOICECALL_MANAGER_INTERFACE,
+            "PhoneStatusChanged", phone_state_changed, handler, handler_free);
+        break;
+    case MSG_OEM_HOOK_RAW_IND:
+        watch_id = g_dbus_add_signal_watch(ctx->connection,
+            OFONO_SERVICE, modem_path, OFONO_MODEM_INTERFACE,
+            "OemHookIndication", process_oem_hook_raw_indication, handler, handler_free);
+        break;
+    case MSG_MODEM_RESTART_IND:
+        watch_id = g_dbus_add_signal_watch(ctx->connection,
+            OFONO_SERVICE, modem_path, OFONO_MODEM_INTERFACE,
+            "ModemRestart", modem_restart, handler, handler_free);
+        break;
+    case MSG_AIRPLANE_MODE_CHANGE_IND:
+        watch_id = g_dbus_add_signal_watch(ctx->connection,
+            OFONO_SERVICE, modem_path, OFONO_MODEM_INTERFACE,
+            "PropertyChanged", airplane_mode_changed, handler, handler_free);
+        break;
+    default:
+        handler_free(handler);
+        return -EINVAL;
+    }
+
+    if (watch_id == 0) {
+        handler_free(handler);
+        return -EINVAL;
+    }
+
+    return watch_id;
+}
+
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
@@ -1465,76 +1539,39 @@ int tapi_get_modem_status(tapi_context context, int slot_id,
 int tapi_register(tapi_context context,
     int slot_id, tapi_indication_msg msg, void* user_obj, tapi_async_function p_handle)
 {
-    dbus_context* ctx = context;
-    const char* modem_path;
-    int watch_id;
-    tapi_async_handler* handler;
-    tapi_async_result* ar;
-
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
-        return -EINVAL;
-    }
-
-    modem_path = tapi_utils_get_modem_path(slot_id);
-    if (modem_path == NULL) {
-        tapi_log_error("no available modem ...\n");
-        return -EIO;
-    }
-
-    handler = malloc(sizeof(tapi_async_handler));
-    if (handler == NULL)
-        return -ENOMEM;
-
-    handler->cb_function = p_handle;
-    ar = malloc(sizeof(tapi_async_result));
-    if (ar == NULL) {
-        free(handler);
-        return -ENOMEM;
-    }
-    handler->result = ar;
-    ar->msg_id = msg;
-    ar->msg_type = INDICATION;
-    ar->arg1 = slot_id;
-    ar->user_obj = user_obj;
-
     switch (msg) {
+    case MSG_NETWORK_STATE_CHANGE_IND:
+    case MSG_CELLINFO_CHANGE_IND:
+    case MSG_SIGNAL_STRENGTH_CHANGE_IND:
+    case MSG_NITZ_STATE_CHANGE_IND:
+        return tapi_network_register(context, slot_id, msg, user_obj, p_handle);
+    case MSG_DATA_ENABLED_CHANGE_IND:
+    case MSG_DATA_REGISTRATION_STATE_CHANGE_IND:
+    case MSG_DATA_NETWORK_TYPE_CHANGE_IND:
+    case MSG_DATA_CONNECTION_STATE_CHANGE_IND:
+    case MSG_DEFAULT_DATA_SLOT_CHANGE_IND:
+        return tapi_data_register(context, slot_id, msg, user_obj, p_handle);
+    case MSG_SIM_STATE_CHANGE_IND:
+    case MSG_SIM_UICC_APP_ENABLED_CHANGE_IND:
+        return tapi_sim_register(context, slot_id, msg, user_obj, p_handle);
+    case MSG_INCOMING_MESSAGE_IND:
+    case MSG_IMMEDIATE_MESSAGE_IND:
+    case MSG_STATUS_REPORT_MESSAGE_IND:
+        return tapi_sms_register(context, slot_id, msg, user_obj, p_handle);
+    case MSG_INCOMING_CBS_IND:
+    case MSG_EMERGENCY_CBS_IND:
+        return tapi_cbs_register(context, slot_id, msg, user_obj, p_handle);
     case MSG_RADIO_STATE_CHANGE_IND:
-        watch_id = g_dbus_add_signal_watch(ctx->connection,
-            OFONO_SERVICE, modem_path, OFONO_MODEM_INTERFACE,
-            "PropertyChanged", radio_state_changed, handler, handler_free);
-        break;
     case MSG_PHONE_STATE_CHANGE_IND:
-        watch_id = g_dbus_add_signal_watch(ctx->connection,
-            OFONO_SERVICE, modem_path, OFONO_VOICECALL_MANAGER_INTERFACE,
-            "PhoneStatusChanged", phone_state_changed, handler, handler_free);
-        break;
     case MSG_OEM_HOOK_RAW_IND:
-        watch_id = g_dbus_add_signal_watch(ctx->connection,
-            OFONO_SERVICE, modem_path, OFONO_MODEM_INTERFACE,
-            "OemHookIndication", process_oem_hook_raw_indication, handler, handler_free);
-        break;
     case MSG_MODEM_RESTART_IND:
-        watch_id = g_dbus_add_signal_watch(ctx->connection,
-            OFONO_SERVICE, modem_path, OFONO_MODEM_INTERFACE,
-            "ModemRestart", modem_restart, handler, handler_free);
-        break;
     case MSG_AIRPLANE_MODE_CHANGE_IND:
-        watch_id = g_dbus_add_signal_watch(ctx->connection,
-            OFONO_SERVICE, modem_path, OFONO_MODEM_INTERFACE,
-            "PropertyChanged", airplane_mode_changed, handler, handler_free);
-        break;
+        return tapi_modem_register(context, slot_id, msg, user_obj, p_handle);
     default:
-        handler_free(handler);
-        return -EINVAL;
         break;
     }
 
-    if (watch_id == 0) {
-        handler_free(handler);
-        return -EINVAL;
-    }
-
-    return watch_id;
+    return 0;
 }
 
 int tapi_unregister(tapi_context context, int watch_id)
