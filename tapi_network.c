@@ -345,13 +345,14 @@ static int cellinfo_list_changed(DBusConnection* connection,
     if (dbus_message_iter_init(message, &iter) == false)
         return 0;
 
-    if (dbus_message_iter_get_arg_type(&iter) != DBUS_TYPE_ARRAY)
-        return 0;
-
     dbus_message_iter_get_basic(&iter, &property);
     if (strcmp(property, "CellList") != 0) {
         return 0;
     }
+
+    dbus_message_iter_next(&iter);
+    if (dbus_message_iter_get_arg_type(&iter) != DBUS_TYPE_ARRAY)
+        return 0;
 
     dbus_message_iter_recurse(&iter, &list);
 
