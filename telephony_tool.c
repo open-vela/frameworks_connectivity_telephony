@@ -112,6 +112,10 @@
 #define EVENT_REQUEST_START_DTMF_DONE 0x72
 #define EVENT_REQUEST_STOP_DTMF_DONE 0x73
 
+// SMS CallBack Event
+#define EVENT_SEND_MESSAGE_DONE 0x81
+#define EVENT_SEND_DATA_MESSAGE_DONE 0x82
+
 #define MAX_INPUT_ARGS_LEN 128
 
 /****************************************************************************
@@ -423,6 +427,24 @@ static void tele_sms_async_fun(tapi_async_result* result)
         syslog(LOG_DEBUG, "%s incoming message received \n", __func__);
     else if (result->msg_id == MSG_IMMEDIATE_MESSAGE_IND)
         syslog(LOG_DEBUG, "%s immediate message received \n", __func__);
+}
+
+static void tele_sms_event_response(tapi_async_result* result)
+{
+    syslog(LOG_DEBUG, "%s : \n", __func__);
+    syslog(LOG_DEBUG, "result->msg_id : %d\n", result->msg_id);
+    syslog(LOG_DEBUG, "result->status : %d\n", result->status);
+    syslog(LOG_DEBUG, "result->arg1 : %d\n", result->arg1);
+    syslog(LOG_DEBUG, "result->arg2 : %d\n", result->arg2);
+
+    if (result->status != OK) {
+        syslog(LOG_DEBUG, "%s msg id: %d result err, return.\n", __func__, result->msg_id);
+        return;
+    }
+
+    if (result->msg_id == EVENT_SEND_MESSAGE_DONE
+        || result->msg_id == EVENT_SEND_DATA_MESSAGE_DONE)
+        syslog(LOG_DEBUG, "send message successed, uuid : %s\n", (char*)result->data);
 }
 
 static void tele_cbs_async_fun(tapi_async_result* result)
@@ -2749,7 +2771,8 @@ static int telephonytool_tapi_sms_send_message(tapi_context context, char* pargs
         return -EINVAL;
 
     syslog(LOG_DEBUG, "%s, slotId : %s  number : %s text: %s \n", __func__, slot_id, to, text);
-    ret = tapi_sms_send_message(context, atoi(slot_id), to, text);
+    ret = tapi_sms_send_message(context, atoi(slot_id), to, text,
+        EVENT_SEND_MESSAGE_DONE, tele_sms_event_response);
     return ret;
 }
 
@@ -2779,7 +2802,8 @@ static int telephonytool_tapi_sms_send_data_message(tapi_context context, char* 
 
     syslog(LOG_DEBUG, "%s, slotId: %s  number: %s text: %s port: %s \n",
         __func__, slot_id, to, text, port);
-    ret = tapi_sms_send_data_message(context, atoi(slot_id), to, atoi(port), text);
+    ret = tapi_sms_send_data_message(context, atoi(slot_id), to, atoi(port), text,
+        EVENT_SEND_DATA_MESSAGE_DONE, tele_sms_event_response);
     return ret;
 }
 
