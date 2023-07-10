@@ -55,21 +55,57 @@ static char* strdup0(const char* str)
     return NULL;
 }
 
+static void message_free(void* user_data)
+{
+    message_param* message = user_data;
+
+    free(message->number);
+    free(message->text);
+    free(message);
+}
+
+static void data_message_free(void* user_data)
+{
+    data_message_param* message = user_data;
+
+    free(message->dest_addr);
+    free(message->data);
+    free(message);
+}
+
 static void send_message_param_append(DBusMessageIter* iter, void* user_data)
 {
-    message_param* param = user_data;
+    message_param* msg_param;
+    tapi_async_handler* param;
 
-    dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &param->number);
-    dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &param->text);
+    param = user_data;
+    if (param == NULL || param->result == NULL)
+        return;
+
+    msg_param = param->result->data;
+
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &msg_param->number);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &msg_param->text);
+
+    message_free(msg_param);
 }
 
 static void send_data_message_param_append(DBusMessageIter* iter, void* user_data)
 {
-    data_message_param* message = user_data;
+    data_message_param* message;
+    tapi_async_handler* param;
+
+    param = user_data;
+    if (param == NULL || param->result == NULL)
+        return;
+
+    message = param->result->data;
 
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &message->dest_addr);
     dbus_message_iter_append_basic(iter, DBUS_TYPE_UINT32, &message->port);
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &message->data);
+
+    data_message_free(message);
 }
 
 static void copy_message_param_append(DBusMessageIter* iter, void* user_data)
@@ -88,22 +124,47 @@ static void delete_message_param_append(DBusMessageIter* iter, void* user_data)
     dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &param);
 }
 
-static void message_free(void* user_data)
+static void send_sms_callback(DBusMessage* message, void* user_data)
 {
-    message_param* message = user_data;
+    tapi_async_handler* handler = user_data;
+    tapi_async_function cb;
+    tapi_async_result* ar;
+    DBusMessageIter iter;
+    DBusError err;
+    char* uuid;
 
-    free(message->number);
-    free(message->text);
-    free(message);
-}
+    if (handler == NULL)
+        return;
 
-static void data_message_free(void* user_data)
-{
-    data_message_param* message = user_data;
+    ar = handler->result;
+    if (ar == NULL)
+        return;
 
-    free(message->dest_addr);
-    free(message->data);
-    free(message);
+    cb = handler->cb_function;
+    if (cb == NULL)
+        return;
+
+    dbus_error_init(&err);
+    if (dbus_set_error_from_message(&err, message) == true) {
+        tapi_log_error("%s: %s\n", err.name, err.message);
+        dbus_error_free(&err);
+        ar->status = ERROR;
+        goto done;
+    }
+
+    if (dbus_message_iter_init(message, &iter) == false) {
+        ar->status = ERROR;
+        goto done;
+    }
+
+    if (dbus_message_iter_get_arg_type(&iter) == DBUS_TYPE_OBJECT_PATH) {
+        dbus_message_iter_get_basic(&iter, &uuid);
+        ar->data = uuid;
+        ar->status = OK;
+    }
+
+done:
+    cb(ar);
 }
 
 static void message_info_free(void* user_data)
@@ -329,9 +390,11 @@ done:
     }
 }
 
-int tapi_sms_send_message(tapi_context context, int slot_id,
-    char* number, char* text)
+int tapi_sms_send_message(tapi_context context, int slot_id, char* number, char* text,
+    int event_id, tapi_async_function p_handle)
 {
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
     dbus_context* ctx = context;
     GDBusProxy* proxy;
     message_param* message;
@@ -357,8 +420,27 @@ int tapi_sms_send_message(tapi_context context, int slot_id,
     message->number = strdup0(number);
     message->text = strdup0(text);
 
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        message_free(message);
+        return -ENOMEM;
+    }
+    ar->msg_id = event_id;
+    ar->arg1 = slot_id;
+    ar->data = message;
+
+    handler = malloc(sizeof(tapi_async_handler));
+    if (handler == NULL) {
+        message_free(message);
+        free(ar);
+        return -ENOMEM;
+    }
+    handler->result = ar;
+    handler->cb_function = p_handle;
+
     if (!g_dbus_proxy_method_call(proxy, "SendMessage",
-            send_message_param_append, no_operate_callback, message, message_free)) {
+            send_message_param_append, send_sms_callback, handler, handler_free)) {
+        handler_free(handler);
         message_free(message);
         return -EINVAL;
     }
@@ -367,9 +449,11 @@ int tapi_sms_send_message(tapi_context context, int slot_id,
 }
 
 int tapi_sms_send_data_message(tapi_context context, int slot_id,
-    char* dest_addr, unsigned int port, char* text)
+    char* dest_addr, unsigned int port, char* text, int event_id, tapi_async_function p_handle)
 {
     dbus_context* ctx = context;
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
     GDBusProxy* proxy;
     data_message_param* data_message;
 
@@ -395,8 +479,29 @@ int tapi_sms_send_data_message(tapi_context context, int slot_id,
     data_message->data = strdup0(text);
     data_message->port = port;
 
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        data_message_free(data_message);
+        return -ENOMEM;
+    }
+
+    ar->msg_id = event_id;
+    ar->arg1 = slot_id;
+    ar->data = data_message;
+
+    handler = malloc(sizeof(tapi_async_handler));
+    if (handler == NULL) {
+        data_message_free(data_message);
+        free(ar);
+        return -ENOMEM;
+    }
+
+    handler->result = ar;
+    handler->cb_function = p_handle;
+
     if (!g_dbus_proxy_method_call(proxy, "SendDataMessage",
-            send_data_message_param_append, no_operate_callback, data_message, data_message_free)) {
+            send_data_message_param_append, send_sms_callback, handler, handler_free)) {
+        handler_free(handler);
         data_message_free(data_message);
         return -EINVAL;
     }
