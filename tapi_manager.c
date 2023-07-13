@@ -476,6 +476,25 @@ static int modem_restart(DBusConnection* connection,
     return 1;
 }
 
+static int device_info_changed(DBusConnection* connection,
+    DBusMessage* message, void* user_data)
+{
+    tapi_async_handler* handler = user_data;
+    tapi_async_result* ar;
+    tapi_async_function cb;
+
+    if (handler == NULL)
+        return false;
+
+    if ((ar = handler->result) == NULL || (cb = handler->cb_function) == NULL)
+        return false;
+
+    ar->status = OK;
+    cb(ar);
+
+    return true;
+}
+
 static void oem_ril_request_raw_param_append(DBusMessageIter* iter, void* user_data)
 {
     oem_ril_request_data* oem_ril_req_raw_param;
@@ -726,6 +745,11 @@ static int tapi_modem_register(tapi_context context,
         watch_id = g_dbus_add_signal_watch(ctx->connection,
             OFONO_SERVICE, modem_path, OFONO_MODEM_INTERFACE,
             "PropertyChanged", airplane_mode_changed, handler, handler_free);
+        break;
+    case MSG_DEVICE_INFO_CHANGE_IND:
+        watch_id = g_dbus_add_signal_watch(ctx->connection,
+            OFONO_SERVICE, modem_path, OFONO_MODEM_INTERFACE,
+            "DeviceInfoChanged", device_info_changed, handler, handler_free);
         break;
     default:
         handler_free(handler);
@@ -1566,6 +1590,7 @@ int tapi_register(tapi_context context,
     case MSG_OEM_HOOK_RAW_IND:
     case MSG_MODEM_RESTART_IND:
     case MSG_AIRPLANE_MODE_CHANGE_IND:
+    case MSG_DEVICE_INFO_CHANGE_IND:
         return tapi_modem_register(context, slot_id, msg, user_obj, p_handle);
     default:
         break;
