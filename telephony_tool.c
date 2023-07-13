@@ -679,6 +679,10 @@ static void radio_signal_change(tapi_async_result* result)
         break;
     case MSG_OEM_HOOK_RAW_IND:
         syslog(LOG_DEBUG, "oem hook raw in slot[%d] \n", slot_id);
+        break;
+    case MSG_DEVICE_INFO_CHANGE_IND:
+        syslog(LOG_DEBUG, "device info has changed in slot[%d] \n", slot_id);
+        break;
     default:
         break;
     }
