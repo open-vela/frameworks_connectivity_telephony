@@ -584,6 +584,52 @@ static void apn_context_remove(DBusMessageIter* iter, void* user_data)
     dbus_message_iter_append_basic(iter, DBUS_TYPE_OBJECT_PATH, &dc->id);
 }
 
+static void apn_context_edit(DBusMessageIter* iter, void* user_data)
+{
+    tapi_async_handler* handler = user_data;
+    tapi_async_result* ar;
+    tapi_data_context* dc;
+    const char* type;
+    char *name, *apn, *username, *password;
+
+    if (handler == NULL)
+        return;
+
+    ar = handler->result;
+    if (ar == NULL)
+        return;
+
+    dc = ar->data;
+    if (dc == NULL) {
+        tapi_log_error("invalid apn settings ... \n");
+        return;
+    }
+
+    type = tapi_utils_apn_type_to_string(dc->type);
+    name = strdup(dc->name);
+    apn = strdup(dc->accesspointname);
+    username = strdup(dc->username);
+    password = strdup(dc->password);
+
+    tapi_log_info("type = %s; name = %s; apn = %s; \
+        username = ***; password = ***; proto = %d; auth = %d \n",
+        type, name, apn, dc->protocol, dc->auth_method);
+
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_OBJECT_PATH, &dc->id);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &type);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &name);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &apn);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &username);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &password);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &dc->protocol);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &dc->auth_method);
+
+    free(name);
+    free(apn);
+    free(username);
+    free(password);
+}
+
 static void network_operation_append(DBusMessageIter* iter, void* user_data)
 {
     const char* type = user_data;
@@ -815,6 +861,55 @@ int tapi_data_remove_apn_context(tapi_context context,
 
     if (!g_dbus_proxy_method_call(proxy,
             "RemoveContext", apn_context_remove, apn_list_changed, handler, handler_free)) {
+        handler_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
+}
+
+int tapi_data_edit_apn_context(tapi_context context,
+    int slot_id, int event_id, tapi_data_context* apn, tapi_async_function p_handle)
+{
+    dbus_context* ctx = context;
+    GDBusProxy* proxy;
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+        return -EINVAL;
+    }
+
+    if (apn == NULL || tapi_utils_apn_type_to_string(apn->type) == NULL) {
+        tapi_log_error("invalid apn argument ...\n");
+        return -EINVAL;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_DATA];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    handler = malloc(sizeof(tapi_async_handler));
+    if (handler == NULL) {
+        return -ENOMEM;
+    }
+
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        free(handler);
+        return -ENOMEM;
+    }
+
+    ar->msg_id = event_id;
+    ar->arg1 = slot_id;
+    ar->data = apn;
+    handler->result = ar;
+    handler->cb_function = p_handle;
+
+    if (!g_dbus_proxy_method_call(proxy,
+            "EditContext", apn_context_edit, apn_list_changed, handler, handler_free)) {
         handler_free(handler);
         return -EINVAL;
     }

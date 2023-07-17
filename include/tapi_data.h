@@ -159,6 +159,18 @@ int tapi_data_remove_apn_context(tapi_context context,
     int slot_id, int event_id, tapi_data_context* apn, tapi_async_function p_handle);
 
 /**
+ * Edit Apn in Apn Storage.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] event_id       Async event identifier.
+ * @param[in] apn            Apn item to edit.
+ * @param[in] p_handle       Event callback.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_data_edit_apn_context(tapi_context context,
+    int slot_id, int event_id, tapi_data_context* apn, tapi_async_function p_handle);
+
+/**
  * Reset Apn Storage.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
