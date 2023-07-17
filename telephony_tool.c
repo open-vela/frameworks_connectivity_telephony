@@ -57,6 +57,7 @@
 #define EVENT_APN_RESTORE_DONE 0x14
 #define EVENT_DATA_ALLOWED_DONE 0x15
 #define EVENT_DATA_CALL_LIST_QUERY_DONE 0x16
+#define EVENT_APN_EDIT_DONE 0x17
 
 // SIM Callback Event
 #define EVENT_CHANGE_SIM_PIN_DONE 0x21
@@ -815,6 +816,9 @@ static void data_event_response(tapi_async_result* result)
         break;
     case EVENT_APN_REMOVAL_DONE:
         syslog(LOG_DEBUG, "apn removed with error code : %d \n", result->status);
+        break;
+    case EVENT_APN_EDIT_DONE:
+        syslog(LOG_DEBUG, "apn edit with error code : %d \n", result->status);
         break;
     case EVENT_APN_RESTORE_DONE:
         syslog(LOG_DEBUG, "apn restored with error code : %d \n", result->status);
@@ -1910,6 +1914,56 @@ static int telephonytool_cmd_remove_apn(tapi_context context, char* pargs)
     tapi_data_remove_apn_context(context,
         atoi(slot_id), EVENT_APN_REMOVAL_DONE, apn, data_event_response);
     free(apn);
+
+    return 0;
+}
+
+static int telephonytool_cmd_edit_apn(tapi_context context, char* pargs)
+{
+    char dst[7][MAX_INPUT_ARGS_LEN];
+    char* slot_id;
+    char *id, *type, *name, *apn, *proto, *auth;
+    tapi_data_context* apn_context;
+    int cnt;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    cnt = split_input(dst, 7, pargs, " ");
+    if (cnt != 7)
+        return -EINVAL;
+
+    slot_id = dst[0];
+    id = dst[1];
+    type = dst[2];
+    name = dst[3];
+    apn = dst[4];
+    proto = dst[5];
+    auth = dst[6];
+    if (!is_valid_slot_id_str(slot_id))
+        return -EINVAL;
+
+    apn_context = malloc(sizeof(tapi_data_context));
+    if (apn_context == NULL)
+        return -EINVAL;
+
+    apn_context->id = id;
+    apn_context->type = atoi(type);
+    apn_context->protocol = atoi(proto);
+    apn_context->auth_method = atoi(auth);
+
+    if (strlen(name) <= MAX_APN_DOMAIN_LENGTH)
+        strcpy(apn_context->name, name);
+
+    if (strlen(apn) <= MAX_APN_DOMAIN_LENGTH)
+        strcpy(apn_context->accesspointname, apn);
+
+    strcpy(apn_context->username, "");
+    strcpy(apn_context->password, "");
+
+    tapi_data_edit_apn_context(context,
+        atoi(slot_id), EVENT_APN_EDIT_DONE, apn_context, data_event_response);
+    free(apn_context);
 
     return 0;
 }
@@ -4255,6 +4309,10 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     { "remove-apn", DATA_CMD,
         telephonytool_cmd_remove_apn,
         "remove apn (enter example : remove-apn 0 /ril_0/context1 [slot_id][id])" },
+    { "edit-apn", DATA_CMD,
+        telephonytool_cmd_edit_apn,
+        "edit apn (enter example : edit-apn 0 /ril_0/context1 1 cmcc cmnet 2 2 "
+        "[slot_id][id][type][name][apn][proto][auth])" },
     { "reset-apn", DATA_CMD,
         telephonytool_cmd_reset_apn,
         "reset apn (enter example : reset-apn 0 [slot_id])" },
