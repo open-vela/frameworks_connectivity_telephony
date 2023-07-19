@@ -596,7 +596,7 @@ static void ss_event_response(tapi_async_result* result)
             syslog(LOG_DEBUG, "fdn enabled or disabled : %d \n", param);
             break;
         case EVENT_QUERY_CALL_FORWARDING_DONE:
-            syslog(LOG_DEBUG, "call forwarding query done : %d \n", param);
+            syslog(LOG_DEBUG, "call forwarding query done! \n");
             cf_info = result->data;
             if (cf_info != NULL) {
                 syslog(LOG_DEBUG, "status: %d; cls: %d; number: %s; time: %d \n",
@@ -604,8 +604,8 @@ static void ss_event_response(tapi_async_result* result)
             }
             break;
         case EVENT_REQUEST_CALL_FORWARDING_DONE:
-            syslog(LOG_DEBUG, "call forwarding set done : %d \n", param);
-            syslog(LOG_DEBUG, "status: %d; option: %d; number: %s \n", status, param, (char*)result->data);
+            syslog(LOG_DEBUG, "call forwarding set done! \n");
+            syslog(LOG_DEBUG, "status: %d; cls: %d; \n", status, param);
             break;
         default:
             break;
