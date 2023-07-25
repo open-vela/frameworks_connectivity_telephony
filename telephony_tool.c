@@ -765,6 +765,8 @@ static void network_signal_change(tapi_async_result* result)
                     type : %d mcc : %s, mnc : %s, alpha_long : %s, alpha_short : %s \n",
                     cell->ci, cell->pci, cell->tac, cell->earfcn, cell->bandwidth, cell->type,
                     cell->mcc_str, cell->mnc_str, cell->alpha_long, cell->alpha_short);
+                syslog(LOG_DEBUG, "rsrp : %d, signal level : %d \n",
+                    cell->signal_strength.rsrp, cell->signal_strength.level);
             }
             syslog(LOG_DEBUG, "phone state changed to %d in slot[%d] \n", param, slot_id);
         }

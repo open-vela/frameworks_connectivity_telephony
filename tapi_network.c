@@ -138,6 +138,7 @@ static void fill_registration_info(const char* prop, DBusMessageIter* iter,
 static void fill_cell_identity(const char* prop, DBusMessageIter* iter,
     tapi_cell_identity* identity)
 {
+    unsigned char value_byte;
     const char* value_str;
     int value_int;
 
@@ -172,26 +173,21 @@ static void fill_cell_identity(const char* prop, DBusMessageIter* iter,
     } else if (strcmp(prop, "Technology") == 0) {
         dbus_message_iter_get_basic(iter, &value_str);
         identity->type = tapi_utils_cell_type_from_string(value_str);
-    }
-}
-
-static void fill_signal_strength(const char* prop, DBusMessageIter* iter, tapi_signal_strength* ss)
-{
-    int value;
-    unsigned char value_byte;
-
-    if (strcmp(prop, "Strength") == 0) {
+    } else if (strcmp(prop, "Strength") == 0) {
         dbus_message_iter_get_basic(iter, &value_byte);
-        ss->rssi = value_byte;
+        identity->signal_strength.rssi = value_byte;
     } else if (strcmp(prop, "SingalToNoiseRatio") == 0) {
-        dbus_message_iter_get_basic(iter, &value);
-        ss->rssnr = value;
+        dbus_message_iter_get_basic(iter, &value_int);
+        identity->signal_strength.rssnr = value_int;
     } else if (strcmp(prop, "ReferenceSignalReceivedQuality") == 0) {
-        dbus_message_iter_get_basic(iter, &value);
-        ss->rsrq = value;
+        dbus_message_iter_get_basic(iter, &value_int);
+        identity->signal_strength.rsrq = value_int;
     } else if (strcmp(prop, "ReferenceSignalReceivedPower") == 0) {
-        dbus_message_iter_get_basic(iter, &value);
-        ss->rsrp = value;
+        dbus_message_iter_get_basic(iter, &value_int);
+        identity->signal_strength.rsrp = value_int;
+    } else if (strcmp(prop, "Level") == 0) {
+        dbus_message_iter_get_basic(iter, &value_int);
+        identity->signal_strength.level = value_int;
     }
 }
 
@@ -234,24 +230,6 @@ static void fill_cell_identity_list(DBusMessageIter* iter, tapi_cell_identity* c
         dbus_message_iter_recurse(&entry, &value);
 
         fill_cell_identity(key, &value, cell);
-
-        dbus_message_iter_next(iter);
-    }
-}
-
-static void fill_signal_strength_list(DBusMessageIter* iter, tapi_signal_strength* ss)
-{
-    while (dbus_message_iter_get_arg_type(iter) == DBUS_TYPE_DICT_ENTRY) {
-        DBusMessageIter entry, value;
-        const char* key;
-
-        dbus_message_iter_recurse(iter, &entry);
-        dbus_message_iter_get_basic(&entry, &key);
-
-        dbus_message_iter_next(&entry);
-        dbus_message_iter_recurse(&entry, &value);
-
-        fill_signal_strength(key, &value, ss);
 
         dbus_message_iter_next(iter);
     }
@@ -373,7 +351,6 @@ static int cellinfo_list_changed(DBusConnection* connection,
         dbus_message_iter_recurse(&entry, &dict);
 
         fill_cell_identity_list(&dict, cell_identity);
-        fill_signal_strength_list(&dict, &(cell_identity->signal_strength));
 
         cell_info_list[cell_index++] = cell_identity;
         if (cell_index >= MAX_CELL_INFO_LIST_SIZE)
