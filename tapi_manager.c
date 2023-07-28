@@ -101,29 +101,15 @@ static void get_dbus_proxy(dbus_context* ctx)
             ctx->dbus_proxy[i][j] = g_dbus_proxy_new(
                 ctx->client, tapi_utils_get_modem_path(i), dbus_proxy_server[j]);
         }
-
-        list_initialize(&ctx->call_proxy_list[i]);
     }
 }
 
 static void release_dbus_proxy(dbus_context* ctx)
 {
-    tapi_dbus_call_proxy* call_proxy;
-    tapi_dbus_call_proxy* tmp;
-
     g_dbus_proxy_unref(ctx->dbus_proxy_manager);
     for (int i = 0; i < CONFIG_ACTIVE_MODEM_COUNT; i++) {
         for (int j = 0; j < DBUS_PROXY_MAX_COUNT; j++) {
             g_dbus_proxy_unref(ctx->dbus_proxy[i][j]);
-        }
-
-        list_for_every_entry_safe(&ctx->call_proxy_list[i], call_proxy, tmp,
-            tapi_dbus_call_proxy, node)
-        {
-            g_dbus_proxy_unref(call_proxy->dbus_proxy);
-
-            list_delete(&call_proxy->node);
-            free(call_proxy);
         }
     }
 }
