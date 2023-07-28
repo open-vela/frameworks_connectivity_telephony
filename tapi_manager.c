@@ -672,7 +672,6 @@ static void on_dbus_client_ready(GDBusClient* client, void* user_data)
 static void on_modem_property_change(GDBusProxy* proxy, const char* name,
     DBusMessageIter* iter, void* user_data)
 {
-    dbus_context* ctx = user_data;
     modem_state state = MODEM_STATE_POWER_OFF;
 
     if (strcmp("ModemState", name) != 0)
@@ -680,9 +679,6 @@ static void on_modem_property_change(GDBusProxy* proxy, const char* name,
 
     dbus_message_iter_get_basic(iter, &state);
     tapi_log_info("%s - modem_state : %d", __func__, state);
-
-    if (state == MODEM_STATE_ALIVE)
-        get_dbus_proxy(ctx);
 }
 
 static int tapi_modem_register(tapi_context context,
