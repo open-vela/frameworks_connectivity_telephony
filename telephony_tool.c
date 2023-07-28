@@ -605,25 +605,6 @@ static void ss_event_response(tapi_async_result* result)
     }
 }
 
-static void modem_list_query_complete(tapi_async_result* result)
-{
-    char* modem_path;
-    int modem_count;
-    char** list = result->data;
-
-    syslog(LOG_DEBUG, "%s : \n", __func__);
-    if (list == NULL)
-        return;
-
-    syslog(LOG_DEBUG, "result->status : %d\n", result->status);
-    modem_count = result->arg1;
-    for (int i = 0; i < modem_count; i++) {
-        modem_path = list[i];
-        if (modem_path != NULL)
-            syslog(LOG_DEBUG, "modem found with path -> %s \n", modem_path);
-    }
-}
-
 static void call_list_query_complete(tapi_async_result* result)
 {
     tapi_call_info* call_info;
@@ -650,6 +631,25 @@ static void call_list_query_complete(tapi_async_result* result)
         syslog(LOG_DEBUG, "call Information: %s \n", call_info[i].info);
         syslog(LOG_DEBUG, "call Icon: %d \n", call_info[i].icon);
         syslog(LOG_DEBUG, "call Emergency: %d \n\n", call_info[i].is_emergency_number);
+    }
+}
+
+static void modem_list_query_complete(tapi_async_result* result)
+{
+    char* modem_path;
+    int modem_count;
+    char** list = result->data;
+
+    syslog(LOG_DEBUG, "%s : \n", __func__);
+    if (list == NULL)
+        return;
+
+    syslog(LOG_DEBUG, "result->status : %d\n", result->status);
+    modem_count = result->arg1;
+    for (int i = 0; i < modem_count; i++) {
+        modem_path = list[i];
+        if (modem_path != NULL)
+            syslog(LOG_DEBUG, "modem found with path -> %s \n", modem_path);
     }
 }
 
@@ -922,43 +922,6 @@ static int telephonytool_cmd_dial(tapi_context context, char* pargs)
         EVENT_REQUEST_DIAL_DONE, tele_call_async_fun);
 }
 
-static int telephonytool_cmd_answer_call(tapi_context context, char* pargs)
-{
-    char dst[3][MAX_INPUT_ARGS_LEN];
-    int slot_id, type;
-    char* call_id;
-    int cnt, ret;
-
-    if (strlen(pargs) == 0)
-        return -EINVAL;
-
-    cnt = split_input(dst, 3, pargs, " ");
-    if (cnt != 2 && cnt != 3)
-        return -EINVAL;
-
-    if (!is_valid_slot_id_str(dst[0]))
-        return -EINVAL;
-
-    slot_id = atoi(dst[0]);
-    type = atoi(dst[1]);
-
-    if (type == 0 && cnt == 3) {
-        call_id = dst[2];
-        syslog(LOG_DEBUG, "%s, slotId : %d callId : %s\n", __func__, slot_id, call_id);
-        ret = tapi_call_answer_call(context, slot_id, call_id, 1);
-    } else if (type == 1) {
-        syslog(LOG_DEBUG, "%s release and answer, slotId : %d\n", __func__, slot_id);
-        ret = tapi_call_release_and_answer(context, slot_id);
-    } else if (type == 2) {
-        syslog(LOG_DEBUG, "%s hold and answer, slotId : %d\n", __func__, slot_id);
-        ret = tapi_call_answer_call(context, slot_id, NULL, 2);
-    } else {
-        ret = -EINVAL;
-    }
-
-    return ret;
-}
-
 static int telephonytool_cmd_release_and_answer_call(tapi_context context, char* pargs)
 {
     char* slot_id;
@@ -1040,23 +1003,6 @@ static int telephonytool_cmd_hangup_all(tapi_context context, char* pargs)
     return tapi_call_hangup_all_calls(context, atoi(slot_id));
 }
 
-static int telephonytool_cmd_hangup_call(tapi_context context, char* pargs)
-{
-    char dst[2][MAX_INPUT_ARGS_LEN];
-    int cnt = split_input(dst, 2, pargs, " ");
-    char* slot_id;
-
-    if (cnt != 2)
-        return -EINVAL;
-
-    slot_id = dst[0];
-    if (!is_valid_slot_id_str(dst[0]))
-        return -EINVAL;
-    syslog(LOG_DEBUG, "%s, slotId : %s\n", __func__, dst[0]);
-
-    return tapi_call_hangup_call(context, atoi(slot_id), (char*)dst[1]);
-}
-
 static int telephonytool_cmd_hangup_by_id(tapi_context context, char* pargs)
 {
     char dst[2][MAX_INPUT_ARGS_LEN];
@@ -1102,8 +1048,6 @@ static int telephonytool_cmd_get_call(tapi_context context, char* pargs)
 {
     char dst[2][MAX_INPUT_ARGS_LEN];
     int cnt = split_input(dst, 2, pargs, " ");
-    tapi_call_info call_info;
-    char* call_id;
     int ret = -EINVAL;
     int slot_id;
 
@@ -1115,28 +1059,6 @@ static int telephonytool_cmd_get_call(tapi_context context, char* pargs)
     if (cnt == 1) {
         slot_id = atoi(dst[0]);
         ret = tapi_call_get_all_calls(context, slot_id, call_list_query_complete);
-    } else if (cnt == 2) {
-        slot_id = atoi(dst[0]);
-        call_id = dst[1];
-
-        memset(&call_info, 0, sizeof(tapi_call_info));
-
-        ret = tapi_call_get_call_info(context, slot_id, call_id, &call_info);
-        if (ret == OK) {
-            syslog(LOG_DEBUG, "call id: %s \n", call_info.call_id);
-            syslog(LOG_DEBUG, "call state: %d \n", call_info.state);
-            syslog(LOG_DEBUG, "call LineIdentification: %s \n", call_info.lineIdentification);
-            syslog(LOG_DEBUG, "call IncomingLine: %s \n", call_info.incoming_line);
-            syslog(LOG_DEBUG, "call Name: %s \n", call_info.name);
-            syslog(LOG_DEBUG, "call StartTime: %s \n", call_info.start_time);
-            syslog(LOG_DEBUG, "call Multiparty: %d \n", call_info.multiparty);
-            syslog(LOG_DEBUG, "call RemoteHeld: %d \n", call_info.remote_held);
-            syslog(LOG_DEBUG, "call RemoteMultiparty: %d \n", call_info.remote_multiparty);
-            syslog(LOG_DEBUG, "call Information: %s \n", call_info.info);
-            syslog(LOG_DEBUG, "call Icon: %d \n", call_info.icon);
-            syslog(LOG_DEBUG, "call Emergency: %d \n", call_info.is_emergency_number);
-        }
-        return ret;
     } else {
         return -EINVAL;
     }
@@ -1195,36 +1117,6 @@ static int telephonytool_cmd_unlisten_call_singal(tapi_context context, char* pa
                       "%s with return value : %d \n",
         dst[0], ret);
 
-    return ret;
-}
-
-static int telephonytool_cmd_call_proxy(tapi_context context, char* pargs)
-{
-    char dst[3][MAX_INPUT_ARGS_LEN];
-    int cnt = split_input(dst, 3, pargs, " ");
-    int slot_id, action;
-    int ret = -EINVAL;
-    char* call_id;
-
-    if (cnt != 3)
-        return -EINVAL;
-
-    if (!is_valid_slot_id_str(dst[0]))
-        return -EINVAL;
-
-    slot_id = atoi(dst[0]);
-    action = atoi(dst[1]);
-    call_id = dst[2];
-
-    if (action == 0) {
-        syslog(LOG_DEBUG, "%s, new call proxy\n", __func__);
-
-        ret = tapi_call_new_voice_call_proxy(context, slot_id, call_id);
-    } else if (action == 1) {
-        syslog(LOG_DEBUG, "%s, release call proxy\n", __func__);
-
-        ret = tapi_call_release_voice_call_proxy(context, slot_id, call_id);
-    }
     return ret;
 }
 
@@ -4314,23 +4206,12 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     { "release_and_swap", CALL_CMD,
         telephonytool_cmd_release_and_swap_call,
         "release_and_swap (enter example : release_and_swap 0 [slot_id]" },
-    { "answer", CALL_CMD,
-        telephonytool_cmd_answer_call,
-        "Answer (enter example : answer 0 0 [slot_id][action:0-answer 1-realse&answer "
-        "2-hold&answer][call_id])" },
     { "swap", CALL_CMD,
         telephonytool_cmd_swap_call,
         "call Swap (enter example : swap 0 1 [slot_id][action:1-hold 0-unhold])" },
-    { "call-proxy", CALL_CMD,
-        telephonytool_cmd_call_proxy,
-        "new/release call proxy (enter example : "
-        "call-proxy [slot_id] [action:0-new 1-release] [call_id]" },
     { "hangup-all", CALL_CMD,
         telephonytool_cmd_hangup_all,
         "hangup all call (enter example : hangup-all 0 [slot_id])" },
-    { "hangup", CALL_CMD,
-        telephonytool_cmd_hangup_call,
-        "hangup (enter example : hangup 0 [call_id] /phonesim/voicecall01)" },
     { "get-call", CALL_CMD,
         telephonytool_cmd_get_call,
         "get call list/call info (enter example : get-call 0 "
