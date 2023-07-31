@@ -97,6 +97,7 @@
 #define EVENT_QUERY_ALL_CALL_BARRING_DONE 0x4F
 #define EVENT_QUERY_ALL_CALL_SETTING_DONE 0x50
 #define EVENT_QUERY_CALL_FORWARDING_DONE 0x51
+#define EVENT_QUERY_CALL_WAITING_DONE 0x52
 
 // PhoneBook Callback Event
 #define EVENT_LOAD_ADN_ENTRIES_DONE 0x61
@@ -598,6 +599,13 @@ static void ss_event_response(tapi_async_result* result)
         case EVENT_REQUEST_CALL_FORWARDING_DONE:
             syslog(LOG_DEBUG, "call forwarding set done! \n");
             syslog(LOG_DEBUG, "status: %d; cls: %d; \n", status, param);
+            break;
+        case EVENT_REQUEST_CALL_WAITING_DONE:
+            syslog(LOG_DEBUG, "%s : call waiting set done! \n", __func__);
+            break;
+        case EVENT_QUERY_CALL_WAITING_DONE:
+            syslog(LOG_DEBUG, "%s : call waiting query done! \n", __func__);
+            syslog(LOG_DEBUG, "%s : call waiting status : %d! \n", __func__, param);
             break;
         default:
             break;
@@ -3539,20 +3547,6 @@ static int telephonytool_cmd_cancel_ussd(tapi_context context, char* pargs)
     return tapi_ss_cancel_ussd(context, atoi(slot_id), EVENT_CANCEL_USSD_DONE, tele_call_async_fun);
 }
 
-static int telephonytool_cmd_request_call_setting(tapi_context context, char* pargs)
-{
-    char* slot_id;
-    if (strlen(pargs) == 0)
-        return -EINVAL;
-
-    slot_id = strtok_r(pargs, " ", NULL);
-    if (!is_valid_slot_id_str(slot_id))
-        return -EINVAL;
-
-    return tapi_ss_request_call_setting(context, atoi(slot_id),
-        EVENT_QUERY_ALL_CALL_SETTING_DONE, tele_call_async_fun);
-}
-
 static int telephonytool_cmd_set_call_waiting(tapi_context context, char* pargs)
 {
     char dst[2][MAX_INPUT_ARGS_LEN];
@@ -3573,14 +3567,13 @@ static int telephonytool_cmd_set_call_waiting(tapi_context context, char* pargs)
         return -EINVAL;
 
     syslog(LOG_DEBUG, "%s, slot_id : %s value : %s \n", __func__, slot_id, value);
-    return tapi_ss_set_call_wating(context, atoi(slot_id),
-        EVENT_REQUEST_CALL_WAITING_DONE, (bool)atoi(value), tele_call_async_fun);
+    return tapi_ss_set_call_waiting(context, atoi(slot_id),
+        EVENT_REQUEST_CALL_WAITING_DONE, (bool)atoi(value), ss_event_response);
 }
 
 static int telephonytool_cmd_get_call_waiting(tapi_context context, char* pargs)
 {
     char* slot_id;
-    bool cw_info;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
@@ -3589,9 +3582,8 @@ static int telephonytool_cmd_get_call_waiting(tapi_context context, char* pargs)
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
-    cw_info = false;
-    tapi_ss_get_call_wating(context, atoi(slot_id), &cw_info);
-    syslog(LOG_DEBUG, "%s, slotId : %s cw_info : %d \n", __func__, slot_id, cw_info);
+    return tapi_ss_get_call_waiting(context, atoi(slot_id),
+        EVENT_QUERY_CALL_WAITING_DONE, ss_event_response);
 
     return 0;
 }
@@ -4523,9 +4515,6 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     { "cancel-ussd", SS_CMD,
         telephonytool_cmd_cancel_ussd,
         "cancel ussd (enter example : cancel-ussd 0 [slot_id])" },
-    { "request-callsetting", SS_CMD,
-        telephonytool_cmd_request_call_setting,
-        "request callsetting (enter example : request-callsetting 0 )" },
     { "set-callwaiting", SS_CMD,
         telephonytool_cmd_set_call_waiting,
         "set callwaiting (enter example : set-callwaiting 0 1 "
