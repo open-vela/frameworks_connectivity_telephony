@@ -48,6 +48,20 @@ typedef struct {
  * Private Functions
  ****************************************************************************/
 
+static void set_call_waiting_append(DBusMessageIter* iter, void* user_data)
+{
+    tapi_async_handler* param = user_data;
+    int enable;
+
+    if (param == NULL || param->result == NULL) {
+        tapi_log_error("invalid call waiting value!!");
+        return;
+    }
+
+    enable = param->result->arg2;
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &enable);
+}
+
 static void query_call_forwarding_option_append(DBusMessageIter* iter, void* user_data)
 {
     tapi_async_handler* param = user_data;
@@ -518,6 +532,42 @@ done:
 }
 
 static void query_fdn_cb(DBusMessage* message, void* user_data)
+{
+    DBusMessageIter iter;
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
+    tapi_async_function cb;
+    DBusError err;
+
+    handler = user_data;
+    if (handler == NULL)
+        return;
+
+    if ((ar = handler->result) == NULL || (cb = handler->cb_function) == NULL)
+        return;
+
+    dbus_error_init(&err);
+    if (dbus_set_error_from_message(&err, message) == true) {
+        tapi_log_error("%s: %s\n", err.name, err.message);
+        dbus_error_free(&err);
+        ar->status = ERROR;
+        goto done;
+    }
+
+    if (dbus_message_iter_init(message, &iter) == false) {
+        ar->status = ERROR;
+        goto done;
+    }
+
+    dbus_message_iter_get_basic(&iter, &ar->arg2);
+
+    ar->status = OK;
+
+done:
+    cb(ar);
+}
+
+static void query_call_waiting_cb(DBusMessage* message, void* user_data)
 {
     DBusMessageIter iter;
     tapi_async_handler* handler;
@@ -1394,7 +1444,7 @@ int tapi_ss_cancel_ussd(tapi_context context, int slot_id, int event_id,
 }
 
 // Call Waiting
-int tapi_ss_request_call_setting(tapi_context context, int slot_id, int event_id,
+int tapi_ss_set_call_waiting(tapi_context context, int slot_id, int event_id, bool enable,
     tapi_async_function p_handle)
 {
     dbus_context* ctx = context;
@@ -1405,6 +1455,9 @@ int tapi_ss_request_call_setting(tapi_context context, int slot_id, int event_id
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
     }
+
+    if (!ctx->client_ready)
+        return -EAGAIN;
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_SETTING];
     if (proxy == NULL) {
@@ -1424,12 +1477,12 @@ int tapi_ss_request_call_setting(tapi_context context, int slot_id, int event_id
 
     handler->result = ar;
     ar->arg1 = slot_id;
+    ar->arg2 = enable;
     ar->msg_id = event_id;
     handler->cb_function = p_handle;
 
-    if (!g_dbus_proxy_method_call(proxy, "GetProperties",
-            NULL, method_call_complete, handler, handler_free)) {
-        tapi_log_error("failed to request callsetting \n");
+    if (!g_dbus_proxy_method_call(proxy, "SetCallWaiting",
+            set_call_waiting_append, method_call_complete, handler, handler_free)) {
         handler_free(handler);
         return -EINVAL;
     }
@@ -1437,14 +1490,13 @@ int tapi_ss_request_call_setting(tapi_context context, int slot_id, int event_id
     return OK;
 }
 
-int tapi_ss_set_call_wating(tapi_context context, int slot_id, int event_id, bool enable,
+int tapi_ss_get_call_waiting(tapi_context context, int slot_id, int event_id,
     tapi_async_function p_handle)
 {
     dbus_context* ctx = context;
     tapi_async_handler* handler;
     tapi_async_result* ar;
     GDBusProxy* proxy;
-    char* state;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
@@ -1474,48 +1526,13 @@ int tapi_ss_set_call_wating(tapi_context context, int slot_id, int event_id, boo
     ar->msg_id = event_id;
     handler->cb_function = p_handle;
 
-    state = enable ? "enabled" : "disabled";
-    if (!g_dbus_proxy_set_property_basic(proxy, "VoiceCallWaiting", DBUS_TYPE_STRING,
-            &state, property_set_done, handler, handler_free)) {
+    if (!g_dbus_proxy_method_call(proxy, "GetCallWaiting", NULL,
+            query_call_waiting_cb, handler, handler_free)) {
         handler_free(handler);
         return -EINVAL;
     }
 
     return OK;
-}
-
-int tapi_ss_get_call_wating(tapi_context context, int slot_id, bool* out)
-{
-    dbus_context* ctx = context;
-    DBusMessageIter iter;
-    GDBusProxy* proxy;
-    char* result = NULL;
-
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
-        return -EINVAL;
-    }
-
-    if (!ctx->client_ready)
-        return -EAGAIN;
-
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_SETTING];
-    if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
-        return -EIO;
-    }
-
-    if (g_dbus_proxy_get_property(proxy, "VoiceCallWaiting", &iter)) {
-        dbus_message_iter_get_basic(&iter, &result);
-        if (result == NULL) {
-            tapi_log_info("%s : result is null.", __func__);
-            *out = 0;
-            return -EINVAL;
-        }
-        *out = (strcmp(result, "enabled") == 0) ? 1 : 0;
-        return OK;
-    }
-
-    return -EINVAL;
 }
 
 // Calling Line Presentation
