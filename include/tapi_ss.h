@@ -255,17 +255,6 @@ int tapi_ss_cancel_ussd(tapi_context context, int slot_id, int event_id,
     tapi_async_function p_handle);
 
 /**
- * Initiates call setting option requests.
- * @param[in] context        Telephony api context.
- * @param[in] slot_id        Slot id of current sim.
- * @param[in] event_id       Async event identifier.
- * @param[in] p_handle       Event callback.
- * @return Zero on success; a negated errno value on failure.
- */
-int tapi_ss_request_call_setting(tapi_context context, int slot_id, int event_id,
-    tapi_async_function p_handle);
-
-/**
  * Sets Call Waiting option.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
@@ -274,17 +263,19 @@ int tapi_ss_request_call_setting(tapi_context context, int slot_id, int event_id
  * @param[in] p_handle       Event callback.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_ss_set_call_wating(tapi_context context, int slot_id, int event_id, bool enable,
+int tapi_ss_set_call_waiting(tapi_context context, int slot_id, int event_id, bool enable,
     tapi_async_function p_handle);
 
 /**
  * Gets Call Waiting info.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
- * @param[out] out           Whether to enable or disable Call Waiting service.
+ * @param[in] event_id       Async event identifier.
+ * @param[in] p_handle       Event callback.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_ss_get_call_wating(tapi_context context, int slot_id, bool* out);
+int tapi_ss_get_call_waiting(tapi_context context, int slot_id, int event_id,
+    tapi_async_function p_handle);
 
 /**
  * Gets Calling Line Presentation info.
