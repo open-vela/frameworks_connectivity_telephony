@@ -209,6 +209,8 @@ static int data_property_changed(DBusConnection* connection,
     if (cb == NULL)
         return false;
 
+    ar->status = ERROR;
+
     if (dbus_message_iter_init(message, &iter) == false)
         goto done;
 
@@ -216,18 +218,29 @@ static int data_property_changed(DBusConnection* connection,
     dbus_message_iter_next(&iter);
     dbus_message_iter_recurse(&iter, &var);
 
-    if (strcmp(property, "DataOn") == 0 || strcmp(property, "DataSlot") == 0) {
+    if ((ar->msg_id == MSG_DATA_ENABLED_CHANGE_IND)
+        && (strcmp(property, "DataOn") == 0)) {
         ar->status = OK;
 
         dbus_message_iter_get_basic(&var, &ar->arg2);
         isvalid = true;
-    } else if (strcmp(property, "Bearer") == 0) {
+    } else if ((ar->msg_id == MSG_DEFAULT_DATA_SLOT_CHANGE_IND)
+        && (strcmp(property, "DataSlot") == 0)) {
+        ar->status = OK;
+
+        dbus_message_iter_get_basic(&var, &ar->arg2);
+        isvalid = true;
+    } else if ((ar->msg_id == MSG_DATA_NETWORK_TYPE_CHANGE_IND)
+        && (strcmp(property, "Bearer") == 0)) {
         ar->status = OK;
 
         dbus_message_iter_get_basic(&var, &value_str);
         ar->arg2 = tapi_utils_network_type_from_string(value_str);
         isvalid = true;
-    } else if (strcmp(property, "Status") == 0) {
+    } else if ((ar->msg_id == MSG_DATA_REGISTRATION_STATE_CHANGE_IND)
+        && (strcmp(property, "Status") == 0)) {
+        ar->status = OK;
+
         dbus_message_iter_get_basic(&var, &ar->arg2);
         isvalid = true;
     }
