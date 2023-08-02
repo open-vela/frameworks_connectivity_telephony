@@ -658,13 +658,24 @@ static void on_dbus_client_ready(GDBusClient* client, void* user_data)
 static void on_modem_property_change(GDBusProxy* proxy, const char* name,
     DBusMessageIter* iter, void* user_data)
 {
-    modem_state state = MODEM_STATE_POWER_OFF;
+    dbus_context* ctx = user_data;
+    tapi_modem_state new_state = MODEM_STATE_POWER_OFF;
+    int modem_id = 0;
 
     if (strcmp("ModemState", name) != 0)
         return;
 
-    dbus_message_iter_get_basic(iter, &state);
-    tapi_log_info("%s - modem_state : %d", __func__, state);
+    modem_id = get_modem_id_by_proxy(ctx, proxy);
+    dbus_message_iter_get_basic(iter, &new_state);
+    tapi_log_info("%s - from %d to %d", __func__, ctx->modem_state[modem_id], new_state);
+
+    if (ctx->modem_state[modem_id] == MODEM_STATE_AWARE && new_state == MODEM_STATE_ALIVE) {
+        tapi_log_info("%s - refresh dbus_proxy ", __func__);
+        release_dbus_proxy(ctx);
+        get_dbus_proxy(ctx);
+    }
+
+    ctx->modem_state[modem_id] = new_state;
 }
 
 static int tapi_modem_register(tapi_context context,
@@ -808,6 +819,7 @@ tapi_context tapi_open(const char* client_name,
     get_dbus_proxy(ctx);
 
     for (int i = 0; i < CONFIG_ACTIVE_MODEM_COUNT; i++) {
+        ctx->modem_state[i] = MODEM_STATE_POWER_OFF;
         g_dbus_proxy_set_property_watch(ctx->dbus_proxy[i][DBUS_PROXY_MODEM],
             on_modem_property_change, ctx);
     }
