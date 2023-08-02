@@ -562,3 +562,18 @@ bool is_interface_supported(const char* interface)
 
     return true;
 }
+
+int get_modem_id_by_proxy(dbus_context* context, GDBusProxy* proxy)
+{
+    if (proxy == NULL)
+        return 0;
+
+    for (int i = 0; i < CONFIG_ACTIVE_MODEM_COUNT; i++) {
+        for (int j = 0; j < DBUS_PROXY_MAX_COUNT; j++) {
+            if (context->dbus_proxy[i][j] == proxy)
+                return i;
+        }
+    }
+
+    return 0;
+}

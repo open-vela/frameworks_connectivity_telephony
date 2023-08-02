@@ -69,6 +69,12 @@ enum dbus_proxy_type {
     DBUS_PROXY_MAX_COUNT,
 };
 
+typedef enum {
+    MODEM_STATE_POWER_OFF,
+    MODEM_STATE_AWARE,
+    MODEM_STATE_ALIVE,
+} tapi_modem_state;
+
 typedef struct {
     char name[MAX_CONTEXT_NAME_LENGTH + 1];
     DBusConnection* connection;
@@ -76,6 +82,7 @@ typedef struct {
     GDBusClient* client;
     GDBusProxy* dbus_proxy_manager;
     GDBusProxy* dbus_proxy[CONFIG_ACTIVE_MODEM_COUNT][DBUS_PROXY_MAX_COUNT];
+    tapi_modem_state modem_state[CONFIG_ACTIVE_MODEM_COUNT];
     bool client_ready;
 } dbus_context;
 
@@ -83,12 +90,6 @@ typedef struct {
     tapi_async_result* result;
     tapi_async_function cb_function;
 } tapi_async_handler;
-
-typedef enum {
-    MODEM_STATE_POWER_OFF,
-    MODEM_STATE_AWARE,
-    MODEM_STATE_ALIVE,
-} modem_state;
 
 /****************************************************************************
  * Public Function Prototypes
@@ -109,6 +110,7 @@ void property_set_done(const DBusError* error, void* user_data);
 void handler_free(void* obj);
 const char* get_env_interface_support_string(const char* interface);
 bool is_interface_supported(const char* interface);
+int get_modem_id_by_proxy(dbus_context* context, GDBusProxy* proxy);
 
 /**
  * Power on or off modem.
