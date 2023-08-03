@@ -67,7 +67,7 @@ static void transmit_apdu_param_append(DBusMessageIter* iter, void* user_data);
  * Private Functions
  ****************************************************************************/
 
-static int sim_state_changed(DBusConnection* connection,
+__attribute__((unused)) static int sim_property_changed(DBusConnection* connection,
     DBusMessage* message, void* user_data)
 {
     tapi_async_handler* handler = user_data;
@@ -175,6 +175,46 @@ done:
 
     if (sim_lock != NULL)
         free(sim_lock);
+
+    return 1;
+}
+
+static int sim_state_changed(DBusConnection* connection,
+    DBusMessage* message, void* user_data)
+{
+    tapi_async_handler* handler = user_data;
+    tapi_async_result* ar;
+    tapi_async_function cb;
+    DBusMessageIter iter, var;
+    char* property;
+
+    if (handler == NULL)
+        return 0;
+
+    ar = handler->result;
+    if (ar == NULL)
+        return 0;
+
+    cb = handler->cb_function;
+    if (cb == NULL)
+        return 0;
+
+    if (ar->msg_id != MSG_SIM_STATE_CHANGE_IND) {
+        return 0;
+    }
+
+    if (dbus_message_iter_init(message, &iter) == false)
+        return 0;
+
+    dbus_message_iter_get_basic(&iter, &property);
+    dbus_message_iter_next(&iter);
+
+    dbus_message_iter_recurse(&iter, &var);
+    if (strcmp(property, "SimState") == 0) {
+        dbus_message_iter_get_basic(&var, &ar->arg2);
+        ar->status = OK;
+        cb(ar);
+    }
 
     return 1;
 }

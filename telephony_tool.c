@@ -443,8 +443,6 @@ static void tele_cbs_async_fun(tapi_async_result* result)
 
 static void tele_sim_async_fun(tapi_async_result* result)
 {
-    sim_lock_state* sim_lock = NULL;
-    sim_state_result* ss;
     unsigned char* apdu_data;
     int i;
 
@@ -467,33 +465,8 @@ static void tele_sim_async_fun(tapi_async_result* result)
     } else if (result->msg_id == EVENT_OPEN_LOGICAL_CHANNEL_DONE) {
         syslog(LOG_DEBUG, "open logical channel respond session id : %d\n", result->arg2);
     } else if (result->msg_id == MSG_SIM_STATE_CHANGE_IND) {
-        ss = result->data;
-        if (ss != NULL) {
-            syslog(LOG_DEBUG, "response strings name : %s\n", ss->name);
-            if (strcmp(ss->name, "Present") == 0) {
-                syslog(LOG_DEBUG, "response is sim present : %d\n", ss->value);
-            } else if (strcmp(ss->name, "PinRequired") == 0) {
-                syslog(LOG_DEBUG, "response pin required type : %s\n", (char*)ss->data);
-            } else if (strcmp(ss->name, "LockedPins") == 0) {
-                sim_lock = ss->data;
-                if (sim_lock != NULL && sim_lock->sim_pwd_type != NULL) {
-                    for (i = 0; i < result->arg2; ++i) {
-                        syslog(LOG_DEBUG, "response locked pins type : %s\n",
-                            sim_lock->sim_pwd_type[i]);
-                    }
-                }
-            } else if (strcmp(ss->name, "Retries") == 0) {
-                sim_lock = ss->data;
-                if (sim_lock != NULL && sim_lock->sim_pwd_type != NULL) {
-                    for (i = 0; i < result->arg2; ++i) {
-                        syslog(LOG_DEBUG, "response locked pins type : %s\n",
-                            sim_lock->sim_pwd_type[i]);
-                        syslog(LOG_DEBUG, "response locked pins retries : %d\n",
-                            sim_lock->retry_count[i]);
-                    }
-                }
-            }
-        }
+        syslog(LOG_DEBUG, "sim state changed to : %s\n",
+            tapi_sim_state_to_string((tapi_sim_state)result->arg2));
     }
 }
 
