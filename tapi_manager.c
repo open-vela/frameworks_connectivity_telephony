@@ -1586,6 +1586,8 @@ int tapi_register(tapi_context context,
     case MSG_AIRPLANE_MODE_CHANGE_IND:
     case MSG_DEVICE_INFO_CHANGE_IND:
         return tapi_modem_register(context, slot_id, msg, user_obj, p_handle);
+    case MSG_IMS_REGISTRATION_MESSAGE_IND:
+        return tapi_ims_register_registration_change(context, slot_id, user_obj, p_handle);
     default:
         break;
     }
