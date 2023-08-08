@@ -54,6 +54,7 @@ typedef enum {
     SIM_STATE_LOCKED_OUT = 2,
     SIM_STATE_READY = 3,
     SIM_STATE_RESETTING = 4,
+    SIM_STATE_ERROR = 5,
 } tapi_sim_state;
 
 /****************************************************************************
@@ -78,11 +79,12 @@ int tapi_sim_has_icc_card(tapi_context context, int slot_id, bool* out);
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[out] out           State of Icc card. The possible values are:
-				0 - SIM_STATE_NOT_PRESENT
-				1 - SIM_STATE_INSERTED
-				2 - SIM_STATE_LOCKED_OUT
-				3 - STATE_READY
-				4 - SIM_STATE_RESETTING
+                0 - SIM_STATE_NOT_PRESENT
+                1 - SIM_STATE_INSERTED
+                2 - SIM_STATE_LOCKED_OUT
+                3 - STATE_READY
+                4 - SIM_STATE_RESETTING
+                5 - SIM_STATE_ERROR
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_sim_get_sim_state(tapi_context context, int slot_id, int* out);
