@@ -528,6 +528,8 @@ const char* tapi_sim_state_to_string(tapi_sim_state sim_state)
         return "SIM_READY";
     case SIM_STATE_RESETTING:
         return "SIM_RESETTING";
+    case SIM_STATE_ERROR:
+        return "SIM_ERROR";
     default:
         return "SIM_UNKNOWN";
     }
