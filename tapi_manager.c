@@ -67,7 +67,27 @@ static void object_remove(GDBusProxy* proxy, void* user_data)
 {
 }
 
-static void get_dbus_proxy(dbus_context* ctx)
+static void get_persistent_dbus_proxy(dbus_context* ctx)
+{
+    ctx->dbus_proxy_manager = g_dbus_proxy_new(
+        ctx->client, OFONO_MANAGER_PATH, OFONO_MANAGER_INTERFACE);
+
+    for (int i = 0; i < CONFIG_ACTIVE_MODEM_COUNT; i++) {
+        ctx->dbus_proxy[i][0] = g_dbus_proxy_new(
+            ctx->client, tapi_utils_get_modem_path(i), OFONO_MODEM_INTERFACE);
+    }
+}
+
+static void release_persistent_dbus_proxy(dbus_context* ctx)
+{
+    g_dbus_proxy_unref(ctx->dbus_proxy_manager);
+
+    for (int i = 0; i < CONFIG_ACTIVE_MODEM_COUNT; i++) {
+        g_dbus_proxy_unref(ctx->dbus_proxy[i][0]);
+    }
+}
+
+static void get_mutable_dbus_proxy(dbus_context* ctx)
 {
     const char* dbus_proxy_server[] = {
         OFONO_MODEM_INTERFACE,
@@ -88,11 +108,8 @@ static void get_dbus_proxy(dbus_context* ctx)
         OFONO_PHONEBOOK_INTERFACE,
     };
 
-    ctx->dbus_proxy_manager = g_dbus_proxy_new(
-        ctx->client, OFONO_MANAGER_PATH, OFONO_MANAGER_INTERFACE);
-
     for (int i = 0; i < CONFIG_ACTIVE_MODEM_COUNT; i++) {
-        for (int j = 0; j < DBUS_PROXY_MAX_COUNT; j++) {
+        for (int j = 1; j < DBUS_PROXY_MAX_COUNT; j++) {
             if (!is_interface_supported(dbus_proxy_server[j])) {
                 ctx->dbus_proxy[i][j] = NULL;
                 continue;
@@ -104,12 +121,14 @@ static void get_dbus_proxy(dbus_context* ctx)
     }
 }
 
-static void release_dbus_proxy(dbus_context* ctx)
+static void release_mutable_dbus_proxy(dbus_context* ctx)
 {
-    g_dbus_proxy_unref(ctx->dbus_proxy_manager);
     for (int i = 0; i < CONFIG_ACTIVE_MODEM_COUNT; i++) {
-        for (int j = 0; j < DBUS_PROXY_MAX_COUNT; j++) {
-            g_dbus_proxy_unref(ctx->dbus_proxy[i][j]);
+        for (int j = 1; j < DBUS_PROXY_MAX_COUNT; j++) {
+            if (ctx->dbus_proxy[i][j] != NULL) {
+                g_dbus_proxy_unref(ctx->dbus_proxy[i][j]);
+                ctx->dbus_proxy[i][j] = NULL;
+            }
         }
     }
 }
@@ -671,8 +690,8 @@ static void on_modem_property_change(GDBusProxy* proxy, const char* name,
 
     if (ctx->modem_state[modem_id] == MODEM_STATE_AWARE && new_state == MODEM_STATE_ALIVE) {
         tapi_log_info("%s - refresh dbus_proxy ", __func__);
-        release_dbus_proxy(ctx);
-        get_dbus_proxy(ctx);
+        release_mutable_dbus_proxy(ctx);
+        get_mutable_dbus_proxy(ctx);
     }
 
     ctx->modem_state[modem_id] = new_state;
@@ -816,7 +835,8 @@ tapi_context tapi_open(const char* client_name,
     ctx->client = client;
     ctx->client_ready = false;
     snprintf(ctx->name, sizeof(ctx->name), "%s", client_name);
-    get_dbus_proxy(ctx);
+    get_persistent_dbus_proxy(ctx);
+    get_mutable_dbus_proxy(ctx);
 
     for (int i = 0; i < CONFIG_ACTIVE_MODEM_COUNT; i++) {
         ctx->modem_state[i] = MODEM_STATE_POWER_OFF;
@@ -845,7 +865,8 @@ int tapi_close(tapi_context context)
         g_dbus_proxy_remove_property_watch(ctx->dbus_proxy[i][DBUS_PROXY_MODEM], NULL);
     }
 
-    release_dbus_proxy(ctx);
+    release_persistent_dbus_proxy(ctx);
+    release_mutable_dbus_proxy(ctx);
     g_dbus_client_unref(ctx->client);
     dbus_connection_close(ctx->connection);
     dbus_connection_unref(ctx->connection);
