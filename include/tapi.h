@@ -151,10 +151,10 @@ typedef enum {
 } tapi_network_type;
 
 typedef enum {
+    RADIO_STATE_UNKNOWN = -1,
     RADIO_STATE_UNAVAILABLE = 0,
     RADIO_STATE_ON,
     RADIO_STATE_OFF,
-    RADIO_STATE_EMERGENCY_ONLY,
 } tapi_radio_state;
 
 typedef enum {
