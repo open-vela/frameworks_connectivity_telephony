@@ -289,6 +289,15 @@ int tapi_call_register_ring_back_tone_change(tapi_context context, int slot_id,
     void* user_obj, tapi_async_function p_handle);
 
 /**
+ * Register default voicecall slot change callback.
+ * @param[in] context       Telephony api context.
+ * @param[in] user_obj      User data.
+ * @return Positive value as watch_id on success; a negated errno value on failure.
+ */
+int tapi_call_register_default_voicecall_slot_change(tapi_context context, void* user_obj,
+    tapi_async_function p_handle);
+
+/**
  * Initiates an IMS conferenca call.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
@@ -370,6 +379,22 @@ int tapi_call_start_dtmf(tapi_context context, int slot_id, unsigned char digit,
  */
 int tapi_call_stop_dtmf(tapi_context context, int slot_id, int event_id,
     tapi_async_function p_handle);
+
+/**
+ * Set default voicecall slot id.
+ * @param[in] context       Telephony api context.
+ * @param[in] slot_id       The default slot id to set (not set: -1, slot id: 0/1).
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_call_set_default_voicecall_slot(tapi_context context, int slot_id);
+
+/**
+ * Get default voicecall slot id.
+ * @param[in] context       Telephony api context.
+ * @param[out] out          Default voicecall slot id (not set: -1, slot id: 0/1).
+   @return Zero on success; a negated errno value on failure.
+*/
+int tapi_call_get_default_voicecall_slot(tapi_context context, int* out);
 
 #ifdef __cplusplus
 }

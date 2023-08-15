@@ -339,6 +339,15 @@ static void tele_call_manager_call_async_fun(tapi_async_result* result)
     }
 }
 
+static void tele_call_property_change_async_fun(tapi_async_result* result)
+{
+    syslog(LOG_DEBUG, "%s : %d\n", __func__, result->status);
+
+    if (result->msg_id == MSG_DEFAULT_VOICECALL_SLOT_CHANGE_IND) {
+        syslog(LOG_DEBUG, "default voicecall slot: %d\n", result->arg2);
+    }
+}
+
 static void call_state_change_cb(tapi_async_result* result)
 {
     tapi_call_info* call_info;
@@ -1110,6 +1119,14 @@ static int telephonytool_cmd_listen_call_manager_change(tapi_context context, ch
     return watch_id;
 }
 
+static int telephonytool_cmd_listen_call_slot_change(tapi_context context, char* pargs)
+{
+    int watch_id = tapi_call_register_default_voicecall_slot_change(context, NULL,
+        tele_call_property_change_async_fun);
+    syslog(LOG_DEBUG, "%s, %s, watch_id : %d \n", __func__, pargs, watch_id);
+    return watch_id;
+}
+
 static int telephonytool_cmd_unlisten_call_singal(tapi_context context, char* pargs)
 {
     char dst[1][MAX_INPUT_ARGS_LEN];
@@ -1308,6 +1325,33 @@ static int telephonytool_cmd_stop_dtmf(tapi_context context, char* pargs)
     syslog(LOG_DEBUG, "%s, slotId : %s digit : %s\n", __func__, dst[0], dst[1]);
     return tapi_call_stop_dtmf(context, atoi(slot_id), EVENT_REQUEST_STOP_DTMF_DONE,
         tele_call_async_fun);
+}
+
+static int telephonytool_cmd_set_default_voicecall_slot(tapi_context context, char* pargs)
+{
+    char* value;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    value = strtok_r(pargs, " ", NULL);
+    if (value == NULL)
+        return -EINVAL;
+
+    if (!is_valid_slot_id_str(value) && strcmp(value, "-1"))
+        return -EINVAL;
+
+    return tapi_call_set_default_voicecall_slot(context, atoi(value));
+}
+
+static int telephonytool_cmd_get_default_voicecall_slot(tapi_context context, char* pargs)
+{
+    int result;
+
+    tapi_call_get_default_voicecall_slot(context, &result);
+    syslog(LOG_DEBUG, "%s : %d \n", __func__, result);
+
+    return 0;
 }
 
 static int telephonytool_cmd_query_modem_list(tapi_context context, char* pargs)
@@ -4231,6 +4275,9 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         telephonytool_cmd_unlisten_call_singal,
         "call unlisten event callback (enter example : unlisten-call [watch_id] "
         "[watch_id, one uint value returned from \"listen-call\"]" },
+    { "listen-call-slot-change", CALL_CMD,
+        telephonytool_cmd_listen_call_slot_change,
+        "register call slot change callback (enter example : listen-call-slot-change)" },
     { "dial", CALL_CMD,
         telephonytool_cmd_dial,
         "Dial (enter example : dial 0 10086 0 [slot_id][number][hide_call_id, 0:show 1:hide])" },
@@ -4286,6 +4333,12 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     { "stop-dtmf", CALL_CMD,
         telephonytool_cmd_stop_dtmf,
         "stop play dtmf (enter example : stop-dtmf 0 [slot_id])" },
+    { "set-voicecall-slot", CALL_CMD,
+        telephonytool_cmd_set_default_voicecall_slot,
+        "set default voicecall slot (enter example : set-voicecall-slot 0 [slot_id])" },
+    { "get-voicecall-slot", CALL_CMD,
+        telephonytool_cmd_get_default_voicecall_slot,
+        "get default data slot (enter example : get-voicecall-slot)" },
 
     /* Data Command */
     { "listen-data", DATA_CMD,
