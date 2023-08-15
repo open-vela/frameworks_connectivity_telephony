@@ -230,6 +230,7 @@ const char* get_call_signal_member(tapi_indication_msg msg)
     case MSG_CALL_DISCONNECTED_REASON_MESSAGE_IND:
         return "DisconnectReason";
     case MSG_ECC_LIST_CHANGE_IND:
+    case MSG_DEFAULT_VOICECALL_SLOT_CHANGE_IND:
         return "PropertyChanged";
     case MSG_CALL_RING_BACK_TONE_IND:
         return "RingBackTone";

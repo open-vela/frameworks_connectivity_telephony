@@ -217,6 +217,41 @@ static void conference_param_append(DBusMessageIter* iter, void* user_data)
     dbus_message_iter_close_container(iter, &array);
 }
 
+static int tapi_call_default_voicecall_slot_change(DBusMessage* message, tapi_async_handler* handler)
+{
+    tapi_async_result* ar;
+    tapi_async_function cb;
+    DBusMessageIter iter, var;
+    const char* property;
+
+    if (handler == NULL)
+        return false;
+
+    ar = handler->result;
+    if (ar == NULL)
+        return false;
+
+    cb = handler->cb_function;
+    if (cb == NULL)
+        return false;
+
+    if (!dbus_message_iter_init(message, &iter)) {
+        return false;
+    }
+
+    dbus_message_iter_get_basic(&iter, &property);
+    dbus_message_iter_next(&iter);
+    dbus_message_iter_recurse(&iter, &var);
+
+    if (!strcmp(property, "VoiceCallSlot")) {
+        dbus_message_iter_get_basic(&var, &ar->arg2);
+        ar->status = OK;
+        cb(ar);
+    }
+
+    return true;
+}
+
 static int ring_back_tone_change(DBusMessage* message, tapi_async_handler* handler)
 {
     tapi_async_result* ar;
@@ -284,6 +319,9 @@ call_manager_property_changed(DBusConnection* connection, DBusMessage* message,
                    "RingBackTone")
         && msg_id == MSG_CALL_RING_BACK_TONE_IND) {
         return ring_back_tone_change(message, handler);
+    } else if (dbus_message_is_signal(message, OFONO_MANAGER_INTERFACE, "PropertyChanged")
+        && msg_id == MSG_DEFAULT_VOICECALL_SLOT_CHANGE_IND) {
+        return tapi_call_default_voicecall_slot_change(message, handler);
     }
 
     return true;
@@ -859,8 +897,18 @@ static int tapi_register_manager_call_signal(tapi_context context, int slot_id, 
     handler->cb_function = p_handle;
     handler->result = ar;
 
-    watch_id = g_dbus_add_signal_watch(ctx->connection,
-        OFONO_SERVICE, modem_path, interface, member, function, handler, handler_free);
+    switch (msg) {
+    case MSG_DEFAULT_VOICECALL_SLOT_CHANGE_IND:
+        watch_id = g_dbus_add_signal_watch(ctx->connection,
+            OFONO_SERVICE, OFONO_MANAGER_PATH, interface,
+            member, function, handler, handler_free);
+        break;
+    default:
+        watch_id = g_dbus_add_signal_watch(ctx->connection,
+            OFONO_SERVICE, modem_path, interface, member, function, handler, handler_free);
+        break;
+    }
+
     if (watch_id == 0) {
         handler_free(handler);
         return -EINVAL;
@@ -1346,6 +1394,18 @@ int tapi_call_register_ring_back_tone_change(tapi_context context, int slot_id, 
         p_handle, call_manager_property_changed);
 }
 
+int tapi_call_register_default_voicecall_slot_change(tapi_context context, void* user_obj,
+    tapi_async_function p_handle)
+{
+    if (context == NULL) {
+        return -EINVAL;
+    }
+
+    return tapi_register_manager_call_signal(context, 0,
+        OFONO_MANAGER_INTERFACE, MSG_DEFAULT_VOICECALL_SLOT_CHANGE_IND, user_obj,
+        p_handle, call_manager_property_changed);
+}
+
 int tapi_call_dial_conferece(tapi_context context, int slot_id, char* participants[], int size)
 {
     ims_conference_param* ims_conference_participants_param;
@@ -1528,4 +1588,52 @@ int tapi_call_stop_dtmf(tapi_context context, int slot_id,
     int event_id, tapi_async_function p_handle)
 {
     return call_play_dtmf(context, slot_id, 0, STOP_PLAY_DTMF, event_id, p_handle);
+}
+
+int tapi_call_set_default_voicecall_slot(tapi_context context, int slot_id)
+{
+    dbus_context* ctx = context;
+    GDBusProxy* proxy;
+
+    proxy = ctx->dbus_proxy_manager;
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
+    if (!tapi_is_valid_slotid(slot_id) && slot_id != -1)
+        return -EINVAL;
+
+    if (!g_dbus_proxy_set_property_basic(proxy,
+            "VoiceCallSlot", DBUS_TYPE_INT32, &slot_id, NULL, NULL, NULL)) {
+        return -EINVAL;
+    }
+
+    return OK;
+}
+
+int tapi_call_get_default_voicecall_slot(tapi_context context, int* out)
+{
+    dbus_context* ctx = context;
+    GDBusProxy* proxy;
+    DBusMessageIter iter;
+
+    proxy = ctx->dbus_proxy_manager;
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
+    if (g_dbus_proxy_get_property(proxy, "VoiceCallSlot", &iter)) {
+        dbus_message_iter_get_basic(&iter, out);
+        return OK;
+    }
+
+    return -EINVAL;
 }
