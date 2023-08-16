@@ -24,6 +24,13 @@
 #include "tapi_manager.h"
 
 /****************************************************************************
+ * Pre-processor Definitions
+ ****************************************************************************/
+
+#define MAX_DBUS_INIT_RETRY_COUNT 6
+#define MAX_DBUS_INIT_RETRY_INTERVAL_MS 500
+
+/****************************************************************************
  * Private Type Declarations
  ****************************************************************************/
 
@@ -787,39 +794,54 @@ tapi_context tapi_open(const char* client_name,
     GDBusClient* client;
     dbus_context* ctx;
     DBusError err;
+    int retry_round = 0;
 
-    connection = g_dbus_setup_private(DBUS_BUS_SYSTEM, NULL, NULL);
-    if (connection == NULL) {
-        tapi_log_error("dbus connection init error \n");
+    ctx = malloc(sizeof(dbus_context));
+    if (ctx == NULL) {
+        tapi_log_error("context malloc failed! \n");
         return NULL;
     }
 
-    dbus_error_init(&err);
-    dbus_request_name(connection, client_name, &err);
-    if (dbus_error_is_set(&err)) {
-        goto error;
+    client_ready_cb_data* cbd = malloc(sizeof(client_ready_cb_data));
+    if (cbd == NULL) {
+        tapi_log_error("client callback malloc failed! \n");
+        free(ctx);
+        return NULL;
     }
 
-    client = g_dbus_client_new(connection, OFONO_SERVICE, OFONO_MANAGER_PATH);
-    if (client == NULL) {
-        goto error;
-    }
+    while (1) {
+        connection = g_dbus_setup_private(DBUS_BUS_SYSTEM, NULL, NULL);
+        if (connection == NULL) {
+            tapi_log_error("dbus connection init error \n");
 
-    // fill tapi contexts .
-    ctx = malloc(sizeof(dbus_context));
-    if (ctx == NULL) {
-        g_dbus_client_unref(client);
-        goto error;
+            if (retry_round++ < MAX_DBUS_INIT_RETRY_COUNT) {
+                usleep(MAX_DBUS_INIT_RETRY_INTERVAL_MS * 1000);
+                continue;
+            }
+
+            tapi_log_error("max retry times, giving up! \n");
+            goto error;
+        }
+
+        dbus_error_init(&err);
+        dbus_request_name(connection, client_name, &err);
+        if (dbus_error_is_set(&err)) {
+            tapi_log_error("%s error %s: %s \n", __func__, err.name, err.message);
+            dbus_error_free(&err);
+            goto error;
+        }
+
+        client = g_dbus_client_new(connection, OFONO_SERVICE, OFONO_MANAGER_PATH);
+        if (client == NULL) {
+            tapi_log_error("client create failed! \n");
+            goto error;
+        }
+
+        break;
     }
 
     g_dbus_client_set_proxy_handlers(client, object_add, object_remove,
         object_filter, NULL, NULL);
-
-    client_ready_cb_data* cbd = malloc(sizeof(client_ready_cb_data));
-    if (cbd == NULL) {
-        g_dbus_client_unref(client);
-        goto error;
-    }
 
     cbd->client_name = client_name;
     cbd->context = ctx;
@@ -827,7 +849,7 @@ tapi_context tapi_open(const char* client_name,
     cbd->callback = callback;
     if (!g_dbus_client_set_ready_watch(client, on_dbus_client_ready, cbd)) {
         g_dbus_client_unref(client);
-        free(cbd);
+
         goto error;
     }
 
@@ -847,9 +869,14 @@ tapi_context tapi_open(const char* client_name,
     return ctx;
 
 error:
-    dbus_connection_close(connection);
-    dbus_connection_unref(connection);
-    tapi_log_error("dbus client init error \n");
+    free(ctx);
+    free(cbd);
+    if (connection != NULL) {
+        dbus_connection_close(connection);
+        dbus_connection_unref(connection);
+    }
+
+    tapi_log_error("dbus connection open error \n");
     return NULL;
 }
 
