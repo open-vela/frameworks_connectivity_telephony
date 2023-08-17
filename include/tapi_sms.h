@@ -156,6 +156,22 @@ int tapi_sms_register(tapi_context context, int slot_id,
  */
 int tapi_sms_unregister(tapi_context context, int watch_id);
 
+/**
+ * Set default sms slot id.
+ * @param[in] context       Telephony api context.
+ * @param[in] slot_id       The default slot id to set (not set: -1, slot_id: 0/1).
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_call_set_default_sms_slot(tapi_context context, int slot_id);
+
+/**
+ * Get default sms slot id.
+ * @param[in] context       Telephony api context.
+ * @param[out] out          Default sms slot id (not set: -1, slot_id: 0/1).
+   @return Zero on success; a negated errno value on failure.
+*/
+int tapi_call_get_default_sms_slot(tapi_context context, int* out);
+
 #ifdef __cplusplus
 }
 #endif

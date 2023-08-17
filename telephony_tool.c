@@ -423,6 +423,11 @@ static void tele_sms_async_fun(tapi_async_result* result)
         return;
     }
 
+    if (result->msg_id == MSG_STATUS_DEFAULT_SMS_SLOT_CHANGED_IND) {
+        syslog(LOG_DEBUG, "default sms slot: %d\n", result->arg2);
+        return;
+    }
+
     syslog(LOG_DEBUG, "%s msg id : %d \n", __func__, result->msg_id);
     message_info = (tapi_message_info*)result->data;
 
@@ -3063,6 +3068,41 @@ static int telephonytool_tapi_sms_delete_message_from_sim(tapi_context context, 
     return tapi_sms_delete_message_from_sim(context, atoi(slot_id), atoi(index));
 }
 
+static int telephonytool_tapi_sms_slot_change(tapi_context context, char* args)
+{
+    int watch_id = tapi_sms_register(context, 0, MSG_STATUS_DEFAULT_SMS_SLOT_CHANGED_IND,
+        NULL, tele_sms_async_fun);
+    syslog(LOG_DEBUG, "%s\n", __func__);
+    return watch_id;
+}
+
+static int telephonytool_cmd_set_default_sms_slot(tapi_context context, char* pargs)
+{
+    char* value;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    value = strtok_r(pargs, " ", NULL);
+    if (value == NULL)
+        return -EINVAL;
+
+    if (!is_valid_slot_id_str(value) && strcmp(value, "-1"))
+        return -EINVAL;
+
+    return tapi_call_set_default_sms_slot(context, atoi(value));
+}
+
+static int telephonytool_cmd_get_default_sms_slot(tapi_context context, char* pargs)
+{
+    int result;
+
+    tapi_call_get_default_sms_slot(context, &result);
+    syslog(LOG_DEBUG, "%s : %d \n", __func__, result);
+
+    return 0;
+}
+
 static int telephonytool_cmd_network_listen(tapi_context context, char* pargs)
 {
     char dst[2][MAX_INPUT_ARGS_LEN];
@@ -4514,12 +4554,21 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     { "register-incoming-cbs", SMS_AND_CBS_CMD,
         telephonytool_tapi_cbs_register,
         "get incoming cbs ? (enter example : register-incoming-cbs 0)" },
+    { "register-sms-slot-change", SMS_AND_CBS_CMD,
+        telephonytool_tapi_sms_slot_change,
+        "register sms slot change callback (enter example : register-sms-slot-change)" },
     { "copy-sms-to-sim", SMS_AND_CBS_CMD,
         telephonytool_tapi_sms_copy_message_to_sim,
         "send message (enter example : copy-sms-to-sim 0 10086 hello)" },
     { "delete-sms-from-sim", SMS_AND_CBS_CMD,
         telephonytool_tapi_sms_delete_message_from_sim,
         "send message (enter example : delete-sms-from-sim 0 1)" },
+    { "set-sms-slot", CALL_CMD,
+        telephonytool_cmd_set_default_sms_slot,
+        "set default sms slot (enter example : set-sms-slot 0 [slot_id])" },
+    { "get-sms-slot", CALL_CMD,
+        telephonytool_cmd_get_default_sms_slot,
+        "get default sms slot (enter example : get-sms-slot)" },
 
     /* Network Command */
     { "listen-network", NETWORK_CMD,
