@@ -285,6 +285,42 @@ done:
     return 1;
 }
 
+static int sms_property_changed(DBusConnection* connection,
+    DBusMessage* message, void* user_data)
+{
+    tapi_async_handler* handler = user_data;
+    tapi_async_result* ar;
+    tapi_async_function cb;
+    DBusMessageIter iter, var;
+    const char* property;
+
+    if (handler == NULL)
+        return 0;
+
+    ar = handler->result;
+    if (ar == NULL)
+        return 0;
+
+    cb = handler->cb_function;
+    if (cb == NULL)
+        return 0;
+
+    if (dbus_message_iter_init(message, &iter) == false)
+        return 0;
+
+    dbus_message_iter_get_basic(&iter, &property);
+    dbus_message_iter_next(&iter);
+    dbus_message_iter_recurse(&iter, &var);
+
+    if (!strcmp(property, "SmsSlot")) {
+        dbus_message_iter_get_basic(&var, &ar->arg2);
+        ar->status = OK;
+        cb(ar);
+    }
+
+    return 1;
+}
+
 static int decode_message_info(DBusMessageIter* iter, tapi_message_info* message_info)
 {
     DBusMessageIter subArrayIter;
@@ -676,7 +712,7 @@ int tapi_sms_register(tapi_context context, int slot_id,
     int watch_id = 0;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
-        || msg_type < MSG_INCOMING_MESSAGE_IND || msg_type > MSG_STATUS_REPORT_MESSAGE_IND) {
+        || msg_type < MSG_INCOMING_MESSAGE_IND || msg_type > MSG_STATUS_DEFAULT_SMS_SLOT_CHANGED_IND) {
         return -EINVAL;
     }
 
@@ -719,6 +755,11 @@ int tapi_sms_register(tapi_context context, int slot_id,
             OFONO_MESSAGE_MANAGER_INTERFACE, "StatusReportMessage",
             unsol_sms_message, user_data, handler_free);
         break;
+    case MSG_STATUS_DEFAULT_SMS_SLOT_CHANGED_IND:
+        watch_id = g_dbus_add_signal_watch(ctx->connection,
+            OFONO_SERVICE, OFONO_MANAGER_PATH, OFONO_MANAGER_INTERFACE,
+            "PropertyChanged", sms_property_changed, user_data, handler_free);
+        break;
     default:
         break;
     }
@@ -729,6 +770,54 @@ int tapi_sms_register(tapi_context context, int slot_id,
     }
 
     return watch_id;
+}
+
+int tapi_call_set_default_sms_slot(tapi_context context, int slot_id)
+{
+    dbus_context* ctx = context;
+    GDBusProxy* proxy;
+
+    proxy = ctx->dbus_proxy_manager;
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
+    if (!tapi_is_valid_slotid(slot_id) && slot_id != -1)
+        return -EINVAL;
+
+    if (!g_dbus_proxy_set_property_basic(proxy,
+            "SmsSlot", DBUS_TYPE_INT32, &slot_id, NULL, NULL, NULL)) {
+        return -EINVAL;
+    }
+
+    return OK;
+}
+
+int tapi_call_get_default_sms_slot(tapi_context context, int* out)
+{
+    dbus_context* ctx = context;
+    GDBusProxy* proxy;
+    DBusMessageIter iter;
+
+    proxy = ctx->dbus_proxy_manager;
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
+    if (g_dbus_proxy_get_property(proxy, "SmsSlot", &iter)) {
+        dbus_message_iter_get_basic(&iter, out);
+        return OK;
+    }
+
+    return -EINVAL;
 }
 
 int tapi_sms_unregister(tapi_context context, int watch_id)
