@@ -1503,7 +1503,7 @@ static int telephonytool_cmd_set_rat_mode(tapi_context context, char* pargs)
 static int telephonytool_cmd_get_rat_mode(tapi_context context, char* pargs)
 {
     char* slot_id;
-    tapi_pref_net_mode value;
+    tapi_pref_net_mode value = NETWORK_PREF_NET_TYPE_ANY;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
@@ -1611,7 +1611,7 @@ static int telephonytool_cmd_get_modem_model(tapi_context context, char* pargs)
 static int telephonytool_cmd_get_phone_state(tapi_context context, char* pargs)
 {
     char* slot_id;
-    tapi_phone_state state;
+    tapi_phone_state state = PHONE_IDLE;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
@@ -1652,7 +1652,7 @@ static int telephonytool_cmd_send_modem_power(tapi_context context, char* pargs)
 static int telephonytool_cmd_get_radio_state(tapi_context context, char* pargs)
 {
     char* slot_id;
-    tapi_radio_state state;
+    tapi_radio_state state = RADIO_STATE_UNKNOWN;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
@@ -2156,7 +2156,7 @@ static int telephonytool_cmd_get_ps_attached(tapi_context context, char* pargs)
 static int telephonytool_cmd_get_ps_network_type(tapi_context context, char* pargs)
 {
     char* slot_id;
-    tapi_network_type result;
+    tapi_network_type result = NETWORK_TYPE_UNKNOWN;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
@@ -2713,7 +2713,7 @@ static int telephonytool_cmd_transmit_apdu_basic_channel(tapi_context context, c
 static int telephonytool_cmd_get_uicc_enablement(tapi_context context, char* pargs)
 {
     char* slot_id;
-    tapi_sim_uicc_app_state state;
+    tapi_sim_uicc_app_state state = SIM_UICC_APP_UNKNOWN;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
@@ -3277,7 +3277,7 @@ static int telephonytool_cmd_get_net_registration_info(tapi_context context, cha
 static int telephonytool_cmd_get_voice_networktype(tapi_context context, char* pargs)
 {
     char* slot_id;
-    tapi_network_type type;
+    tapi_network_type type = NETWORK_TYPE_UNKNOWN;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
