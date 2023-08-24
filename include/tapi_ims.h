@@ -121,6 +121,15 @@ int tapi_ims_is_registered(tapi_context context, int slot_id);
  */
 int tapi_ims_is_volte_available(tapi_context context, int slot_id);
 
+/**
+ * Gets Subscriber Uri Number.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[out] out           Subscriber Uri Number returned.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_ims_get_subscriber_uri_number(tapi_context context, int slot_id, char** out);
+
 #ifdef __cplusplus
 }
 #endif

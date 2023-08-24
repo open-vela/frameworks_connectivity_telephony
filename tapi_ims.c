@@ -326,3 +326,30 @@ int tapi_ims_is_volte_available(tapi_context context, int slot_id)
 
     return reg && cap;
 }
+
+int tapi_ims_get_subscriber_uri_number(tapi_context context, int slot_id, char** out)
+{
+    dbus_context* ctx = context;
+    DBusMessageIter iter;
+    GDBusProxy* proxy;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+        return -EINVAL;
+    }
+
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_IMS];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    if (g_dbus_proxy_get_property(proxy, "SubscriberUriNumber", &iter)) {
+        dbus_message_iter_get_basic(&iter, out);
+        return OK;
+    }
+
+    return -EINVAL;
+}
