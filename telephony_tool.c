@@ -1667,7 +1667,7 @@ static int telephonytool_cmd_get_radio_state(tapi_context context, char* pargs)
     return 0;
 }
 
-static int telephonytool_cmd_get_line_number(tapi_context context, char* pargs)
+static int telephonytool_cmd_get_phone_number(tapi_context context, char* pargs)
 {
     char* slot_id;
     char* number = NULL;
@@ -1679,7 +1679,7 @@ static int telephonytool_cmd_get_line_number(tapi_context context, char* pargs)
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
-    tapi_get_msisdn_number(context, atoi(slot_id), &number);
+    tapi_get_phone_number(context, atoi(slot_id), &number);
     syslog(LOG_DEBUG, "%s, slotId : %s  number : %s \n", __func__, slot_id, number);
 
     return 0;
@@ -4278,7 +4278,7 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         telephonytool_cmd_get_modem_revision,
         "get modem_revision (enter example : get-modem-revision 0 [slot_id])" },
     { "get-msisdn", RADIO_CMD,
-        telephonytool_cmd_get_line_number,
+        telephonytool_cmd_get_phone_number,
         "query line number (enter example : get-msisdn 0 [slot_id])" },
     { "get-modem-activity-info", RADIO_CMD,
         telephonytool_cmd_get_modem_activity_info,

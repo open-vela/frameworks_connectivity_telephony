@@ -1835,3 +1835,23 @@ int tapi_set_fast_dormancy(tapi_context context,
 
     return OK;
 }
+
+int tapi_get_phone_number(tapi_context context, int slot_id, char** out)
+{
+    dbus_context* ctx = context;
+    char* msisdn_number = NULL;
+    char* subscriber_uri_number = NULL;
+    int ret1, ret2;
+
+    ret1 = tapi_get_msisdn_number(ctx, slot_id, &msisdn_number);
+    if (ret1 == OK && msisdn_number != NULL) {
+        *out = msisdn_number;
+        tapi_log_info("get phone number from UICC.");
+    } else {
+        ret2 = tapi_ims_get_subscriber_uri_number(ctx, slot_id, &subscriber_uri_number);
+        *out = (ret2 == OK && subscriber_uri_number != NULL) ? subscriber_uri_number : NULL;
+        tapi_log_info("get phone number from IMS.");
+    }
+
+    return OK;
+}
