@@ -507,6 +507,42 @@ static int device_info_changed(DBusConnection* connection,
     return true;
 }
 
+static int modem_state_changed(DBusConnection* connection,
+    DBusMessage* message, void* user_data)
+{
+    tapi_async_handler* handler = user_data;
+    tapi_async_result* ar;
+    tapi_async_function cb;
+    DBusMessageIter iter, var;
+    const char* property;
+
+    if (handler == NULL)
+        return 0;
+
+    ar = handler->result;
+    if (ar == NULL)
+        return 0;
+
+    cb = handler->cb_function;
+    if (cb == NULL)
+        return 0;
+
+    if (dbus_message_iter_init(message, &iter) == false)
+        return 0;
+
+    dbus_message_iter_get_basic(&iter, &property);
+    dbus_message_iter_next(&iter);
+
+    dbus_message_iter_recurse(&iter, &var);
+    if (strcmp(property, "ModemState") == 0) {
+        dbus_message_iter_get_basic(&var, &ar->arg2);
+        ar->status = OK;
+        cb(ar);
+    }
+
+    return 1;
+}
+
 static void oem_ril_request_raw_param_append(DBusMessageIter* iter, void* user_data)
 {
     oem_ril_request_data* oem_ril_req_raw_param;
@@ -769,6 +805,11 @@ static int tapi_modem_register(tapi_context context,
         watch_id = g_dbus_add_signal_watch(ctx->connection,
             OFONO_SERVICE, modem_path, OFONO_MODEM_INTERFACE,
             "DeviceInfoChanged", device_info_changed, handler, handler_free);
+        break;
+    case MSG_MODEM_STATE_CHANGE_IND:
+        watch_id = g_dbus_add_signal_watch(ctx->connection,
+            OFONO_SERVICE, modem_path, OFONO_MODEM_INTERFACE,
+            "PropertyChanged", modem_state_changed, handler, handler_free);
         break;
     default:
         handler_free(handler);
@@ -1602,6 +1643,35 @@ int tapi_get_modem_status(tapi_context context, int slot_id,
     return OK;
 }
 
+int tapi_get_modem_status_sync(tapi_context context, int slot_id, tapi_modem_state* out)
+{
+    dbus_context* ctx = context;
+    GDBusProxy* proxy;
+    DBusMessageIter iter;
+    int state = 0;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+        return -EINVAL;
+    }
+
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    if (g_dbus_proxy_get_property(proxy, "ModemState", &iter)) {
+        dbus_message_iter_get_basic(&iter, &state);
+        *out = state;
+        return OK;
+    }
+
+    return -EINVAL;
+}
+
 int tapi_register(tapi_context context,
     int slot_id, tapi_indication_msg msg, void* user_obj, tapi_async_function p_handle)
 {
@@ -1633,6 +1703,7 @@ int tapi_register(tapi_context context,
     case MSG_MODEM_RESTART_IND:
     case MSG_AIRPLANE_MODE_CHANGE_IND:
     case MSG_DEVICE_INFO_CHANGE_IND:
+    case MSG_MODEM_STATE_CHANGE_IND:
         return tapi_modem_register(context, slot_id, msg, user_obj, p_handle);
     case MSG_IMS_REGISTRATION_MESSAGE_IND:
         return tapi_ims_register_registration_change(context, slot_id, user_obj, p_handle);
