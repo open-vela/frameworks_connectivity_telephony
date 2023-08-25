@@ -90,6 +90,12 @@ typedef enum {
     FORBIDDEN,
 } tapi_operator_status;
 
+typedef enum {
+    MODEM_STATE_POWER_OFF,
+    MODEM_STATE_AWARE,
+    MODEM_STATE_ALIVE,
+} tapi_modem_state;
+
 /*
  * registration state as follows:
  * 0 - Not registered, MT is not currently searching a new operator to register.
@@ -264,6 +270,9 @@ typedef enum {
 
     // airplane mode change Message
     MSG_AIRPLANE_MODE_CHANGE_IND,
+
+    // modem state change Message
+    MSG_MODEM_STATE_CHANGE_IND,
 
     // tapi indication msg value max.
     MSG_IND_MASK,

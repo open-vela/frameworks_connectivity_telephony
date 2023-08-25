@@ -219,7 +219,7 @@ int tapi_enable_modem(tapi_context context, int slot_id,
     int event_id, bool enable, tapi_async_function p_handle);
 
 /**
- * get modem status.
+ * get modem status asynchronously.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[in] event_id       Async event identifier.
@@ -228,6 +228,15 @@ int tapi_enable_modem(tapi_context context, int slot_id,
  */
 int tapi_get_modem_status(tapi_context context, int slot_id,
     int event_id, tapi_async_function p_handle);
+
+/**
+ * get modem status synchronously.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[out] out           Modem state returned core stack.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_get_modem_status_sync(tapi_context context, int slot_id, tapi_modem_state* out);
 
 /**
  * Set fast dormancy to modem.
