@@ -69,12 +69,6 @@ enum dbus_proxy_type {
     DBUS_PROXY_MAX_COUNT,
 };
 
-typedef enum {
-    MODEM_STATE_POWER_OFF,
-    MODEM_STATE_AWARE,
-    MODEM_STATE_ALIVE,
-} tapi_modem_state;
-
 typedef struct {
     char name[MAX_CONTEXT_NAME_LENGTH + 1];
     DBusConnection* connection;
