@@ -343,14 +343,18 @@ static int airplane_mode_changed(DBusConnection* connection,
 
     ar = handler->result;
     if (ar == NULL)
-        return false;
+        return 0;
+
+    if (ar->msg_id != MSG_AIRPLANE_MODE_CHANGE_IND) {
+        return 0;
+    }
 
     cb = handler->cb_function;
     if (cb == NULL)
-        return false;
+        return 0;
 
     if (dbus_message_iter_init(message, &iter) == false)
-        return false;
+        return 0;
 
     dbus_message_iter_get_basic(&iter, &property);
     dbus_message_iter_next(&iter);
@@ -362,7 +366,7 @@ static int airplane_mode_changed(DBusConnection* connection,
         cb(ar);
     }
 
-    return true;
+    return 1;
 }
 
 static int radio_state_changed(DBusConnection* connection,
@@ -375,18 +379,22 @@ static int radio_state_changed(DBusConnection* connection,
     const char* property;
 
     if (handler == NULL)
-        return false;
+        return 0;
 
     ar = handler->result;
     if (ar == NULL)
-        return false;
+        return 0;
+
+    if (ar->msg_id != MSG_RADIO_STATE_CHANGE_IND) {
+        return 0;
+    }
 
     cb = handler->cb_function;
     if (cb == NULL)
-        return false;
+        return 0;
 
     if (dbus_message_iter_init(message, &iter) == false)
-        return false;
+        return 0;
 
     dbus_message_iter_get_basic(&iter, &property);
     dbus_message_iter_next(&iter);
@@ -398,7 +406,7 @@ static int radio_state_changed(DBusConnection* connection,
         cb(ar);
     }
 
-    return true;
+    return 1;
 }
 
 static int phone_state_changed(DBusConnection* connection,
@@ -522,6 +530,10 @@ static int modem_state_changed(DBusConnection* connection,
     ar = handler->result;
     if (ar == NULL)
         return 0;
+
+    if (ar->msg_id != MSG_MODEM_STATE_CHANGE_IND) {
+        return 0;
+    }
 
     cb = handler->cb_function;
     if (cb == NULL)
