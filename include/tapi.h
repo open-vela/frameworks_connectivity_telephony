@@ -200,7 +200,7 @@ typedef enum {
     MSG_MODEM_RESTART_IND,
     MSG_DEVICE_INFO_CHANGE_IND,
 
-    // Call Indication Message
+    // Below call signals were obsolete
     MSG_CALL_ADD_MESSAGE_IND,
     MSG_CALL_REMOVE_MESSAGE_IND,
     MSG_CALL_FORWARDED_MESSAGE_IND,
@@ -209,6 +209,8 @@ typedef enum {
     MSG_CALL_DISCONNECTED_REASON_MESSAGE_IND,
     MSG_CALL_MERGE_IND,
     MSG_CALL_SEPERATE_IND,
+
+    // Call Indication Message
     MSG_CALL_RING_BACK_TONE_IND,
     MSG_ECC_LIST_CHANGE_IND,
     MSG_DEFAULT_VOICECALL_SLOT_CHANGE_IND,
@@ -273,6 +275,9 @@ typedef enum {
 
     // modem state change Message
     MSG_MODEM_STATE_CHANGE_IND,
+
+    // call state change Message
+    MSG_CALL_STATE_CHANGE_IND,
 
     // tapi indication msg value max.
     MSG_IND_MASK,

@@ -1688,6 +1688,18 @@ int tapi_register(tapi_context context,
     int slot_id, tapi_indication_msg msg, void* user_obj, tapi_async_function p_handle)
 {
     switch (msg) {
+    case MSG_CALL_STATE_CHANGE_IND:
+        return tapi_call_register_call_state_change(
+            context, slot_id, user_obj, p_handle);
+    case MSG_CALL_RING_BACK_TONE_IND:
+        return tapi_call_register_ring_back_tone_change(
+            context, slot_id, user_obj, p_handle);
+    case MSG_ECC_LIST_CHANGE_IND:
+        return tapi_call_register_emergencylist_change(
+            context, slot_id, user_obj, p_handle);
+    case MSG_DEFAULT_VOICECALL_SLOT_CHANGE_IND:
+        return tapi_call_register_default_voicecall_slot_change(
+            context, user_obj, p_handle);
     case MSG_NETWORK_STATE_CHANGE_IND:
     case MSG_CELLINFO_CHANGE_IND:
     case MSG_SIGNAL_STRENGTH_CHANGE_IND:
