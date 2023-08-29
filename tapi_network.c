@@ -94,10 +94,8 @@ static void fill_registration_info(const char* prop, DBusMessageIter* iter,
         dbus_message_iter_get_basic(iter, &value_str);
         registration_info->selection_mode = tapi_utils_registration_mode_from_string(value_str);
     } else if (strcmp(prop, "Technology") == 0) {
-        dbus_message_iter_get_basic(iter, &value_str);
-
-        if (strlen(value_str) <= MAX_NETWORK_INFO_LENGTH)
-            strcpy(registration_info->technology, value_str);
+        dbus_message_iter_get_basic(iter, &value_int);
+        registration_info->technology = value_int;
     } else if (strcmp(prop, "Name") == 0) {
         dbus_message_iter_get_basic(iter, &value_str);
 
@@ -637,7 +635,6 @@ static void registration_info_query_done(DBusMessage* message, void* user_data)
     if (registration_info == NULL)
         return;
 
-    registration_info->technology[0] = '\0';
     registration_info->operator_name[0] = '\0';
     registration_info->mcc[0] = '\0';
     registration_info->mnc[0] = '\0';
@@ -1066,7 +1063,7 @@ int tapi_network_get_voice_network_type(tapi_context context, int slot_id, tapi_
     dbus_context* ctx = context;
     GDBusProxy* proxy;
     DBusMessageIter iter;
-    char* result;
+    int result;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
@@ -1084,7 +1081,7 @@ int tapi_network_get_voice_network_type(tapi_context context, int slot_id, tapi_
     if (g_dbus_proxy_get_property(proxy, "Technology", &iter)) {
         dbus_message_iter_get_basic(&iter, &result);
 
-        *out = tapi_utils_network_type_from_string(result);
+        *out = tapi_utils_network_type_from_ril_tech(result);
         return OK;
     }
 

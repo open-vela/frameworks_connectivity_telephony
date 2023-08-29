@@ -23,6 +23,29 @@
 #include "tapi.h"
 #include "tapi_internal.h"
 
+/* Radio technologies */
+#define RADIO_TECH_UNKNOWN 0
+#define RADIO_TECH_GPRS 1
+#define RADIO_TECH_EDGE 2
+#define RADIO_TECH_UMTS 3
+#define RADIO_TECH_IS95A 4
+#define RADIO_TECH_IS95B 5
+#define RADIO_TECH_1xRTT 6
+#define RADIO_TECH_EVDO_0 7
+#define RADIO_TECH_EVDO_A 8
+#define RADIO_TECH_HSDPA 9
+#define RADIO_TECH_HSUPA 10
+#define RADIO_TECH_HSPA 11
+#define RADIO_TECH_EVDO_B 12
+#define RADIO_TECH_EHRPD 13
+#define RADIO_TECH_LTE 14
+#define RADIO_TECH_HSPAP 15
+#define RADIO_TECH_GSM 16
+#define RADIO_TECH_TD_SCDMA 17
+#define RADIO_TECH_IWLAN 18
+#define RADIO_TECH_LTE_CA 19
+#define RADIO_TECH_NR 20
+
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
@@ -116,24 +139,21 @@ tapi_pref_net_mode tapi_utils_network_mode_from_string(const char* mode)
     return NETWORK_PREF_NET_TYPE_ANY;
 }
 
-tapi_network_type tapi_utils_network_type_from_string(const char* type)
+tapi_network_type tapi_utils_network_type_from_ril_tech(int type)
 {
-    if (type == NULL)
-        return NETWORK_TYPE_UNKNOWN;
-
-    if (strcmp(type, "gsm") == 0) {
+    if (type == RADIO_TECH_EDGE) {
         return NETWORK_TYPE_EDGE;
-    } else if (strcmp(type, "umts") == 0) {
+    } else if (type == RADIO_TECH_UMTS) {
         return NETWORK_TYPE_UMTS;
-    } else if (strcmp(type, "lte") == 0) {
+    } else if (type == RADIO_TECH_LTE) {
         return NETWORK_TYPE_LTE;
-    } else if (strcmp(type, "hsdpa") == 0) {
+    } else if (type == RADIO_TECH_HSDPA) {
         return NETWORK_TYPE_HSDPA;
-    } else if (strcmp(type, "hspa") == 0) {
+    } else if (type == RADIO_TECH_HSPA) {
         return NETWORK_TYPE_HSPA;
-    } else if (strcmp(type, "hsupa") == 0) {
+    } else if (type == RADIO_TECH_HSUPA) {
         return NETWORK_TYPE_HSUPA;
-    } else if (strcmp(type, "lte_ca") == 0) {
+    } else if (type == RADIO_TECH_LTE_CA) {
         return NETWORK_TYPE_LTE_CA;
     }
 
