@@ -60,7 +60,7 @@ typedef struct {
 
 typedef struct {
     tapi_registration_state reg_state;
-    char technology[MAX_NETWORK_INFO_LENGTH + 1];
+    int technology;
     char operator_name[MAX_OPERATOR_NAME_LENGTH + 1];
     char mcc[MAX_MCC_LENGTH + 1];
     char mnc[MAX_MCC_LENGTH + 1];
