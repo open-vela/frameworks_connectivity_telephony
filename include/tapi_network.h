@@ -184,6 +184,15 @@ int tapi_network_get_neighbouring_cellinfos(tapi_context context,
     int slot_id, int event_id, tapi_async_function p_handle);
 
 /**
+ * Check if CS domain is registered or not.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[out] out           Return value.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_network_is_voice_registered(tapi_context context, int slot_id, bool* out);
+
+/**
  * Get CS domain network type.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
