@@ -3292,6 +3292,25 @@ static int telephonytool_cmd_get_voice_networktype(tapi_context context, char* p
     return 0;
 }
 
+static int telephonytool_cmd_is_voice_registered(tapi_context context, char* pargs)
+{
+    bool value;
+    char* slot_id;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", NULL);
+    if (!is_valid_slot_id_str(slot_id))
+        return -EINVAL;
+
+    value = false;
+    tapi_network_is_voice_registered(context, atoi(slot_id), &value);
+    syslog(LOG_DEBUG, "%s, slotId : %s value :%d \n", __func__, slot_id, value);
+
+    return 0;
+}
+
 static int telephonytool_cmd_is_voice_roaming(tapi_context context, char* pargs)
 {
     bool value;
@@ -4598,6 +4617,9 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     { "get-voice-nwtype", NETWORK_CMD,
         telephonytool_cmd_get_voice_networktype,
         "query cs network type (enter example : get-voice-nwtype 0 [slot_id])" },
+    { "get-voice-registered", NETWORK_CMD,
+        telephonytool_cmd_is_voice_registered,
+        "judge voice in service  (enter example : get-voice-registered 0 [slot_id])" },
     { "get-voice-roaming", NETWORK_CMD,
         telephonytool_cmd_is_voice_roaming,
         "judge voice roaming  (enter example : get-voice-roaming 0 [slot_id])" },

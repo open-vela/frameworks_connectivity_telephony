@@ -1028,6 +1028,39 @@ int tapi_network_get_neighbouring_cellinfos(tapi_context context,
     return OK;
 }
 
+int tapi_network_is_voice_registered(tapi_context context, int slot_id, bool* out)
+{
+    dbus_context* ctx = context;
+    GDBusProxy* proxy;
+    DBusMessageIter iter;
+    char* result;
+    tapi_registration_state reg_state;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+        return -EINVAL;
+    }
+
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_NETREG];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    if (!g_dbus_proxy_get_property(proxy, "Status", &iter)) {
+        return -EINVAL;
+    }
+
+    dbus_message_iter_get_basic(&iter, &result);
+    reg_state = tapi_utils_registration_status_from_string(result);
+    *out = (reg_state == NETWORK_REGISTRATION_STATUS_REGISTERED
+        || reg_state == NETWORK_REGISTRATION_STATUS_ROAMING);
+
+    return OK;
+}
+
 int tapi_network_get_voice_network_type(tapi_context context, int slot_id, tapi_network_type* out)
 {
     dbus_context* ctx = context;
