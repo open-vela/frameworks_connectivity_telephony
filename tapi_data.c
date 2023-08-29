@@ -195,7 +195,7 @@ static int data_property_changed(DBusConnection* connection,
     tapi_async_function cb;
     DBusMessageIter iter, var;
     const char* property;
-    const char* value_str;
+    int  value_int;
     bool isvalid = false;
 
     if (handler == NULL)
@@ -234,8 +234,8 @@ static int data_property_changed(DBusConnection* connection,
         && (strcmp(property, "Bearer") == 0)) {
         ar->status = OK;
 
-        dbus_message_iter_get_basic(&var, &value_str);
-        ar->arg2 = tapi_utils_network_type_from_string(value_str);
+        dbus_message_iter_get_basic(&var, &value_int);
+        ar->arg2 = tapi_utils_network_type_from_ril_tech(value_int);
         isvalid = true;
     } else if ((ar->msg_id == MSG_DATA_REGISTRATION_STATE_CHANGE_IND)
         && (strcmp(property, "Status") == 0)) {
@@ -996,7 +996,7 @@ int tapi_data_get_network_type(tapi_context context, int slot_id, tapi_network_t
     dbus_context* ctx = context;
     GDBusProxy* proxy;
     DBusMessageIter iter;
-    char* result;
+    int result;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
@@ -1011,10 +1011,10 @@ int tapi_data_get_network_type(tapi_context context, int slot_id, tapi_network_t
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property(proxy, "Bearer", &iter)) {
+    if (g_dbus_proxy_get_property(proxy, "Technology", &iter)) {
         dbus_message_iter_get_basic(&iter, &result);
 
-        *out = tapi_utils_network_type_from_string(result);
+        *out = tapi_utils_network_type_from_ril_tech(result);
         return OK;
     }
 
