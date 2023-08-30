@@ -980,10 +980,11 @@ int tapi_data_is_registered(tapi_context context, int slot_id, bool* out)
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property(proxy, "Attached", &iter)) {
+    if (g_dbus_proxy_get_property(proxy, "Status", &iter)) {
         dbus_message_iter_get_basic(&iter, &result);
 
-        *out = result;
+        *out = (result == NETWORK_REGISTRATION_STATUS_REGISTERED
+            || result == NETWORK_REGISTRATION_STATUS_ROAMING);
         return OK;
     }
 
