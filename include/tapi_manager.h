@@ -251,10 +251,10 @@ int tapi_set_fast_dormancy(tapi_context context,
     int slot_id, int event_id, bool state, tapi_async_function p_handle);
 
 /**
- * Gets Line Number.
+ * Gets Phone Number.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
- * @param[out] out           Line Number returned.
+ * @param[out] out           Phone Number returned.
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_get_phone_number(tapi_context context, int slot_id, char** out);

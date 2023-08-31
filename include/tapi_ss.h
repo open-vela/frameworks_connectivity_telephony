@@ -307,7 +307,7 @@ int tapi_ss_set_calling_line_restriction(tapi_context context, int slot_id, int 
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_ss_get_calling_line_restriction_info(tapi_context context, int slot_id,
-    tapi_clir_status* out);
+    int event_id, tapi_async_function p_handle);
 
 /**
  * Sets the ICC fdn enabled or disabled.
