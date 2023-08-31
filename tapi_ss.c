@@ -48,6 +48,22 @@ typedef struct {
  * Private Functions
  ****************************************************************************/
 
+static void set_clir_append(DBusMessageIter* iter, void* user_data)
+{
+    tapi_async_handler* param = user_data;
+    tapi_clir_status status;
+    const char* clir_status;
+
+    if (param == NULL || param->result == NULL) {
+        tapi_log_error("invalid clir value !!");
+        return;
+    }
+
+    status = param->result->arg2;
+    clir_status = tapi_utils_clir_status_to_string(status);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &clir_status);
+}
+
 static void set_call_waiting_append(DBusMessageIter* iter, void* user_data)
 {
     tapi_async_handler* param = user_data;
@@ -568,6 +584,42 @@ done:
 }
 
 static void query_call_waiting_cb(DBusMessage* message, void* user_data)
+{
+    DBusMessageIter iter;
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
+    tapi_async_function cb;
+    DBusError err;
+
+    handler = user_data;
+    if (handler == NULL)
+        return;
+
+    if ((ar = handler->result) == NULL || (cb = handler->cb_function) == NULL)
+        return;
+
+    dbus_error_init(&err);
+    if (dbus_set_error_from_message(&err, message) == true) {
+        tapi_log_error("%s: %s\n", err.name, err.message);
+        dbus_error_free(&err);
+        ar->status = ERROR;
+        goto done;
+    }
+
+    if (dbus_message_iter_init(message, &iter) == false) {
+        ar->status = ERROR;
+        goto done;
+    }
+
+    dbus_message_iter_get_basic(&iter, &ar->arg2);
+
+    ar->status = OK;
+
+done:
+    cb(ar);
+}
+
+static void query_clir_cb(DBusMessage* message, void* user_data)
 {
     DBusMessageIter iter;
     tapi_async_handler* handler;
@@ -1572,7 +1624,52 @@ int tapi_ss_set_calling_line_restriction(tapi_context context, int slot_id, int 
     tapi_async_handler* handler;
     tapi_async_result* ar;
     GDBusProxy* proxy;
-    const char* clir_status;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+        return -EINVAL;
+    }
+
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_SETTING];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    handler = malloc(sizeof(tapi_async_handler));
+    if (handler == NULL)
+        return -ENOMEM;
+
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        free(handler);
+        return -ENOMEM;
+    }
+
+    handler->result = ar;
+    ar->arg1 = slot_id;
+    ar->arg2 = state;
+    ar->msg_id = event_id;
+    handler->cb_function = p_handle;
+
+    if (!g_dbus_proxy_method_call(proxy, "SetClir",
+            set_clir_append, method_call_complete, handler, handler_free)) {
+        handler_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
+}
+
+int tapi_ss_get_calling_line_restriction_info(tapi_context context, int slot_id,
+    int event_id, tapi_async_function p_handle)
+{
+    dbus_context* ctx = context;
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
+    GDBusProxy* proxy;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
@@ -1602,44 +1699,13 @@ int tapi_ss_set_calling_line_restriction(tapi_context context, int slot_id, int 
     ar->msg_id = event_id;
     handler->cb_function = p_handle;
 
-    clir_status = tapi_utils_clir_status_to_string(state);
-    if (!g_dbus_proxy_set_property_basic(proxy, "HideCallerId", DBUS_TYPE_STRING,
-            &clir_status, property_set_done, handler, handler_free)) {
+    if (!g_dbus_proxy_method_call(proxy, "GetClir", NULL,
+            query_clir_cb, handler, handler_free)) {
         handler_free(handler);
         return -EINVAL;
     }
 
     return OK;
-}
-
-int tapi_ss_get_calling_line_restriction_info(tapi_context context, int slot_id,
-    tapi_clir_status* out)
-{
-    dbus_context* ctx = context;
-    DBusMessageIter iter;
-    GDBusProxy* proxy;
-    char* result = NULL;
-
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
-        return -EINVAL;
-    }
-
-    if (!ctx->client_ready)
-        return -EAGAIN;
-
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_SETTING];
-    if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
-        return -EIO;
-    }
-
-    if (g_dbus_proxy_get_property(proxy, "HideCallerId", &iter)) {
-        dbus_message_iter_get_basic(&iter, &result);
-        *out = tapi_utils_clir_status_from_string(result);
-        return OK;
-    }
-
-    return -EINVAL;
 }
 
 int tapi_ss_enable_fdn(tapi_context context, int slot_id, int event_id,

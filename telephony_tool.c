@@ -99,6 +99,7 @@
 #define EVENT_QUERY_ALL_CALL_SETTING_DONE 0x50
 #define EVENT_QUERY_CALL_FORWARDING_DONE 0x51
 #define EVENT_QUERY_CALL_WAITING_DONE 0x52
+#define EVENT_QUERY_CLIR_DONE 0x53
 
 // PhoneBook Callback Event
 #define EVENT_LOAD_ADN_ENTRIES_DONE 0x61
@@ -616,6 +617,10 @@ static void ss_event_response(tapi_async_result* result)
         case EVENT_QUERY_CALL_WAITING_DONE:
             syslog(LOG_DEBUG, "%s : call waiting query done! \n", __func__);
             syslog(LOG_DEBUG, "%s : call waiting status : %d! \n", __func__, param);
+            break;
+        case EVENT_QUERY_CLIR_DONE:
+            syslog(LOG_DEBUG, "%s : clir query done! \n", __func__);
+            syslog(LOG_DEBUG, "%s : clir status : %d! \n", __func__, param);
             break;
         default:
             break;
@@ -3738,8 +3743,6 @@ static int telephonytool_cmd_get_call_waiting(tapi_context context, char* pargs)
 
     return tapi_ss_get_call_waiting(context, atoi(slot_id),
         EVENT_QUERY_CALL_WAITING_DONE, ss_event_response);
-
-    return 0;
 }
 
 static int telephonytool_cmd_get_clip(tapi_context context, char* pargs)
@@ -3787,7 +3790,6 @@ static int telephonytool_cmd_set_clir(tapi_context context, char* pargs)
 static int telephonytool_cmd_get_clir(tapi_context context, char* pargs)
 {
     char* slot_id;
-    tapi_clir_status clir_status;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
@@ -3796,10 +3798,8 @@ static int telephonytool_cmd_get_clir(tapi_context context, char* pargs)
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
-    tapi_ss_get_calling_line_restriction_info(context, atoi(slot_id), &clir_status);
-    syslog(LOG_DEBUG, "%s, slotId : %s clir_status : %d \n", __func__, slot_id, clir_status);
-
-    return 0;
+    return tapi_ss_get_calling_line_restriction_info(context, atoi(slot_id),
+        EVENT_QUERY_CLIR_DONE, ss_event_response);
 }
 
 static int telephonytool_cmd_enable_fdn(tapi_context context, char* pargs)
