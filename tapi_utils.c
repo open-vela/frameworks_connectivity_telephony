@@ -237,18 +237,6 @@ const char* get_call_signal_member(tapi_indication_msg msg)
     int msg_id = msg;
 
     switch (msg_id) {
-    case MSG_CALL_ADD_MESSAGE_IND:
-        return "CallAdded";
-    case MSG_CALL_REMOVE_MESSAGE_IND:
-        return "CallRemoved";
-    case MSG_CALL_FORWARDED_MESSAGE_IND:
-        return "Forwarded";
-    case MSG_CALL_BARRING_ACTIVE_MESSAGE_IND:
-        return "BarringActive";
-    case MSG_CALL_PROPERTY_CHANGED_MESSAGE_IND:
-        return "PropertyChanged";
-    case MSG_CALL_DISCONNECTED_REASON_MESSAGE_IND:
-        return "DisconnectReason";
     case MSG_ECC_LIST_CHANGE_IND:
     case MSG_DEFAULT_VOICECALL_SLOT_CHANGE_IND:
         return "PropertyChanged";

@@ -67,8 +67,6 @@ static int call_manager_property_changed(DBusConnection* connection, DBusMessage
     void* user_data);
 static int call_state_changed(DBusConnection* connection, DBusMessage* message,
     void* user_data);
-static int tapi_call_signal_call_added(DBusMessage* message, tapi_async_handler* handler);
-static int tapi_call_signal_normal(DBusMessage* message, tapi_async_handler* handler, int msg_type);
 static int tapi_call_signal_ecc_list_change(DBusMessage* message, tapi_async_handler* handler);
 
 /****************************************************************************
@@ -296,23 +294,7 @@ call_manager_property_changed(DBusConnection* connection, DBusMessage* message,
 
     msg_id = ar->msg_id;
     if (dbus_message_is_signal(message, OFONO_VOICECALL_MANAGER_INTERFACE,
-            "CallAdded")
-        && msg_id == MSG_CALL_ADD_MESSAGE_IND) {
-        return tapi_call_signal_call_added(message, handler);
-    } else if (dbus_message_is_signal(message, OFONO_VOICECALL_MANAGER_INTERFACE,
-                   "CallRemoved")
-        && msg_id == MSG_CALL_REMOVE_MESSAGE_IND) {
-        return tapi_call_signal_normal(message, handler, DBUS_TYPE_OBJECT_PATH);
-    } else if (dbus_message_is_signal(message, OFONO_VOICECALL_MANAGER_INTERFACE,
-                   "Forwarded")
-        && msg_id == MSG_CALL_FORWARDED_MESSAGE_IND) {
-        return tapi_call_signal_normal(message, handler, DBUS_TYPE_STRING);
-    } else if (dbus_message_is_signal(message, OFONO_VOICECALL_MANAGER_INTERFACE,
-                   "BarringActive")
-        && msg_id == MSG_CALL_BARRING_ACTIVE_MESSAGE_IND) {
-        return tapi_call_signal_normal(message, handler, DBUS_TYPE_STRING);
-    } else if (dbus_message_is_signal(message, OFONO_VOICECALL_MANAGER_INTERFACE,
-                   "PropertyChanged")
+            "PropertyChanged")
         && msg_id == MSG_ECC_LIST_CHANGE_IND) {
         return tapi_call_signal_ecc_list_change(message, handler);
     } else if (dbus_message_is_signal(message, OFONO_VOICECALL_MANAGER_INTERFACE,
@@ -357,81 +339,6 @@ static int call_state_changed(DBusConnection* connection, DBusMessage* message, 
     }
 
     return 0;
-}
-
-static int call_property_changed(DBusConnection* connection, DBusMessage* message,
-    void* user_data)
-{
-    tapi_async_handler* handler = user_data;
-    tapi_call_property call_property;
-    DBusMessageIter iter, value_iter;
-    tapi_async_function cb;
-    tapi_async_result* ar;
-    const char* path;
-    char* reason_str; // local,remote,network
-    int ret = false;
-    int msg_id;
-    char* key;
-
-    if (handler == NULL)
-        return false;
-
-    ar = handler->result;
-    if (ar == NULL)
-        return false;
-
-    cb = handler->cb_function;
-    if (cb == NULL)
-        return false;
-
-    msg_id = ar->msg_id;
-    if (dbus_message_get_type(message) != DBUS_MESSAGE_TYPE_SIGNAL)
-        return false;
-
-    path = dbus_message_get_path(message);
-    if (path == NULL)
-        return false;
-
-    if (call_strcpy(call_property.call_id, path, MAX_CALL_ID_LENGTH) != 0) {
-        tapi_log_debug("call_property_changed: path is too long: %s", path);
-        return false;
-    }
-    tapi_log_debug("call_property_changed signal path: %s", path);
-
-    if (dbus_message_is_signal(message, OFONO_VOICECALL_INTERFACE, "DisconnectReason")
-        && msg_id == MSG_CALL_DISCONNECTED_REASON_MESSAGE_IND) {
-        if (is_call_signal_message(message, &iter, DBUS_TYPE_STRING)) {
-            dbus_message_iter_get_basic(&iter, &reason_str);
-
-            ar->data = call_property.call_id;
-            ar->status = OK;
-            ar->arg2 = tapi_utils_call_disconnected_reason(reason_str);
-            tapi_log_debug("DisconnectReason %s", reason_str);
-        }
-        ret = true;
-    } else if (dbus_message_is_signal(message, OFONO_VOICECALL_INTERFACE, "PropertyChanged")
-        && msg_id == MSG_CALL_PROPERTY_CHANGED_MESSAGE_IND) {
-        if (is_call_signal_message(message, &iter, DBUS_TYPE_STRING)) {
-            dbus_message_iter_get_basic(&iter, &key);
-            dbus_message_iter_next(&iter);
-            call_strcpy(call_property.key, key, MAX_CALL_PROPERTY_NAME_LENGTH);
-
-            if (dbus_message_iter_get_arg_type(&iter) != DBUS_TYPE_VARIANT)
-                return false;
-
-            dbus_message_iter_recurse(&iter, &value_iter);
-            dbus_message_iter_get_basic(&value_iter, &call_property.value);
-
-            ar->data = &call_property;
-            ar->status = OK;
-        }
-        ret = true;
-    }
-
-    if (ret)
-        cb(ar);
-
-    return true;
 }
 
 static void dial_call_callback(DBusMessage* message, void* user_data)
@@ -621,69 +528,6 @@ done:
     cb(ar);
 }
 
-static int tapi_call_signal_call_added(DBusMessage* message, tapi_async_handler* handler)
-{
-    tapi_call_info voicecall;
-    tapi_async_result* ar;
-    tapi_async_function cb;
-    DBusMessageIter iter;
-
-    if (handler == NULL)
-        return 0;
-
-    ar = handler->result;
-    if (ar == NULL)
-        return 0;
-
-    cb = handler->cb_function;
-    if (cb == NULL)
-        return 0;
-
-    if (is_call_signal_message(message, &iter, DBUS_TYPE_OBJECT_PATH)) {
-
-        if (decode_voice_call_info(&iter, &voicecall)) {
-            ar->data = &voicecall;
-            ar->status = OK;
-            cb(ar);
-        }
-    }
-
-    return 1;
-}
-
-static int tapi_call_signal_normal(DBusMessage* message, tapi_async_handler* handler, int msg_type)
-{
-    tapi_async_function cb;
-    tapi_async_result* ar;
-    DBusMessageIter iter;
-    int ret = false;
-    char* info;
-
-    if (handler == NULL)
-        return false;
-
-    ar = handler->result;
-    if (ar == NULL)
-        return false;
-
-    cb = handler->cb_function;
-    if (cb == NULL)
-        return false;
-
-    if (is_call_signal_message(message, &iter, msg_type)) {
-        dbus_message_iter_get_basic(&iter, &info);
-
-        ar->data = info;
-        ar->status = OK;
-        cb(ar);
-
-        ret = true;
-        tapi_log_debug("call singal message id: %d, data: %s", ar->msg_id, info);
-    }
-
-    return ret;
-}
-
 static int tapi_call_signal_ecc_list_change(DBusMessage* message, tapi_async_handler* handler)
 {
     DBusMessageIter iter, list, array;
@@ -800,57 +644,6 @@ static int decode_voice_call_info(DBusMessageIter* iter, tapi_call_info* call_in
     }
 
     return true;
-}
-
-static int tapi_register_call_signal(tapi_context context, int slot_id,
-    char* path, char* interface, tapi_indication_msg msg,
-    void* user_obj, tapi_async_function p_handle, GDBusSignalFunction function)
-{
-    tapi_async_handler* handler;
-    dbus_context* ctx = context;
-    tapi_async_result* ar;
-    const char* member;
-    int watch_id;
-
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
-        return -EINVAL;
-    }
-
-    if (path == NULL) {
-        tapi_log_error("no available modem ...\n");
-        return -ENODEV;
-    }
-
-    member = get_call_signal_member(msg);
-    if (member == NULL) {
-        tapi_log_error("no signal member found ...\n");
-        return -EINVAL;
-    }
-
-    ar = malloc(sizeof(tapi_async_result));
-    if (ar == NULL) {
-        return -ENOMEM;
-    }
-    ar->msg_id = msg;
-    ar->arg1 = slot_id;
-    ar->user_obj = user_obj;
-
-    handler = malloc(sizeof(tapi_async_handler));
-    if (handler == NULL) {
-        free(ar);
-        return -ENOMEM;
-    }
-    handler->cb_function = p_handle;
-    handler->result = ar;
-
-    watch_id = g_dbus_add_signal_watch(ctx->connection,
-        OFONO_SERVICE, path, interface, member, function, handler, handler_free);
-    if (watch_id == 0) {
-        handler_free(handler);
-        return -EINVAL;
-    }
-
-    return watch_id;
 }
 
 static int tapi_register_manager_call_signal(tapi_context context, int slot_id, char* interface,
@@ -1183,7 +976,7 @@ int tapi_call_get_all_calls(tapi_context context, int slot_id,
 }
 
 int tapi_call_merge_call(tapi_context context,
-    int slot_id, tapi_async_function p_handle)
+    int slot_id, int event_id, tapi_async_function p_handle)
 {
     dbus_context* ctx = context;
     tapi_async_handler* handler;
@@ -1205,7 +998,7 @@ int tapi_call_merge_call(tapi_context context,
         return -ENOMEM;
     }
 
-    ar->msg_id = MSG_CALL_MERGE_IND;
+    ar->msg_id = event_id;
     ar->arg1 = slot_id;
 
     handler = malloc(sizeof(tapi_async_handler));
@@ -1226,7 +1019,7 @@ int tapi_call_merge_call(tapi_context context,
 }
 
 int tapi_call_separate_call(tapi_context context,
-    int slot_id, char* call_id, tapi_async_function p_handle)
+    int slot_id, int event_id, char* call_id, tapi_async_function p_handle)
 {
     dbus_context* ctx = context;
     tapi_async_handler* handler;
@@ -1247,7 +1040,7 @@ int tapi_call_separate_call(tapi_context context,
     if (ar == NULL) {
         return -ENOMEM;
     }
-    ar->msg_id = MSG_CALL_SEPERATE_IND;
+    ar->msg_id = event_id;
     ar->arg1 = slot_id;
     ar->data = call_id;
 
@@ -1357,17 +1150,6 @@ bool tapi_call_is_emergency_number(tapi_context context, char* number)
     }
 
     return false;
-}
-
-int tapi_call_register_call_info_change(tapi_context context, int slot_id, char* call_id,
-    tapi_indication_msg msg, void* user_obj, tapi_async_function p_handle)
-{
-    if (context == NULL || !tapi_is_valid_slotid(slot_id)) {
-        return -EINVAL;
-    }
-
-    return tapi_register_call_signal(context, slot_id, call_id, OFONO_VOICECALL_INTERFACE,
-        msg, user_obj, p_handle, call_property_changed);
 }
 
 int tapi_call_register_emergencylist_change(tapi_context context, int slot_id, void* user_obj,

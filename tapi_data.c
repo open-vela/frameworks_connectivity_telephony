@@ -195,7 +195,7 @@ static int data_property_changed(DBusConnection* connection,
     tapi_async_function cb;
     DBusMessageIter iter, var;
     const char* property;
-    int  value_int;
+    int value_int;
     bool isvalid = false;
 
     if (handler == NULL)
