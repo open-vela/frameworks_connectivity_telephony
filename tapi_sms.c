@@ -712,7 +712,7 @@ int tapi_sms_register(tapi_context context, int slot_id,
     int watch_id = 0;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
-        || msg_type < MSG_INCOMING_MESSAGE_IND || msg_type > MSG_STATUS_DEFAULT_SMS_SLOT_CHANGED_IND) {
+        || msg_type < MSG_INCOMING_MESSAGE_IND || msg_type > MSG_DEFAULT_SMS_SLOT_CHANGED_IND) {
         return -EINVAL;
     }
 
@@ -755,7 +755,7 @@ int tapi_sms_register(tapi_context context, int slot_id,
             OFONO_MESSAGE_MANAGER_INTERFACE, "StatusReportMessage",
             unsol_sms_message, user_data, handler_free);
         break;
-    case MSG_STATUS_DEFAULT_SMS_SLOT_CHANGED_IND:
+    case MSG_DEFAULT_SMS_SLOT_CHANGED_IND:
         watch_id = g_dbus_add_signal_watch(ctx->connection,
             OFONO_SERVICE, OFONO_MANAGER_PATH, OFONO_MANAGER_INTERFACE,
             "PropertyChanged", sms_property_changed, user_data, handler_free);
