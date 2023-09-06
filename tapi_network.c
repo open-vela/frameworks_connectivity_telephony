@@ -270,7 +270,8 @@ static int network_state_changed(DBusConnection* connection,
     if (cb == NULL)
         return 0;
 
-    if (ar->msg_id != MSG_NETWORK_STATE_CHANGE_IND) {
+    if (ar->msg_id != MSG_NETWORK_STATE_CHANGE_IND
+        && ar->msg_id != MSG_VOICE_REGISTRATION_STATE_CHANGE_IND) {
         return 0;
     }
 
@@ -1333,6 +1334,7 @@ int tapi_network_register(tapi_context context,
 
     switch (msg) {
     case MSG_NETWORK_STATE_CHANGE_IND:
+    case MSG_VOICE_REGISTRATION_STATE_CHANGE_IND:
         watch_id = g_dbus_add_signal_watch(ctx->connection,
             OFONO_SERVICE, modem_path, OFONO_NETWORK_REGISTRATION_INTERFACE,
             "PropertyChanged", network_state_changed, handler, handler_free);

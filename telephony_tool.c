@@ -112,6 +112,8 @@
 #define EVENT_REQUEST_DIAL_DONE 0x71
 #define EVENT_REQUEST_START_DTMF_DONE 0x72
 #define EVENT_REQUEST_STOP_DTMF_DONE 0x73
+#define EVENT_REQUEST_CALL_MERGE_DONE 0x74
+#define EVENT_REQUEST_CALL_SEPARATE_DONE 0x75
 
 // SMS CallBack Event
 #define EVENT_SEND_MESSAGE_DONE 0x81
@@ -269,7 +271,8 @@ static void tele_call_async_fun(tapi_async_result* result)
         return;
     }
 
-    if (result->msg_id == MSG_CALL_MERGE_IND || result->msg_id == MSG_CALL_SEPERATE_IND) {
+    if (result->msg_id == EVENT_REQUEST_CALL_SEPARATE_DONE
+        || result->msg_id == EVENT_REQUEST_CALL_MERGE_DONE) {
         char** ret = result->data;
 
         syslog(LOG_DEBUG, "conference size : %d\n", result->arg2);
@@ -309,34 +312,10 @@ static void tele_call_async_fun(tapi_async_result* result)
 
 static void tele_call_manager_call_async_fun(tapi_async_result* result)
 {
-    tapi_call_info* call_info;
-
     syslog(LOG_DEBUG, "%s : %d\n", __func__, result->status);
 
-    if (result->msg_id == MSG_CALL_ADD_MESSAGE_IND) {
-        call_info = (tapi_call_info*)result->data;
-
-        syslog(LOG_DEBUG, "call added call_id : %s\n", call_info->call_id);
-        syslog(LOG_DEBUG, "call state: %d \n", call_info->state);
-        syslog(LOG_DEBUG, "call LineIdentification: %s \n", call_info->lineIdentification);
-        syslog(LOG_DEBUG, "call IncomingLine: %s \n", call_info->incoming_line);
-        syslog(LOG_DEBUG, "call Name: %s \n", call_info->name);
-        syslog(LOG_DEBUG, "call StartTime: %s \n", call_info->start_time);
-        syslog(LOG_DEBUG, "call Multiparty: %d \n", call_info->multiparty);
-        syslog(LOG_DEBUG, "call RemoteHeld: %d \n", call_info->remote_held);
-        syslog(LOG_DEBUG, "call RemoteMultiparty: %d \n", call_info->remote_multiparty);
-        syslog(LOG_DEBUG, "call Information: %s \n", call_info->info);
-        syslog(LOG_DEBUG, "call Icon: %d \n", call_info->icon);
-        syslog(LOG_DEBUG, "call Emergency: %d \n\n", call_info->is_emergency_number);
-
-    } else if (result->msg_id == MSG_CALL_REMOVE_MESSAGE_IND) {
-        syslog(LOG_DEBUG, "call removed call_id : %s\n", (char*)result->data);
-    } else if (result->msg_id == MSG_CALL_RING_BACK_TONE_IND) {
+    if (result->msg_id == MSG_CALL_RING_BACK_TONE_IND) {
         syslog(LOG_DEBUG, "ring back tone status : %d\n", result->arg2);
-    } else if (result->msg_id == MSG_CALL_FORWARDED_MESSAGE_IND) {
-        syslog(LOG_DEBUG, "call Forwarded: %s\n", (char*)result->data);
-    } else if (result->msg_id == MSG_CALL_BARRING_ACTIVE_MESSAGE_IND) {
-        syslog(LOG_DEBUG, "call BarringActive: %s\n", (char*)result->data);
     }
 }
 
@@ -424,7 +403,7 @@ static void tele_sms_async_fun(tapi_async_result* result)
         return;
     }
 
-    if (result->msg_id == MSG_STATUS_DEFAULT_SMS_SLOT_CHANGED_IND) {
+    if (result->msg_id == MSG_DEFAULT_SMS_SLOT_CHANGED_IND) {
         syslog(LOG_DEBUG, "default sms slot: %d\n", result->arg2);
         return;
     }
@@ -769,6 +748,7 @@ static void network_signal_change(tapi_async_result* result)
 
     switch (signal) {
     case MSG_NETWORK_STATE_CHANGE_IND:
+    case MSG_VOICE_REGISTRATION_STATE_CHANGE_IND:
         syslog(LOG_DEBUG, "MSG_NETWORK_STATE_CHANGE_IND \n");
         break;
     case MSG_CELLINFO_CHANGE_IND:
@@ -1187,7 +1167,8 @@ static int telephonytool_cmd_merge_call(tapi_context context, char* pargs)
 
     syslog(LOG_DEBUG, "%s, slotId : %s\n", __func__, slot_id);
 
-    return tapi_call_merge_call(context, atoi(slot_id), tele_call_async_fun);
+    return tapi_call_merge_call(context, atoi(slot_id),
+        EVENT_REQUEST_CALL_MERGE_DONE, tele_call_async_fun);
 }
 
 static int telephonytool_cmd_separate_call(tapi_context context, char* pargs)
@@ -1205,7 +1186,8 @@ static int telephonytool_cmd_separate_call(tapi_context context, char* pargs)
 
     syslog(LOG_DEBUG, "%s, slotId : %s\n", __func__, slot_id);
 
-    return tapi_call_separate_call(context, atoi(slot_id), dst[1], tele_call_async_fun);
+    return tapi_call_separate_call(context, atoi(slot_id),
+        EVENT_REQUEST_CALL_SEPARATE_DONE, dst[1], tele_call_async_fun);
 }
 
 static int telephonytool_cmd_dial_conference(tapi_context context, char* pargs)
@@ -3075,7 +3057,7 @@ static int telephonytool_tapi_sms_delete_message_from_sim(tapi_context context, 
 
 static int telephonytool_tapi_sms_slot_change(tapi_context context, char* args)
 {
-    int watch_id = tapi_sms_register(context, 0, MSG_STATUS_DEFAULT_SMS_SLOT_CHANGED_IND,
+    int watch_id = tapi_sms_register(context, 0, MSG_DEFAULT_SMS_SLOT_CHANGED_IND,
         NULL, tele_sms_async_fun);
     syslog(LOG_DEBUG, "%s\n", __func__);
     return watch_id;

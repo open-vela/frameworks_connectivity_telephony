@@ -199,6 +199,7 @@ typedef enum {
     MSG_OEM_HOOK_RAW_IND,
     MSG_MODEM_RESTART_IND,
     MSG_DEVICE_INFO_CHANGE_IND,
+    MSG_AIRPLANE_MODE_CHANGE_IND,
 
     // Below call signals were obsolete
     MSG_CALL_ADD_MESSAGE_IND,
@@ -211,12 +212,14 @@ typedef enum {
     MSG_CALL_SEPERATE_IND,
 
     // Call Indication Message
+    MSG_CALL_STATE_CHANGE_IND,
     MSG_CALL_RING_BACK_TONE_IND,
     MSG_ECC_LIST_CHANGE_IND,
     MSG_DEFAULT_VOICECALL_SLOT_CHANGE_IND,
 
     // Network Indication Message
     MSG_NETWORK_STATE_CHANGE_IND,
+    MSG_VOICE_REGISTRATION_STATE_CHANGE_IND,
     MSG_CELLINFO_CHANGE_IND,
     MSG_SIGNAL_STRENGTH_CHANGE_IND,
     MSG_NITZ_STATE_CHANGE_IND,
@@ -255,7 +258,7 @@ typedef enum {
     MSG_INCOMING_MESSAGE_IND,
     MSG_IMMEDIATE_MESSAGE_IND,
     MSG_STATUS_REPORT_MESSAGE_IND,
-    MSG_STATUS_DEFAULT_SMS_SLOT_CHANGED_IND,
+    MSG_DEFAULT_SMS_SLOT_CHANGED_IND,
 
     // CBS Indication Message
     MSG_INCOMING_CBS_IND,
@@ -270,14 +273,8 @@ typedef enum {
     // IMS Indication Message
     MSG_IMS_REGISTRATION_MESSAGE_IND,
 
-    // airplane mode change Message
-    MSG_AIRPLANE_MODE_CHANGE_IND,
-
     // modem state change Message
     MSG_MODEM_STATE_CHANGE_IND,
-
-    // call state change Message
-    MSG_CALL_STATE_CHANGE_IND,
 
     // tapi indication msg value max.
     MSG_IND_MASK,
