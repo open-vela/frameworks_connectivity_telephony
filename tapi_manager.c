@@ -1701,6 +1701,7 @@ int tapi_register(tapi_context context,
         return tapi_call_register_default_voicecall_slot_change(
             context, user_obj, p_handle);
     case MSG_NETWORK_STATE_CHANGE_IND:
+    case MSG_VOICE_REGISTRATION_STATE_CHANGE_IND:
     case MSG_CELLINFO_CHANGE_IND:
     case MSG_SIGNAL_STRENGTH_CHANGE_IND:
     case MSG_NITZ_STATE_CHANGE_IND:
