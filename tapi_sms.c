@@ -772,7 +772,7 @@ int tapi_sms_register(tapi_context context, int slot_id,
     return watch_id;
 }
 
-int tapi_call_set_default_sms_slot(tapi_context context, int slot_id)
+int tapi_sms_set_default_slot(tapi_context context, int slot_id)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
@@ -797,7 +797,7 @@ int tapi_call_set_default_sms_slot(tapi_context context, int slot_id)
     return OK;
 }
 
-int tapi_call_get_default_sms_slot(tapi_context context, int* out)
+int tapi_sms_get_default_slot(tapi_context context, int* out)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
