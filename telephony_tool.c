@@ -3095,14 +3095,14 @@ static int telephonytool_cmd_set_default_sms_slot(tapi_context context, char* pa
     if (!is_valid_slot_id_str(value) && strcmp(value, "-1"))
         return -EINVAL;
 
-    return tapi_call_set_default_sms_slot(context, atoi(value));
+    return tapi_sms_set_default_slot(context, atoi(value));
 }
 
 static int telephonytool_cmd_get_default_sms_slot(tapi_context context, char* pargs)
 {
     int result;
 
-    tapi_call_get_default_sms_slot(context, &result);
+    tapi_sms_get_default_slot(context, &result);
     syslog(LOG_DEBUG, "%s : %d \n", __func__, result);
 
     return 0;
