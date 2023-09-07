@@ -114,6 +114,7 @@
 #define EVENT_REQUEST_STOP_DTMF_DONE 0x73
 #define EVENT_REQUEST_CALL_MERGE_DONE 0x74
 #define EVENT_REQUEST_CALL_SEPARATE_DONE 0x75
+#define EVENT_REQUEST_CALL_LIST_DONE 0x76
 
 // SMS CallBack Event
 #define EVENT_SEND_MESSAGE_DONE 0x81
@@ -1064,7 +1065,8 @@ static int telephonytool_cmd_get_call(tapi_context context, char* pargs)
 
     if (cnt == 1) {
         slot_id = atoi(dst[0]);
-        ret = tapi_call_get_all_calls(context, slot_id, call_list_query_complete);
+        ret = tapi_call_get_all_calls(context, slot_id,
+            EVENT_REQUEST_CALL_LIST_DONE, call_list_query_complete);
     } else {
         return -EINVAL;
     }
