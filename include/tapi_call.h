@@ -209,9 +209,10 @@ int tapi_call_send_tones(void* context, int slot_id, char* tones);
  * Get all calls.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
+ * @param[in] event_id       Async event identifier.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_call_get_all_calls(tapi_context context, int slot_id,
+int tapi_call_get_all_calls(tapi_context context, int slot_id, int event_id,
     tapi_async_function p_handle);
 
 /**

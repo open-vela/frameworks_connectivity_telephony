@@ -933,7 +933,7 @@ int tapi_call_get_call_by_state(tapi_context context, int slot_id,
     return index;
 }
 
-int tapi_call_get_all_calls(tapi_context context, int slot_id,
+int tapi_call_get_all_calls(tapi_context context, int slot_id, int event_id,
     tapi_async_function p_handle)
 {
     dbus_context* ctx = context;
@@ -955,6 +955,7 @@ int tapi_call_get_all_calls(tapi_context context, int slot_id,
     if (ar == NULL) {
         return -ENOMEM;
     }
+    ar->msg_id = event_id;
     ar->arg1 = slot_id;
 
     handler = malloc(sizeof(tapi_async_handler));
