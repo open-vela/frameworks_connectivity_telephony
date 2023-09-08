@@ -1373,7 +1373,7 @@ int tapi_call_stop_dtmf(tapi_context context, int slot_id,
     return call_play_dtmf(context, slot_id, 0, STOP_PLAY_DTMF, event_id, p_handle);
 }
 
-int tapi_call_set_default_voicecall_slot(tapi_context context, int slot_id)
+int tapi_call_set_default_slot(tapi_context context, int slot_id)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
@@ -1398,7 +1398,7 @@ int tapi_call_set_default_voicecall_slot(tapi_context context, int slot_id)
     return OK;
 }
 
-int tapi_call_get_default_voicecall_slot(tapi_context context, int* out)
+int tapi_call_get_default_slot(tapi_context context, int* out)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;

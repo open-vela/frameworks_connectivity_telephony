@@ -376,7 +376,7 @@ int tapi_call_stop_dtmf(tapi_context context, int slot_id, int event_id,
  * @param[in] slot_id       The default slot id to set (not set: -1, slot id: 0/1).
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_call_set_default_voicecall_slot(tapi_context context, int slot_id);
+int tapi_call_set_default_slot(tapi_context context, int slot_id);
 
 /**
  * Get default voicecall slot id.
@@ -384,7 +384,7 @@ int tapi_call_set_default_voicecall_slot(tapi_context context, int slot_id);
  * @param[out] out          Default voicecall slot id (not set: -1, slot id: 0/1).
    @return Zero on success; a negated errno value on failure.
 */
-int tapi_call_get_default_voicecall_slot(tapi_context context, int* out);
+int tapi_call_get_default_slot(tapi_context context, int* out);
 
 #ifdef __cplusplus
 }
