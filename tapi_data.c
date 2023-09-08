@@ -1318,7 +1318,7 @@ int tapi_data_get_roaming_enabled(tapi_context context, bool* out)
     return -EINVAL;
 }
 
-int tapi_data_set_default_data_slot(tapi_context context, int slot_id)
+int tapi_data_set_default_slot(tapi_context context, int slot_id)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
@@ -1340,7 +1340,7 @@ int tapi_data_set_default_data_slot(tapi_context context, int slot_id)
     return OK;
 }
 
-int tapi_data_get_default_data_slot(tapi_context context, int* out)
+int tapi_data_get_default_slot(tapi_context context, int* out)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;

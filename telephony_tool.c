@@ -1335,14 +1335,14 @@ static int telephonytool_cmd_set_default_voicecall_slot(tapi_context context, ch
     if (!is_valid_slot_id_str(value) && strcmp(value, "-1"))
         return -EINVAL;
 
-    return tapi_call_set_default_voicecall_slot(context, atoi(value));
+    return tapi_call_set_default_slot(context, atoi(value));
 }
 
 static int telephonytool_cmd_get_default_voicecall_slot(tapi_context context, char* pargs)
 {
     int result;
 
-    tapi_call_get_default_voicecall_slot(context, &result);
+    tapi_call_get_default_slot(context, &result);
     syslog(LOG_DEBUG, "%s : %d \n", __func__, result);
 
     return 0;
@@ -2221,14 +2221,14 @@ static int telephonytool_cmd_set_default_data_slot(tapi_context context, char* p
     if (value == NULL)
         return -EINVAL;
 
-    return tapi_data_set_default_data_slot(context, atoi(value));
+    return tapi_data_set_default_slot(context, atoi(value));
 }
 
 static int telephonytool_cmd_get_default_data_slot(tapi_context context, char* pargs)
 {
     int result;
 
-    tapi_data_get_default_data_slot(context, &result);
+    tapi_data_get_default_slot(context, &result);
     syslog(LOG_DEBUG, "%s : %d \n", __func__, result);
 
     return 0;
