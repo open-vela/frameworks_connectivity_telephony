@@ -292,7 +292,7 @@ int tapi_data_get_roaming_enabled(tapi_context context, bool* out);
  * @param[in] slot_id        Slot id of current sim.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_data_set_default_data_slot(tapi_context context, int slot_id);
+int tapi_data_set_default_slot(tapi_context context, int slot_id);
 
 /**
  * Get default data slot id.
@@ -300,7 +300,7 @@ int tapi_data_set_default_data_slot(tapi_context context, int slot_id);
  * @param[out] out        Slot id of current sim.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_data_get_default_data_slot(tapi_context context, int* out);
+int tapi_data_get_default_slot(tapi_context context, int* out);
 
 /**
  * Set data allow in given slot id.
