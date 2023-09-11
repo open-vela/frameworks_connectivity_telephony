@@ -3903,6 +3903,24 @@ static int telephonytool_cmd_ims_enable(tapi_context context, char* pargs)
     return ret;
 }
 
+static int telephonytool_cmd_get_ims_enabled(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    bool value;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", NULL);
+    if (!is_valid_slot_id_str(slot_id))
+        return -EINVAL;
+
+    value = false;
+    tapi_ims_get_enabled(context, atoi(slot_id), &value);
+    syslog(LOG_DEBUG, "%s: slot_id: %s, ims enable: %d \n", __func__, slot_id, value);
+    return 0;
+}
+
 static int telephonytool_cmd_set_ims_service(tapi_context context, char* pargs)
 {
     char dst[2][MAX_INPUT_ARGS_LEN];
@@ -4707,6 +4725,9 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         telephonytool_cmd_ims_enable,
         "turn on/off ims (enter example : enable-ims 0 1 "
         "[slot_id][action: 0-disable 1-enable])" },
+    { "get-ims-enabled", IMS_CMD,
+        telephonytool_cmd_get_ims_enabled,
+        "get ims enabled (enter example : get-ims-enabled 0 [slot_id]" },
     { "set-ims-cap", IMS_CMD,
         telephonytool_cmd_set_ims_service,
         "set ims service function (enter example : set-ims-cap 0 1 "
