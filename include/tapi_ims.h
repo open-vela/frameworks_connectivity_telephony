@@ -109,17 +109,19 @@ int tapi_ims_register_registration_change(tapi_context context, int slot_id,
  * Query the ims registration status
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
- * @return true if ims is registered
+ * @param[out] out           ims registration status.
+ * @return Zero on success; a negated errno value on failure.
  */
-int tapi_ims_is_registered(tapi_context context, int slot_id);
+int tapi_ims_is_registered(tapi_context context, int slot_id, bool* out);
 
 /**
  * Query ims voice capability status
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
- * @return true if ims is registered and voice capability is enbaled
+ * @param[out] out           voice capability status.
+ * @return Zero on success; a negated errno value on failure.
  */
-int tapi_ims_is_volte_available(tapi_context context, int slot_id);
+int tapi_ims_is_volte_available(tapi_context context, int slot_id, bool* out);
 
 /**
  * Gets Subscriber Uri Number.
