@@ -228,7 +228,7 @@ int tapi_ims_get_registration(tapi_context context, int slot_id,
     dbus_context* ctx = context;
     DBusMessageIter iter;
     GDBusProxy* proxy;
-    int val;
+    int val = 0;
     int cap_value = 0;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || ims_reg == NULL) {
@@ -265,12 +265,12 @@ int tapi_ims_get_registration(tapi_context context, int slot_id,
     return OK;
 }
 
-int tapi_ims_is_registered(tapi_context context, int slot_id)
+int tapi_ims_is_registered(tapi_context context, int slot_id, bool* out)
 {
     dbus_context* ctx = context;
     DBusMessageIter iter;
     GDBusProxy* proxy;
-    int val;
+    int val = 0;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
@@ -290,14 +290,15 @@ int tapi_ims_is_registered(tapi_context context, int slot_id)
     }
 
     dbus_message_iter_get_basic(&iter, &val);
+    *out = val;
 
-    return val;
+    return OK;
 }
 
-int tapi_ims_is_volte_available(tapi_context context, int slot_id)
+int tapi_ims_is_volte_available(tapi_context context, int slot_id, bool* out)
 {
     dbus_context* ctx = context;
-    int reg, cap;
+    int reg = 0, cap = 0;
     DBusMessageIter iter;
     GDBusProxy* proxy;
 
@@ -323,8 +324,9 @@ int tapi_ims_is_volte_available(tapi_context context, int slot_id)
         return -EIO;
 
     dbus_message_iter_get_basic(&iter, &cap);
+    *out = reg && cap;
 
-    return reg && cap;
+    return OK;
 }
 
 int tapi_ims_get_subscriber_uri_number(tapi_context context, int slot_id, char** out)
@@ -359,7 +361,7 @@ int tapi_ims_get_enabled(tapi_context context, int slot_id, bool* out)
     dbus_context* ctx = context;
     DBusMessageIter iter;
     GDBusProxy* proxy;
-    int is_enabled;
+    int is_enabled = 0;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;

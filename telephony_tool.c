@@ -3968,6 +3968,7 @@ static int telephonytool_cmd_ims_get_registration(tapi_context context, char* pa
     tapi_ims_registration_info info;
     int slot_id, action_type;
     int ret = 0;
+    bool status = false;
 
     if (cnt != 2)
         return -EINVAL;
@@ -3989,11 +3990,11 @@ static int telephonytool_cmd_ims_get_registration(tapi_context context, char* pa
             syslog(LOG_DEBUG, "%s: ims_get_registration error: %d\n", __func__, ret);
         }
     } else if (action_type == 1) {
-        ret = tapi_ims_is_registered(context, slot_id);
-        syslog(LOG_DEBUG, "%s: ims_registered: %d\n", __func__, ret);
+        ret = tapi_ims_is_registered(context, slot_id, &status);
+        syslog(LOG_DEBUG, "%s: ims_registered: %d - %d\n", __func__, ret, status);
     } else if (action_type == 2) {
-        ret = tapi_ims_is_volte_available(context, slot_id);
-        syslog(LOG_DEBUG, "%s: ims_volte_enabled: %d\n", __func__, ret);
+        ret = tapi_ims_is_volte_available(context, slot_id, &status);
+        syslog(LOG_DEBUG, "%s: ims_volte_enabled: %d - %d\n", __func__, ret, status);
     }
 
     return ret;
