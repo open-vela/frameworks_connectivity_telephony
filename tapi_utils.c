@@ -175,6 +175,14 @@ const char* tapi_utils_registration_status_to_string(int status)
         return "unknown";
     case NETWORK_REGISTRATION_STATUS_ROAMING:
         return "roaming";
+    case NETWORK_REGISTRATION_STATUS_NOT_REGISTERED_EM:
+        return "unregistered_em";
+    case NETWORK_REGISTRATION_STATUS_SEARCHING_EM:
+        return "searching_em";
+    case NETWORK_REGISTRATION_STATUS_DENIED_EM:
+        return "denied_em";
+    case NETWORK_REGISTRATION_STATUS_UNKNOWN_EM:
+        return "unknown_em";
     }
 
     return "";
@@ -197,6 +205,14 @@ tapi_registration_state tapi_utils_registration_status_from_string(const char* s
         return NETWORK_REGISTRATION_STATUS_UNKNOWN;
     } else if (strcmp(status, "roaming") == 0) {
         return NETWORK_REGISTRATION_STATUS_ROAMING;
+    } else if (strcmp(status, "unregistered_em") == 0) {
+        return NETWORK_REGISTRATION_STATUS_NOT_REGISTERED_EM;
+    } else if (strcmp(status, "searching_em") == 0) {
+        return NETWORK_REGISTRATION_STATUS_SEARCHING_EM;
+    } else if (strcmp(status, "denied_em") == 0) {
+        return NETWORK_REGISTRATION_STATUS_DENIED_EM;
+    } else if (strcmp(status, "unknown_em") == 0) {
+        return NETWORK_REGISTRATION_STATUS_UNKNOWN_EM;
     }
 
     return NETWORK_REGISTRATION_STATUS_UNKNOWN;

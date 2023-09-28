@@ -191,6 +191,15 @@ int tapi_data_reset_apn_contexts(tapi_context context,
 int tapi_data_is_registered(tapi_context context, int slot_id, bool* out);
 
 /**
+ * Check if Packet switched domain is emergency only.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[out] out           Return value.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_data_is_data_emergency_only(tapi_context context, int slot_id, bool* out);
+
+/**
  * Get radio tech in Packet switched domain.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
