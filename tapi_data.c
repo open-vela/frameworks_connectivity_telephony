@@ -991,6 +991,39 @@ int tapi_data_is_registered(tapi_context context, int slot_id, bool* out)
     return -EINVAL;
 }
 
+int tapi_data_is_data_emergency_only(tapi_context context, int slot_id, bool* out)
+{
+    dbus_context* ctx = context;
+    GDBusProxy* proxy;
+    DBusMessageIter iter;
+    int result;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+        return -EINVAL;
+    }
+
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_DATA];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    if (g_dbus_proxy_get_property(proxy, "Status", &iter)) {
+        dbus_message_iter_get_basic(&iter, &result);
+
+        *out = (result == NETWORK_REGISTRATION_STATUS_NOT_REGISTERED_EM
+            || result == NETWORK_REGISTRATION_STATUS_SEARCHING_EM
+            || result == NETWORK_REGISTRATION_STATUS_DENIED_EM
+            || result == NETWORK_REGISTRATION_STATUS_UNKNOWN_EM);
+        return OK;
+    }
+
+    return -EINVAL;
+}
+
 int tapi_data_get_network_type(tapi_context context, int slot_id, tapi_network_type* out)
 {
     dbus_context* ctx = context;
