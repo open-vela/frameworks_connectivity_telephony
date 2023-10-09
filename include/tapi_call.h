@@ -264,7 +264,7 @@ bool tapi_call_is_emergency_number(tapi_context context, char* number);
  * @param[in] p_handle       Event callback.
  * @return Positive value as watch_id on success; a negated errno value on failure.
  */
-int tapi_call_register_emergencylist_change(tapi_context context, int slot_id,
+int tapi_call_register_emergency_list_change(tapi_context context, int slot_id,
     void* user_obj, tapi_async_function p_handle);
 
 /**
@@ -275,7 +275,7 @@ int tapi_call_register_emergencylist_change(tapi_context context, int slot_id,
  * @param[in] p_handle       Event callback.
  * @return Positive value as watch_id on success; a negated errno value on failure.
  */
-int tapi_call_register_ring_back_tone_change(tapi_context context, int slot_id,
+int tapi_call_register_ringback_tone_change(tapi_context context, int slot_id,
     void* user_obj, tapi_async_function p_handle);
 
 /**
