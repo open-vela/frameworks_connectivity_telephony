@@ -1095,11 +1095,11 @@ static int telephonytool_cmd_listen_call_manager_change(tapi_context context, ch
             call_state_change_cb);
         break;
     case 1:
-        watch_id = tapi_call_register_emergencylist_change(context, slot_id, NULL,
+        watch_id = tapi_call_register_emergency_list_change(context, slot_id, NULL,
             tele_call_ecc_list_async_fun);
         break;
     case 2:
-        watch_id = tapi_call_register_ring_back_tone_change(context, slot_id, NULL,
+        watch_id = tapi_call_register_ringback_tone_change(context, slot_id, NULL,
             tele_call_manager_call_async_fun);
         break;
     default:
