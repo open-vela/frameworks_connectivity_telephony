@@ -1153,7 +1153,7 @@ bool tapi_call_is_emergency_number(tapi_context context, char* number)
     return false;
 }
 
-int tapi_call_register_emergencylist_change(tapi_context context, int slot_id, void* user_obj,
+int tapi_call_register_emergency_list_change(tapi_context context, int slot_id, void* user_obj,
     tapi_async_function p_handle)
 {
     if (context == NULL || !tapi_is_valid_slotid(slot_id)) {
@@ -1165,7 +1165,7 @@ int tapi_call_register_emergencylist_change(tapi_context context, int slot_id, v
         p_handle, call_manager_property_changed);
 }
 
-int tapi_call_register_ring_back_tone_change(tapi_context context, int slot_id, void* user_obj,
+int tapi_call_register_ringback_tone_change(tapi_context context, int slot_id, void* user_obj,
     tapi_async_function p_handle)
 {
     if (context == NULL || !tapi_is_valid_slotid(slot_id)) {

@@ -1692,10 +1692,10 @@ int tapi_register(tapi_context context,
         return tapi_call_register_call_state_change(
             context, slot_id, user_obj, p_handle);
     case MSG_CALL_RING_BACK_TONE_IND:
-        return tapi_call_register_ring_back_tone_change(
+        return tapi_call_register_ringback_tone_change(
             context, slot_id, user_obj, p_handle);
     case MSG_ECC_LIST_CHANGE_IND:
-        return tapi_call_register_emergencylist_change(
+        return tapi_call_register_emergency_list_change(
             context, slot_id, user_obj, p_handle);
     case MSG_DEFAULT_VOICECALL_SLOT_CHANGE_IND:
         return tapi_call_register_default_voicecall_slot_change(
