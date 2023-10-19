@@ -282,6 +282,36 @@ int tapi_register(tapi_context context,
  */
 int tapi_unregister(tapi_context context, int watch_id);
 
+/**
+ * Gets Carrier Config Value.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] key            Carrier Config Key.
+ * @param[out] out           Carrier Config Value.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_get_carrier_config_bool(tapi_context context, int slot_id, char* key, bool* out);
+
+/**
+ * Gets Carrier Config Value.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] key            Carrier Config Key.
+ * @param[out] out           Carrier Config Value.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_get_carrier_config_int(tapi_context context, int slot_id, char* key, int* out);
+
+/**
+ * Gets Carrier Config Value.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] key            Carrier Config Key.
+ * @param[out] out           Carrier Config Value.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_get_carrier_config_string(tapi_context context, int slot_id, char* key, char** out);
+
 #ifdef __cplusplus
 }
 #endif
