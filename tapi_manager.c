@@ -1856,3 +1856,88 @@ int tapi_get_phone_number(tapi_context context, int slot_id, char** out)
 
     return OK;
 }
+
+int tapi_get_carrier_config_bool(tapi_context context, int slot_id, char* key, bool* out)
+{
+    dbus_context* ctx = context;
+    GDBusProxy* proxy;
+    DBusMessageIter iter;
+    int result = 0;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || key == NULL) {
+        return -EINVAL;
+    }
+
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    if (g_dbus_proxy_get_property(proxy, key, &iter)) {
+        dbus_message_iter_get_basic(&iter, &result);
+        *out = result;
+        return OK;
+    }
+
+    return -EINVAL;
+}
+
+int tapi_get_carrier_config_int(tapi_context context, int slot_id, char* key, int* out)
+{
+    dbus_context* ctx = context;
+    GDBusProxy* proxy;
+    DBusMessageIter iter;
+    int result = 0;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || key == NULL) {
+        return -EINVAL;
+    }
+
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    if (g_dbus_proxy_get_property(proxy, key, &iter)) {
+        dbus_message_iter_get_basic(&iter, &result);
+        *out = result;
+        return OK;
+    }
+
+    return -EINVAL;
+}
+
+int tapi_get_carrier_config_string(tapi_context context, int slot_id, char* key, char** out)
+{
+    dbus_context* ctx = context;
+    GDBusProxy* proxy;
+    DBusMessageIter iter;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || key == NULL) {
+        return -EINVAL;
+    }
+
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    if (g_dbus_proxy_get_property(proxy, key, &iter)) {
+        dbus_message_iter_get_basic(&iter, out);
+        return OK;
+    }
+
+    return -EINVAL;
+}
