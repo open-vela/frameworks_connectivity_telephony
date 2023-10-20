@@ -1862,6 +1862,7 @@ int tapi_get_carrier_config_bool(tapi_context context, int slot_id, char* key, b
     dbus_context* ctx = context;
     GDBusProxy* proxy;
     DBusMessageIter iter;
+    DBusMessageIter var_elem;
     int result = 0;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || key == NULL) {
@@ -1877,10 +1878,34 @@ int tapi_get_carrier_config_bool(tapi_context context, int slot_id, char* key, b
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property(proxy, key, &iter)) {
-        dbus_message_iter_get_basic(&iter, &result);
-        *out = result;
-        return OK;
+    if (!g_dbus_proxy_get_property(proxy, "CarrierConfig", &iter)) {
+        return -EINVAL;
+    }
+
+    if (dbus_message_iter_get_arg_type(&iter) != DBUS_TYPE_ARRAY) {
+        return -EINVAL;
+    }
+
+    dbus_message_iter_recurse(&iter, &var_elem);
+
+    while (dbus_message_iter_get_arg_type(&var_elem) == DBUS_TYPE_DICT_ENTRY) {
+        DBusMessageIter entry, value;
+        const char* prop_name;
+
+        dbus_message_iter_recurse(&var_elem, &entry);
+        dbus_message_iter_get_basic(&entry, &prop_name);
+
+        dbus_message_iter_next(&entry);
+        dbus_message_iter_recurse(&entry, &value);
+
+        if (strcmp(prop_name, key) == 0) {
+            dbus_message_iter_get_basic(&value, &result);
+            *out = result;
+
+            return OK;
+        }
+
+        dbus_message_iter_next(&var_elem);
     }
 
     return -EINVAL;
@@ -1891,6 +1916,7 @@ int tapi_get_carrier_config_int(tapi_context context, int slot_id, char* key, in
     dbus_context* ctx = context;
     GDBusProxy* proxy;
     DBusMessageIter iter;
+    DBusMessageIter var_elem;
     int result = 0;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || key == NULL) {
@@ -1906,10 +1932,34 @@ int tapi_get_carrier_config_int(tapi_context context, int slot_id, char* key, in
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property(proxy, key, &iter)) {
-        dbus_message_iter_get_basic(&iter, &result);
-        *out = result;
-        return OK;
+    if (!g_dbus_proxy_get_property(proxy, "CarrierConfig", &iter)) {
+        return -EINVAL;
+    }
+
+    if (dbus_message_iter_get_arg_type(&iter) != DBUS_TYPE_ARRAY) {
+        return -EINVAL;
+    }
+
+    dbus_message_iter_recurse(&iter, &var_elem);
+
+    while (dbus_message_iter_get_arg_type(&var_elem) == DBUS_TYPE_DICT_ENTRY) {
+        DBusMessageIter entry, value;
+        const char* prop_name;
+
+        dbus_message_iter_recurse(&var_elem, &entry);
+        dbus_message_iter_get_basic(&entry, &prop_name);
+
+        dbus_message_iter_next(&entry);
+        dbus_message_iter_recurse(&entry, &value);
+
+        if (strcmp(prop_name, key) == 0) {
+            dbus_message_iter_get_basic(&value, &result);
+            *out = result;
+
+            return OK;
+        }
+
+        dbus_message_iter_next(&var_elem);
     }
 
     return -EINVAL;
@@ -1920,6 +1970,7 @@ int tapi_get_carrier_config_string(tapi_context context, int slot_id, char* key,
     dbus_context* ctx = context;
     GDBusProxy* proxy;
     DBusMessageIter iter;
+    DBusMessageIter var_elem;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || key == NULL) {
         return -EINVAL;
@@ -1934,9 +1985,32 @@ int tapi_get_carrier_config_string(tapi_context context, int slot_id, char* key,
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property(proxy, key, &iter)) {
-        dbus_message_iter_get_basic(&iter, out);
-        return OK;
+    if (!g_dbus_proxy_get_property(proxy, "CarrierConfig", &iter)) {
+        return -EINVAL;
+    }
+
+    if (dbus_message_iter_get_arg_type(&iter) != DBUS_TYPE_ARRAY) {
+        return -EINVAL;
+    }
+
+    dbus_message_iter_recurse(&iter, &var_elem);
+
+    while (dbus_message_iter_get_arg_type(&var_elem) == DBUS_TYPE_DICT_ENTRY) {
+        DBusMessageIter entry, value;
+        const char* prop_name;
+
+        dbus_message_iter_recurse(&var_elem, &entry);
+        dbus_message_iter_get_basic(&entry, &prop_name);
+
+        dbus_message_iter_next(&entry);
+        dbus_message_iter_recurse(&entry, &value);
+
+        if (strcmp(prop_name, key) == 0) {
+            dbus_message_iter_get_basic(&value, out);
+            return OK;
+        }
+
+        dbus_message_iter_next(&var_elem);
     }
 
     return -EINVAL;
