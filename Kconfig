@@ -6,7 +6,7 @@
 config TELEPHONY
 	tristate "Enable telephony library"
 	default n
-	depends on OFONO
+	depends on LIBUV
 	---help---
 		Enable telephony library
 
