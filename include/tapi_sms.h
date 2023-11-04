@@ -64,28 +64,30 @@ extern "C" {
  * send a message
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
- * @param[in] number         sms send number.
- * @param[in] text           send text.
+ * @param[in] sms_id         Sms identifier.
+ * @param[in] number         Sms number to send.
+ * @param[in] text           Sms text body.
  * @param[in] event_id       Async event identifier.
  * @param[in] p_handle       Event callback.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_sms_send_message(tapi_context context, int slot_id, char* number, char* text,
-    int event_id, tapi_async_function p_handle);
+int tapi_sms_send_message(tapi_context context, int slot_id, int sms_id,
+    char* number, char* text, int event_id, tapi_async_function p_handle);
 
 /**
  * send a message
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
- * @param[in] dest_addr      sms send number.
- * @param[in] port           data address port.
- * @param[in] text           send data text.
+ * @param[in] sms_id         Sms identifier.
+ * @param[in] dest_addr      Sms number to send.
+ * @param[in] port           Sms port to send.
+ * @param[in] text           Sms text body.
  * @param[in] event_id       Async event identifier.
  * @param[in] p_handle       Event callback.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_sms_send_data_message(tapi_context context, int slot_id, char* dest_addr,
-    unsigned int port, char* text, int event_id, tapi_async_function p_handle);
+int tapi_sms_send_data_message(tapi_context context, int slot_id, int sms_id,
+    char* dest_addr, unsigned int port, char* text, int event_id, tapi_async_function p_handle);
 
 /**
  * set service center number.
