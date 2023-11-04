@@ -2809,7 +2809,7 @@ static int telephonytool_tapi_sms_send_message(tapi_context context, char* pargs
         return -EINVAL;
 
     syslog(LOG_DEBUG, "%s, slotId : %s  number : %s text: %s \n", __func__, slot_id, to, text);
-    ret = tapi_sms_send_message(context, atoi(slot_id), to, text,
+    ret = tapi_sms_send_message(context, atoi(slot_id), 0, to, text,
         EVENT_SEND_MESSAGE_DONE, tele_sms_event_response);
     return ret;
 }
@@ -2840,7 +2840,7 @@ static int telephonytool_tapi_sms_send_data_message(tapi_context context, char* 
 
     syslog(LOG_DEBUG, "%s, slotId: %s  number: %s text: %s port: %s \n",
         __func__, slot_id, to, text, port);
-    ret = tapi_sms_send_data_message(context, atoi(slot_id), to, atoi(port), text,
+    ret = tapi_sms_send_data_message(context, atoi(slot_id), 0, to, atoi(port), text,
         EVENT_SEND_DATA_MESSAGE_DONE, tele_sms_event_response);
     return ret;
 }
