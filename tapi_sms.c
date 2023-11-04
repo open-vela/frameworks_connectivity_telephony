@@ -426,8 +426,8 @@ done:
     }
 }
 
-int tapi_sms_send_message(tapi_context context, int slot_id, char* number, char* text,
-    int event_id, tapi_async_function p_handle)
+int tapi_sms_send_message(tapi_context context, int slot_id, int sms_id,
+    char* number, char* text, int event_id, tapi_async_function p_handle)
 {
     tapi_async_handler* handler;
     tapi_async_result* ar;
@@ -463,6 +463,7 @@ int tapi_sms_send_message(tapi_context context, int slot_id, char* number, char*
     }
     ar->msg_id = event_id;
     ar->arg1 = slot_id;
+    ar->arg2 = sms_id;
     ar->data = message;
 
     handler = malloc(sizeof(tapi_async_handler));
@@ -484,7 +485,7 @@ int tapi_sms_send_message(tapi_context context, int slot_id, char* number, char*
     return OK;
 }
 
-int tapi_sms_send_data_message(tapi_context context, int slot_id,
+int tapi_sms_send_data_message(tapi_context context, int slot_id, int sms_id,
     char* dest_addr, unsigned int port, char* text, int event_id, tapi_async_function p_handle)
 {
     dbus_context* ctx = context;
@@ -523,6 +524,7 @@ int tapi_sms_send_data_message(tapi_context context, int slot_id,
 
     ar->msg_id = event_id;
     ar->arg1 = slot_id;
+    ar->arg2 = sms_id;
     ar->data = data_message;
 
     handler = malloc(sizeof(tapi_async_handler));
