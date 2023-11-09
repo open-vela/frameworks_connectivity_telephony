@@ -21,6 +21,7 @@
 include $(APPDIR)/Make.defs
 
 CFLAGS += ${INCDIR_PREFIX}$(APPDIR)/external/dbus/dbus
+CFLAGS += ${INCDIR_PREFIX}$(APPDIR)/external/ofono/include
 CFLAGS += ${INCDIR_PREFIX}$(APPDIR)/frameworks/utils/gdbus
 CFLAGS += ${INCDIR_PREFIX}$(APPDIR)/frameworks/telephony
 
