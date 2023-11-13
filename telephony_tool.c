@@ -4200,7 +4200,7 @@ static void* read_stdin(pthread_addr_t pvarg)
         printf("telephonytool> ");
         fflush(stdout);
 
-        len = readline(buffer, CONFIG_NSH_LINELEN, stdin, stdout);
+        len = readline_stream(buffer, CONFIG_NSH_LINELEN, stdin, stdout);
         buffer[len] = '\0';
         if (len < 0)
             continue;
