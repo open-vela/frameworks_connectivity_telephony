@@ -733,7 +733,7 @@ static void on_modem_property_change(GDBusProxy* proxy, const char* name,
     DBusMessageIter* iter, void* user_data)
 {
     dbus_context* ctx = user_data;
-    tapi_modem_state new_state = MODEM_STATE_POWER_OFF;
+    int new_state = MODEM_STATE_POWER_OFF;
     int modem_id = 0;
 
     if (strcmp("ModemState", name) != 0)
