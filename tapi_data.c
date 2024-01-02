@@ -576,7 +576,7 @@ static void apn_context_remove(DBusMessageIter* iter, void* user_data)
         return;
 
     dc = ar->data;
-    if (dc == NULL) {
+    if (dc == NULL || !dbus_validate_path(dc->id, NULL)) {
         tapi_log_error("invalid apn settings ... \n");
         return;
     }
