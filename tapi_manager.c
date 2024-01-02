@@ -1255,6 +1255,7 @@ int tapi_get_phone_state(tapi_context context, int slot_id, tapi_phone_state* st
     dbus_context* ctx = context;
     GDBusProxy* proxy;
     DBusMessageIter iter;
+    int new_state = 0;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
@@ -1270,7 +1271,8 @@ int tapi_get_phone_state(tapi_context context, int slot_id, tapi_phone_state* st
     }
 
     if (g_dbus_proxy_get_property(proxy, "PhoneStatus", &iter)) {
-        dbus_message_iter_get_basic(&iter, state);
+        dbus_message_iter_get_basic(&iter, &new_state);
+        *state = new_state;
         return OK;
     }
 
