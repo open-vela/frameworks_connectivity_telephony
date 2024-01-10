@@ -195,6 +195,7 @@ static int data_property_changed(DBusConnection* connection,
     tapi_async_function cb;
     DBusMessageIter iter, var;
     const char* property;
+    const char* slot;
     int value_int;
     bool isvalid = false;
 
@@ -228,7 +229,8 @@ static int data_property_changed(DBusConnection* connection,
         && (strcmp(property, "DataSlot") == 0)) {
         ar->status = OK;
 
-        dbus_message_iter_get_basic(&var, &ar->arg2);
+        dbus_message_iter_get_basic(&var, &slot);
+        ar->arg2 = tapi_utils_get_slot_id(slot);
         isvalid = true;
     } else if ((ar->msg_id == MSG_DATA_NETWORK_TYPE_CHANGE_IND)
         && (strcmp(property, "Bearer") == 0)) {
@@ -1355,6 +1357,7 @@ int tapi_data_set_default_slot(tapi_context context, int slot_id)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
+    const char* modem_path;
 
     proxy = ctx->dbus_proxy_manager;
     if (proxy == NULL) {
@@ -1365,8 +1368,12 @@ int tapi_data_set_default_slot(tapi_context context, int slot_id)
     if (!ctx->client_ready)
         return -EAGAIN;
 
+    if (!tapi_is_valid_slotid(slot_id))
+        return -EINVAL;
+
+    modem_path = tapi_utils_get_modem_path(slot_id);
     if (!g_dbus_proxy_set_property_basic(proxy,
-            "DataSlot", DBUS_TYPE_INT32, &slot_id, NULL, NULL, NULL)) {
+            "DataSlot", DBUS_TYPE_STRING, &modem_path, NULL, NULL, NULL)) {
         return -EINVAL;
     }
 
@@ -1378,6 +1385,7 @@ int tapi_data_get_default_slot(tapi_context context, int* out)
     dbus_context* ctx = context;
     GDBusProxy* proxy;
     DBusMessageIter iter;
+    char* modem_path;
 
     proxy = ctx->dbus_proxy_manager;
     if (proxy == NULL) {
@@ -1389,7 +1397,8 @@ int tapi_data_get_default_slot(tapi_context context, int* out)
         return -EAGAIN;
 
     if (g_dbus_proxy_get_property(proxy, "DataSlot", &iter)) {
-        dbus_message_iter_get_basic(&iter, out);
+        dbus_message_iter_get_basic(&iter, &modem_path);
+        *out = tapi_utils_get_slot_id(modem_path);
         return OK;
     }
 
