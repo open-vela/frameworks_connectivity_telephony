@@ -44,6 +44,7 @@
 
 #define MAX_CONTEXT_NAME_LENGTH 256
 #define MAX_VOICE_CALL_PROXY_COUNT 99
+#define SLOT_NOT_SET "SLOT_NOT_SET"
 
 /****************************************************************************
  * Public Types
