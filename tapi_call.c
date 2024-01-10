@@ -221,6 +221,7 @@ static int tapi_call_default_voicecall_slot_change(DBusMessage* message, tapi_as
     tapi_async_function cb;
     DBusMessageIter iter, var;
     const char* property;
+    const char* slot;
 
     if (handler == NULL)
         return false;
@@ -242,7 +243,8 @@ static int tapi_call_default_voicecall_slot_change(DBusMessage* message, tapi_as
     dbus_message_iter_recurse(&iter, &var);
 
     if (!strcmp(property, "VoiceCallSlot")) {
-        dbus_message_iter_get_basic(&var, &ar->arg2);
+        dbus_message_iter_get_basic(&var, &slot);
+        ar->arg2 = tapi_utils_get_slot_id(slot);
         ar->status = OK;
         cb(ar);
     }
@@ -1377,6 +1379,7 @@ int tapi_call_set_default_slot(tapi_context context, int slot_id)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
+    const char* modem_path;
 
     proxy = ctx->dbus_proxy_manager;
     if (proxy == NULL) {
@@ -1390,8 +1393,10 @@ int tapi_call_set_default_slot(tapi_context context, int slot_id)
     if (!tapi_is_valid_slotid(slot_id) && slot_id != -1)
         return -EINVAL;
 
+    modem_path = tapi_utils_get_modem_path(slot_id);
+
     if (!g_dbus_proxy_set_property_basic(proxy,
-            "VoiceCallSlot", DBUS_TYPE_INT32, &slot_id, NULL, NULL, NULL)) {
+            "VoiceCallSlot", DBUS_TYPE_STRING, &modem_path, NULL, NULL, NULL)) {
         return -EINVAL;
     }
 
@@ -1403,6 +1408,7 @@ int tapi_call_get_default_slot(tapi_context context, int* out)
     dbus_context* ctx = context;
     GDBusProxy* proxy;
     DBusMessageIter iter;
+    char* modem_path;
 
     proxy = ctx->dbus_proxy_manager;
     if (proxy == NULL) {
@@ -1414,7 +1420,8 @@ int tapi_call_get_default_slot(tapi_context context, int* out)
         return -EAGAIN;
 
     if (g_dbus_proxy_get_property(proxy, "VoiceCallSlot", &iter)) {
-        dbus_message_iter_get_basic(&iter, out);
+        dbus_message_iter_get_basic(&iter, &modem_path);
+        *out = tapi_utils_get_slot_id(modem_path);
         return OK;
     }
 

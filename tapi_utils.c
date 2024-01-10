@@ -276,11 +276,28 @@ const char* tapi_utils_get_modem_path(int slot_id)
 #ifdef CONFIG_MODEM_PATH_2
         return CONFIG_MODEM_PATH_2;
 #endif
+    case -1:
+        return SLOT_NOT_SET;
     default:
         break;
     }
 
     return NULL;
+}
+
+int tapi_utils_get_slot_id(const char* modem_path)
+{
+#ifdef CONFIG_MODEM_PATH_1
+    if (!strcmp(modem_path, CONFIG_MODEM_PATH_1))
+#else
+    if (!strcmp(modem_path, CONFIG_MODEM_PATH))
+#endif
+        return 0;
+#ifdef CONFIG_MODEM_PATH_2
+    else if (!strcmp(modem_path, CONFIG_MODEM_PATH_2))
+        return 1;
+#endif
+    return -1;
 }
 
 tapi_call_status tapi_utils_call_status_from_string(const char* status)
