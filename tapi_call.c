@@ -67,7 +67,7 @@ static int call_manager_property_changed(DBusConnection* connection, DBusMessage
     void* user_data);
 static int call_state_changed(DBusConnection* connection, DBusMessage* message,
     void* user_data);
-static int tapi_call_signal_ecc_list_change(DBusMessage* message, tapi_async_handler* handler);
+static int tapi_call_property_change(DBusMessage* message, tapi_async_handler* handler);
 
 /****************************************************************************
  * Private Functions
@@ -296,9 +296,8 @@ call_manager_property_changed(DBusConnection* connection, DBusMessage* message,
 
     msg_id = ar->msg_id;
     if (dbus_message_is_signal(message, OFONO_VOICECALL_MANAGER_INTERFACE,
-            "PropertyChanged")
-        && msg_id == MSG_ECC_LIST_CHANGE_IND) {
-        return tapi_call_signal_ecc_list_change(message, handler);
+            "PropertyChanged")) {
+        return tapi_call_property_change(message, handler);
     } else if (dbus_message_is_signal(message, OFONO_VOICECALL_MANAGER_INTERFACE,
                    "RingBackTone")
         && msg_id == MSG_CALL_RING_BACK_TONE_IND) {
@@ -530,7 +529,7 @@ done:
     cb(ar);
 }
 
-static int tapi_call_signal_ecc_list_change(DBusMessage* message, tapi_async_handler* handler)
+static int tapi_call_property_change(DBusMessage* message, tapi_async_handler* handler)
 {
     DBusMessageIter iter, list, array;
     tapi_async_result* ar;
@@ -550,9 +549,14 @@ static int tapi_call_signal_ecc_list_change(DBusMessage* message, tapi_async_han
     if (cb == NULL)
         return false;
 
-    if (is_call_signal_message(message, &iter, DBUS_TYPE_STRING)) {
-        dbus_message_iter_get_basic(&iter, &key);
-        dbus_message_iter_next(&iter);
+    if (is_call_signal_message(message, &iter, DBUS_TYPE_STRING) == false)
+        return false;
+
+    dbus_message_iter_get_basic(&iter, &key);
+    dbus_message_iter_next(&iter);
+
+    if ((ar->msg_id == MSG_ECC_LIST_CHANGE_IND)
+        && strcmp(key, "EmergencyNumbers") == 0) {
 
         dbus_message_iter_recurse(&iter, &list);
         dbus_message_iter_recurse(&list, &array);
@@ -566,11 +570,10 @@ static int tapi_call_signal_ecc_list_change(DBusMessage* message, tapi_async_han
         }
 
         ar->status = OK;
+        ar->data = ecc_list;
+        ar->arg2 = index;
+        cb(ar);
     }
-
-    ar->data = ecc_list;
-    ar->arg2 = index;
-    cb(ar);
 
     return true;
 }
