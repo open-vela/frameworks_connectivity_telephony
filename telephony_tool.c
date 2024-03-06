@@ -152,6 +152,7 @@ struct telephonytool_cmd_s {
  * Private Declarations
  ****************************************************************************/
 
+static uv_async_t g_uv_exit;
 static bool g_should_exit;
 static struct telephonytool_cmd_s g_telephonytool_cmds[];
 static int telephonytool_cmd_help(tapi_context context, char* pargs);
@@ -161,6 +162,16 @@ static void* read_stdin(pthread_addr_t pvarg);
 /****************************************************************************
  * Private Function
  ****************************************************************************/
+
+static void exit_async_cleanup(uv_async_t* handle)
+{
+    /* let's close the handle and stop the loop here as
+     * we must be running in the same thread where the `uv_run` is
+     * NOTE that uv_stop is not thread-safe!
+     */
+    uv_close((uv_handle_t*)&g_uv_exit, NULL);
+    uv_stop(uv_default_loop());
+}
 
 static void on_tapi_client_ready(const char* client_name, void* user_data)
 {
@@ -4234,8 +4245,7 @@ static void* read_stdin(pthread_addr_t pvarg)
     }
 
     free(buffer);
-    tapi_close(context);
-    uv_stop(uv_default_loop());
+    uv_async_send(&g_uv_exit);
     return NULL;
 }
 
@@ -4794,6 +4804,11 @@ int main(int argc, char* argv[])
         return 0;
     }
 
+    /* initialize async handler before the thread creation
+     * in case we have some race issues
+     */
+    uv_async_init(uv_default_loop(), &g_uv_exit, exit_async_cleanup);
+
     pthread_attr_init(&attr);
     param.sched_priority = CONFIG_TELEPHONY_TOOL_PRIORITY;
     pthread_attr_setschedparam(&attr, &param);
@@ -4807,6 +4822,17 @@ int main(int argc, char* argv[])
 
     uv_run(uv_default_loop(), UV_RUN_DEFAULT);
     uv_loop_close(uv_default_loop());
+
+    /* wait for read_stdin to exit :-) */
+    pthread_join(thread, NULL);
+
+    /* close the tapi context here as invoking it will lead to
+     * an *exit on close* in the dbus library
+     * The dbus libarary internally invokes the `_exit()`
+     * which will exit the current task. Hence,
+     * the uv loop will not be closed properly.
+     */
+    tapi_close(context);
 
     return ret;
 }
