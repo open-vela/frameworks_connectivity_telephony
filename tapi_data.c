@@ -593,6 +593,7 @@ static void apn_context_edit(DBusMessageIter* iter, void* user_data)
     tapi_data_context* dc;
     const char* type;
     char *name, *apn, *username, *password;
+    int protocol, auth_method;
 
     if (handler == NULL)
         return;
@@ -612,6 +613,8 @@ static void apn_context_edit(DBusMessageIter* iter, void* user_data)
     apn = strdup(dc->accesspointname);
     username = strdup(dc->username);
     password = strdup(dc->password);
+    protocol = dc->protocol;
+    auth_method = dc->auth_method;
 
     tapi_log_info("type = %s; name = %s; apn = %s; \
         username = ***; password = ***; proto = %d; auth = %d \n",
@@ -623,8 +626,8 @@ static void apn_context_edit(DBusMessageIter* iter, void* user_data)
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &apn);
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &username);
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &password);
-    dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &dc->protocol);
-    dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &dc->auth_method);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &protocol);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &auth_method);
 
     free(name);
     free(apn);
