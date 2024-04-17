@@ -383,6 +383,8 @@ int tapi_phonebook_load_fdn_entries(tapi_context context,
     }
     ar->msg_id = event_id;
     ar->arg1 = slot_id;
+    ar->arg2 = 0;
+    ar->data = NULL;
 
     user_data = malloc(sizeof(tapi_async_handler));
     if (user_data == NULL) {
