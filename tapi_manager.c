@@ -835,7 +835,12 @@ static int tapi_modem_register(tapi_context context,
 
     return watch_id;
 }
-
+static void system_dbus_disconnected(DBusConnection* conn, void* user_data)
+{
+    tapi_client_ready_function callback = (tapi_client_ready_function)user_data;
+    tapi_log_error("DBusConnection %p has disconnected!", conn);
+    callback(NULL, NULL);
+}
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
@@ -875,6 +880,8 @@ tapi_context tapi_open(const char* client_name,
             tapi_log_error("max retry times, giving up! \n");
             goto error;
         }
+
+        g_dbus_set_disconnect_function(connection, system_dbus_disconnected, callback, NULL);
 
         dbus_error_init(&err);
         dbus_request_name(connection, client_name, &err);
