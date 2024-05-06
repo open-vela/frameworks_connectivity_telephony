@@ -56,10 +56,11 @@ static int object_filter(GDBusProxy* proxy)
     if (interface == NULL)
         return false;
 
-    // ss related interface skip get properties
+    // ss and sms related interface skip get properties
     if ((strcmp(interface, OFONO_CALL_BARRING_INTERFACE) == 0)
         || (strcmp(interface, OFONO_CALL_FORWARDING_INTERFACE) == 0)
-        || (strcmp(interface, OFONO_CALL_SETTINGS_INTERFACE) == 0)) {
+        || (strcmp(interface, OFONO_CALL_SETTINGS_INTERFACE) == 0)
+        || (strcmp(interface, OFONO_MESSAGE_MANAGER_INTERFACE) == 0)) {
         return true;
     }
 
