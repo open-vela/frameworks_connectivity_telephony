@@ -38,6 +38,12 @@ config MODEM_PATH_2
 	---help---
 		The modem path 2
 
+config ABNORMAL_EVENT
+        bool "support modem abnormal event"
+        default n
+        ---help---
+                enable/disable modem abnormal event feature
+
 config TELEPHONY_TOOL
 	bool "Telephony tool"
 	default n
@@ -53,5 +59,4 @@ config TELEPHONY_TOOL_PRIORITY
 	default 100
 
 endif
-
 endif

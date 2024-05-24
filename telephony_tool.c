@@ -49,6 +49,7 @@
 #define EVENT_OEM_RIL_REQUEST_RAW_DONE 0x07
 #define EVENT_OEM_RIL_REQUEST_STRINGS_DONE 0x08
 #define EVENT_REQUEST_SCREEN_STATE_DONE 0x09
+#define EVENT_MODEM_ENABLE_ABNORMAL_EVENT_DONE 0x0A
 
 // Data Callback Event
 #define EVENT_APN_LOADED_DONE 0x11
@@ -1723,6 +1724,39 @@ static int telephonytool_cmd_enable_modem(tapi_context context, char* pargs)
     syslog(LOG_DEBUG, "%s, slotId : %s target_state: %s \n", __func__, slot_id, target_state);
     return tapi_enable_modem(context, atoi(slot_id),
         EVENT_MODEM_ENABLE_DONE, (bool)atoi(target_state), tele_call_async_fun);
+}
+
+static int telephonytool_cmd_enable_modem_abnormal_event(tapi_context context, char* pargs)
+{
+    char dst[5][MAX_INPUT_ARGS_LEN];
+    char* slot_id;
+    bool enable = false;
+    char* module_mask;
+    char* from_event_id;
+    char* to_event_id;
+    int cnt;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    cnt = split_input(dst, 5, pargs, " ");
+    if (cnt != 5)
+        return -EINVAL;
+
+    slot_id = dst[0];
+    if (atoi(dst[1]) == 1) {
+        enable = true;
+    }
+
+    module_mask = dst[2];
+    from_event_id = dst[3];
+    to_event_id = dst[4];
+
+    syslog(LOG_DEBUG, "%s, slot_id: %s,enable: %d module_mask: %s from_event_id: %s to_event_id: %s \n", __func__,
+        slot_id, enable, module_mask, from_event_id, to_event_id);
+    return tapi_enable_modem_abnormal_event(context, atoi(slot_id), enable,
+        EVENT_MODEM_ENABLE_ABNORMAL_EVENT_DONE, atoi(module_mask),
+        atoi(from_event_id), atoi(to_event_id), tele_call_async_fun);
 }
 
 static int telephonytool_cmd_get_modem_status(tapi_context context, char* pargs)
@@ -4319,6 +4353,10 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         telephonytool_cmd_enable_modem,
         "enable modem (enter example : enable-modem 0 1 "
         "[slot_id][state, 0:disable modem 1:enable modem])" },
+    { "enable-modem-abnormal-event", RADIO_CMD,
+        telephonytool_cmd_enable_modem_abnormal_event,
+        "enable modem abnormal event (enter example : enable-modem-abnormal-event 0 1 63 0 0 "
+        "[slot_id][state, 0:disable 1:enable][modem module mask][start event id][end event id])" },
     { "get-modem-status", RADIO_CMD,
         telephonytool_cmd_get_modem_status,
         "get modem status (enter example : get-modem-status 0 [slot_id])" },
