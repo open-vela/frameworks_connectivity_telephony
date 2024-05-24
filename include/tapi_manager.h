@@ -219,6 +219,21 @@ int tapi_enable_modem(tapi_context context, int slot_id,
     int event_id, bool enable, tapi_async_function p_handle);
 
 /**
+ * enable or disable modem abnormal event report.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] target_state   Indicate enable or disable function.
+ * @param[in] event_id       Async event identifier.
+ * @param[in] module_list    Control event report based on module,0x01 DP 0x02 RRC 0x04 NAS 0x08 IMS 0x10 SPV 0x20 SIM.
+ * @param[in] from_event_id  control event report based on event id range,0 means no restriction
+ * @param[in] to_event_id    control event report based on event id range,0 means no restriction
+ * @param[in] p_handle       Event callback.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_enable_modem_abnormal_event(tapi_context context, int slot_id, bool enable,
+    int event_id, int module_mask, int from_event_id, int to_event_id, tapi_async_function p_handle);
+
+/**
  * get modem status asynchronously.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
