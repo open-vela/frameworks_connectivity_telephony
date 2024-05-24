@@ -46,6 +46,13 @@ typedef struct {
     void* oem_req;
 } oem_ril_request_data;
 
+typedef struct {
+    bool enable;
+    int module_mask;
+    int from_event_id;
+    int to_event_id;
+} abnormal_event_data;
+
 /****************************************************************************
  * Private Functions
  ****************************************************************************/
@@ -288,6 +295,40 @@ static void enable_or_disable_modem_done(DBusMessage* message, void* user_data)
 
 done:
     cb(ar);
+}
+
+static void enable_modem_abnormal_event_done(DBusMessage* message, void* user_data)
+{
+    tapi_async_handler* handler = user_data;
+    tapi_async_result* ar;
+    tapi_async_function cb;
+    DBusError err;
+    DBusMessageIter iter;
+
+    if (handler == NULL)
+        return;
+
+    ar = handler->result;
+    if (ar == NULL)
+        return;
+
+    dbus_error_init(&err);
+    if (dbus_set_error_from_message(&err, message) == true) {
+        tapi_log_error("%s: %s\n", err.name, err.message);
+        dbus_error_free(&err);
+        ar->status = ERROR;
+    } else {
+        if (dbus_message_iter_init(message, &iter) == false) {
+            ar->status = ERROR;
+        }
+        dbus_message_iter_get_basic(&iter, &ar->arg2);
+        tapi_log_info("%s:%d", __func__, ar->arg2);
+    }
+
+    cb = handler->cb_function;
+    if (cb != NULL) {
+        cb(ar);
+    }
 }
 
 static void modem_status_query_done(DBusMessage* message, void* user_data)
@@ -554,6 +595,33 @@ static int modem_state_changed(DBusConnection* connection,
     }
 
     return 1;
+}
+
+static void enable_modem_abnormal_event_param_append(DBusMessageIter* iter, void* user_data)
+{
+    abnormal_event_data* abnormal_event_param;
+    tapi_async_handler* param;
+    int enable;
+    int module_mask;
+    int from_event_id;
+    int to_event_id;
+
+    param = user_data;
+    if (param == NULL || param->result == NULL)
+        return;
+
+    abnormal_event_param = param->result->data;
+    enable = abnormal_event_param->enable ? 1 : 0;
+    module_mask = abnormal_event_param->module_mask;
+    from_event_id = abnormal_event_param->from_event_id;
+    to_event_id = abnormal_event_param->to_event_id;
+
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &enable);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &module_mask);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &from_event_id);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &to_event_id);
+
+    free(abnormal_event_param);
 }
 
 static void oem_ril_request_raw_param_append(DBusMessageIter* iter, void* user_data)
@@ -854,6 +922,15 @@ tapi_context tapi_open(const char* client_name,
     dbus_context* ctx;
     DBusError err;
     int retry_round = 0;
+    int slot_id = 0;
+#ifdef CONFIG_ABNORMAL_EVENT
+    bool enable = true;
+#else
+    bool enable = false;
+#endif
+    int module_mask = 63;
+    int from_event_id = 0;
+    int to_event_id = 0;
 
     ctx = malloc(sizeof(dbus_context));
     if (ctx == NULL) {
@@ -926,6 +1003,8 @@ tapi_context tapi_open(const char* client_name,
         g_dbus_proxy_set_property_watch(ctx->dbus_proxy[i][DBUS_PROXY_MODEM],
             on_modem_property_change, ctx);
     }
+
+    tapi_enable_modem_abnormal_event(ctx, slot_id, enable, 0, module_mask, from_event_id, to_event_id, NULL);
 
     return ctx;
 
@@ -1617,6 +1696,63 @@ int tapi_enable_modem(tapi_context context, int slot_id,
     if (!g_dbus_proxy_method_call(proxy, enable ? "EnableModem" : "DisableModem",
             NULL, enable_or_disable_modem_done, handler, handler_free)) {
         handler_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
+}
+
+int tapi_enable_modem_abnormal_event(tapi_context context, int slot_id, bool enable,
+    int event_id, int module_mask, int from_event_id, int to_event_id, tapi_async_function p_handle)
+{
+    dbus_context* ctx = context;
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
+    abnormal_event_data* user_data;
+    GDBusProxy* proxy;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+        return -EINVAL;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    handler = malloc(sizeof(tapi_async_handler));
+    if (handler == NULL)
+        return -ENOMEM;
+
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        free(handler);
+        return -ENOMEM;
+    }
+
+    user_data = malloc(sizeof(abnormal_event_data));
+    if (user_data == NULL) {
+        free(handler);
+        free(ar);
+        return -ENOMEM;
+    }
+    user_data->enable = enable;
+    user_data->module_mask = module_mask;
+    user_data->from_event_id = from_event_id;
+    user_data->to_event_id = to_event_id;
+
+    ar->msg_id = event_id;
+    ar->arg1 = slot_id;
+    ar->data = user_data;
+    handler->result = ar;
+    handler->cb_function = p_handle;
+
+    if (!g_dbus_proxy_method_call(proxy, "EnableModemAbnormalEvent",
+            enable_modem_abnormal_event_param_append, enable_modem_abnormal_event_done,
+            handler, handler_free)) {
+        handler_free(handler);
+        free(user_data);
         return -EINVAL;
     }
 
