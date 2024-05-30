@@ -18,6 +18,7 @@
  * Included Files
  ****************************************************************************/
 
+#include <ofono/dfx.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -731,6 +732,8 @@ static int manage_call_proxy_method(tapi_context context, int slot_id, const cha
     }
 
     if (!g_dbus_proxy_method_call(proxy, member, NULL, no_operate_callback, NULL, NULL)) {
+        OFONO_DFX_CALL_INFO_IF(!strcmp("HangupAll", member), OFONO_TYPE_UNKNOW,
+            OFONO_DIRECTION_UNKNOW, OFONO_VOICE, OFONO_HANGUP_FAIL, "dbus method call fail");
         return -EINVAL;
     }
 
@@ -759,6 +762,8 @@ static int manager_conference(tapi_context context, int slot_id,
 
     if (!g_dbus_proxy_method_call(proxy, member, conference_param_append,
             no_operate_callback, param, free)) {
+        OFONO_DFX_CALL_INFO_IF(!strcmp("DialConference", member), OFONO_CONFERENCE_CALL,
+            OFONO_ORIGINATE, OFONO_VOICE, OFONO_DIAL_FAIL, "dbus method call fail");
         return -EINVAL;
     }
 
@@ -836,6 +841,9 @@ int tapi_call_dial(tapi_context context, int slot_id, char* number, int hide_cal
     call_param* param;
     GDBusProxy* proxy;
 
+    OFONO_DFX_CALL_INFO(OFONO_NORMAL_CALL, OFONO_ORIGINATE, OFONO_VOICE,
+        OFONO_NORMAL, "NA");
+
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
     }
@@ -874,6 +882,8 @@ int tapi_call_dial(tapi_context context, int slot_id, char* number, int hide_cal
 
     if (!g_dbus_proxy_method_call(proxy, "Dial", call_param_append,
             dial_call_callback, handler, handler_free)) {
+        OFONO_DFX_CALL_INFO(OFONO_NORMAL_CALL, OFONO_ORIGINATE,
+            OFONO_VOICE, OFONO_DIAL_FAIL, "dbus method call fail");
         free(param);
         handler_free(handler);
         return -EINVAL;
@@ -914,6 +924,8 @@ int tapi_call_transfer(tapi_context context, int slot_id)
 
 int tapi_call_hangup_all_calls(tapi_context context, int slot_id)
 {
+    OFONO_DFX_CALL_INFO(OFONO_TYPE_UNKNOW, OFONO_DIRECTION_UNKNOW,
+        OFONO_MEDIA_UNKNOW, OFONO_NORMAL, "NA");
     return manage_call_proxy_method(context, slot_id, "HangupAll");
 }
 
@@ -989,6 +1001,9 @@ int tapi_call_merge_call(tapi_context context,
     tapi_async_result* ar;
     GDBusProxy* proxy;
 
+    OFONO_DFX_CALL_INFO(OFONO_CONFERENCE_CALL, OFONO_ORIGINATE, OFONO_VOICE,
+        OFONO_NORMAL, "NA");
+
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
     }
@@ -1017,6 +1032,8 @@ int tapi_call_merge_call(tapi_context context,
 
     if (!g_dbus_proxy_method_call(proxy, "CreateMultiparty", NULL,
             merge_call_complete, handler, handler_free)) {
+        OFONO_DFX_CALL_INFO(OFONO_CONFERENCE_CALL, OFONO_ORIGINATE,
+            OFONO_VOICE, OFONO_DIAL_FAIL, "dbus method call fail");
         handler_free(handler);
         return -EINVAL;
     }
@@ -1199,6 +1216,8 @@ int tapi_call_dial_conferece(tapi_context context, int slot_id, char* participan
     ims_conference_param* ims_conference_participants_param;
     int ret;
 
+    OFONO_DFX_CALL_INFO(OFONO_CONFERENCE_CALL, OFONO_ORIGINATE, OFONO_VOICE,
+        OFONO_NORMAL, "NA");
     ims_conference_participants_param = malloc(sizeof(ims_conference_param));
     if (ims_conference_participants_param == NULL) {
         return -ENOMEM;
@@ -1292,6 +1311,8 @@ int tapi_call_answer_by_id(tapi_context context, int slot_id, char* call_id)
     dbus_context* ctx = context;
     GDBusProxy* proxy;
 
+    OFONO_DFX_CALL_INFO(OFONO_NORMAL_CALL, OFONO_TERMINATE, OFONO_VOICE,
+        OFONO_NORMAL, "NA");
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || call_id == NULL) {
         return -EINVAL;
     }
@@ -1304,6 +1325,8 @@ int tapi_call_answer_by_id(tapi_context context, int slot_id, char* call_id)
 
     if (!g_dbus_proxy_method_call(proxy, "Answer", answer_hangup_param_append,
             no_operate_callback, call_id, NULL)) {
+        OFONO_DFX_CALL_INFO(OFONO_NORMAL_CALL, OFONO_TERMINATE,
+            OFONO_VOICE, OFONO_ANSWER_FAIL, "dbus method call fail");
         return -EINVAL;
     }
 
@@ -1327,6 +1350,8 @@ int tapi_call_hangup_by_id(tapi_context context, int slot_id, char* call_id)
 
     if (!g_dbus_proxy_method_call(proxy, "Hangup", answer_hangup_param_append,
             no_operate_callback, call_id, NULL)) {
+        OFONO_DFX_CALL_INFO(OFONO_TYPE_UNKNOW, OFONO_DIRECTION_UNKNOW,
+            OFONO_MEDIA_UNKNOW, OFONO_HANGUP_FAIL, "dbus method call fail");
         return -EINVAL;
     }
 
