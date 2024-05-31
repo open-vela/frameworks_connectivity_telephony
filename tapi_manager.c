@@ -923,7 +923,7 @@ tapi_context tapi_open(const char* client_name,
     DBusError err;
     int retry_round = 0;
     int slot_id = 0;
-#ifdef CONFIG_ABNORMAL_EVENT
+#ifdef CONFIG_MODEM_ABNORMAL_EVENT
     bool enable = true;
 #else
     bool enable = false;
