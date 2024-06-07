@@ -699,7 +699,7 @@ int tapi_sms_delete_message_from_sim(tapi_context context, int slot_id, int inde
     }
 
     if (!g_dbus_proxy_method_call(proxy, "DeleteMessageFromSim",
-            delete_message_param_append, no_operate_callback, (void*)index, NULL)) {
+            delete_message_param_append, no_operate_callback, (void*)(intptr_t)index, NULL)) {
         return -EINVAL;
     }
 
