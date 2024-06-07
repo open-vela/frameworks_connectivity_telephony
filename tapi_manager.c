@@ -87,7 +87,7 @@ static void get_persistent_dbus_proxy(dbus_context* ctx)
     ctx->dbus_proxy_manager = g_dbus_proxy_new(
         ctx->client, OFONO_MANAGER_PATH, OFONO_MANAGER_INTERFACE);
 
-    for (int i = 0; i < CONFIG_ACTIVE_MODEM_COUNT; i++) {
+    for (int i = 0; i < CONFIG_MODEM_ACTIVE_COUNT; i++) {
         ctx->dbus_proxy[i][0] = g_dbus_proxy_new(
             ctx->client, tapi_utils_get_modem_path(i), OFONO_MODEM_INTERFACE);
     }
@@ -97,7 +97,7 @@ static void release_persistent_dbus_proxy(dbus_context* ctx)
 {
     g_dbus_proxy_unref(ctx->dbus_proxy_manager);
 
-    for (int i = 0; i < CONFIG_ACTIVE_MODEM_COUNT; i++) {
+    for (int i = 0; i < CONFIG_MODEM_ACTIVE_COUNT; i++) {
         g_dbus_proxy_unref(ctx->dbus_proxy[i][0]);
     }
 }
@@ -123,7 +123,7 @@ static void get_mutable_dbus_proxy(dbus_context* ctx)
         OFONO_PHONEBOOK_INTERFACE,
     };
 
-    for (int i = 0; i < CONFIG_ACTIVE_MODEM_COUNT; i++) {
+    for (int i = 0; i < CONFIG_MODEM_ACTIVE_COUNT; i++) {
         for (int j = 1; j < DBUS_PROXY_MAX_COUNT; j++) {
             if (!is_interface_supported(dbus_proxy_server[j])) {
                 ctx->dbus_proxy[i][j] = NULL;
@@ -138,7 +138,7 @@ static void get_mutable_dbus_proxy(dbus_context* ctx)
 
 static void release_mutable_dbus_proxy(dbus_context* ctx)
 {
-    for (int i = 0; i < CONFIG_ACTIVE_MODEM_COUNT; i++) {
+    for (int i = 0; i < CONFIG_MODEM_ACTIVE_COUNT; i++) {
         for (int j = 1; j < DBUS_PROXY_MAX_COUNT; j++) {
             if (ctx->dbus_proxy[i][j] != NULL) {
                 g_dbus_proxy_unref(ctx->dbus_proxy[i][j]);
@@ -998,7 +998,7 @@ tapi_context tapi_open(const char* client_name,
     get_persistent_dbus_proxy(ctx);
     get_mutable_dbus_proxy(ctx);
 
-    for (int i = 0; i < CONFIG_ACTIVE_MODEM_COUNT; i++) {
+    for (int i = 0; i < CONFIG_MODEM_ACTIVE_COUNT; i++) {
         ctx->modem_state[i] = MODEM_STATE_POWER_OFF;
         g_dbus_proxy_set_property_watch(ctx->dbus_proxy[i][DBUS_PROXY_MODEM],
             on_modem_property_change, ctx);
@@ -1028,7 +1028,7 @@ int tapi_close(tapi_context context)
         return -EINVAL;
     }
 
-    for (int i = 0; i < CONFIG_ACTIVE_MODEM_COUNT; i++) {
+    for (int i = 0; i < CONFIG_MODEM_ACTIVE_COUNT; i++) {
         g_dbus_proxy_remove_property_watch(ctx->dbus_proxy[i][DBUS_PROXY_MODEM], NULL);
     }
 
