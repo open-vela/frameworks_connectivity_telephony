@@ -196,7 +196,7 @@ static bool is_valid_slot_id_str(char* slot_id_str)
     if (slot_id_str == NULL
         || strlen(slot_id_str) != 1
         || *slot_id_str < '0'
-        || *slot_id_str >= '0' + CONFIG_ACTIVE_MODEM_COUNT)
+        || *slot_id_str >= '0' + CONFIG_MODEM_ACTIVE_COUNT)
         return false;
 
     return true;

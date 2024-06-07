@@ -76,8 +76,8 @@ typedef struct {
     DBusMessage* pending;
     GDBusClient* client;
     GDBusProxy* dbus_proxy_manager;
-    GDBusProxy* dbus_proxy[CONFIG_ACTIVE_MODEM_COUNT][DBUS_PROXY_MAX_COUNT];
-    tapi_modem_state modem_state[CONFIG_ACTIVE_MODEM_COUNT];
+    GDBusProxy* dbus_proxy[CONFIG_MODEM_ACTIVE_COUNT][DBUS_PROXY_MAX_COUNT];
+    tapi_modem_state modem_state[CONFIG_MODEM_ACTIVE_COUNT];
     bool client_ready;
 } dbus_context;
 
@@ -96,7 +96,7 @@ extern "C" {
 
 static inline bool tapi_is_valid_slotid(int slot_id)
 {
-    return (slot_id >= 0 && slot_id < CONFIG_ACTIVE_MODEM_COUNT);
+    return (slot_id >= 0 && slot_id < CONFIG_MODEM_ACTIVE_COUNT);
 }
 void no_operate_callback(DBusMessage* message, void* user_data);
 bool is_call_signal_message(DBusMessage* message, DBusMessageIter* iter, int msg_type);

@@ -267,11 +267,7 @@ const char* tapi_utils_get_modem_path(int slot_id)
 {
     switch (slot_id) {
     case SLOT_ID_1:
-#ifdef CONFIG_MODEM_PATH_1
-        return CONFIG_MODEM_PATH_1;
-#else
         return CONFIG_MODEM_PATH;
-#endif
     case SLOT_ID_2:
 #ifdef CONFIG_MODEM_PATH_2
         return CONFIG_MODEM_PATH_2;
@@ -287,11 +283,7 @@ const char* tapi_utils_get_modem_path(int slot_id)
 
 int tapi_utils_get_slot_id(const char* modem_path)
 {
-#ifdef CONFIG_MODEM_PATH_1
-    if (!strcmp(modem_path, CONFIG_MODEM_PATH_1))
-#else
     if (!strcmp(modem_path, CONFIG_MODEM_PATH))
-#endif
         return 0;
 #ifdef CONFIG_MODEM_PATH_2
     else if (!strcmp(modem_path, CONFIG_MODEM_PATH_2))
@@ -612,7 +604,7 @@ int get_modem_id_by_proxy(dbus_context* context, GDBusProxy* proxy)
     if (proxy == NULL)
         return 0;
 
-    for (int i = 0; i < CONFIG_ACTIVE_MODEM_COUNT; i++) {
+    for (int i = 0; i < CONFIG_MODEM_ACTIVE_COUNT; i++) {
         for (int j = 0; j < DBUS_PROXY_MAX_COUNT; j++) {
             if (context->dbus_proxy[i][j] == proxy)
                 return i;

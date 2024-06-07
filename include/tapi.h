@@ -40,11 +40,6 @@
 #define MAX_CALL_ID_LENGTH 100
 #define MAX_TX_TIME_ARRAY_LEN 5
 #define MAX_OEM_RIL_RESP_STRINGS_LENTH 20
-
-#ifndef CONFIG_ACTIVE_MODEM_COUNT
-#define CONFIG_ACTIVE_MODEM_COUNT 1
-#endif
-
 #define MAX_MODEM_COUNT 10
 
 /* MCC is always three digits. MNC is either two or three digits */

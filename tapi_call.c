@@ -1139,7 +1139,7 @@ int tapi_call_get_ecc_list(tapi_context context, int slot_id, char** out)
 
 bool tapi_call_is_emergency_number(tapi_context context, char* number)
 {
-    for (int i = 0; i < CONFIG_ACTIVE_MODEM_COUNT; i++) {
+    for (int i = 0; i < CONFIG_MODEM_ACTIVE_COUNT; i++) {
         char* ecc_list[MAX_ECC_LIST_SIZE];
         int size = tapi_call_get_ecc_list(context, i, ecc_list);
         if (size <= 0) {
