@@ -1249,7 +1249,7 @@ int tapi_data_enable_data(tapi_context context, bool enabled)
         return -EAGAIN;
 
     value = enabled;
-    for (int i = 0; i < CONFIG_ACTIVE_MODEM_COUNT; i++) {
+    for (int i = 0; i < CONFIG_MODEM_ACTIVE_COUNT; i++) {
         proxy = ctx->dbus_proxy[i][DBUS_PROXY_DATA];
         if (proxy == NULL) {
             tapi_log_error("no available proxy ...\n");
@@ -1310,7 +1310,7 @@ int tapi_data_enable_roaming(tapi_context context, bool enabled)
         return -EAGAIN;
 
     value = enabled;
-    for (int i = 0; i < CONFIG_ACTIVE_MODEM_COUNT; i++) {
+    for (int i = 0; i < CONFIG_MODEM_ACTIVE_COUNT; i++) {
         proxy = ctx->dbus_proxy[i][DBUS_PROXY_DATA];
         if (proxy == NULL) {
             tapi_log_error("no available proxy ...\n");
