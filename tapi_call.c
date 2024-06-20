@@ -732,7 +732,7 @@ static int manage_call_proxy_method(tapi_context context, int slot_id, const cha
     }
 
     if (!g_dbus_proxy_method_call(proxy, member, NULL, no_operate_callback, NULL, NULL)) {
-        OFONO_DFX_CALL_INFO_IF(!strcmp("HangupAll", member), OFONO_TYPE_UNKNOW,
+        OFONO_DFX_CALL_INFO_IF(!strcmp("HangupAll", member), OFONO_CALL_TYPE_UNKNOW,
             OFONO_DIRECTION_UNKNOW, OFONO_VOICE, OFONO_HANGUP_FAIL, "dbus method call fail");
         return -EINVAL;
     }
@@ -924,7 +924,7 @@ int tapi_call_transfer(tapi_context context, int slot_id)
 
 int tapi_call_hangup_all_calls(tapi_context context, int slot_id)
 {
-    OFONO_DFX_CALL_INFO(OFONO_TYPE_UNKNOW, OFONO_DIRECTION_UNKNOW,
+    OFONO_DFX_CALL_INFO(OFONO_CALL_TYPE_UNKNOW, OFONO_DIRECTION_UNKNOW,
         OFONO_MEDIA_UNKNOW, OFONO_NORMAL, "NA");
     return manage_call_proxy_method(context, slot_id, "HangupAll");
 }
@@ -1350,7 +1350,7 @@ int tapi_call_hangup_by_id(tapi_context context, int slot_id, char* call_id)
 
     if (!g_dbus_proxy_method_call(proxy, "Hangup", answer_hangup_param_append,
             no_operate_callback, call_id, NULL)) {
-        OFONO_DFX_CALL_INFO(OFONO_TYPE_UNKNOW, OFONO_DIRECTION_UNKNOW,
+        OFONO_DFX_CALL_INFO(OFONO_CALL_TYPE_UNKNOW, OFONO_DIRECTION_UNKNOW,
             OFONO_MEDIA_UNKNOW, OFONO_HANGUP_FAIL, "dbus method call fail");
         return -EINVAL;
     }

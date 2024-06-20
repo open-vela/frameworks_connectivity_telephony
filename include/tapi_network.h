@@ -280,6 +280,24 @@ int tapi_network_register(tapi_context context,
  */
 int tapi_network_unregister(tapi_context context, int watch_id);
 
+/**
+ * Get the display name of current registered operator.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[out] mcc           mcc returned from modem.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_network_get_mcc(tapi_context context, int slot_id, char** mcc);
+
+/**
+ * Get the display name of current registered operator.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[out] mnc           mnc returned from modem.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_network_get_mnc(tapi_context context, int slot_id, char** mnc);
+
 #ifdef __cplusplus
 }
 #endif

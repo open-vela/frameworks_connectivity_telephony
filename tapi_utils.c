@@ -613,3 +613,31 @@ int get_modem_id_by_proxy(dbus_context* context, GDBusProxy* proxy)
 
     return 0;
 }
+
+const int get_op_code_base_mcc_mnc(const char* mcc, const char* mnc)
+{
+    tapi_plmn_op_code_info plmn_op_info_list[] = {
+        { "460", "00", OP_CMCC },
+        { "460", "02", OP_CMCC },
+        { "460", "04", OP_CMCC },
+        { "460", "07", OP_CMCC },
+        { "460", "08", OP_CMCC },
+        { "460", "03", OP_CT },
+        { "460", "05", OP_CT },
+        { "460", "11", OP_CT },
+        { "460", "01", OP_CU },
+        { "460", "06", OP_CU },
+        { "460", "09", OP_CU },
+        { "460", "15", OP_UNKNOW },
+    };
+    int i = 0;
+    int list_len = sizeof(plmn_op_info_list) / sizeof(tapi_plmn_op_code_info);
+
+    for (i = 0; i < list_len; i++) {
+        if (!strcmp(mcc, plmn_op_info_list[i].mcc) && !strcmp(mnc, plmn_op_info_list[i].mnc)) {
+            return plmn_op_info_list[i].op_code;
+        }
+    }
+
+    return OP_UNKNOW;
+}
