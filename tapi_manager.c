@@ -244,6 +244,7 @@ static void modem_activity_info_query_done(DBusMessage* message, void* user_data
     dbus_message_iter_get_fixed_array(&array, &activity_info, &length);
 
     if (length != MAX_TX_TIME_ARRAY_LEN + 3) {
+        ar->status = ERROR;
         goto done;
     }
 
@@ -312,6 +313,7 @@ static void enable_modem_abnormal_event_done(DBusMessage* message, void* user_da
     if (ar == NULL)
         return;
 
+    ar->status = OK;
     dbus_error_init(&err);
     if (dbus_set_error_from_message(&err, message) == true) {
         tapi_log_error("%s: %s\n", err.name, err.message);
@@ -321,6 +323,7 @@ static void enable_modem_abnormal_event_done(DBusMessage* message, void* user_da
         if (dbus_message_iter_init(message, &iter) == false) {
             ar->status = ERROR;
         }
+
         dbus_message_iter_get_basic(&iter, &ar->arg2);
         tapi_log_info("%s:%d", __func__, ar->arg2);
     }

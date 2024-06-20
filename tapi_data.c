@@ -450,13 +450,20 @@ static void apn_list_loaded(DBusMessage* message, void* user_data)
     if (dbus_set_error_from_message(&err, message) == true) {
         tapi_log_error("%s: %s\n", err.name, err.message);
         dbus_error_free(&err);
+        ar->status = ERROR;
         goto done;
     }
 
-    if (dbus_message_has_signature(message, "a(oa{sv})") == false)
+    if (dbus_message_has_signature(message, "a(oa{sv})") == false) {
+        ar->status = ERROR;
         goto done;
-    if (dbus_message_iter_init(message, &args) == false)
+    }
+
+    if (dbus_message_iter_init(message, &args) == false) {
+        ar->status = ERROR;
         goto done;
+    }
+
     dbus_message_iter_recurse(&args, &list);
 
     while (dbus_message_iter_get_arg_type(&list) == DBUS_TYPE_STRUCT) {
@@ -666,13 +673,20 @@ static void data_connection_list_query_done(DBusMessage* message, void* user_dat
     if (dbus_set_error_from_message(&err, message) == true) {
         tapi_log_error("%s: %s\n", err.name, err.message);
         dbus_error_free(&err);
+        ar->status = ERROR;
         goto done;
     }
 
-    if (dbus_message_has_signature(message, "a(oa{sv})") == false)
+    if (dbus_message_has_signature(message, "a(oa{sv})") == false) {
+        ar->status = ERROR;
         goto done;
-    if (dbus_message_iter_init(message, &args) == false)
+    }
+
+    if (dbus_message_iter_init(message, &args) == false) {
+        ar->status = ERROR;
         goto done;
+    }
+
     dbus_message_iter_recurse(&args, &list);
 
     while (dbus_message_iter_get_arg_type(&list) == DBUS_TYPE_STRUCT) {
