@@ -358,6 +358,7 @@ static int cellinfo_list_changed(DBusConnection* connection,
         dbus_message_iter_next(&list);
     }
 
+    ar->status = OK;
     ar->arg2 = cell_index; // cell_info count;
     ar->data = cell_info_list;
     cb(ar);
@@ -649,10 +650,16 @@ static void registration_info_query_done(DBusMessage* message, void* user_data)
         goto done;
     }
 
-    if (dbus_message_has_signature(message, "a{sv}") == false)
+    if (dbus_message_has_signature(message, "a{sv}") == false) {
+        ar->status = ERROR;
         goto done;
-    if (dbus_message_iter_init(message, &args) == false)
+    }
+
+    if (dbus_message_iter_init(message, &args) == false) {
+        ar->status = ERROR;
         goto done;
+    }
+
     dbus_message_iter_recurse(&args, &list);
 
     while (dbus_message_iter_get_arg_type(&list) == DBUS_TYPE_DICT_ENTRY) {

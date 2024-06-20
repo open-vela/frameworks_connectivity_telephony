@@ -409,8 +409,10 @@ static void call_forwarding_query_complete(DBusMessage* message, void* user_data
         goto done;
     }
 
-    if (dbus_message_iter_init(message, &args) == false)
+    if (dbus_message_iter_init(message, &args) == false) {
+        ar->status = ERROR;
         goto done;
+    }
     dbus_message_iter_recurse(&args, &list);
 
     while (dbus_message_iter_get_arg_type(&list) == DBUS_TYPE_DICT_ENTRY) {

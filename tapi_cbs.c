@@ -89,6 +89,7 @@ static int unsol_cbs_message(DBusConnection* connection,
         dbus_message_iter_get_basic(&iter, &cbs_message->channel);
 
         ar->data = cbs_message;
+        ar->status = OK;
         cb(ar);
         free(cbs_message);
     } else if (strcmp(member, "EmergencyBroadcast") == 0) {
@@ -121,6 +122,7 @@ static int unsol_cbs_message(DBusConnection* connection,
         }
 
         ar->data = cbs_emergency_message;
+        ar->status = OK;
         cb(ar);
         free(cbs_emergency_message);
     }
