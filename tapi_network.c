@@ -1163,6 +1163,60 @@ int tapi_network_is_voice_roaming(tapi_context context, int slot_id, bool* out)
     return OK;
 }
 
+int tapi_network_get_mcc(tapi_context context, int slot_id, char** mcc)
+{
+    dbus_context* ctx = context;
+    GDBusProxy* proxy;
+    DBusMessageIter iter;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+        return -EINVAL;
+    }
+
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_NETREG];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    if (g_dbus_proxy_get_property(proxy, "MobileCountryCode", &iter)) {
+        dbus_message_iter_get_basic(&iter, mcc);
+        return OK;
+    }
+
+    return -EIO;
+}
+
+int tapi_network_get_mnc(tapi_context context, int slot_id, char** mnc)
+{
+    dbus_context* ctx = context;
+    GDBusProxy* proxy;
+    DBusMessageIter iter;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+        return -EINVAL;
+    }
+
+    if (!ctx->client_ready)
+        return -EAGAIN;
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_NETREG];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    if (g_dbus_proxy_get_property(proxy, "MobileNetworkCode", &iter)) {
+        dbus_message_iter_get_basic(&iter, mnc);
+        return OK;
+    }
+
+    return -EIO;
+}
+
 int tapi_network_get_display_name(tapi_context context, int slot_id, char** out)
 {
     dbus_context* ctx = context;

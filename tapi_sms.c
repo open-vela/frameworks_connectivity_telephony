@@ -18,8 +18,10 @@
  * Included Files
  ****************************************************************************/
 
+#include <ofono/dfx.h>
 #include <stdio.h>
 
+#include "tapi.h"
 #include "tapi_internal.h"
 #include "tapi_manager.h"
 #include "tapi_sms.h"
@@ -428,6 +430,24 @@ done:
     }
 }
 
+int tapi_sms_get_op_code(tapi_context context, int slot_id)
+{
+    char* mcc = NULL;
+    char* mnc = NULL;
+    int result;
+
+    result = tapi_network_get_mcc(context, slot_id, &mcc);
+    if (result != OK) {
+        return OP_UNKNOW;
+    }
+    result = tapi_network_get_mcc(context, slot_id, &mnc);
+    if (result != OK) {
+        return OP_UNKNOW;
+    }
+
+    return get_op_code_base_mcc_mnc(mcc, mnc);
+}
+
 int tapi_sms_send_message(tapi_context context, int slot_id, int sms_id,
     char* number, char* text, int event_id, tapi_async_function p_handle)
 {
@@ -437,6 +457,8 @@ int tapi_sms_send_message(tapi_context context, int slot_id, int sms_id,
     GDBusProxy* proxy;
     message_param* message;
 
+    OFONO_DFX_SMS_INFO(tapi_sms_get_op_code(context, slot_id), OFONO_CS_SMS,
+        OFONO_SMS_SEND, OFONO_SMS_NORMAL);
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
     }
@@ -479,6 +501,8 @@ int tapi_sms_send_message(tapi_context context, int slot_id, int sms_id,
 
     if (!g_dbus_proxy_method_call(proxy, "SendMessage",
             send_message_param_append, send_sms_callback, handler, handler_free)) {
+        OFONO_DFX_SMS_INFO(tapi_sms_get_op_code(context, slot_id), OFONO_CS_SMS,
+            OFONO_SMS_SEND, OFONO_SMS_FAIL);
         handler_free(handler);
         message_free(message);
         return -EINVAL;
@@ -495,6 +519,8 @@ int tapi_sms_send_data_message(tapi_context context, int slot_id, int sms_id,
     tapi_async_result* ar;
     GDBusProxy* proxy;
     data_message_param* data_message;
+    OFONO_DFX_SMS_INFO(tapi_sms_get_op_code(context, slot_id), OFONO_IMS_SMS,
+        OFONO_SMS_SEND, OFONO_SMS_NORMAL);
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
@@ -541,6 +567,8 @@ int tapi_sms_send_data_message(tapi_context context, int slot_id, int sms_id,
 
     if (!g_dbus_proxy_method_call(proxy, "SendDataMessage",
             send_data_message_param_append, send_sms_callback, handler, handler_free)) {
+        OFONO_DFX_SMS_INFO(tapi_sms_get_op_code(context, slot_id), OFONO_IMS_SMS,
+            OFONO_SMS_SEND, OFONO_SMS_FAIL);
         handler_free(handler);
         data_message_free(data_message);
         return -EINVAL;
