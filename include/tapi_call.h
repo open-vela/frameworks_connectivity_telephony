@@ -216,17 +216,6 @@ int tapi_call_get_all_calls(tapi_context context, int slot_id, int event_id,
     tapi_async_function p_handle);
 
 /**
- * Get all calls.
- * @param[in] context        Telephony api context.
- * @param[in] slot_id        Slot id of current sim.
- * @param[in] call_id        Call id of current call.
- * @param[out] info          Call info of queryed.
- * @return Zero on success; a negated errno value on failure.
- */
-int tapi_call_get_call_info(tapi_context context, int slot_id,
-    char* call_id, tapi_call_info* info);
-
-/**
  * Get call by given call state.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
