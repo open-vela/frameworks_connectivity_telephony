@@ -284,8 +284,10 @@ static int data_connection_changed(DBusConnection* connection,
         return false;
     }
 
-    if (dbus_message_iter_init(message, &args) == false)
+    if (dbus_message_iter_init(message, &args) == false) {
+        ar->status = ERROR;
         goto done;
+    }
 
     dbus_message_iter_get_basic(&args, &dc->id);
 
