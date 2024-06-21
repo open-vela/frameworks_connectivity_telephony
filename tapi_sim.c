@@ -49,8 +49,6 @@ typedef struct {
  * Private Function Prototypes
  ****************************************************************************/
 
-static int sim_state_changed(DBusConnection* connection,
-    DBusMessage* message, void* user_data);
 /* This method should be called if the data field needs to be recycled. */
 static void sim_event_data_free(void* user_data);
 static void change_pin_param_append(DBusMessageIter* iter, void* user_data);
@@ -67,159 +65,7 @@ static void transmit_apdu_param_append(DBusMessageIter* iter, void* user_data);
  * Private Functions
  ****************************************************************************/
 
-__attribute__((unused)) static int sim_property_changed(DBusConnection* connection,
-    DBusMessage* message, void* user_data)
-{
-    tapi_async_handler* handler = user_data;
-    tapi_async_result* ar;
-    tapi_async_function cb;
-    DBusMessageIter iter, var, arr, entry;
-    sim_lock_state* sim_lock;
-    sim_state_result ss;
-    char* property;
-    int index;
-
-    if (handler == NULL)
-        return 0;
-
-    ar = handler->result;
-    if (ar == NULL)
-        return 0;
-
-    cb = handler->cb_function;
-    if (cb == NULL)
-        return 0;
-
-    if (ar->msg_id != MSG_SIM_STATE_CHANGE_IND) {
-        return 0;
-    }
-
-    if (dbus_message_iter_init(message, &iter) == false)
-        return 0;
-
-    dbus_message_iter_get_basic(&iter, &property);
-    dbus_message_iter_next(&iter);
-
-    dbus_message_iter_recurse(&iter, &var);
-
-    sim_lock = NULL;
-    if (strcmp(property, "Present") == 0) {
-        dbus_message_iter_get_basic(&var, &ss.value);
-        goto done;
-    } else if (strcmp(property, "PinRequired") == 0) {
-        dbus_message_iter_get_basic(&var, &ss.data);
-        goto done;
-    } else if (strcmp(property, "LockedPins") == 0) {
-        sim_lock = malloc(sizeof(sim_lock_state));
-        if (sim_lock == NULL) {
-            return 0;
-        }
-
-        sim_lock->sim_pwd_type[0] = '\0';
-
-        index = 0;
-        dbus_message_iter_recurse(&var, &arr);
-        while (dbus_message_iter_get_arg_type(&arr) == DBUS_TYPE_STRING) {
-            dbus_message_iter_get_basic(&arr, &sim_lock->sim_pwd_type[index++]);
-            dbus_message_iter_next(&arr);
-
-            if (index >= MAX_SIM_PWD_TYPE)
-                break;
-        }
-
-        ss.data = sim_lock;
-        ar->arg2 = index;
-
-        goto done;
-    } else if (strcmp(property, "Retries") == 0) {
-        sim_lock = malloc(sizeof(sim_lock_state));
-        if (sim_lock == NULL) {
-            return 0;
-        }
-
-        index = 0;
-        dbus_message_iter_recurse(&var, &arr);
-        if (dbus_message_iter_get_arg_type(&arr) == DBUS_TYPE_ARRAY) {
-            dbus_message_iter_recurse(&arr, &entry);
-
-            while (dbus_message_iter_get_arg_type(&entry) != DBUS_TYPE_INVALID) {
-                if (dbus_message_iter_get_arg_type(&entry) == DBUS_TYPE_DICT_ENTRY) {
-                    dbus_message_iter_get_basic(&entry, &sim_lock->sim_pwd_type[index++]);
-                    dbus_message_iter_next(&entry);
-
-                    dbus_message_iter_get_basic(&entry, &sim_lock->retry_count[index++]);
-                }
-
-                if (index >= MAX_SIM_PWD_TYPE)
-                    break;
-
-                dbus_message_iter_next(&arr);
-                dbus_message_iter_recurse(&arr, &entry);
-            }
-        }
-
-        ss.data = sim_lock;
-        ar->arg2 = index;
-
-        goto done;
-    }
-
-    return 1;
-
-done:
-    ss.name = property;
-    ar->data = &ss;
-    ar->status = OK;
-
-    cb(ar);
-
-    if (sim_lock != NULL)
-        free(sim_lock);
-
-    return 1;
-}
-
-static int sim_state_changed(DBusConnection* connection,
-    DBusMessage* message, void* user_data)
-{
-    tapi_async_handler* handler = user_data;
-    tapi_async_result* ar;
-    tapi_async_function cb;
-    DBusMessageIter iter, var;
-    char* property;
-
-    if (handler == NULL)
-        return 0;
-
-    ar = handler->result;
-    if (ar == NULL)
-        return 0;
-
-    cb = handler->cb_function;
-    if (cb == NULL)
-        return 0;
-
-    if (ar->msg_id != MSG_SIM_STATE_CHANGE_IND) {
-        return 0;
-    }
-
-    if (dbus_message_iter_init(message, &iter) == false)
-        return 0;
-
-    dbus_message_iter_get_basic(&iter, &property);
-    dbus_message_iter_next(&iter);
-
-    dbus_message_iter_recurse(&iter, &var);
-    if (strcmp(property, "SimState") == 0) {
-        dbus_message_iter_get_basic(&var, &ar->arg2);
-        ar->status = OK;
-        cb(ar);
-    }
-
-    return 1;
-}
-
-static int sim_uicc_app_enabled_changed(DBusConnection* connection,
+static int sim_property_changed(DBusConnection* connection,
     DBusMessage* message, void* user_data)
 {
     tapi_async_handler* handler = user_data;
@@ -227,7 +73,6 @@ static int sim_uicc_app_enabled_changed(DBusConnection* connection,
     tapi_async_function cb;
     DBusMessageIter iter, var;
     const char* property;
-    int enabled;
 
     if (handler == NULL)
         return 0;
@@ -240,21 +85,30 @@ static int sim_uicc_app_enabled_changed(DBusConnection* connection,
     if (cb == NULL)
         return 0;
 
-    if (ar->msg_id != MSG_SIM_UICC_APP_ENABLED_CHANGE_IND) {
+    if (dbus_message_iter_init(message, &iter) == false) {
         return 0;
     }
 
-    if (dbus_message_iter_init(message, &iter) == false)
-        return 0;
-
     dbus_message_iter_get_basic(&iter, &property);
     dbus_message_iter_next(&iter);
-
     dbus_message_iter_recurse(&iter, &var);
-    if (strcmp(property, "UiccActive") == 0) {
-        dbus_message_iter_get_basic(&var, &enabled);
+
+    if ((ar->msg_id == MSG_SIM_STATE_CHANGE_IND)
+        && strcmp(property, "SimState") == 0) {
+        dbus_message_iter_get_basic(&var, &ar->arg2);
         ar->status = OK;
-        ar->arg2 = enabled;
+        cb(ar);
+    } else if ((ar->msg_id == MSG_SIM_UICC_APP_ENABLED_CHANGE_IND)
+        && strcmp(property, "UiccActive") == 0) {
+        dbus_message_iter_get_basic(&var, &ar->arg2);
+        ar->status = OK;
+        cb(ar);
+    } else if ((ar->msg_id == MSG_SIM_ICCID_CHANGE_IND)
+        && strcmp(property, "CardIdentifier") == 0) {
+        char* iccid;
+        dbus_message_iter_get_basic(&var, &iccid);
+        ar->data = iccid;
+        ar->status = OK;
         cb(ar);
     }
 
@@ -832,7 +686,7 @@ int tapi_sim_register(tapi_context context, int slot_id,
     int watch_id = 0;
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
-        || msg < MSG_SIM_STATE_CHANGE_IND || msg > MSG_SIM_UICC_APP_ENABLED_CHANGE_IND) {
+        || msg < MSG_SIM_STATE_CHANGE_IND || msg > MSG_SIM_ICCID_CHANGE_IND) {
         return -EINVAL;
     }
 
@@ -860,14 +714,11 @@ int tapi_sim_register(tapi_context context, int slot_id,
 
     switch (msg) {
     case MSG_SIM_STATE_CHANGE_IND:
-        watch_id = g_dbus_add_signal_watch(ctx->connection,
-            OFONO_SERVICE, modem_path, OFONO_SIM_MANAGER_INTERFACE,
-            "PropertyChanged", sim_state_changed, handler, handler_free);
-        break;
     case MSG_SIM_UICC_APP_ENABLED_CHANGE_IND:
+    case MSG_SIM_ICCID_CHANGE_IND:
         watch_id = g_dbus_add_signal_watch(ctx->connection,
             OFONO_SERVICE, modem_path, OFONO_SIM_MANAGER_INTERFACE,
-            "PropertyChanged", sim_uicc_app_enabled_changed, handler, handler_free);
+            "PropertyChanged", sim_property_changed, handler, handler_free);
         break;
     default:
         break;
