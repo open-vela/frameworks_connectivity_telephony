@@ -496,6 +496,10 @@ static void tele_sim_async_fun(tapi_async_result* result)
     } else if (result->msg_id == MSG_SIM_STATE_CHANGE_IND) {
         syslog(LOG_DEBUG, "sim state changed to : %s\n",
             tapi_sim_state_to_string((tapi_sim_state)result->arg2));
+    } else if (result->msg_id == MSG_SIM_UICC_APP_ENABLED_CHANGE_IND) {
+        syslog(LOG_DEBUG, "uicc app enabled: %d\n", result->arg2);
+    } else if (result->msg_id == MSG_SIM_ICCID_CHANGE_IND) {
+        syslog(LOG_DEBUG, "iccid: %s\n", (char*)result->data);
     }
 }
 
