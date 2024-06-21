@@ -231,6 +231,7 @@ typedef enum {
     // SIM Indication Message
     MSG_SIM_STATE_CHANGE_IND,
     MSG_SIM_UICC_APP_ENABLED_CHANGE_IND,
+    MSG_SIM_ICCID_CHANGE_IND,
 
     // STK Indication Message
     MSG_STK_AGENT_DISPLAY_TEXT_IND,
