@@ -177,10 +177,15 @@ static void modem_list_query_done(DBusMessage* message, void* user_data)
         goto done;
     }
 
-    if (dbus_message_has_signature(message, "a(oa{sv})") == false)
+    if (dbus_message_has_signature(message, "a(oa{sv})") == false) {
+        ar->status = ERROR;
         goto done;
-    if (dbus_message_iter_init(message, &args) == false)
+    }
+
+    if (dbus_message_iter_init(message, &args) == false) {
+        ar->status = ERROR;
         goto done;
+    }
     dbus_message_iter_recurse(&args, &list);
 
     index = 0;
@@ -473,8 +478,10 @@ static int phone_state_changed(DBusConnection* connection,
     if (cb == NULL)
         return false;
 
-    if (dbus_message_iter_init(message, &args) == false)
+    if (dbus_message_iter_init(message, &args) == false) {
+        ar->status = ERROR;
         goto done;
+    }
 
     ar->status = OK;
     dbus_message_iter_get_basic(&args, &ar->arg2);
