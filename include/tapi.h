@@ -274,6 +274,8 @@ typedef enum {
     // modem state change Message
     MSG_MODEM_STATE_CHANGE_IND,
 
+    MSG_DATA_LOGING_IND,
+
     // tapi indication msg value max.
     MSG_IND_MASK,
 
@@ -330,6 +332,5 @@ int tapi_utils_get_slot_id(const char* modem_path);
 const char* tapi_sim_state_to_string(tapi_sim_state sim_state);
 const char* tapi_utils_clir_status_to_string(tapi_clir_status status);
 tapi_clir_status tapi_utils_clir_status_from_string(const char* status);
-const int get_op_code_base_mcc_mnc(const char* mcc, const char* mnc);
 
 #endif /* __TELEPHONY_APIS_H */

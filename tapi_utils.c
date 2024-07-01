@@ -614,7 +614,7 @@ int get_modem_id_by_proxy(dbus_context* context, GDBusProxy* proxy)
     return 0;
 }
 
-const int get_op_code_base_mcc_mnc(const char* mcc, const char* mnc)
+int get_op_code_base_mcc_mnc(const char* mcc, const char* mnc)
 {
     tapi_plmn_op_code_info plmn_op_info_list[] = {
         { "460", "00", OP_CMCC },
@@ -628,7 +628,7 @@ const int get_op_code_base_mcc_mnc(const char* mcc, const char* mnc)
         { "460", "01", OP_CU },
         { "460", "06", OP_CU },
         { "460", "09", OP_CU },
-        { "460", "15", OP_UNKNOW },
+        { "460", "15", OP_CBN },
     };
     int i = 0;
     int list_len = sizeof(plmn_op_info_list) / sizeof(tapi_plmn_op_code_info);

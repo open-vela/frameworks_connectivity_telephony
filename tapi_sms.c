@@ -448,6 +448,32 @@ int tapi_sms_get_op_code(tapi_context context, int slot_id)
     return get_op_code_base_mcc_mnc(mcc, mnc);
 }
 
+static void report_data_logging_for_sms(dbus_context* ctx, int opcode, int sms_type,
+    int direction, int fail_flag)
+{
+#if defined(CONFIG_OFONO_DATA_LOG_OVER_MIWEAR) \
+    && (!defined(CONFIG_DFX_EVENT) || (!defined(CONFIG_DFX)))
+    tapi_async_result* temp_ar;
+    char out_data[MIWEAR_LOG_IND_BUF_SIZE] = { 0 };
+
+    if (ctx->logging_over_miwear_cb != NULL) {
+        temp_ar = malloc(sizeof(tapi_async_result));
+        if (temp_ar == NULL) {
+            tapi_log_error("Memory allocation failed");
+        } else {
+            snprintf(out_data, MIWEAR_LOG_IND_BUF_SIZE, "%s,%d,%d,%d,%d",
+                "SMS_INFO", opcode, sms_type, direction, fail_flag);
+            temp_ar->status = OK;
+            temp_ar->data = out_data;
+            ctx->logging_over_miwear_cb(temp_ar);
+            free(temp_ar);
+        }
+    }
+#else
+    OFONO_DFX_SMS_INFO(opcode, sms_type, direction, fail_flag);
+#endif
+}
+
 int tapi_sms_send_message(tapi_context context, int slot_id, int sms_id,
     char* number, char* text, int event_id, tapi_async_function p_handle)
 {
@@ -457,8 +483,9 @@ int tapi_sms_send_message(tapi_context context, int slot_id, int sms_id,
     GDBusProxy* proxy;
     message_param* message;
 
-    OFONO_DFX_SMS_INFO(tapi_sms_get_op_code(context, slot_id), OFONO_CS_SMS,
-        OFONO_SMS_SEND, OFONO_SMS_NORMAL);
+    report_data_logging_for_sms(ctx, tapi_sms_get_op_code(context, slot_id),
+        OFONO_SMS_TYPE_UNKNOW, OFONO_SMS_SEND, OFONO_SMS_NORMAL);
+
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
     }
@@ -501,7 +528,7 @@ int tapi_sms_send_message(tapi_context context, int slot_id, int sms_id,
 
     if (!g_dbus_proxy_method_call(proxy, "SendMessage",
             send_message_param_append, send_sms_callback, handler, handler_free)) {
-        OFONO_DFX_SMS_INFO(tapi_sms_get_op_code(context, slot_id), OFONO_CS_SMS,
+        report_data_logging_for_sms(ctx, tapi_sms_get_op_code(context, slot_id), OFONO_CS_SMS,
             OFONO_SMS_SEND, OFONO_SMS_FAIL);
         handler_free(handler);
         message_free(message);
@@ -519,7 +546,8 @@ int tapi_sms_send_data_message(tapi_context context, int slot_id, int sms_id,
     tapi_async_result* ar;
     GDBusProxy* proxy;
     data_message_param* data_message;
-    OFONO_DFX_SMS_INFO(tapi_sms_get_op_code(context, slot_id), OFONO_IMS_SMS,
+
+    report_data_logging_for_sms(ctx, tapi_sms_get_op_code(context, slot_id), OFONO_SMS_TYPE_UNKNOW,
         OFONO_SMS_SEND, OFONO_SMS_NORMAL);
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
@@ -567,7 +595,7 @@ int tapi_sms_send_data_message(tapi_context context, int slot_id, int sms_id,
 
     if (!g_dbus_proxy_method_call(proxy, "SendDataMessage",
             send_data_message_param_append, send_sms_callback, handler, handler_free)) {
-        OFONO_DFX_SMS_INFO(tapi_sms_get_op_code(context, slot_id), OFONO_IMS_SMS,
+        report_data_logging_for_sms(ctx, tapi_sms_get_op_code(context, slot_id), OFONO_IMS_SMS,
             OFONO_SMS_SEND, OFONO_SMS_FAIL);
         handler_free(handler);
         data_message_free(data_message);

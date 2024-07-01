@@ -79,6 +79,7 @@ typedef struct {
     GDBusProxy* dbus_proxy[CONFIG_MODEM_ACTIVE_COUNT][DBUS_PROXY_MAX_COUNT];
     tapi_modem_state modem_state[CONFIG_MODEM_ACTIVE_COUNT];
     bool client_ready;
+    tapi_async_function logging_over_miwear_cb;
 } dbus_context;
 
 typedef struct {
@@ -106,6 +107,7 @@ void handler_free(void* obj);
 const char* get_env_interface_support_string(const char* interface);
 bool is_interface_supported(const char* interface);
 int get_modem_id_by_proxy(dbus_context* context, GDBusProxy* proxy);
+int get_op_code_base_mcc_mnc(const char* mcc, const char* mnc);
 
 /**
  * Power on or off modem.
