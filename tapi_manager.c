@@ -18,6 +18,7 @@
  * Included Files
  ****************************************************************************/
 
+#include <ofono/dfx.h>
 #include <stdio.h>
 
 #include "tapi_internal.h"
@@ -1004,6 +1005,7 @@ tapi_context tapi_open(const char* client_name,
     ctx->connection = connection;
     ctx->client = client;
     ctx->client_ready = false;
+    ctx->logging_over_miwear_cb = NULL;
     snprintf(ctx->name, sizeof(ctx->name), "%s", client_name);
     get_persistent_dbus_proxy(ctx);
     get_mutable_dbus_proxy(ctx);
@@ -1840,6 +1842,85 @@ int tapi_get_modem_status_sync(tapi_context context, int slot_id, tapi_modem_sta
     return -EINVAL;
 }
 
+int tapi_data_log_ind(DBusConnection* connection, DBusMessage* message, void* user_data)
+{
+    tapi_async_handler* handler = user_data;
+    tapi_async_result* ar;
+    tapi_async_function cb;
+    DBusMessageIter iter;
+    char* out_data;
+
+    if (handler == NULL) {
+        return 0;
+    }
+
+    ar = handler->result;
+    if (ar == NULL) {
+        return 0;
+    }
+
+    cb = handler->cb_function;
+    if (cb == NULL) {
+        return 0;
+    }
+
+    if (!dbus_message_iter_init(message, &iter)) {
+        return 0;
+    }
+
+    if (dbus_message_iter_get_arg_type(&iter) == DBUS_TYPE_STRING) {
+        dbus_message_iter_get_basic(&iter, &out_data);
+        ar->data = out_data;
+        ar->status = OK;
+        cb(ar);
+        return 1;
+    }
+
+    return 0;
+}
+
+static int tapi_manager_register_data_loging(tapi_context context,
+    int slot_id, void* user_obj, tapi_async_function p_handle)
+{
+    dbus_context* ctx = context;
+    int watch_id;
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
+
+    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+        return -EINVAL;
+    }
+
+    handler = malloc(sizeof(tapi_async_handler));
+    if (handler == NULL) {
+        return -ENOMEM;
+    }
+
+    handler->cb_function = p_handle;
+    ar = malloc(sizeof(tapi_async_result));
+    if (ar == NULL) {
+        free(handler);
+        return -ENOMEM;
+    }
+    handler->result = ar;
+    ar->msg_id = MSG_DATA_LOGING_IND;
+    ar->msg_type = INDICATION;
+    ar->arg1 = slot_id;
+    ar->user_obj = user_obj;
+
+    watch_id = g_dbus_add_signal_watch(ctx->connection,
+        OFONO_SERVICE, OFONO_MANAGER_PATH, OFONO_MANAGER_INTERFACE,
+        "DataLogInd", tapi_data_log_ind, handler, handler_free);
+
+    if (watch_id == 0) {
+        handler_free(handler);
+        return -EINVAL;
+    }
+    ctx->logging_over_miwear_cb = p_handle;
+
+    return watch_id;
+}
+
 int tapi_register(tapi_context context,
     int slot_id, tapi_indication_msg msg, void* user_obj, tapi_async_function p_handle)
 {
@@ -1888,6 +1969,8 @@ int tapi_register(tapi_context context,
         return tapi_modem_register(context, slot_id, msg, user_obj, p_handle);
     case MSG_IMS_REGISTRATION_MESSAGE_IND:
         return tapi_ims_register_registration_change(context, slot_id, user_obj, p_handle);
+    case MSG_DATA_LOGING_IND:
+        return tapi_manager_register_data_loging(context, slot_id, user_obj, p_handle);
     default:
         break;
     }
