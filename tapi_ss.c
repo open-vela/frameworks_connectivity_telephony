@@ -893,6 +893,31 @@ static int ussd_request_received(DBusConnection* connection,
     return true;
 }
 
+static void report_data_logging_for_ss(dbus_context* ctx, char* type, char* fail_reason)
+{
+#if defined(CONFIG_OFONO_DATA_LOG_OVER_MIWEAR) \
+    && (!defined(CONFIG_DFX_EVENT) || (!defined(CONFIG_DFX)))
+    tapi_async_result* temp_ar;
+    char out_data[MIWEAR_LOG_IND_BUF_SIZE] = { 0 };
+
+    if (ctx->logging_over_miwear_cb != NULL) {
+        temp_ar = malloc(sizeof(tapi_async_result));
+        if (temp_ar == NULL) {
+            tapi_log_error("Memory allocation failed");
+        } else {
+            snprintf(out_data, MIWEAR_LOG_IND_BUF_SIZE, "%s,%s,%s", "SS_INFO",
+                type, fail_reason);
+            temp_ar->status = OK;
+            temp_ar->data = out_data;
+            ctx->logging_over_miwear_cb(temp_ar);
+            free(temp_ar);
+        }
+    }
+#else
+    OFONO_DFX_SS_INFO(type, fail_reason);
+#endif
+}
+
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
@@ -905,7 +930,7 @@ int tapi_ss_initiate_service(tapi_context context, int slot_id, int event_id,
     tapi_async_result* ar;
     GDBusProxy* proxy;
 
-    OFONO_DFX_SS_INFO("ss:ussd:request", "NA");
+    report_data_logging_for_ss(ctx, "ss:ussd:request", "NA");
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || command == NULL) {
         return -EINVAL;
@@ -935,7 +960,7 @@ int tapi_ss_initiate_service(tapi_context context, int slot_id, int event_id,
 
     if (!g_dbus_proxy_method_call(proxy, "Initiate", ss_initiate_param_append,
             ss_initiate_complete, handler, handler_free)) {
-        OFONO_DFX_SS_INFO("ss:ussd:request", "dbus method fail");
+        report_data_logging_for_ss(ctx, "ss:ussd:request", "dbus method fail");
         tapi_log_error("failed to initiate service \n");
         handler_free(handler);
         return -EINVAL;
@@ -953,7 +978,7 @@ int tapi_ss_request_call_barring(tapi_context context, int slot_id, int event_id
     tapi_async_result* ar;
     GDBusProxy* proxy;
 
-    OFONO_DFX_SS_INFO("ss:request callbarring", "NA");
+    report_data_logging_for_ss(ctx, "ss:request callbarring", "NA");
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
@@ -982,7 +1007,7 @@ int tapi_ss_request_call_barring(tapi_context context, int slot_id, int event_id
 
     if (!g_dbus_proxy_method_call(proxy, "GetProperties",
             NULL, method_call_complete, handler, handler_free)) {
-        OFONO_DFX_SS_INFO("ss:request callbarring", "dbus method fail");
+        report_data_logging_for_ss(ctx, "ss:request callbarring", "dbus method fail");
         tapi_log_error("failed to request callbarring \n");
         handler_free(handler);
         return -EINVAL;
@@ -1003,7 +1028,7 @@ int tapi_ss_set_call_barring_option(tapi_context context, int slot_id, int event
     int len;
     char* key;
 
-    OFONO_DFX_SS_INFO("ss:set callbarring", "NA");
+    report_data_logging_for_ss(ctx, "ss:set callbarring", "NA");
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
         || facility == NULL || pin2 == NULL) {
@@ -1066,7 +1091,7 @@ int tapi_ss_set_call_barring_option(tapi_context context, int slot_id, int event
 
     if (!g_dbus_proxy_method_call(proxy, "SetProperty", cb_request_param_append,
             method_call_complete, handler, ss_event_data_free)) {
-        OFONO_DFX_SS_INFO("ss:set callbarring", "dbus method fail");
+        report_data_logging_for_ss(ctx, "ss:set callbarring", "dbus method fail");
         tapi_log_error("failed to set callbarring \n");
         ss_event_data_free(handler);
         return -EINVAL;
@@ -1111,7 +1136,7 @@ int tapi_ss_change_call_barring_password(tapi_context context, int slot_id, int 
     tapi_async_result* ar;
     GDBusProxy* proxy;
 
-    OFONO_DFX_SS_INFO("ss:set callbarring:change password", "NA");
+    report_data_logging_for_ss(ctx, "ss:set callbarring:change password", "NA");
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
         || old_passwd == NULL || new_passwd == NULL) {
@@ -1152,7 +1177,7 @@ int tapi_ss_change_call_barring_password(tapi_context context, int slot_id, int 
 
     if (!g_dbus_proxy_method_call(proxy, "ChangePassword", cb_change_passwd_append,
             method_call_complete, handler, ss_event_data_free)) {
-        OFONO_DFX_SS_INFO("ss:set callbarring:change password", "dbus method fail");
+        report_data_logging_for_ss(ctx, "ss:set callbarring:change password", "dbus method fail");
         tapi_log_error("failed to change callbarring passward \n");
         ss_event_data_free(handler);
         return -EINVAL;
@@ -1169,7 +1194,7 @@ int tapi_ss_disable_all_call_barrings(tapi_context context, int slot_id, int eve
     tapi_async_result* ar;
     GDBusProxy* proxy;
 
-    OFONO_DFX_SS_INFO("ss:set callbarring:disable all", "NA");
+    report_data_logging_for_ss(ctx, "ss:set callbarring:disable all", "NA");
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || passwd == NULL) {
         return -EINVAL;
@@ -1199,7 +1224,7 @@ int tapi_ss_disable_all_call_barrings(tapi_context context, int slot_id, int eve
 
     if (!g_dbus_proxy_method_call(proxy, "DisableAll", disable_all_cb_param_append,
             method_call_complete, handler, handler_free)) {
-        OFONO_DFX_SS_INFO("ss:set callbarring:disable all", "dbus method fail");
+        report_data_logging_for_ss(ctx, "ss:set callbarring:disable all", "dbus method fail");
         tapi_log_error("failed to disable all callbarring \n");
         handler_free(handler);
         return -EINVAL;
@@ -1216,7 +1241,7 @@ int tapi_ss_disable_all_incoming(tapi_context context, int slot_id,
     tapi_async_result* ar;
     GDBusProxy* proxy;
 
-    OFONO_DFX_SS_INFO("ss:set callbarring:disable all incoming", "NA");
+    report_data_logging_for_ss(ctx, "ss:set callbarring:disable all incoming", "NA");
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || passwd == NULL) {
         return -EINVAL;
@@ -1246,7 +1271,7 @@ int tapi_ss_disable_all_incoming(tapi_context context, int slot_id,
 
     if (!g_dbus_proxy_method_call(proxy, "DisableAllIncoming",
             disable_all_incoming_param_append, method_call_complete, handler, handler_free)) {
-        OFONO_DFX_SS_INFO("ss:set callbarring:disable all incoming", "dbus method fail");
+        report_data_logging_for_ss(ctx, "ss:set callbarring:disable all incoming", "dbus method fail");
         tapi_log_error("failed to disable all incoming \n");
         handler_free(handler);
         return -EINVAL;
@@ -1263,7 +1288,7 @@ int tapi_ss_disable_all_outgoing(tapi_context context, int slot_id,
     tapi_async_result* ar;
     GDBusProxy* proxy;
 
-    OFONO_DFX_SS_INFO("ss:set callbarring:disable all outgoing", "NA");
+    report_data_logging_for_ss(ctx, "ss:set callbarring:disable all outgoing", "NA");
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || passwd == NULL) {
         return -EINVAL;
@@ -1293,7 +1318,7 @@ int tapi_ss_disable_all_outgoing(tapi_context context, int slot_id,
 
     if (!g_dbus_proxy_method_call(proxy, "DisableAllOutgoing",
             disable_all_outgoing_param_append, method_call_complete, handler, handler_free)) {
-        OFONO_DFX_SS_INFO("ss:set callbarring:disable all outgoing", "dbus method fail");
+        report_data_logging_for_ss(ctx, "ss:set callbarring:disable all outgoing", "dbus method fail");
         tapi_log_error("failed to disable all outgoing \n");
         handler_free(handler);
         return -EINVAL;
@@ -1311,7 +1336,7 @@ int tapi_ss_query_call_forwarding_option(tapi_context context, int slot_id, int 
     tapi_async_result* ar;
     GDBusProxy* proxy;
 
-    OFONO_DFX_SS_INFO("ss:query call forwarding", "NA");
+    report_data_logging_for_ss(ctx, "ss:query call forwarding", "NA");
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
@@ -1346,7 +1371,7 @@ int tapi_ss_query_call_forwarding_option(tapi_context context, int slot_id, int 
     if (!g_dbus_proxy_method_call(proxy, "GetCallForwarding",
             query_call_forwarding_option_append, call_forwarding_query_complete,
             handler, handler_free)) {
-        OFONO_DFX_SS_INFO("ss:query call forwarding", "dbus method fail");
+        report_data_logging_for_ss(ctx, "ss:query call forwarding", "dbus method fail");
         tapi_log_error("failed to request callforwarding \n");
         handler_free(handler);
         return -EINVAL;
@@ -1364,7 +1389,7 @@ int tapi_ss_set_call_forwarding_option(tapi_context context, int slot_id, int ev
     tapi_async_result* ar;
     GDBusProxy* proxy;
 
-    OFONO_DFX_SS_INFO("ss:set call forwarding", "NA");
+    report_data_logging_for_ss(ctx, "ss:set call forwarding", "NA");
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || number == NULL) {
         return -EINVAL;
@@ -1402,7 +1427,7 @@ int tapi_ss_set_call_forwarding_option(tapi_context context, int slot_id, int ev
 
     if (!g_dbus_proxy_method_call(proxy, "SetCallForwarding",
             set_call_forwarding_option_append, method_call_complete, handler, handler_free)) {
-        OFONO_DFX_SS_INFO("ss:set call forwarding", "dbus method fail");
+        report_data_logging_for_ss(ctx, "ss:set call forwarding", "dbus method fail");
         handler_free(handler);
         return -EINVAL;
     }
@@ -1417,7 +1442,7 @@ int tapi_get_ussd_state(tapi_context context, int slot_id, char** out)
     DBusMessageIter iter;
     GDBusProxy* proxy;
 
-    OFONO_DFX_SS_INFO("ss:ussd:get state", "NA");
+    report_data_logging_for_ss(ctx, "ss:ussd:get state", "NA");
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
@@ -1437,7 +1462,7 @@ int tapi_get_ussd_state(tapi_context context, int slot_id, char** out)
         return OK;
     }
 
-    OFONO_DFX_SS_INFO("ss:ussd:get state", "dbus method fail");
+    report_data_logging_for_ss(ctx, "ss:ussd:get state", "dbus method fail");
     return -EINVAL;
 }
 
@@ -1449,7 +1474,7 @@ int tapi_ss_send_ussd(tapi_context context, int slot_id, int event_id, char* rep
     tapi_async_result* ar;
     GDBusProxy* proxy;
 
-    OFONO_DFX_SS_INFO("ss:ussd:response", "NA");
+    report_data_logging_for_ss(ctx, "ss:ussd:response", "NA");
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || reply == NULL) {
         return -EINVAL;
@@ -1479,7 +1504,7 @@ int tapi_ss_send_ussd(tapi_context context, int slot_id, int event_id, char* rep
 
     if (!g_dbus_proxy_method_call(proxy, "Respond", send_ussd_param_append,
             ss_send_ussd_cb, handler, handler_free)) {
-        OFONO_DFX_SS_INFO("ss:ussd:response", "dbus method fail");
+        report_data_logging_for_ss(ctx, "ss:ussd:response", "dbus method fail");
         tapi_log_error("failed to send ussd \n");
         handler_free(handler);
         return -EINVAL;
@@ -1496,7 +1521,7 @@ int tapi_ss_cancel_ussd(tapi_context context, int slot_id, int event_id,
     tapi_async_result* ar;
     GDBusProxy* proxy;
 
-    OFONO_DFX_SS_INFO("ss:ussd:cancel", "NA");
+    report_data_logging_for_ss(ctx, "ss:ussd:cancel", "NA");
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
@@ -1525,7 +1550,7 @@ int tapi_ss_cancel_ussd(tapi_context context, int slot_id, int event_id,
 
     if (!g_dbus_proxy_method_call(proxy, "Cancel", NULL,
             method_call_complete, handler, handler_free)) {
-        OFONO_DFX_SS_INFO("ss:ussd:cancel", "dbus method fail");
+        report_data_logging_for_ss(ctx, "ss:ussd:cancel", "dbus method fail");
         tapi_log_error("failed to cancel ussd \n");
         handler_free(handler);
         return -EINVAL;
@@ -1543,7 +1568,7 @@ int tapi_ss_set_call_waiting(tapi_context context, int slot_id, int event_id, bo
     tapi_async_result* ar;
     GDBusProxy* proxy;
 
-    OFONO_DFX_SS_INFO("ss:set call waiting", "NA");
+    report_data_logging_for_ss(ctx, "ss:set call waiting", "NA");
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
@@ -1576,7 +1601,7 @@ int tapi_ss_set_call_waiting(tapi_context context, int slot_id, int event_id, bo
 
     if (!g_dbus_proxy_method_call(proxy, "SetCallWaiting",
             set_call_waiting_append, method_call_complete, handler, handler_free)) {
-        OFONO_DFX_SS_INFO("ss:set call waiting", "dbus method fail");
+        report_data_logging_for_ss(ctx, "ss:set call waiting", "dbus method fail");
         handler_free(handler);
         return -EINVAL;
     }
@@ -1592,7 +1617,7 @@ int tapi_ss_get_call_waiting(tapi_context context, int slot_id, int event_id,
     tapi_async_result* ar;
     GDBusProxy* proxy;
 
-    OFONO_DFX_SS_INFO("ss:get call waiting", "NA");
+    report_data_logging_for_ss(ctx, "ss:get call waiting", "NA");
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
@@ -1624,7 +1649,7 @@ int tapi_ss_get_call_waiting(tapi_context context, int slot_id, int event_id,
 
     if (!g_dbus_proxy_method_call(proxy, "GetCallWaiting", NULL,
             query_call_waiting_cb, handler, handler_free)) {
-        OFONO_DFX_SS_INFO("ss:get call waiting", "dbus method fail");
+        report_data_logging_for_ss(ctx, "ss:get call waiting", "dbus method fail");
         handler_free(handler);
         return -EINVAL;
     }
@@ -1640,7 +1665,7 @@ int tapi_ss_get_calling_line_presentation_info(tapi_context context, int slot_id
     DBusMessageIter iter;
     GDBusProxy* proxy;
 
-    OFONO_DFX_SS_INFO("ss:get clip", "NA");
+    report_data_logging_for_ss(ctx, "ss:get clip", "NA");
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
@@ -1656,7 +1681,7 @@ int tapi_ss_get_calling_line_presentation_info(tapi_context context, int slot_id
     }
 
     if (g_dbus_proxy_get_property(proxy, "CallingLinePresentation", &iter)) {
-        OFONO_DFX_SS_INFO("ss:get clip", "dbus method fail");
+        report_data_logging_for_ss(ctx, "ss:get clip", "dbus method fail");
         dbus_message_iter_get_basic(&iter, out);
         return OK;
     }
@@ -1673,7 +1698,7 @@ int tapi_ss_set_calling_line_restriction(tapi_context context, int slot_id, int 
     tapi_async_result* ar;
     GDBusProxy* proxy;
 
-    OFONO_DFX_SS_INFO("ss:set clir", "NA");
+    report_data_logging_for_ss(ctx, "ss:set clir", "NA");
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
@@ -1706,7 +1731,7 @@ int tapi_ss_set_calling_line_restriction(tapi_context context, int slot_id, int 
 
     if (!g_dbus_proxy_method_call(proxy, "SetClir",
             set_clir_append, method_call_complete, handler, handler_free)) {
-        OFONO_DFX_SS_INFO("ss:set clir", "dbus method fail");
+        report_data_logging_for_ss(ctx, "ss:set clir", "dbus method fail");
         handler_free(handler);
         return -EINVAL;
     }
@@ -1722,7 +1747,7 @@ int tapi_ss_get_calling_line_restriction_info(tapi_context context, int slot_id,
     tapi_async_result* ar;
     GDBusProxy* proxy;
 
-    OFONO_DFX_SS_INFO("ss:get clir", "NA");
+    report_data_logging_for_ss(ctx, "ss:get clir", "NA");
 
     if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
         return -EINVAL;
@@ -1754,7 +1779,7 @@ int tapi_ss_get_calling_line_restriction_info(tapi_context context, int slot_id,
 
     if (!g_dbus_proxy_method_call(proxy, "GetClir", NULL,
             query_clir_cb, handler, handler_free)) {
-        OFONO_DFX_SS_INFO("ss:get clir", "dbus method fail");
+        report_data_logging_for_ss(ctx, "ss:get clir", "dbus method fail");
         handler_free(handler);
         return -EINVAL;
     }
