@@ -440,7 +440,7 @@ int tapi_sms_get_op_code(tapi_context context, int slot_id)
     if (result != OK) {
         return OP_UNKNOW;
     }
-    result = tapi_network_get_mcc(context, slot_id, &mnc);
+    result = tapi_network_get_mnc(context, slot_id, &mnc);
     if (result != OK) {
         return OP_UNKNOW;
     }
