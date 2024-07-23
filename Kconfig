@@ -6,7 +6,7 @@
 config TELEPHONY
 	tristate "Enable telephony library"
 	default n
-	depends on LIBUV
+	depends on LIBUV && LIB_DBUS
 	---help---
 		Enable telephony library
 
