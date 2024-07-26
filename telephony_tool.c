@@ -1295,6 +1295,32 @@ static int telephonytool_cmd_is_emergency_number(tapi_context context, char* par
     return 0;
 }
 
+static int telephonytool_cmd_send_tones(tapi_context context, char* pargs)
+{
+    char dst[3][MAX_INPUT_ARGS_LEN];
+    int cnt = split_input(dst, 2, pargs, " ");
+    char* slot_id;
+
+    if (cnt != 2)
+        return -EINVAL;
+
+    slot_id = dst[0];
+    if (!is_valid_slot_id_str(dst[0]))
+        return -EINVAL;
+
+    if (strlen(dst[1]) < 1)
+        return -EINVAL;
+
+    for (int i = 0; i < strlen(dst[1]); i++) {
+        if (!is_valid_dtmf_char(dst[1][i])) {
+            return -EINVAL;
+        }
+    }
+
+    syslog(LOG_DEBUG, "%s, slotId : %s dtmf : %s\n", __func__, dst[0], dst[1]);
+    return tapi_call_send_tones(context, atoi(slot_id), dst[1]);
+}
+
 static int telephonytool_cmd_start_dtmf(tapi_context context, char* pargs)
 {
     char dst[3][MAX_INPUT_ARGS_LEN];
@@ -4441,9 +4467,12 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     { "is-ecc", CALL_CMD,
         telephonytool_cmd_is_emergency_number,
         "is emergency number  (enter example : is-ecc 110 [number])" },
+    { "send-tones", CALL_CMD,
+        telephonytool_cmd_send_tones,
+        "start play dtmf (enter example : send-tones 0 11 [slot_id][dtmf])" },
     { "start-dtmf", CALL_CMD,
         telephonytool_cmd_start_dtmf,
-        "start play dtmf (enter example : start-dtmf 0 1 [slot_id][dfmf])" },
+        "start play dtmf (enter example : start-dtmf 0 1 [slot_id][dtmf])" },
     { "stop-dtmf", CALL_CMD,
         telephonytool_cmd_stop_dtmf,
         "stop play dtmf (enter example : stop-dtmf 0 [slot_id])" },
