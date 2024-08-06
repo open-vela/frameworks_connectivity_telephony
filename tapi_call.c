@@ -535,7 +535,7 @@ static int tapi_call_property_change(DBusMessage* message, tapi_async_handler* h
     DBusMessageIter iter, list, array;
     tapi_async_result* ar;
     tapi_async_function cb;
-    char* ecc_list[MAX_ECC_LIST_SIZE];
+    ecc_info ecc_list[MAX_ECC_LIST_SIZE] = { 0 };
     char* key;
     int index = 0;
 
@@ -563,7 +563,24 @@ static int tapi_call_property_change(DBusMessage* message, tapi_async_handler* h
         dbus_message_iter_recurse(&list, &array);
 
         while (dbus_message_iter_get_arg_type(&array) == DBUS_TYPE_STRING) {
-            dbus_message_iter_get_basic(&array, &ecc_list[index++]);
+            char* str;
+            char* ptr;
+            dbus_message_iter_get_basic(&array, &str);
+            ecc_list[index].ecc_num = str;
+            dbus_message_iter_next(&array);
+            if (dbus_message_iter_get_arg_type(&array) == DBUS_TYPE_STRING) {
+                dbus_message_iter_get_basic(&array, &str);
+                ptr = strtok(str, ",");
+                ecc_list[index].category = atoi(ptr);
+                ptr = strtok(NULL, ",");
+                ecc_list[index].condition = atoi(ptr);
+                syslog(LOG_DEBUG, "tapi_call_property_change info:%s,%d,%d",
+                    ecc_list[index].ecc_num, ecc_list[index].category,
+                    ecc_list[index].condition);
+            }
+
+            index++;
+
             if (index >= MAX_ECC_LIST_SIZE)
                 break;
 
@@ -1156,7 +1173,7 @@ int tapi_call_send_tones(void* context, int slot_id, char* tones)
     return OK;
 }
 
-int tapi_call_get_ecc_list(tapi_context context, int slot_id, char** out)
+int tapi_call_get_ecc_list(tapi_context context, int slot_id, ecc_info* out)
 {
     dbus_context* ctx = context;
     DBusMessageIter list;
@@ -1177,7 +1194,16 @@ int tapi_call_get_ecc_list(tapi_context context, int slot_id, char** out)
     }
 
     if (!g_dbus_proxy_get_property(proxy, "EmergencyNumbers", &list)) {
-        return -EINVAL;
+        syslog(LOG_DEBUG, "no EmergencyNumbers in CALL,use default");
+        proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
+        if (proxy == NULL) {
+            tapi_log_error("no available proxy ...\n");
+            return -EIO;
+        }
+        if (!g_dbus_proxy_get_property(proxy, "EmergencyNumbers", &list)) {
+            tapi_log_error("no EmergencyNumbers in modem");
+            return -EINVAL;
+        }
     }
 
     if (dbus_message_iter_get_arg_type(&list) == DBUS_TYPE_ARRAY) {
@@ -1185,9 +1211,24 @@ int tapi_call_get_ecc_list(tapi_context context, int slot_id, char** out)
         dbus_message_iter_recurse(&list, &var_elem);
 
         while (dbus_message_iter_get_arg_type(&var_elem) != DBUS_TYPE_INVALID) {
-            if (dbus_message_iter_get_arg_type(&var_elem) == DBUS_TYPE_STRING)
-                dbus_message_iter_get_basic(&var_elem, &out[index++]);
+            char* str;
+            char* ptr;
 
+            if (dbus_message_iter_get_arg_type(&var_elem) == DBUS_TYPE_STRING) {
+                dbus_message_iter_get_basic(&var_elem, &str);
+                out[index].ecc_num = str;
+                dbus_message_iter_next(&var_elem);
+                dbus_message_iter_get_basic(&var_elem, &str);
+                ptr = strtok(str, ",");
+                out[index].category = atoi(ptr);
+                ptr = strtok(NULL, ",");
+                out[index].condition = atoi(ptr);
+                syslog(LOG_DEBUG, "tapi_call_get_ecc_list info:%s,%d,%d",
+                    out[index].ecc_num, out[index].category,
+                    out[index].condition);
+            }
+
+            index++;
             if (index >= MAX_ECC_LIST_SIZE)
                 break;
 
@@ -1198,25 +1239,25 @@ int tapi_call_get_ecc_list(tapi_context context, int slot_id, char** out)
     return index;
 }
 
-bool tapi_call_is_emergency_number(tapi_context context, char* number)
+int tapi_call_is_emergency_number(tapi_context context, char* number)
 {
     for (int i = 0; i < CONFIG_MODEM_ACTIVE_COUNT; i++) {
-        char* ecc_list[MAX_ECC_LIST_SIZE];
+        ecc_info ecc_list[MAX_ECC_LIST_SIZE] = { 0 };
         int size = tapi_call_get_ecc_list(context, i, ecc_list);
         if (size <= 0) {
             tapi_log_error("tapi_is_emergency_number: get ecc list error\n");
-            return false;
+            return -1;
         }
 
         for (int j = 0; j < size; j++) {
-            if (strcmp(number, ecc_list[j]) == 0) {
+            if (strcmp(number, ecc_list[j].ecc_num) == 0) {
                 tapi_log_debug("tapi_is_emergency_number:%s is emergency number\n", number);
-                return true;
+                return ecc_list[j].condition;
             }
         }
     }
 
-    return false;
+    return -1;
 }
 
 int tapi_call_register_emergency_list_change(tapi_context context, int slot_id, void* user_obj,
