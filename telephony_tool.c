@@ -367,7 +367,7 @@ static void tele_call_ecc_list_async_fun(tapi_async_result* result)
 {
     int status = result->status;
     int list_length = result->arg2;
-    char** ret = result->data;
+    ecc_info* ret = result->data;
 
     syslog(LOG_DEBUG, "%s : \n", __func__);
     syslog(LOG_DEBUG, "msg_id : %d\n", result->msg_id);
@@ -376,7 +376,8 @@ static void tele_call_ecc_list_async_fun(tapi_async_result* result)
 
     if (result->status == 0) {
         for (int i = 0; i < list_length; i++) {
-            syslog(LOG_DEBUG, "ecc number : %s \n", ret[i]);
+            syslog(LOG_DEBUG, "ecc number : %s,%u,%u \n", ret[i].ecc_num,
+                ret[i].category, ret[i].condition);
         }
     }
 }
@@ -694,6 +695,9 @@ static void radio_signal_change(tapi_async_result* result)
     case MSG_DEVICE_INFO_CHANGE_IND:
         syslog(LOG_DEBUG, "device info has changed in slot[%d] \n", slot_id);
         break;
+    case MSG_ECC_LIST_CHANGE_IND:
+        syslog(LOG_DEBUG, "MSG_ECC_LIST_CHANGE_IND");
+        tele_call_ecc_list_async_fun(result);
     default:
         break;
     }
@@ -1258,7 +1262,7 @@ static int telephonytool_cmd_get_ecc_list(tapi_context context, char* pargs)
 {
     char dst[1][MAX_INPUT_ARGS_LEN];
     int cnt = split_input(dst, 1, pargs, " ");
-    char* out[20];
+    ecc_info out[MAX_ECC_LIST_SIZE];
     char* slot_id;
     int size = 0;
     int i;
@@ -1274,7 +1278,8 @@ static int telephonytool_cmd_get_ecc_list(tapi_context context, char* pargs)
 
     size = tapi_call_get_ecc_list(context, atoi(slot_id), out);
     for (i = 0; i < size; i++) {
-        syslog(LOG_DEBUG, "ecc number : %s \n", out[i]);
+        syslog(LOG_DEBUG, "ecc number : %s,%u,%u \n", out[i].ecc_num,
+            out[i].category, out[i].condition);
     }
 
     return size;
@@ -4796,7 +4801,7 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         "get clir (enter example : get-clir 0 [slot_id])" },
     { "enable-fdn", SS_CMD,
         telephonytool_cmd_enable_fdn,
-        "enable fdn (enter example : enable-fdn 0 1 1234 "
+        "enable fdn (enter example : enable-fdn 0 1 123456 "
         "[slot_id][enable 1 or disable 0][pin2])" },
     { "query-fdn", SS_CMD,
         telephonytool_cmd_query_fdn,

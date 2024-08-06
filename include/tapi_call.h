@@ -90,6 +90,29 @@ typedef struct {
     void* value;
 } tapi_call_property;
 
+typedef struct {
+    char* ecc_num;
+    /* Category: the service category (From 3GPP TS24.008)
+     * - 0 means unknow
+     * - Bit 1 (1): Police
+     * - Bit 2 (2): Ambulance
+     * - Bit 3 (4): Fire Brigade
+     * - Bit 4 (8): Marine Guard
+     * - Bit 5 (16): Mountain Rescue
+     * - Bit 6 (32): Manually initiated eCall
+     * - Bit 7 (64): Automatically initiated eCall
+     * - Bit 8 (128): is spare and set to "0"
+     */
+    unsigned int category;
+    /* Condition: there are following values:
+     * 0  emergency call when card absent,not emergency call when card present
+     * 1  real emergency call regardless of card present or card absent
+     * 2  fake emergency call when card present,real emergency call when card absent
+     * 3  emergency call card present,not emergency call when card absen
+     */
+    unsigned int condition;
+} ecc_info;
+
 /****************************************************************************
  * Public Function Prototypes
  ****************************************************************************/
@@ -235,15 +258,15 @@ int tapi_call_get_call_by_state(tapi_context context, int slot_id,
  * @param[out] out           Ecc list container.
  * @return size of ecc list on success; a negated errno value on failure.
  */
-int tapi_call_get_ecc_list(tapi_context context, int slot_id, char** out);
+int tapi_call_get_ecc_list(tapi_context context, int slot_id, ecc_info* out);
 
 /**
  * Check whether one give number is one emergency number or not
  * @param[in] context        Telephony api context.
  * @param[in] number         Phone number.
- * @return true: is emergency number; false: not emergency number.
+ * @return >=0: is emergency number,value is condition info; -1: not emergency number.
  */
-bool tapi_call_is_emergency_number(tapi_context context, char* number);
+int tapi_call_is_emergency_number(tapi_context context, char* number);
 
 /**
  * Register ecc list change callback.

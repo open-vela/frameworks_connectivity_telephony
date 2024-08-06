@@ -568,6 +568,76 @@ static int device_info_changed(DBusConnection* connection,
     return true;
 }
 
+static int modem_ecc_list_change(DBusConnection* connection,
+    DBusMessage* message, void* user_data)
+{
+    tapi_async_handler* handler = user_data;
+    tapi_async_result* ar;
+    tapi_async_function cb;
+    DBusMessageIter iter, list;
+    DBusMessageIter array;
+    char* key = NULL;
+    int index = 0;
+    ecc_info ecc_list[MAX_ECC_LIST_SIZE] = { 0 };
+
+    if (handler == NULL)
+        return 0;
+
+    ar = handler->result;
+    if (ar == NULL)
+        return 0;
+    ar->msg_id = MSG_ECC_LIST_CHANGE_IND;
+
+    cb = handler->cb_function;
+    if (cb == NULL)
+        return 0;
+
+    if (dbus_message_iter_init(message, &iter) == false)
+        return 0;
+
+    dbus_message_iter_get_basic(&iter, &key);
+    dbus_message_iter_next(&iter);
+
+    if (strcmp(key, "EmergencyNumbers") == 0) {
+        dbus_message_iter_recurse(&iter, &list);
+        dbus_message_iter_recurse(&list, &array);
+
+        while (dbus_message_iter_get_arg_type(&array) == DBUS_TYPE_STRING) {
+            char* str;
+            char* ptr;
+
+            dbus_message_iter_get_basic(&array, &str);
+            ecc_list[index].ecc_num = str;
+            dbus_message_iter_next(&array);
+
+            if (dbus_message_iter_get_arg_type(&array) == DBUS_TYPE_STRING) {
+                dbus_message_iter_get_basic(&array, &str);
+                ptr = strtok(str, ",");
+                ecc_list[index].category = atoi(ptr);
+                ptr = strtok(NULL, ",");
+                ecc_list[index].condition = atoi(ptr);
+                syslog(LOG_DEBUG, "tapi_call_property_change info:%s,%d,%d",
+                    ecc_list[index].ecc_num, ecc_list[index].category,
+                    ecc_list[index].condition);
+            }
+
+            index++;
+
+            if (index >= MAX_ECC_LIST_SIZE)
+                break;
+
+            dbus_message_iter_next(&array);
+        }
+
+        ar->status = OK;
+        ar->data = ecc_list;
+        ar->arg2 = index;
+        cb(ar);
+    }
+
+    return true;
+}
+
 static int modem_state_changed(DBusConnection* connection,
     DBusMessage* message, void* user_data)
 {
@@ -902,6 +972,11 @@ static int tapi_modem_register(tapi_context context,
         watch_id = g_dbus_add_signal_watch(ctx->connection,
             OFONO_SERVICE, modem_path, OFONO_MODEM_INTERFACE,
             "PropertyChanged", modem_state_changed, handler, handler_free);
+        break;
+    case MSG_MODEM_ECC_LIST_CHANGE_IND:
+        watch_id = g_dbus_add_signal_watch(ctx->connection,
+            OFONO_SERVICE, modem_path, OFONO_MODEM_INTERFACE,
+            "PropertyChanged", modem_ecc_list_change, handler, handler_free);
         break;
     default:
         handler_free(handler);
@@ -1921,9 +1996,34 @@ static int tapi_manager_register_data_loging(tapi_context context,
     return watch_id;
 }
 
+static int trigger_modem_load_ecc_list(tapi_context context, int slot_id)
+{
+    dbus_context* ctx = context;
+    GDBusProxy* proxy;
+
+    syslog(LOG_DEBUG, "load modem ecc list");
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy ...\n");
+        return -EIO;
+    }
+
+    if (!g_dbus_proxy_method_call(proxy, "LoadModemEccList", NULL,
+            no_operate_callback, NULL, NULL)) {
+        tapi_log_error("load modem ecc list command send fail");
+        return -EINVAL;
+    }
+
+    return 1;
+}
+
 int tapi_register(tapi_context context,
     int slot_id, tapi_indication_msg msg, void* user_obj, tapi_async_function p_handle)
 {
+    int voicecall_watch_id = 0;
+    int modem_watch_id = 0;
+
     switch (msg) {
     case MSG_CALL_STATE_CHANGE_IND:
         return tapi_call_register_call_state_change(
@@ -1932,8 +2032,16 @@ int tapi_register(tapi_context context,
         return tapi_call_register_ringback_tone_change(
             context, slot_id, user_obj, p_handle);
     case MSG_ECC_LIST_CHANGE_IND:
-        return tapi_call_register_emergency_list_change(
+        voicecall_watch_id = tapi_call_register_emergency_list_change(
             context, slot_id, user_obj, p_handle);
+        modem_watch_id = tapi_modem_register(context, slot_id, MSG_MODEM_ECC_LIST_CHANGE_IND,
+            user_obj, p_handle);
+        trigger_modem_load_ecc_list(context, slot_id);
+        if (voicecall_watch_id < 0 || modem_watch_id < 0) {
+            tapi_log_error("register ecc list change:%d,%d", voicecall_watch_id, modem_watch_id);
+            return voicecall_watch_id;
+        }
+        return voicecall_watch_id;
     case MSG_DEFAULT_VOICECALL_SLOT_CHANGE_IND:
         return tapi_call_register_default_voicecall_slot_change(
             context, user_obj, p_handle);
