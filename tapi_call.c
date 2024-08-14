@@ -769,6 +769,10 @@ static int manage_call_proxy_method(tapi_context context, int slot_id, const cha
     if (!g_dbus_proxy_method_call(proxy, member, NULL, no_operate_callback, NULL, NULL)) {
         report_data_logging_for_call_if(!strcmp("HangupAll", member), ctx, OFONO_CALL_TYPE_UNKNOW,
             OFONO_DIRECTION_UNKNOW, OFONO_VOICE, OFONO_HANGUP_FAIL, "dbus method call fail");
+        report_data_logging_for_call_if(!strcmp("ReleaseAndAnswer", member)
+                || !strcmp("HoldAndAnswer", member),
+            ctx, OFONO_NORMAL_CALL, OFONO_TERMINATE,
+            OFONO_VOICE, OFONO_ANSWER_FAIL, "dbus method call fail");
         return -EINVAL;
     }
 
@@ -935,11 +939,15 @@ int tapi_call_release_and_swap(tapi_context context, int slot_id)
 
 int tapi_call_release_and_answer(tapi_context context, int slot_id)
 {
+    report_data_logging_for_call(context, OFONO_NORMAL_CALL, OFONO_TERMINATE,
+        OFONO_VOICE, OFONO_NORMAL, "NA:ReleaseAndAnswer");
     return manage_call_proxy_method(context, slot_id, "ReleaseAndAnswer");
 }
 
 int tapi_call_hold_and_answer(tapi_context context, int slot_id)
 {
+    report_data_logging_for_call(context, OFONO_NORMAL_CALL, OFONO_TERMINATE,
+        OFONO_VOICE, OFONO_NORMAL, "NA:HoldAndAnswer");
     return manage_call_proxy_method(context, slot_id, "HoldAndAnswer");
 }
 
