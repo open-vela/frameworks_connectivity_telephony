@@ -4486,7 +4486,7 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     /* Data Command */
     { "listen-data", DATA_CMD,
         telephonytool_cmd_data_register,
-        "Register data event (enter example : listen-data 0 18 "
+        "Register data event (enter example : listen-data 0 23 "
         "[slot_id][event_id, see Data Indication Message in tapi.h/tapi_indication_msg])" },
     { "unlisten-data", DATA_CMD,
         telephonytool_cmd_data_unregister,
@@ -4555,7 +4555,7 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     /* SIM Command */
     { "listen-sim", SIM_CMD,
         telephonytool_cmd_listen_sim,
-        "Register sim event (enter example : listen-sim 0 23 "
+        "Register sim event (enter example : listen-sim 0 28 "
         "[slot_id][event_id, see SIM Indication Message in tapi.h/tapi_indication_msg])" },
     { "unlisten-sim", SIM_CMD,
         telephonytool_cmd_unlisten_sim,
@@ -4676,7 +4676,7 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     /* Network Command */
     { "listen-network", NETWORK_CMD,
         telephonytool_cmd_network_listen,
-        "Register network event (enter example : listen-network 0 16 "
+        "Register network event (enter example : listen-network 0 18 "
         "[slot_id][event_id, see Network Indication Message in tapi.h/tapi_indication_msg])" },
     { "unlisten-network", NETWORK_CMD,
         telephonytool_cmd_network_unlisten,
@@ -4724,7 +4724,7 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     /* Ss Command */
     { "listen-ss", SS_CMD,
         telephonytool_cmd_ss_listen,
-        "Register ss event (enter example : listen-ss 0 51 "
+        "Register ss event (enter example : listen-ss 0 54 "
         "[slot_id][event_id, see SS Indication Message in tapi.h/tapi_indication_msg])" },
     { "unlisten-ss", SS_CMD,
         telephonytool_cmd_ss_unlisten,
