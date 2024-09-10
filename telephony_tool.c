@@ -4796,7 +4796,7 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         "get clir (enter example : get-clir 0 [slot_id])" },
     { "enable-fdn", SS_CMD,
         telephonytool_cmd_enable_fdn,
-        "enable fdn (enter example : enable-fdn 0 1 123456 "
+        "enable fdn (enter example : enable-fdn 0 1 1234 "
         "[slot_id][enable 1 or disable 0][pin2])" },
     { "query-fdn", SS_CMD,
         telephonytool_cmd_query_fdn,
