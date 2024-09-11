@@ -903,7 +903,7 @@ int tapi_network_select_manual(tapi_context context,
         return -EINVAL;
     }
 
-    return -EINVAL;
+    return OK;
 }
 
 int tapi_network_scan(tapi_context context,
