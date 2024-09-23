@@ -1213,13 +1213,14 @@ int tapi_call_get_ecc_list(tapi_context context, int slot_id, ecc_info* out)
         while (dbus_message_iter_get_arg_type(&var_elem) != DBUS_TYPE_INVALID) {
             char* str;
             char* ptr;
-
+            char cond_cat[5];
             if (dbus_message_iter_get_arg_type(&var_elem) == DBUS_TYPE_STRING) {
                 dbus_message_iter_get_basic(&var_elem, &str);
                 out[index].ecc_num = str;
                 dbus_message_iter_next(&var_elem);
                 dbus_message_iter_get_basic(&var_elem, &str);
-                ptr = strtok(str, ",");
+                strncpy(cond_cat, str, 4);
+                ptr = strtok(cond_cat, ",");
                 out[index].category = atoi(ptr);
                 ptr = strtok(NULL, ",");
                 out[index].condition = atoi(ptr);
