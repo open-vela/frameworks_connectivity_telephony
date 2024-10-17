@@ -32,7 +32,7 @@ config MODEM_PATH_2
 
 config MODEM_ABNORMAL_EVENT
 	bool "support modem abnormal event"
-	default n
+	default y
 	---help---
 		enable/disable modem abnormal event feature
 
