@@ -22,7 +22,7 @@ include $(APPDIR)/Make.defs
 
 CFLAGS += ${INCDIR_PREFIX}$(APPDIR)/external/dbus/dbus
 CFLAGS += ${INCDIR_PREFIX}$(APPDIR)/external/ofono/include
-CFLAGS += ${INCDIR_PREFIX}$(APPDIR)/frameworks/utils/gdbus
+CFLAGS += ${INCDIR_PREFIX}$(APPDIR)/frameworks/system/utils/gdbus
 CFLAGS += ${INCDIR_PREFIX}$(APPDIR)/frameworks/telephony
 
 CSRCS += tapi_manager.c tapi_utils.c tapi_call.c tapi_data.c tapi_sim.c tapi_stk.c
