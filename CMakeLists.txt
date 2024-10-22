@@ -23,10 +23,11 @@ if(CONFIG_TELEPHONY)
   file(GLOB APPEND_FILES ${CMAKE_CURRENT_LIST_DIR}/*.c)
   list(APPEND CSRCS ${APPEND_FILES})
   list(REMOVE_ITEM CSRCS ${CMAKE_CURRENT_LIST_DIR}/telephony_tool.c)
-  set(INCDIR ${NUTTX_APPS_DIR}/external/dbus/dbus
-             ${NUTTX_APPS_DIR}/external/ofono/include
-             ${NUTTX_APPS_DIR}/frameworks/utils/gdbus
-             ${NUTTX_APPS_DIR}/frameworks/telephony)
+  set(INCDIR
+      ${NUTTX_APPS_DIR}/external/dbus/dbus
+      ${NUTTX_APPS_DIR}/external/ofono/include
+      ${NUTTX_APPS_DIR}/frameworks/system/utils/gdbus
+      ${NUTTX_APPS_DIR}/frameworks/telephony)
 
   nuttx_add_library(tapi)
 
