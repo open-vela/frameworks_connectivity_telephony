@@ -27,7 +27,7 @@ if(CONFIG_TELEPHONY)
       ${NUTTX_APPS_DIR}/external/dbus/dbus
       ${NUTTX_APPS_DIR}/external/ofono/include
       ${NUTTX_APPS_DIR}/frameworks/system/utils/gdbus
-      ${NUTTX_APPS_DIR}/frameworks/telephony)
+      ${NUTTX_APPS_DIR}/frameworks/connectivity/telephony)
 
   nuttx_add_library(tapi)
 
