@@ -4281,10 +4281,10 @@ static void* read_stdin(pthread_addr_t pvarg)
         fflush(stdout);
 
         len = readline_stream(buffer, CONFIG_NSH_LINELEN, stdin, stdout);
-        buffer[len] = '\0';
         if (len < 0)
-            continue;
+            break;
 
+        buffer[len] = '\0';
         if (buffer[0] == '!') {
 #ifdef CONFIG_SYSTEM_SYSTEM
             system(buffer + 1);
