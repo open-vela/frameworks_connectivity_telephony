@@ -55,7 +55,13 @@ static int tapi_ims_enable(tapi_context context, int slot_id, int state)
     GDBusProxy* proxy;
     char* member;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("invalid slot id in %s", __func__);
         return -EINVAL;
     }
 
@@ -69,11 +75,15 @@ static int tapi_ims_enable(tapi_context context, int slot_id, int state)
         member = "Register";
     else if (state == IMS_REGISTER_DISABLE)
         member = "Unregister";
-    else
+    else {
+        tapi_log_error("invalid state in %s", __func__);
         return -EINVAL;
+    }
 
-    if (!g_dbus_proxy_method_call(proxy, member, NULL, no_operate_callback, NULL, NULL))
+    if (!g_dbus_proxy_method_call(proxy, member, NULL, no_operate_callback, NULL, NULL)) {
+        tapi_log_error("call method failed in %s", __func__);
         return -EIO;
+    }
 
     return OK;
 }
@@ -90,16 +100,22 @@ static int ims_registration_changed(DBusConnection* connection, DBusMessage* mes
     int msg_id;
     char* key;
 
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return false;
+    }
 
     ar = handler->result;
-    if (ar == NULL)
+    if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         return false;
+    }
 
     cb = handler->cb_function;
-    if (cb == NULL)
+    if (cb == NULL) {
+        tapi_log_error("callback in %s is null", __func__);
         return false;
+    }
 
     msg_id = handler->result->msg_id;
     if (dbus_message_is_signal(message, OFONO_IMS_INTERFACE,
@@ -107,6 +123,7 @@ static int ims_registration_changed(DBusConnection* connection, DBusMessage* mes
         && msg_id == MSG_IMS_REGISTRATION_MESSAGE_IND) {
 
         if (dbus_message_iter_init(message, &iter) == FALSE) {
+            tapi_log_error("message iter init fail in %s", __func__);
             handler->result->status = ERROR;
             goto done;
         }
@@ -155,7 +172,13 @@ int tapi_ims_set_service_status(tapi_context context, int slot_id, int capabilit
     dbus_context* ctx = context;
     GDBusProxy* proxy;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("invalid slot id in %s", __func__);
         return -EINVAL;
     }
 
@@ -166,8 +189,10 @@ int tapi_ims_set_service_status(tapi_context context, int slot_id, int capabilit
     }
 
     if (!g_dbus_proxy_method_call(proxy, "SetCapability", set_ss_param_append,
-            no_operate_callback, &capability, NULL))
+            no_operate_callback, &capability, NULL)) {
+        tapi_log_error("call method failed in %s", __func__);
         return -EIO;
+    }
 
     return OK;
 }
@@ -181,7 +206,13 @@ int tapi_ims_register_registration_change(tapi_context context, int slot_id, voi
     const char* path;
     int watch_id;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("invalid slot id in %s", __func__);
         return -EINVAL;
     }
 
@@ -193,11 +224,13 @@ int tapi_ims_register_registration_change(tapi_context context, int slot_id, voi
 
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         return -ENOMEM;
     }
 
     handler = malloc(sizeof(tapi_async_handler));
     if (handler == NULL) {
+        tapi_log_error("async handler in %s is null", __func__);
         free(ar);
         return -ENOMEM;
     }
@@ -215,6 +248,7 @@ int tapi_ims_register_registration_change(tapi_context context, int slot_id, voi
         ims_registration_changed, handler, handler_free);
 
     if (watch_id == 0) {
+        tapi_log_error("add signal watch failed in %s", __func__);
         handler_free(handler);
         return -EINVAL;
     }
@@ -231,12 +265,25 @@ int tapi_ims_get_registration(tapi_context context, int slot_id,
     int val = 0;
     int cap_value = 0;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || ims_reg == NULL) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
         return -EINVAL;
     }
 
-    if (!ctx->client_ready)
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("invalid slot id in %s", __func__);
+        return -EINVAL;
+    }
+
+    if (ims_reg == NULL) {
+        tapi_log_error("ims registration info in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (!ctx->client_ready) {
+        tapi_log_error("dbus client is not ready in %s", __func__);
         return -EAGAIN;
+    }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_IMS];
     if (proxy == NULL) {
@@ -244,8 +291,10 @@ int tapi_ims_get_registration(tapi_context context, int slot_id,
         return -EIO;
     }
 
-    if (!g_dbus_proxy_get_property(proxy, "Registered", &iter))
+    if (!g_dbus_proxy_get_property(proxy, "Registered", &iter)) {
+        tapi_log_error("get property failed in %s", __func__);
         return -EIO;
+    }
 
     dbus_message_iter_get_basic(&iter, &val);
     ims_reg->reg_info = val;
@@ -272,12 +321,20 @@ int tapi_ims_is_registered(tapi_context context, int slot_id, bool* out)
     GDBusProxy* proxy;
     int val = 0;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
         return -EINVAL;
     }
 
-    if (!ctx->client_ready)
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("invalid slot id in %s", __func__);
+        return -EINVAL;
+    }
+
+    if (!ctx->client_ready) {
+        tapi_log_error("dbus client is not ready in %s", __func__);
         return -EAGAIN;
+    }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_IMS];
     if (proxy == NULL) {
@@ -286,6 +343,7 @@ int tapi_ims_is_registered(tapi_context context, int slot_id, bool* out)
     }
 
     if (!g_dbus_proxy_get_property(proxy, "Registered", &iter)) {
+        tapi_log_error("get property failed in %s", __func__);
         return -EIO;
     }
 
@@ -302,12 +360,20 @@ int tapi_ims_is_volte_available(tapi_context context, int slot_id, bool* out)
     DBusMessageIter iter;
     GDBusProxy* proxy;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
         return -EINVAL;
     }
 
-    if (!ctx->client_ready)
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("invalid slot id in %s", __func__);
+        return -EINVAL;
+    }
+
+    if (!ctx->client_ready) {
+        tapi_log_error("dbus client is not ready in %s", __func__);
         return -EAGAIN;
+    }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_IMS];
     if (proxy == NULL) {
@@ -315,13 +381,17 @@ int tapi_ims_is_volte_available(tapi_context context, int slot_id, bool* out)
         return -EIO;
     }
 
-    if (!g_dbus_proxy_get_property(proxy, "Registered", &iter))
+    if (!g_dbus_proxy_get_property(proxy, "Registered", &iter)) {
+        tapi_log_error("get property failed in %s", __func__);
         return -EIO;
+    }
 
     dbus_message_iter_get_basic(&iter, &reg);
 
-    if (!g_dbus_proxy_get_property(proxy, "VoiceCapable", &iter))
+    if (!g_dbus_proxy_get_property(proxy, "VoiceCapable", &iter)) {
+        tapi_log_error("get property failed in %s", __func__);
         return -EIO;
+    }
 
     dbus_message_iter_get_basic(&iter, &cap);
     *out = reg && cap;
@@ -335,12 +405,20 @@ int tapi_ims_get_subscriber_uri_number(tapi_context context, int slot_id, char**
     DBusMessageIter iter;
     GDBusProxy* proxy;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
         return -EINVAL;
     }
 
-    if (!ctx->client_ready)
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("invalid slot id in %s", __func__);
+        return -EINVAL;
+    }
+
+    if (!ctx->client_ready) {
+        tapi_log_error("dbus client is not ready in %s", __func__);
         return -EAGAIN;
+    }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_IMS];
     if (proxy == NULL) {
@@ -353,6 +431,7 @@ int tapi_ims_get_subscriber_uri_number(tapi_context context, int slot_id, char**
         return OK;
     }
 
+    tapi_log_error("get property failed in %s", __func__);
     return -EINVAL;
 }
 
@@ -363,12 +442,20 @@ int tapi_ims_get_enabled(tapi_context context, int slot_id, bool* out)
     GDBusProxy* proxy;
     int is_enabled = 0;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
         return -EINVAL;
     }
 
-    if (!ctx->client_ready)
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("invalid slot id in %s", __func__);
+        return -EINVAL;
+    }
+
+    if (!ctx->client_ready) {
+        tapi_log_error("dbus client is not ready in %s", __func__);
         return -EAGAIN;
+    }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_IMS];
     if (proxy == NULL) {
@@ -383,5 +470,6 @@ int tapi_ims_get_enabled(tapi_context context, int slot_id, bool* out)
         return OK;
     }
 
+    tapi_log_error("get property failed in %s", __func__);
     return -EINVAL;
 }
