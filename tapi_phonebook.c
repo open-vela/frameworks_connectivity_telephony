@@ -83,21 +83,31 @@ static void load_adn_entries_cb(DBusMessage* message, void* user_data)
     char* entries;
 
     handler = user_data;
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return;
+    }
 
-    if ((ar = handler->result) == NULL || (cb = handler->cb_function) == NULL)
+    if ((ar = handler->result) == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         return;
+    }
+
+    if ((cb = handler->cb_function) == NULL) {
+        tapi_log_error("callback in %s is null", __func__);
+        return;
+    }
 
     dbus_error_init(&err);
     if (dbus_set_error_from_message(&err, message) == true) {
-        tapi_log_error("%s: %s\n", err.name, err.message);
+        tapi_log_error("error from message in %s, %s: %s", __func__, err.name, err.message);
         dbus_error_free(&err);
         ar->status = ERROR;
         goto done;
     }
 
     if (dbus_message_iter_init(message, &iter) == false) {
+        tapi_log_error("message iter init failed in %s", __func__);
         ar->status = ERROR;
         goto done;
     }
@@ -122,21 +132,31 @@ static void load_fdn_entries_cb(DBusMessage* message, void* user_data)
     int index;
 
     handler = user_data;
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return;
+    }
 
-    if ((ar = handler->result) == NULL || (cb = handler->cb_function) == NULL)
+    if ((ar = handler->result) == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         return;
+    }
+
+    if ((cb = handler->cb_function) == NULL) {
+        tapi_log_error("callback in %s is null", __func__);
+        return;
+    }
 
     dbus_error_init(&err);
     if (dbus_set_error_from_message(&err, message) == true) {
-        tapi_log_error("%s: %s\n", err.name, err.message);
+        tapi_log_error("error from message in %s, %s: %s", __func__, err.name, err.message);
         dbus_error_free(&err);
         ar->status = ERROR;
         goto done;
     }
 
     if (dbus_message_iter_init(message, &iter) == false) {
+        tapi_log_error("message iter init failed in %s", __func__);
         ar->status = ERROR;
         goto done;
     }
@@ -184,8 +204,13 @@ static void insert_fdn_record_append(DBusMessageIter* iter, void* user_data)
     char* number;
     char* pin2;
 
-    if (param == NULL || param->result == NULL) {
-        tapi_log_error("invalid pin argument!");
+    if (param == NULL) {
+        tapi_log_error("param in %s is null", __func__);
+        return;
+    }
+
+    if (param->result == NULL) {
+        tapi_log_error("invalid pin argument in %s!", __func__);
         return;
     }
 
@@ -208,21 +233,31 @@ static void insert_fdn_record_cb(DBusMessage* message, void* user_data)
     DBusError err;
 
     handler = user_data;
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return;
+    }
 
-    if ((ar = handler->result) == NULL || (cb = handler->cb_function) == NULL)
+    if ((ar = handler->result) == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         return;
+    }
+
+    if ((cb = handler->cb_function) == NULL) {
+        tapi_log_error("callback in %s is null", __func__);
+        return;
+    }
 
     dbus_error_init(&err);
     if (dbus_set_error_from_message(&err, message) == true) {
-        tapi_log_error("%s: %s\n", err.name, err.message);
+        tapi_log_error("error from message in %s, %s: %s", __func__, err.name, err.message);
         dbus_error_free(&err);
         ar->status = ERROR;
         goto done;
     }
 
     if (dbus_message_iter_init(message, &iter) == false) {
+        tapi_log_error("message iter init failed in %s", __func__);
         ar->status = ERROR;
         goto done;
     }
@@ -242,8 +277,13 @@ static void delete_fdn_record_append(DBusMessageIter* iter, void* user_data)
     int fdn_idx;
     char* pin2;
 
-    if (param == NULL || param->result == NULL) {
-        tapi_log_error("invalid pin argument!");
+    if (param == NULL) {
+        tapi_log_error("param in %s is null", __func__);
+        return;
+    }
+
+    if (param->result == NULL) {
+        tapi_log_error("invalid pin argument in %s!", __func__);
         return;
     }
 
@@ -264,8 +304,13 @@ static void update_fdn_record_append(DBusMessageIter* iter, void* user_data)
     int fdn_idx;
     char* pin2;
 
-    if (param == NULL || param->result == NULL) {
-        tapi_log_error("invalid pin argument!");
+    if (param == NULL) {
+        tapi_log_error("param in %s is null", __func__);
+        return;
+    }
+
+    if (param->result == NULL) {
+        tapi_log_error("invalid pin argument in %s!", __func__);
         return;
     }
 
@@ -288,20 +333,26 @@ static void method_call_complete(DBusMessage* message, void* user_data)
     tapi_async_function cb;
     DBusError err;
 
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return;
+    }
 
     ar = handler->result;
-    if (ar == NULL)
+    if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         return;
+    }
 
     cb = handler->cb_function;
-    if (cb == NULL)
+    if (cb == NULL) {
+        tapi_log_error("callback in %s is null", __func__);
         return;
+    }
 
     dbus_error_init(&err);
     if (dbus_set_error_from_message(&err, message) == true) {
-        tapi_log_error("%s error %s: %s \n", __func__, err.name, err.message);
+        tapi_log_error("error from message in %s, %s: %s", __func__, err.name, err.message);
         dbus_error_free(&err);
         ar->status = ERROR;
         goto done;
@@ -325,18 +376,25 @@ int tapi_phonebook_load_adn_entries(tapi_context context,
     tapi_async_result* ar;
     GDBusProxy* proxy;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("invalid slot id in %s", __func__);
         return -EINVAL;
     }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_PHONEBOOK];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         return -ENOMEM;
     }
     ar->msg_id = event_id;
@@ -344,6 +402,7 @@ int tapi_phonebook_load_adn_entries(tapi_context context,
 
     user_data = malloc(sizeof(tapi_async_handler));
     if (user_data == NULL) {
+        tapi_log_error("user data in %s is null", __func__);
         free(ar);
         return -ENOMEM;
     }
@@ -352,6 +411,7 @@ int tapi_phonebook_load_adn_entries(tapi_context context,
 
     if (!g_dbus_proxy_method_call(proxy, "Import", NULL,
             load_adn_entries_cb, user_data, handler_free)) {
+        tapi_log_error("method call failed in %s", __func__);
         handler_free(user_data);
         return -EINVAL;
     }
@@ -367,18 +427,25 @@ int tapi_phonebook_load_fdn_entries(tapi_context context,
     tapi_async_result* ar;
     GDBusProxy* proxy;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("invalid slot id in %s", __func__);
         return -EINVAL;
     }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_PHONEBOOK];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         return -ENOMEM;
     }
     ar->msg_id = event_id;
@@ -388,6 +455,7 @@ int tapi_phonebook_load_fdn_entries(tapi_context context,
 
     user_data = malloc(sizeof(tapi_async_handler));
     if (user_data == NULL) {
+        tapi_log_error("user data in %s is null", __func__);
         free(ar);
         return -ENOMEM;
     }
@@ -396,6 +464,7 @@ int tapi_phonebook_load_fdn_entries(tapi_context context,
 
     if (!g_dbus_proxy_method_call(proxy, "ImportFdn", NULL,
             load_fdn_entries_cb, user_data, handler_free)) {
+        tapi_log_error("method call failed in %s", __func__);
         handler_free(user_data);
         return -EINVAL;
     }
@@ -412,19 +481,40 @@ int tapi_phonebook_insert_fdn_entry(tapi_context context, int slot_id,
     tapi_async_result* ar;
     GDBusProxy* proxy;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
-        || name == NULL || number == NULL || pin2 == NULL) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("invalid slot id in %s", __func__);
+        return -EINVAL;
+    }
+
+    if (name == NULL) {
+        tapi_log_error("name in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (number == NULL) {
+        tapi_log_error("number in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (pin2 == NULL) {
+        tapi_log_error("pin2 in %s is null", __func__);
         return -EINVAL;
     }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_PHONEBOOK];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
     fdn_record = malloc(sizeof(fdn_record_param));
     if (fdn_record == NULL) {
+        tapi_log_error("fdn record in %s is null", __func__);
         return -ENOMEM;
     }
     fdn_record->tag = name;
@@ -433,6 +523,7 @@ int tapi_phonebook_insert_fdn_entry(tapi_context context, int slot_id,
 
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         free(fdn_record);
         return -ENOMEM;
     }
@@ -442,6 +533,7 @@ int tapi_phonebook_insert_fdn_entry(tapi_context context, int slot_id,
 
     user_data = malloc(sizeof(tapi_async_handler));
     if (user_data == NULL) {
+        tapi_log_error("user data in %s is null", __func__);
         free(fdn_record);
         free(ar);
         return -ENOMEM;
@@ -452,6 +544,7 @@ int tapi_phonebook_insert_fdn_entry(tapi_context context, int slot_id,
     if (!g_dbus_proxy_method_call(proxy, "InsertFdn", insert_fdn_record_append,
             insert_fdn_record_cb, user_data, phonebook_event_data_free)) {
         phonebook_event_data_free(user_data);
+        tapi_log_error("method call failed in %s", __func__);
         return -EINVAL;
     }
 
@@ -467,19 +560,35 @@ int tapi_phonebook_delete_fdn_entry(tapi_context context, int slot_id,
     tapi_async_result* ar;
     GDBusProxy* proxy;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
-        || fdn_idx < 1 || pin2 == NULL) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("invalid slot id in %s", __func__);
+        return -EINVAL;
+    }
+
+    if (fdn_idx < 1) {
+        tapi_log_error("invalid fdn idx in %s", __func__);
+        return -EINVAL;
+    }
+
+    if (pin2 == NULL) {
+        tapi_log_error("pin2 in %s is null", __func__);
         return -EINVAL;
     }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_PHONEBOOK];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
     fdn_record = malloc(sizeof(fdn_record_param));
     if (fdn_record == NULL) {
+        tapi_log_error("fdn record in %s is null", __func__);
         return -ENOMEM;
     }
     fdn_record->fdn_idx = fdn_idx;
@@ -487,6 +596,7 @@ int tapi_phonebook_delete_fdn_entry(tapi_context context, int slot_id,
 
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         free(fdn_record);
         return -ENOMEM;
     }
@@ -496,6 +606,7 @@ int tapi_phonebook_delete_fdn_entry(tapi_context context, int slot_id,
 
     user_data = malloc(sizeof(tapi_async_handler));
     if (user_data == NULL) {
+        tapi_log_error("user data in %s is null", __func__);
         free(fdn_record);
         free(ar);
         return -ENOMEM;
@@ -505,6 +616,7 @@ int tapi_phonebook_delete_fdn_entry(tapi_context context, int slot_id,
 
     if (!g_dbus_proxy_method_call(proxy, "DeleteFdn", delete_fdn_record_append,
             method_call_complete, user_data, phonebook_event_data_free)) {
+        tapi_log_error("method call failed in %s", __func__);
         phonebook_event_data_free(user_data);
         return -EINVAL;
     }
@@ -521,20 +633,45 @@ int tapi_phonebook_update_fdn_entry(tapi_context context, int slot_id, int event
     tapi_async_result* ar;
     GDBusProxy* proxy;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
-        || fdn_idx < 1 || new_name == NULL
-        || new_number == NULL || pin2 == NULL) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("invalid slot id in %s", __func__);
+        return -EINVAL;
+    }
+
+    if (fdn_idx < 1) {
+        tapi_log_error("invalid fdn idx in %s", __func__);
+        return -EINVAL;
+    }
+
+    if (new_name == NULL) {
+        tapi_log_error("new name in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (new_number == NULL) {
+        tapi_log_error("new number in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (pin2 == NULL) {
+        tapi_log_error("pin2 in %s is null", __func__);
         return -EINVAL;
     }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_PHONEBOOK];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
     fdn_record = malloc(sizeof(fdn_record_param));
     if (fdn_record == NULL) {
+        tapi_log_error("fdn record in %s is null", __func__);
         return -ENOMEM;
     }
     fdn_record->fdn_idx = fdn_idx;
@@ -544,6 +681,7 @@ int tapi_phonebook_update_fdn_entry(tapi_context context, int slot_id, int event
 
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         free(fdn_record);
         return -ENOMEM;
     }
@@ -553,6 +691,7 @@ int tapi_phonebook_update_fdn_entry(tapi_context context, int slot_id, int event
 
     user_data = malloc(sizeof(tapi_async_handler));
     if (user_data == NULL) {
+        tapi_log_error("user data in %s is null", __func__);
         free(fdn_record);
         free(ar);
         return -ENOMEM;
@@ -563,6 +702,7 @@ int tapi_phonebook_update_fdn_entry(tapi_context context, int slot_id, int event
     if (!g_dbus_proxy_method_call(proxy, "UpdateFdn", update_fdn_record_append,
             method_call_complete, user_data, phonebook_event_data_free)) {
         phonebook_event_data_free(user_data);
+        tapi_log_error("method call failed in %s", __func__);
         return -EINVAL;
     }
 
