@@ -20,9 +20,9 @@ if(CONFIG_TELEPHONY)
     APPEND
     PROPERTY NUTTX_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_LIST_DIR}/include)
   set(CSRCS)
-  file(GLOB APPEND_FILES ${CMAKE_CURRENT_LIST_DIR}/src/*.c)
+  file(GLOB APPEND_FILES ${CMAKE_CURRENT_LIST_DIR}/*.c)
   list(APPEND CSRCS ${APPEND_FILES})
-  list(REMOVE_ITEM CSRCS ${CMAKE_CURRENT_LIST_DIR}/tools/telephony_tool.c)
+  list(REMOVE_ITEM CSRCS ${CMAKE_CURRENT_LIST_DIR}/telephony_tool.c)
   set(INCDIR
       ${NUTTX_APPS_DIR}/external/dbus/dbus
       ${NUTTX_APPS_DIR}/external/ofono/include
@@ -42,7 +42,7 @@ if(CONFIG_TELEPHONY)
       PRIORITY
       ${CONFIG_TELEPHONY_TOOL_PRIORITY}
       SRCS
-      tools/telephony_tool.c
+      telephony_tool.c
       INCLUDE_DIRECTORIES
       ${INCDIR}
       DEPENDS

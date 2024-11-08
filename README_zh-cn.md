@@ -5,13 +5,13 @@
 
 ## **概述**
 
-Telephony 是 `openvela` 操作系统中用于处理电话和通信功能的框架和 `API` 集合。`Framework/telephony` 是 `openvela` 通信对应用层提供的接口层，又称为 `TAPI（Telephony API）`。
+Telephony 是 Vela 操作系统中用于处理电话和通信功能的框架和 API 集合。Framework/telephony 是 Vela 通信对应用层提供的接口层，又称为 TAPI（Telephony API）。
 
-`TAPI` 提供了一组功能丰富的工具和接口，涵盖网络服务、通话服务、短信服务、数据服务、SIM 卡服务及其他相关功能。这些接口设计使得应用开发者无需深入了解 Telephony 的内部业务逻辑（Telephony 内部业务由 `Ofono` 实现），只需调用 API 即可轻松获取与 Telephony 相关的信息，完成应用开发。另外，Telephony 还支持灵活的扩展和定制，可满足不断变化的通信需求。
+TAPI 提供了一组功能丰富的工具和接口，涵盖网络服务、通话服务、短信服务、数据服务、SIM 卡服务及其他相关功能。这些接口设计使得应用开发者无需深入了解 Telephony 的内部业务逻辑（Telephony 内部业务由 Ofono 实现），只需调用 API 即可轻松获取与 Telephony 相关的信息，完成应用开发。另外，Telephony 还支持灵活的扩展和定制，可满足不断变化的通信需求。
 
 ![Telephony架构图](./TelephonyFramework.jpg)
 
-## **代码目录**
+## **项目目录**
 ```tree
 ├── include
 │   ├── tapi_call.h
@@ -26,40 +26,18 @@ Telephony 是 `openvela` 操作系统中用于处理电话和通信功能的框�
 │   ├── tapi_sms.h
 │   ├── tapi_ss.h
 │   └── tapi_stk.h
-├── src
-│   ├── tapi_call.c
-│   ├── tapi_cbs.c
-│   ├── tapi_data.c
-│   ├── tapi_ims.c
-│   ├── tapi_manager.c
-│   ├── tapi_network.c
-│   ├── tapi_phonebook.c
-│   ├── tapi_sim.c
-│   ├── tapi_sms.c
-│   ├── tapi_ss.c
-│   ├── tapi_stk.c
-│   └── tapi_utils.c
-├── tools
-│   └── telephony_tool.c
-├── test
-│   ├── cmocka_telephony_test.c
-│   ├── telephony_call_test.c
-│   ├── telephony_call_test.h
-│   ├── telephony_common_test.c
-│   ├── telephony_common_test.h
-│   ├── telephony_data_test.c
-│   ├── telephony_data_test.h
-│   ├── telephony_ims_test.c
-│   ├── telephony_ims_test.h
-│   ├── telephony_network_test.c
-│   ├── telephony_network_test.h
-│   ├── telephony_sim_test.c
-│   ├── telephony_sim_test.h
-│   ├── telephony_sms_test.c
-│   ├── telephony_sms_test.h
-│   ├── telephony_ss_test.c
-│   ├── telephony_ss_test.h
-│   └── telephony_test.h
+├── tapi_call.c
+├── tapi_cbs.c
+├── tapi_data.c
+├── tapi_ims.c
+├── tapi_manager.c
+├── tapi_network.c
+├── tapi_phonebook.c
+├── tapi_sim.c
+├── tapi_sms.c
+├── tapi_ss.c
+├── tapi_stk.c
+├── tapi_utils.c
 ├── README.md
 └── README_zh-cn.md
 ```
@@ -78,15 +56,13 @@ Telephony 是 `openvela` 操作系统中用于处理电话和通信功能的框�
 | SMS | tapi_sms.c/h | 短信服务接口 |
 | IMS | tapi_ims.c/h | IMS 服务接口  |
 | Phonebook | tapi_phonebook.c/h | 电话簿接口  |
-| <div style="width: 120pt">Telephony Utils| tapi_utils.c | Telephony 工具类接口  |
-| Telephony Tools| telephony_tool.c | Telephony 内部接口测试  |
-| Telephony Test Case| test/* | Telephony 内部测试用例 |
+| <div style="width: 120pt">Telephony 工具类| tapi_utils.c/h | Telephony 工具类接口  |
 
 ### **功能介绍**
 
 #### Common Api
 - Telephony 服务接口：提供 Telephony 服务获取以及释放的接口。
-- 获取通讯设备相关信息：如 `IMEI`、`MODEL`、`MSISDN`、`PhoneNumber`、`Modem` 参数等信息。
+- 获取通讯设备相关信息：如 IMEI、MODEL、MSISDN、PhoneNumber、Modem 参数等信息。
 - 设备通讯能力管理：开启/关闭飞行模式、蜂窝通信能力等功能。
 
 #### Call Api
@@ -125,15 +101,8 @@ Telephony 是 `openvela` 操作系统中用于处理电话和通信功能的框�
 #### Phonebook Api
 - SIM 卡联系人管理：SIM 卡上的联系人进行增删改查的相关操作。
 
-#### Telephony Utils Api
+#### Utils Api
 - 双向数据类型转换：Telephony 内部结构体参数与基本类型之间的双向转换，以满足不同数据处理需求。
-
-#### Telephony Tools
-- 内部接口测试：用于内部所有 TAPI 接口测试。
-
-#### Telephony Test Case
-- 内部测试用例: 用于内部所有 Telephony 场景的测试用例。
-
 
 ## **TAPI 工作模型**
 
@@ -141,23 +110,23 @@ Telephony 是 `openvela` 操作系统中用于处理电话和通信功能的框�
 
 ## **TAPI 代码演示**
 ### **使用步骤**
-1. 调用 `tapi_open` 函数获取 `tapi_context`。
-    ```c
+1. 调用 tapi_open 函数获取 tapi_context
+```c
     tapi_context context;
     char* dbus_name = "vela.telephony.tool";
     context = tapi_open(dbus_name, on_tapi_client_ready, NULL);
-    ```
+```
 
-2. 通过 `tapi_context` 传参到 `TAPI` 接口函数进行 `Telephony` 服务的操作。
-    ```c
+2. 通过 tapi_context 传参到TAPI接口函数进行 Telephony 服务的操作
+```c
     tapi_radio_state current = RADIO_STATE_UNAVAILABLE;
     tapi_get_radio_state(t_context, get_used_slot_id(), &current);
-    ```
+```
 
-3. 调用 `tapi_close` 函数释放 `tapi_context`。
-    ```c
+3. 调用 tapi_close 函数释放 tapi_context
+```c
     tapi_close(context);
-    ```
+```
 
 ### **完整示例代码**
 ```c

@@ -4,13 +4,13 @@
 
 ## **Overview**
 
-Telephony is a framework and API set for handling phone and communication functions in the `openvela` operating system. `Framework/telephony` is the interface layer provided by `openvela` communication to the application layer, also known as `TAPI (Telephony API)`.
+Telephony is a framework and API set for handling call and communication functions in the Vela system. Framework/telephony is the interface layer that Vela provides to upper-layer applications, also known as TAPI (Telephony API).
 
-`TAPI` provides a set of feature-rich tools and interfaces, covering network services, call services, SMS services, data services, SIM card services and other related functions. These interface designs allow application developers to easily obtain information related to Telephony and complete application development by calling `API` without having to deeply understand the internal business logic of Telephony (Telephony internal business is implemented by `Ofono`). In addition, Telephony also supports flexible expansion and customization to meet changing communication needs.
+TAPI provides a set of feature-rich tools and interfaces, covering network services, call services, SMS services, data services, SIM card services and other related functions. These interface allow application developers to easily obtain Telephony-related information and complete application development by calling APIs without having to deeply understand the internal implementation of Telephony (Telephony is implemented by Ofono). In addition, Telephony also supports flexible expansion and customization to realize ever-changing communication requirements.
 
 ![TelephonyFramework](./TelephonyFramework.jpg)
 
-## **Code Directory**
+## **Project Directory**
 ```tree
 ├── include
 │   ├── tapi_call.h
@@ -25,40 +25,18 @@ Telephony is a framework and API set for handling phone and communication functi
 │   ├── tapi_sms.h
 │   ├── tapi_ss.h
 │   └── tapi_stk.h
-├── src
-│   ├── tapi_call.c
-│   ├── tapi_cbs.c
-│   ├── tapi_data.c
-│   ├── tapi_ims.c
-│   ├── tapi_manager.c
-│   ├── tapi_network.c
-│   ├── tapi_phonebook.c
-│   ├── tapi_sim.c
-│   ├── tapi_sms.c
-│   ├── tapi_ss.c
-│   ├── tapi_stk.c
-│   └── tapi_utils.c
-├── tools
-│   └── telephony_tool.c
-├── test
-│   ├── cmocka_telephony_test.c
-│   ├── telephony_call_test.c
-│   ├── telephony_call_test.h
-│   ├── telephony_common_test.c
-│   ├── telephony_common_test.h
-│   ├── telephony_data_test.c
-│   ├── telephony_data_test.h
-│   ├── telephony_ims_test.c
-│   ├── telephony_ims_test.h
-│   ├── telephony_network_test.c
-│   ├── telephony_network_test.h
-│   ├── telephony_sim_test.c
-│   ├── telephony_sim_test.h
-│   ├── telephony_sms_test.c
-│   ├── telephony_sms_test.h
-│   ├── telephony_ss_test.c
-│   ├── telephony_ss_test.h
-│   └── telephony_test.h
+├── tapi_call.c
+├── tapi_cbs.c
+├── tapi_data.c
+├── tapi_ims.c
+├── tapi_manager.c
+├── tapi_network.c
+├── tapi_phonebook.c
+├── tapi_sim.c
+├── tapi_sms.c
+├── tapi_ss.c
+├── tapi_stk.c
+├── tapi_utils.c
 ├── README.md
 └── README_zh-cn.md
 ```
@@ -77,15 +55,13 @@ Telephony is a framework and API set for handling phone and communication functi
 | SMS | tapi_sms.c/h | SMS service interface |
 | IMS | tapi_ims.c/h | IMS service interface  |
 | Phonebook | tapi_phonebook.c/h | Phonebook interface  |
-| <div style="width: 120pt">Telephony Utils| tapi_utils.c |Telephony util interface |
-| Telephony Tools| telephony_tool.c | Telephony internal interface test  |
-| Telephony Test Case| test/* | Telephony internal test case |
+| <div style="width: 120pt">Utils| tapi_utils.c/h |Telephony util interface |
 
 ### **Function Introduction**
 
 #### Common Api
 - Telephony service interface: provides an interface for obtaining and releasing Telephony services.
-- Obtain communications equipment related information: such as `IMEI`, `MODEL`, `MSISDN`, `PhoneNumber`, `Modem` parameters, etc.
+- Obtain communications equipment related information: such as IMEI, MODEL, MSISDN, PhoneNumber, Modem parameters, etc.
 - Communication capability management: turn on/off flight mode, turn on/off cellular communication capability, etc.
 
 #### Call Api
@@ -124,38 +100,32 @@ Telephony is a framework and API set for handling phone and communication functi
 #### Phonebook Api
 - SIM card contact management: perform operations related to adding, deleting, modifying and checking contacts on the SIM card.
 
-#### Telephony Utils Api
+#### Utils Api
 - Bidirectional data type conversion: Bidirectional conversion between Telephony internal structure parameters and basic types to meet different data processing requirements.
-
-#### Telephony Tools
-- Internal interface test: Used for testing all internal TAPI interfaces.
-
-#### Telephony Test Case
-- Internal test case: Used for testing all internal Telephony scenarios.
 
 ## **TAPI Workflow**
 
 ![TelephonyApi](./TapiEn.jpg)
 
-## **TAPI code demonstration**
-### **Usage steps**
-1. Call the `tapi_open` function to get the `tapi_context`.
-    ```c
+## **TAPI Code Demonstration**
+### **How to use**
+1. Call tapi_open function to get tapi_context
+```c
     tapi_context context;
     char* dbus_name = "vela.telephony.tool";
     context = tapi_open(dbus_name, on_tapi_client_ready, NULL);
-    ```
+```
 
-2. Pass the `tapi_context` parameter to the `TAPI` interface function to operate the `Telephony` service.
-    ```c
+2. Transfer parameters to TAPI interface functions through tapi_context to operate Telephony services
+```c
     tapi_radio_state current = RADIO_STATE_UNAVAILABLE;
     tapi_get_radio_state(t_context, get_used_slot_id(), &current);
-    ```
+```
 
-3. Call the `tapi_close` function to release the `tapi_context`.
-    ```c
+3. Call tapi_close function to release tapi_context
+```c
     tapi_close(context);
-    ```
+```
 
 ### **Complete sample code**
 ```c

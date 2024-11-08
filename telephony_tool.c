@@ -33,7 +33,7 @@
 #include <unistd.h>
 #include <uv.h>
 
-#include "src/tapi_internal.h"
+#include "tapi_internal.h"
 
 /****************************************************************************
  * Pre-processor Definitions
