@@ -55,8 +55,13 @@ static void set_clir_append(DBusMessageIter* iter, void* user_data)
     tapi_clir_status status;
     const char* clir_status;
 
-    if (param == NULL || param->result == NULL) {
-        tapi_log_error("invalid clir value !!");
+    if (param == NULL) {
+        tapi_log_error("param in %s is null", __func__);
+        return;
+    }
+
+    if (param->result == NULL) {
+        tapi_log_error("invalid clir value in %s !!", __func__);
         return;
     }
 
@@ -70,8 +75,13 @@ static void set_call_waiting_append(DBusMessageIter* iter, void* user_data)
     tapi_async_handler* param = user_data;
     int enable;
 
-    if (param == NULL || param->result == NULL) {
-        tapi_log_error("invalid call waiting value!!");
+    if (param == NULL) {
+        tapi_log_error("param in %s is null", __func__);
+        return;
+    }
+
+    if (param->result == NULL) {
+        tapi_log_error("invalid call waiting value in %s!!", __func__);
         return;
     }
 
@@ -85,8 +95,13 @@ static void query_call_forwarding_option_append(DBusMessageIter* iter, void* use
     int option;
     int cls;
 
-    if (param == NULL || param->result == NULL) {
-        tapi_log_error("invalid call forwarding option !!");
+    if (param == NULL) {
+        tapi_log_error("param in %s is null", __func__);
+        return;
+    }
+
+    if (param->result == NULL) {
+        tapi_log_error("invalid call forwarding option in %s!!", __func__);
         return;
     }
 
@@ -104,8 +119,13 @@ static void set_call_forwarding_option_append(DBusMessageIter* iter, void* user_
     int cls;
     char* number;
 
-    if (param == NULL || param->result == NULL) {
-        tapi_log_error("invalid call forwarding option !!");
+    if (param == NULL) {
+        tapi_log_error("param in %s is null", __func__);
+        return;
+    }
+
+    if (param->result == NULL) {
+        tapi_log_error("invalid call forwarding option in %s!!", __func__);
         return;
     }
 
@@ -125,8 +145,15 @@ static void cb_request_param_append(DBusMessageIter* iter, void* user_data)
     DBusMessageIter value;
 
     param = user_data;
-    if (param == NULL || param->result == NULL)
+    if (param == NULL) {
+        tapi_log_error("param in %s is null", __func__);
         return;
+    }
+
+    if (param->result == NULL) {
+        tapi_log_error("param result in %s is null", __func__);
+        return;
+    }
 
     set_property_param = param->result->data;
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &set_property_param->key);
@@ -146,8 +173,15 @@ static void cb_change_passwd_append(DBusMessageIter* iter, void* user_data)
     char* new_passwd;
 
     param = user_data;
-    if (param == NULL || param->result == NULL)
+    if (param == NULL) {
+        tapi_log_error("param in %s is null", __func__);
         return;
+    }
+
+    if (param->result == NULL) {
+        tapi_log_error("param result in %s is null", __func__);
+        return;
+    }
 
     change_passwd_param = param->result->data;
     old_passwd = change_passwd_param->old_passwd;
@@ -163,8 +197,15 @@ static void disable_all_cb_param_append(DBusMessageIter* iter, void* user_data)
     tapi_async_handler* param;
 
     param = user_data;
-    if (param == NULL || param->result == NULL)
+    if (param == NULL) {
+        tapi_log_error("param in %s is null", __func__);
         return;
+    }
+
+    if (param->result == NULL) {
+        tapi_log_error("param result in %s is null", __func__);
+        return;
+    }
 
     disable_all_cb_param = param->result->data;
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &disable_all_cb_param);
@@ -176,8 +217,15 @@ static void disable_all_incoming_param_append(DBusMessageIter* iter, void* user_
     tapi_async_handler* param;
 
     param = user_data;
-    if (param == NULL || param->result == NULL)
+    if (param == NULL) {
+        tapi_log_error("param in %s is null", __func__);
         return;
+    }
+
+    if (param->result == NULL) {
+        tapi_log_error("param result in %s is null", __func__);
+        return;
+    }
 
     disable_all_incoming_param = param->result->data;
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &disable_all_incoming_param);
@@ -189,8 +237,15 @@ static void disable_all_outgoing_param_append(DBusMessageIter* iter, void* user_
     tapi_async_handler* param;
 
     param = user_data;
-    if (param == NULL || param->result == NULL)
+    if (param == NULL) {
+        tapi_log_error("param in %s is null", __func__);
         return;
+    }
+
+    if (param->result == NULL) {
+        tapi_log_error("param result in %s is null", __func__);
+        return;
+    }
 
     disable_all_outgoing_param = param->result->data;
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &disable_all_outgoing_param);
@@ -202,8 +257,15 @@ static void ss_initiate_param_append(DBusMessageIter* iter, void* user_data)
     char* ss_initiate_param;
 
     param = user_data;
-    if (param == NULL || param->result == NULL)
+    if (param == NULL) {
+        tapi_log_error("param in %s is null", __func__);
         return;
+    }
+
+    if (param->result == NULL) {
+        tapi_log_error("param result in %s is null", __func__);
+        return;
+    }
 
     ss_initiate_param = param->result->data;
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &ss_initiate_param);
@@ -215,8 +277,15 @@ static void send_ussd_param_append(DBusMessageIter* iter, void* user_data)
     char* send_ussd_param;
 
     param = user_data;
-    if (param == NULL || param->result == NULL)
+    if (param == NULL) {
+        tapi_log_error("param in %s is null", __func__);
         return;
+    }
+
+    if (param->result == NULL) {
+        tapi_log_error("param result in %s is null", __func__);
+        return;
+    }
 
     send_ussd_param = param->result->data;
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &send_ussd_param);
@@ -228,8 +297,15 @@ static void enable_fdn_param_append(DBusMessageIter* iter, void* user_data)
     char* passwd;
 
     param = user_data;
-    if (param == NULL || param->result == NULL)
+    if (param == NULL) {
+        tapi_log_error("param in %s is null", __func__);
         return;
+    }
+
+    if (param->result == NULL) {
+        tapi_log_error("param result in %s is null", __func__);
+        return;
+    }
 
     passwd = param->result->data;
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &passwd);
@@ -333,20 +409,26 @@ static void method_call_complete(DBusMessage* message, void* user_data)
     tapi_async_function cb;
     DBusError err;
 
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return;
+    }
 
     ar = handler->result;
-    if (ar == NULL)
+    if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         return;
+    }
 
     cb = handler->cb_function;
-    if (cb == NULL)
+    if (cb == NULL) {
+        tapi_log_error("callback in %s is null", __func__);
         return;
+    }
 
     dbus_error_init(&err);
     if (dbus_set_error_from_message(&err, message) == true) {
-        tapi_log_error("%s error %s: %s \n", __func__, err.name, err.message);
+        tapi_log_error("error from message in %s, %s: %s", __func__, err.name, err.message);
         dbus_error_free(&err);
         ar->status = ERROR;
         goto done;
@@ -386,30 +468,39 @@ static void call_forwarding_query_complete(DBusMessage* message, void* user_data
     DBusError err;
     tapi_call_forward_info* cf_condition;
 
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return;
+    }
 
     ar = handler->result;
-    if (ar == NULL)
+    if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         return;
+    }
 
     cb = handler->cb_function;
-    if (cb == NULL)
+    if (cb == NULL) {
+        tapi_log_error("callback in %s is null", __func__);
         return;
+    }
 
     cf_condition = malloc(sizeof(tapi_call_forward_info));
-    if (cf_condition == NULL)
+    if (cf_condition == NULL) {
+        tapi_log_error("cf_condition in %s is null", __func__);
         return;
+    }
 
     dbus_error_init(&err);
     if (dbus_set_error_from_message(&err, message) == true) {
-        tapi_log_error("%s error %s: %s \n", __func__, err.name, err.message);
+        tapi_log_error("error from mesage in %s, %s: %s", __func__, err.name, err.message);
         dbus_error_free(&err);
         ar->status = ERROR;
         goto done;
     }
 
     if (dbus_message_iter_init(message, &args) == false) {
+        tapi_log_error("dbus message iter init fail in %s", __func__);
         ar->status = ERROR;
         goto done;
     }
@@ -447,33 +538,40 @@ static void ss_initiate_complete(DBusMessage* message, void* user_data)
     DBusError err;
 
     handler = user_data;
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return;
+    }
 
     ar = handler->result;
-    if (ar == NULL)
+    if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         return;
+    }
 
     cb = handler->cb_function;
-    if (cb == NULL)
+    if (cb == NULL) {
+        tapi_log_error("callback in %s is null", __func__);
         return;
+    }
 
     dbus_error_init(&err);
     if (dbus_set_error_from_message(&err, message) == true) {
-        tapi_log_error("%s: %s\n", err.name, err.message);
+        tapi_log_error("error from message in %s, %s: %s", __func__, err.name, err.message);
         dbus_error_free(&err);
         ar->status = ERROR;
         goto done;
     }
 
     if (dbus_message_iter_init(message, &iter) == false) {
+        tapi_log_error("message iter init failed in %s", __func__);
         ar->status = ERROR;
         goto done;
     }
 
     info = malloc(sizeof(tapi_ss_initiate_info));
     if (info == NULL) {
-        tapi_log_error("no memory ... \n");
+        tapi_log_error("info in %s is null", __func__);
         ar->status = ERROR;
         goto done;
     }
@@ -516,26 +614,33 @@ static void ss_send_ussd_cb(DBusMessage* message, void* user_data)
     char* response;
 
     handler = user_data;
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return;
+    }
 
     ar = handler->result;
-    if (ar == NULL)
+    if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         return;
+    }
 
     cb = handler->cb_function;
-    if (cb == NULL)
+    if (cb == NULL) {
+        tapi_log_error("callback in %s is null", __func__);
         return;
+    }
 
     dbus_error_init(&err);
     if (dbus_set_error_from_message(&err, message) == true) {
-        tapi_log_error("%s: %s\n", err.name, err.message);
+        tapi_log_error("error from message in %s, %s: %s", __func__, err.name, err.message);
         dbus_error_free(&err);
         ar->status = ERROR;
         goto done;
     }
 
     if (dbus_message_iter_init(message, &iter) == false) {
+        tapi_log_error("message iter init failed in %s", __func__);
         ar->status = ERROR;
         goto done;
     }
@@ -559,21 +664,31 @@ static void query_fdn_cb(DBusMessage* message, void* user_data)
     DBusError err;
 
     handler = user_data;
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return;
+    }
 
-    if ((ar = handler->result) == NULL || (cb = handler->cb_function) == NULL)
+    if ((ar = handler->result) == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         return;
+    }
+
+    if ((cb = handler->cb_function) == NULL) {
+        tapi_log_error("callback in %s is null", __func__);
+        return;
+    }
 
     dbus_error_init(&err);
     if (dbus_set_error_from_message(&err, message) == true) {
-        tapi_log_error("%s: %s\n", err.name, err.message);
+        tapi_log_error("error from message in %s, %s: %s", __func__, err.name, err.message);
         dbus_error_free(&err);
         ar->status = ERROR;
         goto done;
     }
 
     if (dbus_message_iter_init(message, &iter) == false) {
+        tapi_log_error("message iter init failed in %s", __func__);
         ar->status = ERROR;
         goto done;
     }
@@ -595,21 +710,31 @@ static void query_call_waiting_cb(DBusMessage* message, void* user_data)
     DBusError err;
 
     handler = user_data;
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return;
+    }
 
-    if ((ar = handler->result) == NULL || (cb = handler->cb_function) == NULL)
+    if ((ar = handler->result) == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         return;
+    }
+
+    if ((cb = handler->cb_function) == NULL) {
+        tapi_log_error("callback in %s is null", __func__);
+        return;
+    }
 
     dbus_error_init(&err);
     if (dbus_set_error_from_message(&err, message) == true) {
-        tapi_log_error("%s: %s\n", err.name, err.message);
+        tapi_log_error("error from message in %s, %s: %s", __func__, err.name, err.message);
         dbus_error_free(&err);
         ar->status = ERROR;
         goto done;
     }
 
     if (dbus_message_iter_init(message, &iter) == false) {
+        tapi_log_error("message iter init failed in %s", __func__);
         ar->status = ERROR;
         goto done;
     }
@@ -631,21 +756,31 @@ static void query_clir_cb(DBusMessage* message, void* user_data)
     DBusError err;
 
     handler = user_data;
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return;
+    }
 
-    if ((ar = handler->result) == NULL || (cb = handler->cb_function) == NULL)
+    if ((ar = handler->result) == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         return;
+    }
+
+    if ((cb = handler->cb_function) == NULL) {
+        tapi_log_error("callback in %s is null", __func__);
+        return;
+    }
 
     dbus_error_init(&err);
     if (dbus_set_error_from_message(&err, message) == true) {
-        tapi_log_error("%s: %s\n", err.name, err.message);
+        tapi_log_error("error from message in %s, %s: %s", __func__, err.name, err.message);
         dbus_error_free(&err);
         ar->status = ERROR;
         goto done;
     }
 
     if (dbus_message_iter_init(message, &iter) == false) {
+        tapi_log_error("message iter init failed in %s", __func__);
         ar->status = ERROR;
         goto done;
     }
@@ -687,30 +822,38 @@ static int call_barring_property_changed(DBusConnection* connection,
     DBusError err;
 
     handler = user_data;
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return false;
+    }
 
     ar = handler->result;
-    if (ar == NULL)
+    if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         return false;
+    }
 
     cb = handler->cb_function;
-    if (cb == NULL)
+    if (cb == NULL) {
+        tapi_log_error("callback in %s is null", __func__);
         return false;
+    }
 
     if (ar->msg_id != MSG_CALL_BARRING_PROPERTY_CHANGE_IND) {
+        tapi_log_error("msg id in %s is invalid", __func__);
         return false;
     }
 
     dbus_error_init(&err);
     if (dbus_set_error_from_message(&err, message) == true) {
-        tapi_log_error("%s: %s\n", err.name, err.message);
+        tapi_log_error("error from message in %s, %s: %s", __func__, err.name, err.message);
         dbus_error_free(&err);
         ar->status = ERROR;
         goto done;
     }
 
     if (dbus_message_iter_init(message, &iter) == false) {
+        tapi_log_error("message iter init failed in %s", __func__);
         ar->status = ERROR;
         goto done;
     }
@@ -719,7 +862,7 @@ static int call_barring_property_changed(DBusConnection* connection,
 
     cb_value = malloc(sizeof(tapi_call_barring_info));
     if (cb_value == NULL) {
-        tapi_log_error("no memory ... \n");
+        tapi_log_error("cb_value in %s is null", __func__);
         ar->status = ERROR;
         goto done;
     }
@@ -766,30 +909,38 @@ static int ussd_state_changed(DBusConnection* connection,
     char* ussd_state;
 
     handler = user_data;
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return false;
+    }
 
     ar = handler->result;
-    if (ar == NULL)
+    if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         return false;
+    }
 
     cb = handler->cb_function;
-    if (cb == NULL)
+    if (cb == NULL) {
+        tapi_log_error("callback in %s is null", __func__);
         return false;
+    }
 
     if (ar->msg_id != MSG_USSD_PROPERTY_CHANGE_IND) {
+        tapi_log_error("msg id in %s is invalid", __func__);
         return false;
     }
 
     dbus_error_init(&err);
     if (dbus_set_error_from_message(&err, message) == true) {
-        tapi_log_error("%s: %s\n", err.name, err.message);
+        tapi_log_error("error from message in %s, %s: %s", __func__, err.name, err.message);
         dbus_error_free(&err);
         ar->status = ERROR;
         goto done;
     }
 
     if (dbus_message_iter_init(message, &iter) == false) {
+        tapi_log_error("message iter init failed in %s", __func__);
         ar->status = ERROR;
         goto done;
     }
@@ -836,16 +987,22 @@ static int ussd_notification_received(DBusConnection* connection,
     DBusMessageIter iter;
 
     handler = user_data;
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return false;
+    }
 
     ar = handler->result;
-    if (ar == NULL)
+    if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         return false;
+    }
 
     cb = handler->cb_function;
-    if (cb == NULL)
+    if (cb == NULL) {
+        tapi_log_error("callback in %s is null", __func__);
         return false;
+    }
 
     if (is_ussd_signal_message(message, &iter, DBUS_TYPE_STRING)) {
         char* notification_message;
@@ -869,16 +1026,22 @@ static int ussd_request_received(DBusConnection* connection,
     DBusMessageIter iter;
 
     handler = user_data;
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return false;
+    }
 
     ar = handler->result;
-    if (ar == NULL)
+    if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         return false;
+    }
 
     cb = handler->cb_function;
-    if (cb == NULL)
+    if (cb == NULL) {
+        tapi_log_error("callback in %s is null", __func__);
         return false;
+    }
 
     if (is_ussd_signal_message(message, &iter, DBUS_TYPE_STRING)) {
         char* request_message;
@@ -932,22 +1095,36 @@ int tapi_ss_initiate_service(tapi_context context, int slot_id, int event_id,
 
     report_data_logging_for_ss(ctx, "ss:ussd:request", "NA");
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || command == NULL) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("slot id %d in %s is invalid", slot_id, __func__);
+        return -EINVAL;
+    }
+
+    if (command == NULL) {
+        tapi_log_error("command in %s is null", __func__);
         return -EINVAL;
     }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SS];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
     handler = malloc(sizeof(tapi_async_handler));
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
+    }
 
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         free(handler);
         return -ENOMEM;
     }
@@ -961,7 +1138,7 @@ int tapi_ss_initiate_service(tapi_context context, int slot_id, int event_id,
     if (!g_dbus_proxy_method_call(proxy, "Initiate", ss_initiate_param_append,
             ss_initiate_complete, handler, handler_free)) {
         report_data_logging_for_ss(ctx, "ss:ussd:request", "dbus method fail");
-        tapi_log_error("failed to initiate service \n");
+        tapi_log_error("method call fail in %s", __func__);
         handler_free(handler);
         return -EINVAL;
     }
@@ -980,22 +1157,31 @@ int tapi_ss_request_call_barring(tapi_context context, int slot_id, int event_id
 
     report_data_logging_for_ss(ctx, "ss:request callbarring", "NA");
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("slot id %d in %s is invalid", slot_id, __func__);
         return -EINVAL;
     }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_BARRING];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
     handler = malloc(sizeof(tapi_async_handler));
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
+    }
 
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         free(handler);
         return -ENOMEM;
     }
@@ -1008,7 +1194,7 @@ int tapi_ss_request_call_barring(tapi_context context, int slot_id, int event_id
     if (!g_dbus_proxy_method_call(proxy, "GetProperties",
             NULL, method_call_complete, handler, handler_free)) {
         report_data_logging_for_ss(ctx, "ss:request callbarring", "dbus method fail");
-        tapi_log_error("failed to request callbarring \n");
+        tapi_log_error("method call fail in %s", __func__);
         handler_free(handler);
         return -EINVAL;
     }
@@ -1030,23 +1216,41 @@ int tapi_ss_set_call_barring_option(tapi_context context, int slot_id, int event
 
     report_data_logging_for_ss(ctx, "ss:set callbarring", "NA");
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
-        || facility == NULL || pin2 == NULL) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("slot id %d in %s is invalid", slot_id, __func__);
+        return -EINVAL;
+    }
+
+    if (facility == NULL) {
+        tapi_log_error("facility in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (pin2 == NULL) {
+        tapi_log_error("pin2 in %s is null", __func__);
         return -EINVAL;
     }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_BARRING];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
     handler = malloc(sizeof(tapi_async_handler));
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
+    }
 
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         free(handler);
         return -ENOMEM;
     }
@@ -1054,6 +1258,7 @@ int tapi_ss_set_call_barring_option(tapi_context context, int slot_id, int event
 
     param = malloc(sizeof(cb_request_param));
     if (param == NULL) {
+        tapi_log_error("param in %s is null", __func__);
         free(handler);
         free(ar);
         return -ENOMEM;
@@ -1092,7 +1297,7 @@ int tapi_ss_set_call_barring_option(tapi_context context, int slot_id, int event
     if (!g_dbus_proxy_method_call(proxy, "SetProperty", cb_request_param_append,
             method_call_complete, handler, ss_event_data_free)) {
         report_data_logging_for_ss(ctx, "ss:set callbarring", "dbus method fail");
-        tapi_log_error("failed to set callbarring \n");
+        tapi_log_error("method call fail in %s", __func__);
         ss_event_data_free(handler);
         return -EINVAL;
     }
@@ -1106,16 +1311,29 @@ int tapi_ss_get_call_barring_option(tapi_context context, int slot_id, const cha
     DBusMessageIter iter;
     GDBusProxy* proxy;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || service_type == NULL) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
         return -EINVAL;
     }
 
-    if (!ctx->client_ready)
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("slot id %d in %s is invalid", slot_id, __func__);
+        return -EINVAL;
+    }
+
+    if (service_type == NULL) {
+        tapi_log_error("service_type in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (!ctx->client_ready) {
+        tapi_log_error("client is not ready in %s", __func__);
         return -EAGAIN;
+    }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_BARRING];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1124,6 +1342,7 @@ int tapi_ss_get_call_barring_option(tapi_context context, int slot_id, const cha
         return OK;
     }
 
+    tapi_log_error("get property failed in %s", __func__);
     return -EINVAL;
 }
 
@@ -1138,23 +1357,41 @@ int tapi_ss_change_call_barring_password(tapi_context context, int slot_id, int 
 
     report_data_logging_for_ss(ctx, "ss:set callbarring:change password", "NA");
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
-        || old_passwd == NULL || new_passwd == NULL) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("slot id %d in %s is invalid", slot_id, __func__);
+        return -EINVAL;
+    }
+
+    if (old_passwd == NULL) {
+        tapi_log_error("old_passwd in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (new_passwd == NULL) {
+        tapi_log_error("new_passwd in %s is null", __func__);
         return -EINVAL;
     }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_BARRING];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
     handler = malloc(sizeof(tapi_async_handler));
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
+    }
 
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         free(handler);
         return -ENOMEM;
     }
@@ -1162,6 +1399,7 @@ int tapi_ss_change_call_barring_password(tapi_context context, int slot_id, int 
 
     param = malloc(sizeof(cb_change_passwd_param));
     if (param == NULL) {
+        tapi_log_error("param in %s is null", __func__);
         free(handler);
         free(ar);
         return -ENOMEM;
@@ -1178,7 +1416,7 @@ int tapi_ss_change_call_barring_password(tapi_context context, int slot_id, int 
     if (!g_dbus_proxy_method_call(proxy, "ChangePassword", cb_change_passwd_append,
             method_call_complete, handler, ss_event_data_free)) {
         report_data_logging_for_ss(ctx, "ss:set callbarring:change password", "dbus method fail");
-        tapi_log_error("failed to change callbarring passward \n");
+        tapi_log_error("method call fail in %s", __func__);
         ss_event_data_free(handler);
         return -EINVAL;
     }
@@ -1196,22 +1434,36 @@ int tapi_ss_disable_all_call_barrings(tapi_context context, int slot_id, int eve
 
     report_data_logging_for_ss(ctx, "ss:set callbarring:disable all", "NA");
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || passwd == NULL) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("slot id %d in %s is invalid", slot_id, __func__);
+        return -EINVAL;
+    }
+
+    if (passwd == NULL) {
+        tapi_log_error("passwd in %s is null", __func__);
         return -EINVAL;
     }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_BARRING];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
     handler = malloc(sizeof(tapi_async_handler));
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
+    }
 
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         free(handler);
         return -ENOMEM;
     }
@@ -1225,7 +1477,7 @@ int tapi_ss_disable_all_call_barrings(tapi_context context, int slot_id, int eve
     if (!g_dbus_proxy_method_call(proxy, "DisableAll", disable_all_cb_param_append,
             method_call_complete, handler, handler_free)) {
         report_data_logging_for_ss(ctx, "ss:set callbarring:disable all", "dbus method fail");
-        tapi_log_error("failed to disable all callbarring \n");
+        tapi_log_error("method call fail in %s", __func__);
         handler_free(handler);
         return -EINVAL;
     }
@@ -1243,22 +1495,36 @@ int tapi_ss_disable_all_incoming(tapi_context context, int slot_id,
 
     report_data_logging_for_ss(ctx, "ss:set callbarring:disable all incoming", "NA");
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || passwd == NULL) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("slot id %d in %s is invalid", slot_id, __func__);
+        return -EINVAL;
+    }
+
+    if (passwd == NULL) {
+        tapi_log_error("passwd in %s is null", __func__);
         return -EINVAL;
     }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_BARRING];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
     handler = malloc(sizeof(tapi_async_handler));
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
+    }
 
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         free(handler);
         return -ENOMEM;
     }
@@ -1272,7 +1538,7 @@ int tapi_ss_disable_all_incoming(tapi_context context, int slot_id,
     if (!g_dbus_proxy_method_call(proxy, "DisableAllIncoming",
             disable_all_incoming_param_append, method_call_complete, handler, handler_free)) {
         report_data_logging_for_ss(ctx, "ss:set callbarring:disable all incoming", "dbus method fail");
-        tapi_log_error("failed to disable all incoming \n");
+        tapi_log_error("method call fail in %s", __func__);
         handler_free(handler);
         return -EINVAL;
     }
@@ -1290,22 +1556,36 @@ int tapi_ss_disable_all_outgoing(tapi_context context, int slot_id,
 
     report_data_logging_for_ss(ctx, "ss:set callbarring:disable all outgoing", "NA");
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || passwd == NULL) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("slot id %d in %s is invalid", slot_id, __func__);
+        return -EINVAL;
+    }
+
+    if (passwd == NULL) {
+        tapi_log_error("passwd in %s is null", __func__);
         return -EINVAL;
     }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_BARRING];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
     handler = malloc(sizeof(tapi_async_handler));
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
+    }
 
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         free(handler);
         return -ENOMEM;
     }
@@ -1319,7 +1599,7 @@ int tapi_ss_disable_all_outgoing(tapi_context context, int slot_id,
     if (!g_dbus_proxy_method_call(proxy, "DisableAllOutgoing",
             disable_all_outgoing_param_append, method_call_complete, handler, handler_free)) {
         report_data_logging_for_ss(ctx, "ss:set callbarring:disable all outgoing", "dbus method fail");
-        tapi_log_error("failed to disable all outgoing \n");
+        tapi_log_error("method call fail in %s", __func__);
         handler_free(handler);
         return -EINVAL;
     }
@@ -1338,26 +1618,36 @@ int tapi_ss_query_call_forwarding_option(tapi_context context, int slot_id, int 
 
     report_data_logging_for_ss(ctx, "ss:query call forwarding", "NA");
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("slot id %d in %s is invalid", slot_id, __func__);
         return -EINVAL;
     }
 
     if (option < CF_REASON_UNCONDITIONAL || option > CF_REASON_NOT_REACHABLE) {
+        tapi_log_error("option %d in %s is invalid", option, __func__);
         return -EINVAL;
     }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_FORWARDING];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
     handler = malloc(sizeof(tapi_async_handler));
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
+    }
 
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         free(handler);
         return -ENOMEM;
     }
@@ -1372,7 +1662,7 @@ int tapi_ss_query_call_forwarding_option(tapi_context context, int slot_id, int 
             query_call_forwarding_option_append, call_forwarding_query_complete,
             handler, handler_free)) {
         report_data_logging_for_ss(ctx, "ss:query call forwarding", "dbus method fail");
-        tapi_log_error("failed to request callforwarding \n");
+        tapi_log_error("method call fail in %s", __func__);
         handler_free(handler);
         return -EINVAL;
     }
@@ -1391,29 +1681,46 @@ int tapi_ss_set_call_forwarding_option(tapi_context context, int slot_id, int ev
 
     report_data_logging_for_ss(ctx, "ss:set call forwarding", "NA");
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || number == NULL) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("slot id %d in %s is invalid", slot_id, __func__);
+        return -EINVAL;
+    }
+
+    if (number == NULL) {
+        tapi_log_error("number in %s is null", __func__);
         return -EINVAL;
     }
 
     if (option < CF_REASON_UNCONDITIONAL || option > CF_REASON_NOT_REACHABLE) {
+        tapi_log_error("option %d in %s is invalid", option, __func__);
         return -EINVAL;
     }
 
-    if (!ctx->client_ready)
+    if (!ctx->client_ready) {
+        tapi_log_error("client is not ready in %s", __func__);
         return -EAGAIN;
+    }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_FORWARDING];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
     handler = malloc(sizeof(tapi_async_handler));
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
+    }
 
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         free(handler);
         return -ENOMEM;
     }
@@ -1427,6 +1734,7 @@ int tapi_ss_set_call_forwarding_option(tapi_context context, int slot_id, int ev
 
     if (!g_dbus_proxy_method_call(proxy, "SetCallForwarding",
             set_call_forwarding_option_append, method_call_complete, handler, handler_free)) {
+        tapi_log_error("method call fail in %s", __func__);
         report_data_logging_for_ss(ctx, "ss:set call forwarding", "dbus method fail");
         handler_free(handler);
         return -EINVAL;
@@ -1444,16 +1752,24 @@ int tapi_get_ussd_state(tapi_context context, int slot_id, char** out)
 
     report_data_logging_for_ss(ctx, "ss:ussd:get state", "NA");
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
         return -EINVAL;
     }
 
-    if (!ctx->client_ready)
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("slot id %d in %s is invalid", slot_id, __func__);
+        return -EINVAL;
+    }
+
+    if (!ctx->client_ready) {
+        tapi_log_error("client is not ready in %s", __func__);
         return -EAGAIN;
+    }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SS];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1462,6 +1778,7 @@ int tapi_get_ussd_state(tapi_context context, int slot_id, char** out)
         return OK;
     }
 
+    tapi_log_error("get property fail in %s", __func__);
     report_data_logging_for_ss(ctx, "ss:ussd:get state", "dbus method fail");
     return -EINVAL;
 }
@@ -1476,22 +1793,36 @@ int tapi_ss_send_ussd(tapi_context context, int slot_id, int event_id, char* rep
 
     report_data_logging_for_ss(ctx, "ss:ussd:response", "NA");
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || reply == NULL) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("slot id %d in %s is invalid", slot_id, __func__);
+        return -EINVAL;
+    }
+
+    if (reply == NULL) {
+        tapi_log_error("reply in %s is null", __func__);
         return -EINVAL;
     }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SS];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
     handler = malloc(sizeof(tapi_async_handler));
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
+    }
 
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         free(handler);
         return -ENOMEM;
     }
@@ -1505,7 +1836,7 @@ int tapi_ss_send_ussd(tapi_context context, int slot_id, int event_id, char* rep
     if (!g_dbus_proxy_method_call(proxy, "Respond", send_ussd_param_append,
             ss_send_ussd_cb, handler, handler_free)) {
         report_data_logging_for_ss(ctx, "ss:ussd:response", "dbus method fail");
-        tapi_log_error("failed to send ussd \n");
+        tapi_log_error("method call fail in %s", __func__);
         handler_free(handler);
         return -EINVAL;
     }
@@ -1523,22 +1854,31 @@ int tapi_ss_cancel_ussd(tapi_context context, int slot_id, int event_id,
 
     report_data_logging_for_ss(ctx, "ss:ussd:cancel", "NA");
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("slot id %d in %s is invalid", slot_id, __func__);
         return -EINVAL;
     }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SS];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
     handler = malloc(sizeof(tapi_async_handler));
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
+    }
 
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         free(handler);
         return -ENOMEM;
     }
@@ -1551,7 +1891,7 @@ int tapi_ss_cancel_ussd(tapi_context context, int slot_id, int event_id,
     if (!g_dbus_proxy_method_call(proxy, "Cancel", NULL,
             method_call_complete, handler, handler_free)) {
         report_data_logging_for_ss(ctx, "ss:ussd:cancel", "dbus method fail");
-        tapi_log_error("failed to cancel ussd \n");
+        tapi_log_error("method call fail in %s", __func__);
         handler_free(handler);
         return -EINVAL;
     }
@@ -1570,25 +1910,36 @@ int tapi_ss_set_call_waiting(tapi_context context, int slot_id, int event_id, bo
 
     report_data_logging_for_ss(ctx, "ss:set call waiting", "NA");
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
         return -EINVAL;
     }
 
-    if (!ctx->client_ready)
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("slot id %d in %s is invalid", slot_id, __func__);
+        return -EINVAL;
+    }
+
+    if (!ctx->client_ready) {
+        tapi_log_error("client is not ready in %s", __func__);
         return -EAGAIN;
+    }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_SETTING];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
     handler = malloc(sizeof(tapi_async_handler));
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
+    }
 
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         free(handler);
         return -ENOMEM;
     }
@@ -1601,6 +1952,7 @@ int tapi_ss_set_call_waiting(tapi_context context, int slot_id, int event_id, bo
 
     if (!g_dbus_proxy_method_call(proxy, "SetCallWaiting",
             set_call_waiting_append, method_call_complete, handler, handler_free)) {
+        tapi_log_error("method call fail in %s", __func__);
         report_data_logging_for_ss(ctx, "ss:set call waiting", "dbus method fail");
         handler_free(handler);
         return -EINVAL;
@@ -1619,22 +1971,32 @@ int tapi_ss_get_call_waiting(tapi_context context, int slot_id, int event_id,
 
     report_data_logging_for_ss(ctx, "ss:get call waiting", "NA");
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
         return -EINVAL;
     }
 
-    if (!ctx->client_ready)
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("slot id %d in %s is invalid", slot_id, __func__);
+        return -EINVAL;
+    }
+
+    if (!ctx->client_ready) {
+        tapi_log_error("client is not ready in %s", __func__);
         return -EAGAIN;
+    }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_SETTING];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
     handler = malloc(sizeof(tapi_async_handler));
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
+    }
 
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
@@ -1649,6 +2011,7 @@ int tapi_ss_get_call_waiting(tapi_context context, int slot_id, int event_id,
 
     if (!g_dbus_proxy_method_call(proxy, "GetCallWaiting", NULL,
             query_call_waiting_cb, handler, handler_free)) {
+        tapi_log_error("method call fail in %s", __func__);
         report_data_logging_for_ss(ctx, "ss:get call waiting", "dbus method fail");
         handler_free(handler);
         return -EINVAL;
@@ -1667,16 +2030,24 @@ int tapi_ss_get_calling_line_presentation_info(tapi_context context, int slot_id
 
     report_data_logging_for_ss(ctx, "ss:get clip", "NA");
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
         return -EINVAL;
     }
 
-    if (!ctx->client_ready)
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("slot id %d in %s is invalid", slot_id, __func__);
+        return -EINVAL;
+    }
+
+    if (!ctx->client_ready) {
+        tapi_log_error("client is not ready in %s", __func__);
         return -EAGAIN;
+    }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_SETTING];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1686,6 +2057,7 @@ int tapi_ss_get_calling_line_presentation_info(tapi_context context, int slot_id
         return OK;
     }
 
+    tapi_log_error("get property failed in %s", __func__);
     return -EINVAL;
 }
 
@@ -1700,25 +2072,36 @@ int tapi_ss_set_calling_line_restriction(tapi_context context, int slot_id, int 
 
     report_data_logging_for_ss(ctx, "ss:set clir", "NA");
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
         return -EINVAL;
     }
 
-    if (!ctx->client_ready)
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("slot id %d in %s is invalid", slot_id, __func__);
+        return -EINVAL;
+    }
+
+    if (!ctx->client_ready) {
+        tapi_log_error("client is not ready in %s", __func__);
         return -EAGAIN;
+    }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_SETTING];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
     handler = malloc(sizeof(tapi_async_handler));
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
+    }
 
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         free(handler);
         return -ENOMEM;
     }
@@ -1731,6 +2114,7 @@ int tapi_ss_set_calling_line_restriction(tapi_context context, int slot_id, int 
 
     if (!g_dbus_proxy_method_call(proxy, "SetClir",
             set_clir_append, method_call_complete, handler, handler_free)) {
+        tapi_log_error("method call fail in %s", __func__);
         report_data_logging_for_ss(ctx, "ss:set clir", "dbus method fail");
         handler_free(handler);
         return -EINVAL;
@@ -1749,25 +2133,36 @@ int tapi_ss_get_calling_line_restriction_info(tapi_context context, int slot_id,
 
     report_data_logging_for_ss(ctx, "ss:get clir", "NA");
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
         return -EINVAL;
     }
 
-    if (!ctx->client_ready)
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("slot id %d in %s is invalid", slot_id, __func__);
+        return -EINVAL;
+    }
+
+    if (!ctx->client_ready) {
+        tapi_log_error("client is not ready in %s", __func__);
         return -EAGAIN;
+    }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_SETTING];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
     handler = malloc(sizeof(tapi_async_handler));
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
+    }
 
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         free(handler);
         return -ENOMEM;
     }
@@ -1779,6 +2174,7 @@ int tapi_ss_get_calling_line_restriction_info(tapi_context context, int slot_id,
 
     if (!g_dbus_proxy_method_call(proxy, "GetClir", NULL,
             query_clir_cb, handler, handler_free)) {
+        tapi_log_error("method call fail in %s", __func__);
         report_data_logging_for_ss(ctx, "ss:get clir", "dbus method fail");
         handler_free(handler);
         return -EINVAL;
@@ -1795,22 +2191,36 @@ int tapi_ss_enable_fdn(tapi_context context, int slot_id, int event_id,
     tapi_async_result* ar;
     GDBusProxy* proxy;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || passwd == NULL) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("slot id %d in %s is invalid", slot_id, __func__);
+        return -EINVAL;
+    }
+
+    if (passwd == NULL) {
+        tapi_log_error("passwd in %s is null", __func__);
         return -EINVAL;
     }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
     handler = malloc(sizeof(tapi_async_handler));
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
+    }
 
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         free(handler);
         return -ENOMEM;
     }
@@ -1823,7 +2233,7 @@ int tapi_ss_enable_fdn(tapi_context context, int slot_id, int event_id,
 
     if (!g_dbus_proxy_method_call(proxy, enable ? "EnableFdn" : "DisableFdn",
             enable_fdn_param_append, method_call_complete, handler, handler_free)) {
-        tapi_log_error("failed to enable fdn \n");
+        tapi_log_error("method call fail in %s", __func__);
         handler_free(handler);
         return -EINVAL;
     }
@@ -1839,22 +2249,31 @@ int tapi_ss_query_fdn(tapi_context context, int slot_id, int event_id,
     tapi_async_result* ar;
     GDBusProxy* proxy;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("slot id %d in %s is invalid", slot_id, __func__);
         return -EINVAL;
     }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
     handler = malloc(sizeof(tapi_async_handler));
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
+    }
 
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         free(handler);
         return -ENOMEM;
     }
@@ -1866,7 +2285,7 @@ int tapi_ss_query_fdn(tapi_context context, int slot_id, int event_id,
 
     if (!g_dbus_proxy_method_call(proxy, "QueryFdn", NULL,
             query_fdn_cb, handler, handler_free)) {
-        tapi_log_error("failed to query fdn \n");
+        tapi_log_error("method call fail in %s", __func__);
         handler_free(handler);
         return -EINVAL;
     }
@@ -1883,25 +2302,38 @@ int tapi_ss_register(tapi_context context,
     const char* modem_path;
     int watch_id = 0;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
-        || msg < MSG_CALL_BARRING_PROPERTY_CHANGE_IND || msg > MSG_USSD_PROPERTY_CHANGE_IND) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("slot id %d in %s is invalid", slot_id, __func__);
+        return -EINVAL;
+    }
+
+    if (msg < MSG_CALL_BARRING_PROPERTY_CHANGE_IND || msg > MSG_USSD_PROPERTY_CHANGE_IND) {
+        tapi_log_error("msg %d in %s is invalid", msg, __func__);
         return -EINVAL;
     }
 
     modem_path = tapi_utils_get_modem_path(slot_id);
     if (modem_path == NULL) {
-        tapi_log_error("no available modem ...\n");
+        tapi_log_error("no available modem in %s", __func__);
         return -EIO;
     }
 
     handler = malloc(sizeof(tapi_async_handler));
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
+    }
 
     handler->cb_function = p_handle;
 
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         free(handler);
         return -ENOMEM;
     }
@@ -1937,6 +2369,7 @@ int tapi_ss_register(tapi_context context,
     }
 
     if (watch_id == 0) {
+        tapi_log_error("add signal watch fail in %s, msg_id: %d", __func__, (int)msg);
         handler_free(handler);
         return -EINVAL;
     }
@@ -1947,11 +2380,20 @@ int tapi_ss_register(tapi_context context,
 int tapi_ss_unregister(tapi_context context, int watch_id)
 {
     dbus_context* ctx = context;
-    if (ctx == NULL || watch_id <= 0)
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
         return -EINVAL;
+    }
 
-    if (!g_dbus_remove_watch(ctx->connection, watch_id))
+    if (watch_id <= 0) {
+        tapi_log_error("watch id %d in %s is invalid", watch_id, __func__);
         return -EINVAL;
+    }
+
+    if (!g_dbus_remove_watch(ctx->connection, watch_id)) {
+        tapi_log_error("remove signal watch fail in %s, watch_id: %d", __func__, watch_id);
+        return -EINVAL;
+    }
 
     return OK;
 }
