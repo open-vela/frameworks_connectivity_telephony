@@ -182,15 +182,25 @@ static void method_call_complete(DBusMessage* message, void* user_data)
     tapi_async_function cb;
     DBusError err;
 
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return;
+    }
 
-    if ((ar = handler->result) == NULL || (cb = handler->cb_function) == NULL)
+    if ((ar = handler->result) == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         return;
+    }
+
+    if ((cb = handler->cb_function) == NULL) {
+        tapi_log_error("callback in %s is null", __func__);
+        return;
+    }
 
     dbus_error_init(&err);
     if (dbus_set_error_from_message(&err, message) == true) {
-        tapi_log_error("%s error %s: %s \n", __func__, err.name, err.message);
+        tapi_log_error("error from message in %s, error %s: %s",
+            __func__, err.name, err.message);
         dbus_error_free(&err);
         ar->status = ERROR;
         goto done;
@@ -205,9 +215,18 @@ done:
 static bool stk_agent_dbus_pending_reply(DBusConnection* conn,
     DBusMessage** msg, DBusMessage* reply)
 {
+    if (conn == NULL) {
+        tapi_log_error("conn in %s is null", __func__);
+        return false;
+    }
 
-    if (conn == NULL || msg == NULL || reply == NULL) {
-        tapi_log_error("failed to send message ...\n");
+    if (msg == NULL) {
+        tapi_log_error("msg in %s is null", __func__);
+        return false;
+    }
+
+    if (reply == NULL) {
+        tapi_log_error("reply in %s is null", __func__);
         return false;
     }
 
@@ -224,8 +243,13 @@ static void stk_agent_register_param_append(DBusMessageIter* iter, void* user_da
     tapi_async_handler* param = user_data;
     char* agent_id;
 
-    if (param == NULL || param->result == NULL) {
-        tapi_log_error("invalid pin argument!");
+    if (param == NULL) {
+        tapi_log_error("param in %s is null", __func__);
+        return;
+    }
+
+    if (param->result == NULL) {
+        tapi_log_error("param result in %s is null", __func__);
         return;
     }
 
@@ -240,8 +264,13 @@ static void stk_select_item_param_append(DBusMessageIter* iter, void* user_data)
     unsigned char item;
     char* agent_id;
 
-    if (param == NULL || param->result == NULL) {
-        tapi_log_error("invalid stk input argument!");
+    if (param == NULL) {
+        tapi_log_error("param in %s is null", __func__);
+        return;
+    }
+
+    if (param->result == NULL) {
+        tapi_log_error("param result in %s is null", __func__);
         return;
     }
 
@@ -300,15 +329,25 @@ static DBusMessage* stk_agent_release(DBusConnection* conn,
 
     tapi_log_info("stk agent release method is called\n");
 
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return stk_agent_error_not_implemented(msg);
+    }
 
-    if ((ar = handler->result) == NULL || (cb = handler->cb_function) == NULL)
+    if ((ar = handler->result) == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         return stk_agent_error_not_implemented(msg);
+    }
+
+    if ((cb = handler->cb_function) == NULL) {
+        tapi_log_error("callback in %s is null", __func__);
+        return stk_agent_error_not_implemented(msg);
+    }
 
     reply = dbus_message_new_method_return(msg);
     ctx = ar->data;
     if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_failed(msg);
         goto done;
@@ -340,21 +379,32 @@ static DBusMessage* stk_agent_cancel(DBusConnection* conn,
 
     tapi_log_info("stk agent cancel method is called\n");
 
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return stk_agent_error_not_implemented(msg);
+    }
 
-    if ((ar = handler->result) == NULL || (cb = handler->cb_function) == NULL)
+    if ((ar = handler->result) == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         return stk_agent_error_not_implemented(msg);
+    }
+
+    if ((cb = handler->cb_function) == NULL) {
+        tapi_log_error("callback in %s is null", __func__);
+        return stk_agent_error_not_implemented(msg);
+    }
 
     reply = NULL;
     ctx = ar->data;
     if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_failed(msg);
         goto done;
     }
 
     if (ctx->pending) {
+        tapi_log_error("context in %s is busy", __func__);
         dbus_message_unref(ctx->pending);
         ctx->pending = NULL;
     }
@@ -381,11 +431,20 @@ static DBusMessage* stk_agent_show_information(DBusConnection* conn,
 
     tapi_log_info("stk agent display text method is called\n");
 
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return stk_agent_error_not_implemented(msg);
+    }
 
-    if ((ar = handler->result) == NULL || (cb = handler->cb_function) == NULL)
+    if ((ar = handler->result) == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         return stk_agent_error_not_implemented(msg);
+    }
+
+    if ((cb = handler->cb_function) == NULL) {
+        tapi_log_error("callback in %s is null", __func__);
+        return stk_agent_error_not_implemented(msg);
+    }
 
     ar->msg_id = MSG_STK_AGENT_DISPLAY_TEXT_IND;
 
@@ -393,12 +452,14 @@ static DBusMessage* stk_agent_show_information(DBusConnection* conn,
     reply = NULL;
     ctx = ar->data;
     if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_failed(msg);
         goto done;
     }
 
     if (ctx->pending) {
+        tapi_log_error("context in %s is busy", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_busy(msg);
         goto done;
@@ -406,6 +467,7 @@ static DBusMessage* stk_agent_show_information(DBusConnection* conn,
 
     params = malloc(sizeof(tapi_stk_display_info_params));
     if (params == NULL) {
+        tapi_log_error("params in %s is null", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_not_implemented(msg);
         goto done;
@@ -415,6 +477,7 @@ static DBusMessage* stk_agent_show_information(DBusConnection* conn,
             DBUS_TYPE_BYTE, &params->icon_id,
             DBUS_TYPE_BOOLEAN, &params->urgent,
             DBUS_TYPE_INVALID)) {
+        tapi_log_error("failed to get args in %s", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_invalid_args(msg);
         goto done;
@@ -445,11 +508,20 @@ static DBusMessage* stk_agent_handle_request_digit(DBusConnection* conn,
 
     tapi_log_info("stk agent request digit method is called\n");
 
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return stk_agent_error_not_implemented(msg);
+    }
 
-    if ((ar = handler->result) == NULL || (cb = handler->cb_function) == NULL)
+    if ((ar = handler->result) == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         return stk_agent_error_not_implemented(msg);
+    }
+
+    if ((cb = handler->cb_function) == NULL) {
+        tapi_log_error("callback in %s is null", __func__);
+        return stk_agent_error_not_implemented(msg);
+    }
 
     ar->msg_id = MSG_STK_AGENT_REQUEST_DIGIT_IND;
 
@@ -457,12 +529,14 @@ static DBusMessage* stk_agent_handle_request_digit(DBusConnection* conn,
     reply = NULL;
     ctx = ar->data;
     if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_failed(msg);
         goto done;
     }
 
     if (ctx->pending) {
+        tapi_log_error("context in %s is busy", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_busy(msg);
         goto done;
@@ -470,6 +544,7 @@ static DBusMessage* stk_agent_handle_request_digit(DBusConnection* conn,
 
     params = malloc(sizeof(tapi_stk_request_key_params));
     if (params == NULL) {
+        tapi_log_error("params in %s is null", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_not_implemented(msg);
         goto done;
@@ -478,6 +553,7 @@ static DBusMessage* stk_agent_handle_request_digit(DBusConnection* conn,
     if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_STRING, &params->alpha,
             DBUS_TYPE_BYTE, &params->icon_id,
             DBUS_TYPE_INVALID)) {
+        tapi_log_error("failed to get args in %s", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_invalid_args(msg);
         goto done;
@@ -508,11 +584,20 @@ static DBusMessage* stk_agent_handle_request_key(DBusConnection* conn,
 
     tapi_log_info("stk agent request key method is called\n");
 
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return stk_agent_error_not_implemented(msg);
+    }
 
-    if ((ar = handler->result) == NULL || (cb = handler->cb_function) == NULL)
+    if ((ar = handler->result) == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         return stk_agent_error_not_implemented(msg);
+    }
+
+    if ((cb = handler->cb_function) == NULL) {
+        tapi_log_error("callback in %s is null", __func__);
+        return stk_agent_error_not_implemented(msg);
+    }
 
     ar->msg_id = MSG_STK_AGENT_REQUEST_KEY_IND;
 
@@ -520,12 +605,14 @@ static DBusMessage* stk_agent_handle_request_key(DBusConnection* conn,
     reply = NULL;
     ctx = ar->data;
     if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_failed(msg);
         goto done;
     }
 
     if (ctx->pending) {
+        tapi_log_error("context in %s is busy", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_busy(msg);
         goto done;
@@ -533,6 +620,7 @@ static DBusMessage* stk_agent_handle_request_key(DBusConnection* conn,
 
     params = malloc(sizeof(tapi_stk_request_key_params));
     if (params == NULL) {
+        tapi_log_error("params in %s is null", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_not_implemented(msg);
         goto done;
@@ -541,6 +629,7 @@ static DBusMessage* stk_agent_handle_request_key(DBusConnection* conn,
     if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_STRING, &params->alpha,
             DBUS_TYPE_BYTE, &params->icon_id,
             DBUS_TYPE_INVALID)) {
+        tapi_log_error("failed to get args in %s", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_invalid_args(msg);
         goto done;
@@ -571,11 +660,20 @@ static DBusMessage* stk_agent_handle_request_confirmation(DBusConnection* conn,
 
     tapi_log_info("stk agent request confirmation is method\n");
 
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return stk_agent_error_not_implemented(msg);
+    }
 
-    if ((ar = handler->result) == NULL || (cb = handler->cb_function) == NULL)
+    if ((ar = handler->result) == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         return stk_agent_error_not_implemented(msg);
+    }
+
+    if ((cb = handler->cb_function) == NULL) {
+        tapi_log_error("callback in %s is null", __func__);
+        return stk_agent_error_not_implemented(msg);
+    }
 
     ar->msg_id = MSG_STK_AGENT_REQUEST_CONFIRMATION_IND;
 
@@ -583,12 +681,14 @@ static DBusMessage* stk_agent_handle_request_confirmation(DBusConnection* conn,
     reply = NULL;
     ctx = ar->data;
     if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_failed(msg);
         goto done;
     }
 
     if (ctx->pending) {
+        tapi_log_error("context in %s is busy", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_busy(msg);
         goto done;
@@ -596,6 +696,7 @@ static DBusMessage* stk_agent_handle_request_confirmation(DBusConnection* conn,
 
     params = malloc(sizeof(tapi_stk_request_key_params));
     if (params == NULL) {
+        tapi_log_error("params in %s is null", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_not_implemented(msg);
         goto done;
@@ -604,6 +705,7 @@ static DBusMessage* stk_agent_handle_request_confirmation(DBusConnection* conn,
     if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_STRING, &params->alpha,
             DBUS_TYPE_BYTE, &params->icon_id,
             DBUS_TYPE_INVALID)) {
+        tapi_log_error("failed to get args in %s", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_invalid_args(msg);
         goto done;
@@ -634,11 +736,20 @@ static DBusMessage* stk_agent_handle_request_input(DBusConnection* conn,
 
     tapi_log_info("stk agent request input method is called\n");
 
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return stk_agent_error_not_implemented(msg);
+    }
 
-    if ((ar = handler->result) == NULL || (cb = handler->cb_function) == NULL)
+    if ((ar = handler->result) == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         return stk_agent_error_not_implemented(msg);
+    }
+
+    if ((cb = handler->cb_function) == NULL) {
+        tapi_log_error("callback in %s is null", __func__);
+        return stk_agent_error_not_implemented(msg);
+    }
 
     ar->msg_id = MSG_STK_AGENT_REQUEST_INPUT_IND;
 
@@ -646,12 +757,14 @@ static DBusMessage* stk_agent_handle_request_input(DBusConnection* conn,
     reply = NULL;
     ctx = ar->data;
     if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_failed(msg);
         goto done;
     }
 
     if (ctx->pending) {
+        tapi_log_error("context in %s is busy", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_busy(msg);
         goto done;
@@ -659,6 +772,7 @@ static DBusMessage* stk_agent_handle_request_input(DBusConnection* conn,
 
     params = malloc(sizeof(tapi_stk_request_input_params));
     if (params == NULL) {
+        tapi_log_error("params in %s is null", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_not_implemented(msg);
         goto done;
@@ -671,6 +785,7 @@ static DBusMessage* stk_agent_handle_request_input(DBusConnection* conn,
             DBUS_TYPE_BYTE, &params->max_len,
             DBUS_TYPE_BOOLEAN, &params->hide_typing,
             DBUS_TYPE_INVALID)) {
+        tapi_log_error("failed to get args in %s", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_invalid_args(msg);
         goto done;
@@ -701,11 +816,20 @@ static DBusMessage* stk_agent_handle_request_digits(DBusConnection* conn,
 
     tapi_log_info("stk agent request input digits is called\n");
 
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return stk_agent_error_not_implemented(msg);
+    }
 
-    if ((ar = handler->result) == NULL || (cb = handler->cb_function) == NULL)
+    if ((ar = handler->result) == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         return stk_agent_error_not_implemented(msg);
+    }
+
+    if ((cb = handler->cb_function) == NULL) {
+        tapi_log_error("callback in %s is null", __func__);
+        return stk_agent_error_not_implemented(msg);
+    }
 
     ar->msg_id = MSG_STK_AGENT_REQUEST_DIGITS_IND;
 
@@ -713,12 +837,14 @@ static DBusMessage* stk_agent_handle_request_digits(DBusConnection* conn,
     reply = NULL;
     ctx = ar->data;
     if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_failed(msg);
         goto done;
     }
 
     if (ctx->pending) {
+        tapi_log_error("context in %s is busy", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_busy(msg);
         goto done;
@@ -726,6 +852,7 @@ static DBusMessage* stk_agent_handle_request_digits(DBusConnection* conn,
 
     params = malloc(sizeof(tapi_stk_request_input_params));
     if (params == NULL) {
+        tapi_log_error("params in %s is null", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_not_implemented(msg);
         goto done;
@@ -738,6 +865,7 @@ static DBusMessage* stk_agent_handle_request_digits(DBusConnection* conn,
             DBUS_TYPE_BYTE, &params->max_len,
             DBUS_TYPE_BOOLEAN, &params->hide_typing,
             DBUS_TYPE_INVALID)) {
+        tapi_log_error("failed to get args in %s", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_invalid_args(msg);
         goto done;
@@ -768,11 +896,20 @@ static DBusMessage* stk_agent_handle_play_tone(DBusConnection* conn,
 
     tapi_log_info("stk agent play tone method is called\n");
 
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return stk_agent_error_not_implemented(msg);
+    }
 
-    if ((ar = handler->result) == NULL || (cb = handler->cb_function) == NULL)
+    if ((ar = handler->result) == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         return stk_agent_error_not_implemented(msg);
+    }
+
+    if ((cb = handler->cb_function) == NULL) {
+        tapi_log_error("callback in %s is null", __func__);
+        return stk_agent_error_not_implemented(msg);
+    }
 
     ar->msg_id = MSG_STK_AGENT_PLAY_TONE_IND;
 
@@ -780,12 +917,14 @@ static DBusMessage* stk_agent_handle_play_tone(DBusConnection* conn,
     reply = NULL;
     ctx = ar->data;
     if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_failed(msg);
         goto done;
     }
 
     if (ctx->pending) {
+        tapi_log_error("context in %s is busy", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_busy(msg);
         goto done;
@@ -793,6 +932,7 @@ static DBusMessage* stk_agent_handle_play_tone(DBusConnection* conn,
 
     params = malloc(sizeof(tapi_stk_play_tone_params));
     if (params == NULL) {
+        tapi_log_error("params in %s is null", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_not_implemented(msg);
         goto done;
@@ -802,6 +942,7 @@ static DBusMessage* stk_agent_handle_play_tone(DBusConnection* conn,
             DBUS_TYPE_STRING, &params->info,
             DBUS_TYPE_BYTE, &params->icon_id,
             DBUS_TYPE_INVALID)) {
+        tapi_log_error("failed to get args in %s", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_invalid_args(msg);
         goto done;
@@ -832,11 +973,20 @@ static DBusMessage* stk_agent_handle_loop_tone(DBusConnection* conn,
 
     tapi_log_info("stk agent loop tone method is called\n");
 
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return stk_agent_error_not_implemented(msg);
+    }
 
-    if ((ar = handler->result) == NULL || (cb = handler->cb_function) == NULL)
+    if ((ar = handler->result) == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         return stk_agent_error_not_implemented(msg);
+    }
+
+    if ((cb = handler->cb_function) == NULL) {
+        tapi_log_error("callback in %s is null", __func__);
+        return stk_agent_error_not_implemented(msg);
+    }
 
     ar->msg_id = MSG_STK_AGENT_LOOP_TONE_IND;
 
@@ -844,12 +994,14 @@ static DBusMessage* stk_agent_handle_loop_tone(DBusConnection* conn,
     reply = NULL;
     ctx = ar->data;
     if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_failed(msg);
         goto done;
     }
 
     if (ctx->pending) {
+        tapi_log_error("context in %s is busy", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_busy(msg);
         goto done;
@@ -857,6 +1009,7 @@ static DBusMessage* stk_agent_handle_loop_tone(DBusConnection* conn,
 
     params = malloc(sizeof(tapi_stk_play_tone_params));
     if (params == NULL) {
+        tapi_log_error("params in %s is null", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_not_implemented(msg);
         goto done;
@@ -866,6 +1019,7 @@ static DBusMessage* stk_agent_handle_loop_tone(DBusConnection* conn,
             DBUS_TYPE_STRING, &params->info,
             DBUS_TYPE_BYTE, &params->icon_id,
             DBUS_TYPE_INVALID)) {
+        tapi_log_error("failed to get args in %s", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_invalid_args(msg);
         goto done;
@@ -901,11 +1055,20 @@ static DBusMessage* stk_agent_handle_request_selection(DBusConnection* conn,
 
     tapi_log_info("stk agent request selection method is called\n");
 
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return stk_agent_error_not_implemented(msg);
+    }
 
-    if ((ar = handler->result) == NULL || (cb = handler->cb_function) == NULL)
+    if ((ar = handler->result) == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         return stk_agent_error_not_implemented(msg);
+    }
+
+    if ((cb = handler->cb_function) == NULL) {
+        tapi_log_error("callback in %s is null", __func__);
+        return stk_agent_error_not_implemented(msg);
+    }
 
     ar->msg_id = MSG_STK_AGENT_REQUEST_SELECTION_IND;
 
@@ -913,7 +1076,7 @@ static DBusMessage* stk_agent_handle_request_selection(DBusConnection* conn,
     reply = NULL;
     dbus_error_init(&err);
     if (dbus_set_error_from_message(&err, msg) == true) {
-        tapi_log_error("%s: %s\n", err.name, err.message);
+        tapi_log_error("error from message in %s, %s: %s", __func__, err.name, err.message);
         dbus_error_free(&err);
         ar->status = ERROR;
         reply = stk_agent_error_failed(msg);
@@ -921,6 +1084,7 @@ static DBusMessage* stk_agent_handle_request_selection(DBusConnection* conn,
     }
 
     if (dbus_message_iter_init(msg, &iter) == false) {
+        tapi_log_error("dbus message iter init failed in %s", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_invalid_args(msg);
         goto done;
@@ -928,12 +1092,14 @@ static DBusMessage* stk_agent_handle_request_selection(DBusConnection* conn,
 
     ctx = ar->data;
     if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_failed(msg);
         goto done;
     }
 
     if (ctx->pending) {
+        tapi_log_error("context in %s is busy", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_busy(msg);
         goto done;
@@ -941,6 +1107,7 @@ static DBusMessage* stk_agent_handle_request_selection(DBusConnection* conn,
 
     params = malloc(sizeof(tapi_stk_request_selection_params));
     if (params == NULL) {
+        tapi_log_error("params in %s is null", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_not_implemented(msg);
         goto done;
@@ -1007,11 +1174,20 @@ static DBusMessage* stk_agent_handle_request_quick_digit(DBusConnection* conn,
 
     tapi_log_info("stk agent request quick digit method is called\n");
 
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return stk_agent_error_not_implemented(msg);
+    }
 
-    if ((ar = handler->result) == NULL || (cb = handler->cb_function) == NULL)
+    if ((ar = handler->result) == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         return stk_agent_error_not_implemented(msg);
+    }
+
+    if ((cb = handler->cb_function) == NULL) {
+        tapi_log_error("callback in %s is null", __func__);
+        return stk_agent_error_not_implemented(msg);
+    }
 
     ar->msg_id = MSG_STK_AGENT_REQUEST_QUICK_DIGIT_IND;
 
@@ -1019,12 +1195,14 @@ static DBusMessage* stk_agent_handle_request_quick_digit(DBusConnection* conn,
     reply = NULL;
     ctx = ar->data;
     if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_failed(msg);
         goto done;
     }
 
     if (ctx->pending) {
+        tapi_log_error("context in %s is busy", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_busy(msg);
         goto done;
@@ -1032,6 +1210,7 @@ static DBusMessage* stk_agent_handle_request_quick_digit(DBusConnection* conn,
 
     params = malloc(sizeof(tapi_stk_request_key_params));
     if (params == NULL) {
+        tapi_log_error("params in %s is null", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_not_implemented(msg);
         goto done;
@@ -1040,6 +1219,7 @@ static DBusMessage* stk_agent_handle_request_quick_digit(DBusConnection* conn,
     if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_STRING, &params->alpha,
             DBUS_TYPE_BYTE, &params->icon_id,
             DBUS_TYPE_INVALID)) {
+        tapi_log_error("dbus message get args failed in %s", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_invalid_args(msg);
         goto done;
@@ -1070,11 +1250,20 @@ static DBusMessage* stk_agent_confirm_call_setup(DBusConnection* conn,
 
     tapi_log_info("stk agent confirm call setup method is called\n");
 
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return stk_agent_error_not_implemented(msg);
+    }
 
-    if ((ar = handler->result) == NULL || (cb = handler->cb_function) == NULL)
+    if ((ar = handler->result) == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         return stk_agent_error_not_implemented(msg);
+    }
+
+    if ((cb = handler->cb_function) == NULL) {
+        tapi_log_error("callback in %s is null", __func__);
+        return stk_agent_error_not_implemented(msg);
+    }
 
     ar->msg_id = MSG_STK_AGENT_CONFIRM_CALL_SETUP_IND;
 
@@ -1082,12 +1271,14 @@ static DBusMessage* stk_agent_confirm_call_setup(DBusConnection* conn,
     reply = NULL;
     ctx = ar->data;
     if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_failed(msg);
         goto done;
     }
 
     if (ctx->pending) {
+        tapi_log_error("context in %s is busy", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_busy(msg);
         goto done;
@@ -1095,6 +1286,7 @@ static DBusMessage* stk_agent_confirm_call_setup(DBusConnection* conn,
 
     params = malloc(sizeof(tapi_stk_request_key_params));
     if (params == NULL) {
+        tapi_log_error("params in %s is null", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_not_implemented(msg);
         goto done;
@@ -1103,6 +1295,7 @@ static DBusMessage* stk_agent_confirm_call_setup(DBusConnection* conn,
     if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_STRING, &params->alpha,
             DBUS_TYPE_BYTE, &params->icon_id,
             DBUS_TYPE_INVALID)) {
+        tapi_log_error("dbus message get args failed in %s", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_invalid_args(msg);
         goto done;
@@ -1133,11 +1326,20 @@ static DBusMessage* stk_agent_display_action_information(DBusConnection* conn,
 
     tapi_log_info("stk agent display action information method is called\n");
 
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return stk_agent_error_not_implemented(msg);
+    }
 
-    if ((ar = handler->result) == NULL || (cb = handler->cb_function) == NULL)
+    if ((ar = handler->result) == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         return stk_agent_error_not_implemented(msg);
+    }
+
+    if ((cb = handler->cb_function) == NULL) {
+        tapi_log_error("callback in %s is null", __func__);
+        return stk_agent_error_not_implemented(msg);
+    }
 
     ar->msg_id = MSG_STK_AGENT_DISPLAY_ACTION_INFORMATION_IND;
 
@@ -1145,12 +1347,14 @@ static DBusMessage* stk_agent_display_action_information(DBusConnection* conn,
     reply = NULL;
     ctx = ar->data;
     if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_failed(msg);
         goto done;
     }
 
     if (ctx->pending) {
+        tapi_log_error("context in %s is busy", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_busy(msg);
         goto done;
@@ -1158,6 +1362,7 @@ static DBusMessage* stk_agent_display_action_information(DBusConnection* conn,
 
     params = malloc(sizeof(tapi_stk_display_info_params));
     if (params == NULL) {
+        tapi_log_error("params in %s is null", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_not_implemented(msg);
         goto done;
@@ -1166,6 +1371,7 @@ static DBusMessage* stk_agent_display_action_information(DBusConnection* conn,
     if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_STRING, &params->info,
             DBUS_TYPE_BYTE, &params->icon_id,
             DBUS_TYPE_INVALID)) {
+        tapi_log_error("dbus message get args failed in %s", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_invalid_args(msg);
         goto done;
@@ -1196,11 +1402,20 @@ static DBusMessage* stk_agent_confirm_launch_browser(DBusConnection* conn,
 
     tapi_log_info("stk agent confirm launch browser method is called\n");
 
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return stk_agent_error_not_implemented(msg);
+    }
 
-    if ((ar = handler->result) == NULL || (cb = handler->cb_function) == NULL)
+    if ((ar = handler->result) == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         return stk_agent_error_not_implemented(msg);
+    }
+
+    if ((cb = handler->cb_function) == NULL) {
+        tapi_log_error("callback in %s is null", __func__);
+        return stk_agent_error_not_implemented(msg);
+    }
 
     ar->msg_id = MSG_STK_AGENT_CONFIRM_LAUNCH_BROWSER_IND;
 
@@ -1208,12 +1423,14 @@ static DBusMessage* stk_agent_confirm_launch_browser(DBusConnection* conn,
     reply = NULL;
     ctx = ar->data;
     if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_failed(msg);
         goto done;
     }
 
     if (ctx->pending) {
+        tapi_log_error("context in %s is busy", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_busy(msg);
         goto done;
@@ -1221,6 +1438,7 @@ static DBusMessage* stk_agent_confirm_launch_browser(DBusConnection* conn,
 
     params = malloc(sizeof(tapi_stk_confirm_launch_browser_params));
     if (params == NULL) {
+        tapi_log_error("params in %s is null", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_not_implemented(msg);
         goto done;
@@ -1230,6 +1448,7 @@ static DBusMessage* stk_agent_confirm_launch_browser(DBusConnection* conn,
             DBUS_TYPE_BYTE, &params->icon_id,
             DBUS_TYPE_STRING, &params->url,
             DBUS_TYPE_INVALID)) {
+        tapi_log_error("dbus message get args failed in %s", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_invalid_args(msg);
         goto done;
@@ -1260,11 +1479,20 @@ static DBusMessage* stk_agent_display_action(DBusConnection* conn,
 
     tapi_log_info("stk agent display action method is called\n");
 
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return stk_agent_error_not_implemented(msg);
+    }
 
-    if ((ar = handler->result) == NULL || (cb = handler->cb_function) == NULL)
+    if ((ar = handler->result) == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         return stk_agent_error_not_implemented(msg);
+    }
+
+    if ((cb = handler->cb_function) == NULL) {
+        tapi_log_error("callback in %s is null", __func__);
+        return stk_agent_error_not_implemented(msg);
+    }
 
     ar->msg_id = MSG_STK_AGENT_DISPLAY_ACTION_IND;
 
@@ -1272,12 +1500,14 @@ static DBusMessage* stk_agent_display_action(DBusConnection* conn,
     reply = NULL;
     ctx = ar->data;
     if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_failed(msg);
         goto done;
     }
 
     if (ctx->pending) {
+        tapi_log_error("context in %s is busy", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_busy(msg);
         goto done;
@@ -1285,6 +1515,7 @@ static DBusMessage* stk_agent_display_action(DBusConnection* conn,
 
     params = malloc(sizeof(tapi_stk_display_info_params));
     if (params == NULL) {
+        tapi_log_error("params in %s is null", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_not_implemented(msg);
         goto done;
@@ -1293,6 +1524,7 @@ static DBusMessage* stk_agent_display_action(DBusConnection* conn,
     if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_STRING, &params->info,
             DBUS_TYPE_BYTE, &params->icon_id,
             DBUS_TYPE_INVALID)) {
+        tapi_log_error("dbus message get args failed in %s", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_invalid_args(msg);
         goto done;
@@ -1323,11 +1555,20 @@ static DBusMessage* stk_agent_confirm_open_channel(DBusConnection* conn,
 
     tapi_log_info("stk agent confirm open channel method is called\n");
 
-    if (handler == NULL)
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
         return stk_agent_error_not_implemented(msg);
+    }
 
-    if ((ar = handler->result) == NULL || (cb = handler->cb_function) == NULL)
+    if ((ar = handler->result) == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         return stk_agent_error_not_implemented(msg);
+    }
+
+    if ((cb = handler->cb_function) == NULL) {
+        tapi_log_error("callback in %s is null", __func__);
+        return stk_agent_error_not_implemented(msg);
+    }
 
     ar->msg_id = MSG_STK_AGENT_CONFIRM_OPEN_CHANNEL_IND;
 
@@ -1335,12 +1576,14 @@ static DBusMessage* stk_agent_confirm_open_channel(DBusConnection* conn,
     reply = NULL;
     ctx = ar->data;
     if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_failed(msg);
         goto done;
     }
 
     if (ctx->pending) {
+        tapi_log_error("context in %s is busy", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_busy(msg);
         goto done;
@@ -1348,6 +1591,7 @@ static DBusMessage* stk_agent_confirm_open_channel(DBusConnection* conn,
 
     params = malloc(sizeof(tapi_stk_request_key_params));
     if (params == NULL) {
+        tapi_log_error("params in %s is null", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_not_implemented(msg);
         goto done;
@@ -1356,6 +1600,7 @@ static DBusMessage* stk_agent_confirm_open_channel(DBusConnection* conn,
     if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_STRING, &params->alpha,
             DBUS_TYPE_BYTE, &params->icon_id,
             DBUS_TYPE_INVALID)) {
+        tapi_log_error("dbus message get args failed in %s", __func__);
         ar->status = ERROR;
         reply = stk_agent_error_invalid_args(msg);
         goto done;
@@ -1385,16 +1630,25 @@ int tapi_stk_agent_interface_register(tapi_context context, int slot_id,
     dbus_context* ctx = context;
     tapi_async_result* ar;
 
-    if (ctx == NULL || agent_id == NULL)
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
         return -EINVAL;
+    }
+
+    if (agent_id == NULL) {
+        tapi_log_error("agent_id in %s is null", __func__);
+        return -EINVAL;
+    }
 
     user_data = malloc(sizeof(tapi_async_handler));
     if (user_data == NULL) {
+        tapi_log_error("user_data in %s is null", __func__);
         return -ENOMEM;
     }
 
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         free(user_data);
         return -ENOMEM;
     }
@@ -1403,7 +1657,8 @@ int tapi_stk_agent_interface_register(tapi_context context, int slot_id,
     user_data->result = ar;
     user_data->cb_function = p_handle;
 
-    tapi_log_debug("starting stk agent interface slot : %d, agent id : %s\n", slot_id, agent_id);
+    tapi_log_debug("starting stk agent interface in %s,  slot : %d, agent id : %s",
+        __func__, slot_id, agent_id);
     if (!g_dbus_register_interface(ctx->connection, agent_id, OFONO_SIM_APP_INTERFACE,
             agent_methods, NULL, NULL, user_data, handler_free)) {
         tapi_log_error("Unable to register stk agent %s\n", agent_id);
@@ -1417,13 +1672,20 @@ int tapi_stk_agent_interface_unregister(tapi_context context, char* agent_id)
 {
     dbus_context* ctx = context;
 
-    if (ctx == NULL || agent_id == NULL)
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
         return -EINVAL;
+    }
 
-    tapi_log_debug("stopping stk agent interface agent id : %s\n", agent_id);
+    if (agent_id == NULL) {
+        tapi_log_error("agent_id in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    tapi_log_debug("stopping stk agent interface in %s, agent id : %s", __func__, agent_id);
     if (!g_dbus_unregister_interface(ctx->connection, agent_id,
             OFONO_SIM_APP_INTERFACE)) {
-        tapi_log_error("Unable to unregister stk agent %s\n", agent_id);
+        tapi_log_error("Unable to unregister stk agent %s in %s", agent_id, __func__);
         return -EINVAL;
     }
 
@@ -1436,7 +1698,13 @@ int tapi_stk_default_agent_interface_register(tapi_context context, int slot_id,
     dbus_context* ctx = context;
     char* agent_path;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
         return -EINVAL;
     }
 
@@ -1455,7 +1723,13 @@ int tapi_stk_default_agent_interface_unregister(tapi_context context, int slot_i
     dbus_context* ctx = context;
     char* agent_path;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
         return -EINVAL;
     }
 
@@ -1477,24 +1751,36 @@ int tapi_stk_agent_register(tapi_context context, int slot_id,
     GDBusProxy* proxy;
     tapi_async_result* ar;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
-        || agent_id == NULL) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
+        return -EINVAL;
+    }
+
+    if (agent_id == NULL) {
+        tapi_log_error("agent_id in %s is null", __func__);
         return -EINVAL;
     }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_STK];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("proxy in %s is null", __func__);
         return -EIO;
     }
 
     user_data = malloc(sizeof(tapi_async_handler));
     if (user_data == NULL) {
+        tapi_log_error("user_data in %s is null", __func__);
         return -ENOMEM;
     }
 
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         free(user_data);
         return -ENOMEM;
     }
@@ -1507,7 +1793,7 @@ int tapi_stk_agent_register(tapi_context context, int slot_id,
 
     if (!g_dbus_proxy_method_call(proxy, "RegisterAgent", stk_agent_register_param_append,
             method_call_complete, user_data, handler_free)) {
-        tapi_log_error("failed to register agent\n");
+        tapi_log_error("dbus method call fail in %s", __func__);
         handler_free(user_data);
         return -EINVAL;
     }
@@ -1523,24 +1809,36 @@ int tapi_stk_agent_unregister(tapi_context context, int slot_id,
     GDBusProxy* proxy;
     tapi_async_result* ar;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
-        || agent_id == NULL) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
+        return -EINVAL;
+    }
+
+    if (agent_id == NULL) {
+        tapi_log_error("agent_id in %s is null", __func__);
         return -EINVAL;
     }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_STK];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
     user_data = malloc(sizeof(tapi_async_handler));
     if (user_data == NULL) {
+        tapi_log_error("user_data in %s is null", __func__);
         return -ENOMEM;
     }
 
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         free(user_data);
         return -ENOMEM;
     }
@@ -1553,7 +1851,7 @@ int tapi_stk_agent_unregister(tapi_context context, int slot_id,
 
     if (!g_dbus_proxy_method_call(proxy, "UnregisterAgent", stk_agent_register_param_append,
             method_call_complete, user_data, handler_free)) {
-        tapi_log_error("failed to unregister agent\n");
+        tapi_log_error("dbus method call fail in %s", __func__);
         handler_free(user_data);
         return -EINVAL;
     }
@@ -1567,7 +1865,13 @@ int tapi_stk_default_agent_register(tapi_context context, int slot_id,
     dbus_context* ctx = context;
     char* agent_path;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
         return -EINVAL;
     }
 
@@ -1587,7 +1891,13 @@ int tapi_stk_default_agent_unregister(tapi_context context, int slot_id,
     dbus_context* ctx = context;
     char* agent_path;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
         return -EINVAL;
     }
 
@@ -1610,18 +1920,30 @@ int tapi_stk_select_item(tapi_context context, int slot_id,
     GDBusProxy* proxy;
     tapi_async_result* ar;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id) || agent_id == NULL) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
+        return -EINVAL;
+    }
+
+    if (agent_id == NULL) {
+        tapi_log_error("agent_id in %s is null", __func__);
         return -EINVAL;
     }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_STK];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
     select_item_param = malloc(sizeof(stk_select_item_param));
     if (select_item_param == NULL) {
+        tapi_log_error("select_item_param in %s is null", __func__);
         return -ENOMEM;
     }
     select_item_param->item = item;
@@ -1629,6 +1951,7 @@ int tapi_stk_select_item(tapi_context context, int slot_id,
 
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         free(select_item_param);
         return -ENOMEM;
     }
@@ -1638,6 +1961,7 @@ int tapi_stk_select_item(tapi_context context, int slot_id,
 
     user_data = malloc(sizeof(tapi_async_handler));
     if (user_data == NULL) {
+        tapi_log_error("user_data in %s is null", __func__);
         free(select_item_param);
         free(ar);
         return -ENOMEM;
@@ -1648,7 +1972,7 @@ int tapi_stk_select_item(tapi_context context, int slot_id,
     tapi_log_info("tapi_stk_select_item item : %d, path : %s\n", item, agent_id);
     if (!g_dbus_proxy_method_call(proxy, "SelectItem", stk_select_item_param_append,
             method_call_complete, user_data, stk_event_data_free)) {
-        tapi_log_error("failed to select item\n");
+        tapi_log_error("dbus method call fail in %s", __func__);
         stk_event_data_free(user_data);
         return -EINVAL;
     }
@@ -1662,16 +1986,24 @@ int tapi_stk_get_idle_mode_text(tapi_context context, int slot_id, char** text)
     GDBusProxy* proxy;
     DBusMessageIter iter;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
         return -EINVAL;
     }
 
-    if (!ctx->client_ready)
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
+        return -EINVAL;
+    }
+
+    if (!ctx->client_ready) {
+        tapi_log_error("client is not ready in %s", __func__);
         return -EAGAIN;
+    }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_STK];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1680,6 +2012,7 @@ int tapi_stk_get_idle_mode_text(tapi_context context, int slot_id, char** text)
         return OK;
     }
 
+    tapi_log_error("dbus get property fail in %s", __func__);
     return ERROR;
 }
 
@@ -1689,16 +2022,24 @@ int tapi_stk_get_idle_mode_icon(tapi_context context, int slot_id, char** icon)
     GDBusProxy* proxy;
     DBusMessageIter iter;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
         return -EINVAL;
     }
 
-    if (!ctx->client_ready)
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
+        return -EINVAL;
+    }
+
+    if (!ctx->client_ready) {
+        tapi_log_error("client is not ready in %s", __func__);
         return -EAGAIN;
+    }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_STK];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1707,6 +2048,7 @@ int tapi_stk_get_idle_mode_icon(tapi_context context, int slot_id, char** icon)
         return OK;
     }
 
+    tapi_log_error("dbus get property fail in %s", __func__);
     return ERROR;
 }
 
@@ -1719,21 +2061,34 @@ int tapi_stk_get_main_menu(tapi_context context, int slot_id, int length, tapi_s
     char* text;
     int index;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)
-        || length <= 0) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
         return -EINVAL;
     }
 
-    if (!ctx->client_ready)
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
+        return -EINVAL;
+    }
+
+    if (length <= 0) {
+        tapi_log_error("invalid length %d in %s", length, __func__);
+        return -EINVAL;
+    }
+
+    if (!ctx->client_ready) {
+        tapi_log_error("client is not ready in %s", __func__);
         return -EAGAIN;
+    }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_STK];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
     if (!g_dbus_proxy_get_property(proxy, "MainMenu", &array)) {
+        tapi_log_error("dbus get property fail in %s", __func__);
         return -EIO;
     }
 
@@ -1772,16 +2127,24 @@ int tapi_stk_get_main_menu_title(tapi_context context, int slot_id, char** title
     GDBusProxy* proxy;
     DBusMessageIter iter;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
         return -EINVAL;
     }
 
-    if (!ctx->client_ready)
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
+        return -EINVAL;
+    }
+
+    if (!ctx->client_ready) {
+        tapi_log_error("client is not ready in %s", __func__);
         return -EAGAIN;
+    }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_STK];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1790,6 +2153,7 @@ int tapi_stk_get_main_menu_title(tapi_context context, int slot_id, char** title
         return OK;
     }
 
+    tapi_log_error("dbus get property fail in %s", __func__);
     return ERROR;
 }
 
@@ -1799,16 +2163,24 @@ int tapi_stk_get_main_menu_icon(tapi_context context, int slot_id, char** icon)
     GDBusProxy* proxy;
     DBusMessageIter iter;
 
-    if (ctx == NULL || !tapi_is_valid_slotid(slot_id)) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
         return -EINVAL;
     }
 
-    if (!ctx->client_ready)
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
+        return -EINVAL;
+    }
+
+    if (!ctx->client_ready) {
+        tapi_log_error("client is not ready in %s", __func__);
         return -EAGAIN;
+    }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_STK];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1817,6 +2189,7 @@ int tapi_stk_get_main_menu_icon(tapi_context context, int slot_id, char** icon)
         return OK;
     }
 
+    tapi_log_error("dbus get property fail in %s", __func__);
     return ERROR;
 }
 
@@ -1825,7 +2198,18 @@ int tapi_stk_handle_agent_display_text(tapi_context context, tapi_stk_agent_oper
     dbus_context* ctx = context;
     DBusMessage* reply;
 
-    if (ctx == NULL || ctx->connection == NULL || ctx->pending == NULL) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (ctx->connection == NULL) {
+        tapi_log_error("connection in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (ctx->pending == NULL) {
+        tapi_log_error("pending in %s is null", __func__);
         return -EINVAL;
     }
 
@@ -1859,7 +2243,18 @@ int tapi_stk_handle_agent_request_key(tapi_context context,
     dbus_context* ctx = context;
     DBusMessage* reply;
 
-    if (ctx == NULL || ctx->connection == NULL || ctx->pending == NULL) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (ctx->connection == NULL) {
+        tapi_log_error("connection in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (ctx->pending == NULL) {
+        tapi_log_error("pending in %s is null", __func__);
         return -EINVAL;
     }
 
@@ -1895,7 +2290,18 @@ int tapi_stk_handle_agent_request_confirmation(tapi_context context,
     int confirm;
     bool flag = false;
 
-    if (ctx == NULL || ctx->connection == NULL || ctx->pending == NULL) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (ctx->connection == NULL) {
+        tapi_log_error("connection in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (ctx->pending == NULL) {
+        tapi_log_error("pending in %s is null", __func__);
         return -EINVAL;
     }
 
@@ -1930,7 +2336,18 @@ int tapi_stk_handle_agent_request_input(tapi_context context,
     dbus_context* ctx = context;
     DBusMessage* reply;
 
-    if (ctx == NULL || ctx->connection == NULL || ctx->pending == NULL) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (ctx->connection == NULL) {
+        tapi_log_error("connection in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (ctx->pending == NULL) {
+        tapi_log_error("pending in %s is null", __func__);
         return -EINVAL;
     }
 
@@ -1969,7 +2386,18 @@ int tapi_stk_handle_agent_play_tone(tapi_context context, tapi_stk_agent_operato
     dbus_context* ctx = context;
     DBusMessage* reply;
 
-    if (ctx == NULL || ctx->connection == NULL || ctx->pending == NULL) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (ctx->connection == NULL) {
+        tapi_log_error("connection in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (ctx->pending == NULL) {
+        tapi_log_error("pending in %s is null", __func__);
         return -EINVAL;
     }
 
@@ -2003,7 +2431,18 @@ int tapi_stk_handle_agent_request_selection(tapi_context context,
     dbus_context* ctx = context;
     DBusMessage* reply;
 
-    if (ctx == NULL || ctx->connection == NULL || ctx->pending == NULL) {
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (ctx->connection == NULL) {
+        tapi_log_error("connection in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (ctx->pending == NULL) {
+        tapi_log_error("pending in %s is null", __func__);
         return -EINVAL;
     }
 
