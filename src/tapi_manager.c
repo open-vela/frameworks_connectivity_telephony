@@ -1065,7 +1065,7 @@ static int tapi_modem_register(tapi_context context,
     }
 
     if (!tapi_is_valid_slotid(slot_id)) {
-        tapi_log_error("invalid slot id %d", slot_id);
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
         return -EINVAL;
     }
 
@@ -1360,18 +1360,18 @@ int tapi_set_pref_net_mode(tapi_context context,
     }
 
     if (!tapi_is_valid_slotid(slot_id)) {
-        tapi_log_error("invalid slot id %d", slot_id);
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
         return -EINVAL;
     }
 
     if (!ctx->client_ready) {
-        tapi_log_error("dbus client is not ready");
+        tapi_log_error("dbus client is not ready in %s", __func__);
         return -EAGAIN;
     }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_RADIO];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1419,18 +1419,18 @@ int tapi_get_pref_net_mode(tapi_context context, int slot_id, tapi_pref_net_mode
     }
 
     if (!tapi_is_valid_slotid(slot_id)) {
-        tapi_log_error("invalid slot id %d", slot_id);
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
         return -EINVAL;
     }
 
     if (!ctx->client_ready) {
-        tapi_log_error("dbus client is not ready");
+        tapi_log_error("dbus client is not ready in %s", __func__);
         return -EAGAIN;
     }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_RADIO];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1457,18 +1457,18 @@ int tapi_send_modem_power(tapi_context context, int slot_id, bool state)
     }
 
     if (!tapi_is_valid_slotid(slot_id)) {
-        tapi_log_error("invalid slot id %d", slot_id);
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
         return -EINVAL;
     }
 
     if (!ctx->client_ready) {
-        tapi_log_error("dbus client is not ready");
+        tapi_log_error("dbus client is not ready in %s", __func__);
         return -EAGAIN;
     }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1493,18 +1493,18 @@ int tapi_get_imei(tapi_context context, int slot_id, char** out)
     }
 
     if (!tapi_is_valid_slotid(slot_id)) {
-        tapi_log_error("invalid slot id %d", slot_id);
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
         return -EINVAL;
     }
 
     if (!ctx->client_ready) {
-        tapi_log_error("dbus client is not ready");
+        tapi_log_error("dbus client is not ready in %s", __func__);
         return -EAGAIN;
     }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1529,18 +1529,18 @@ int tapi_get_imeisv(tapi_context context, int slot_id, char** out)
     }
 
     if (!tapi_is_valid_slotid(slot_id)) {
-        tapi_log_error("invalid slot id %d", slot_id);
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
         return -EINVAL;
     }
 
     if (!ctx->client_ready) {
-        tapi_log_error("dbus client is not ready");
+        tapi_log_error("dbus client is not ready in %s", __func__);
         return -EAGAIN;
     }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1565,18 +1565,18 @@ int tapi_get_modem_manufacturer(tapi_context context, int slot_id, char** out)
     }
 
     if (!tapi_is_valid_slotid(slot_id)) {
-        tapi_log_error("invalid slot id %d", slot_id);
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
         return -EINVAL;
     }
 
     if (!ctx->client_ready) {
-        tapi_log_error("dbus client is not ready");
+        tapi_log_error("dbus client is not ready in %s", __func__);
         return -EAGAIN;
     }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1601,18 +1601,18 @@ int tapi_get_modem_model(tapi_context context, int slot_id, char** out)
     }
 
     if (!tapi_is_valid_slotid(slot_id)) {
-        tapi_log_error("invalid slot id %d", slot_id);
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
         return -EINVAL;
     }
 
     if (!ctx->client_ready) {
-        tapi_log_error("dbus client is not ready");
+        tapi_log_error("dbus client is not ready in %s", __func__);
         return -EAGAIN;
     }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1637,18 +1637,18 @@ int tapi_get_modem_revision(tapi_context context, int slot_id, char** out)
     }
 
     if (!tapi_is_valid_slotid(slot_id)) {
-        tapi_log_error("invalid slot id %d", slot_id);
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
         return -EINVAL;
     }
 
     if (!ctx->client_ready) {
-        tapi_log_error("dbus client is not ready");
+        tapi_log_error("dbus client is not ready in %s", __func__);
         return -EAGAIN;
     }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1674,18 +1674,18 @@ int tapi_get_phone_state(tapi_context context, int slot_id, tapi_phone_state* st
     }
 
     if (!tapi_is_valid_slotid(slot_id)) {
-        tapi_log_error("invalid slot id %d", slot_id);
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
         return -EINVAL;
     }
 
     if (!ctx->client_ready) {
-        tapi_log_error("dbus client is not ready");
+        tapi_log_error("dbus client is not ready in %s", __func__);
         return -EAGAIN;
     }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1714,18 +1714,18 @@ int tapi_set_radio_power(tapi_context context,
     }
 
     if (!tapi_is_valid_slotid(slot_id)) {
-        tapi_log_error("invalid slot id %d", slot_id);
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
         return -EINVAL;
     }
 
     if (!ctx->client_ready) {
-        tapi_log_error("dbus client is not ready");
+        tapi_log_error("dbus client is not ready in %s", __func__);
         return -EAGAIN;
     }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1770,18 +1770,18 @@ int tapi_get_radio_power(tapi_context context, int slot_id, bool* out)
     }
 
     if (!tapi_is_valid_slotid(slot_id)) {
-        tapi_log_error("invalid slot id %d", slot_id);
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
         return -EINVAL;
     }
 
     if (!ctx->client_ready) {
-        tapi_log_error("dbus client is not ready");
+        tapi_log_error("dbus client is not ready in %s", __func__);
         return -EAGAIN;
     }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1809,18 +1809,18 @@ int tapi_get_radio_state(tapi_context context, int slot_id, tapi_radio_state* ou
     }
 
     if (!tapi_is_valid_slotid(slot_id)) {
-        tapi_log_error("invalid slot id %d", slot_id);
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
         return -EINVAL;
     }
 
     if (!ctx->client_ready) {
-        tapi_log_error("dbus client is not ready");
+        tapi_log_error("dbus client is not ready in %s", __func__);
         return -EAGAIN;
     }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1846,18 +1846,18 @@ int tapi_get_msisdn_number(tapi_context context, int slot_id, char** out)
     }
 
     if (!tapi_is_valid_slotid(slot_id)) {
-        tapi_log_error("invalid slot id %d", slot_id);
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
         return -EINVAL;
     }
 
     if (!ctx->client_ready) {
-        tapi_log_error("dbus client is not ready");
+        tapi_log_error("dbus client is not ready in %s", __func__);
         return -EAGAIN;
     }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1896,13 +1896,13 @@ int tapi_get_modem_activity_info(tapi_context context, int slot_id,
     }
 
     if (!tapi_is_valid_slotid(slot_id)) {
-        tapi_log_error("invalid slot id %d", slot_id);
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
         return -EINVAL;
     }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1950,7 +1950,7 @@ int tapi_invoke_oem_ril_request_raw(tapi_context context, int slot_id, int event
     }
 
     if (!tapi_is_valid_slotid(slot_id)) {
-        tapi_log_error("invalid slot id %d", slot_id);
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
         return -EINVAL;
     }
 
@@ -1966,7 +1966,7 @@ int tapi_invoke_oem_ril_request_raw(tapi_context context, int slot_id, int event
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -2025,7 +2025,7 @@ int tapi_invoke_oem_ril_request_strings(tapi_context context, int slot_id, int e
     }
 
     if (!tapi_is_valid_slotid(slot_id)) {
-        tapi_log_error("invalid slot id %d", slot_id);
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
         return -EINVAL;
     }
 
@@ -2041,7 +2041,7 @@ int tapi_invoke_oem_ril_request_strings(tapi_context context, int slot_id, int e
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -2099,13 +2099,13 @@ int tapi_enable_modem(tapi_context context, int slot_id,
     }
 
     if (!tapi_is_valid_slotid(slot_id)) {
-        tapi_log_error("invalid slot id %d", slot_id);
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
         return -EINVAL;
     }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -2152,13 +2152,13 @@ int tapi_enable_modem_abnormal_event(tapi_context context, int slot_id, bool ena
     }
 
     if (!tapi_is_valid_slotid(slot_id)) {
-        tapi_log_error("invalid slot id %d", slot_id);
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
         return -EINVAL;
     }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -2219,13 +2219,13 @@ int tapi_get_modem_status(tapi_context context, int slot_id,
     }
 
     if (!tapi_is_valid_slotid(slot_id)) {
-        tapi_log_error("invalid slot id %d", slot_id);
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
         return -EINVAL;
     }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -2270,7 +2270,7 @@ int tapi_get_modem_status_sync(tapi_context context, int slot_id, tapi_modem_sta
     }
 
     if (!tapi_is_valid_slotid(slot_id)) {
-        tapi_log_error("invalid slot id %d", slot_id);
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
         return -EINVAL;
     }
 
@@ -2281,7 +2281,7 @@ int tapi_get_modem_status_sync(tapi_context context, int slot_id, tapi_modem_sta
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -2351,7 +2351,7 @@ static int tapi_manager_register_data_loging(tapi_context context,
     }
 
     if (!tapi_is_valid_slotid(slot_id)) {
-        tapi_log_error("invalid slot id %d", slot_id);
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
         return -EINVAL;
     }
 
@@ -2397,7 +2397,7 @@ static int trigger_modem_load_ecc_list(tapi_context context, int slot_id)
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -2512,13 +2512,13 @@ int tapi_handle_command(tapi_context context, int slot_id, int atom, int command
     }
 
     if (!tapi_is_valid_slotid(slot_id)) {
-        tapi_log_error("invalid slot id %d", slot_id);
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
         return -EINVAL;
     }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -2564,7 +2564,7 @@ int tapi_set_fast_dormancy(tapi_context context,
     }
 
     if (!tapi_is_valid_slotid(slot_id)) {
-        tapi_log_error("invalid slot id %d", slot_id);
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
         return -EINVAL;
     }
 
@@ -2575,7 +2575,7 @@ int tapi_set_fast_dormancy(tapi_context context,
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_RADIO];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -2641,7 +2641,7 @@ int tapi_get_carrier_config_bool(tapi_context context, int slot_id, char* key, b
     }
 
     if (!tapi_is_valid_slotid(slot_id)) {
-        tapi_log_error("invalid slot id %d", slot_id);
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
         return -EINVAL;
     }
 
@@ -2657,7 +2657,7 @@ int tapi_get_carrier_config_bool(tapi_context context, int slot_id, char* key, b
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -2711,7 +2711,7 @@ int tapi_get_carrier_config_int(tapi_context context, int slot_id, char* key, in
     }
 
     if (!tapi_is_valid_slotid(slot_id)) {
-        tapi_log_error("invalid slot id %d", slot_id);
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
         return -EINVAL;
     }
 
@@ -2727,7 +2727,7 @@ int tapi_get_carrier_config_int(tapi_context context, int slot_id, char* key, in
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -2780,7 +2780,7 @@ int tapi_get_carrier_config_string(tapi_context context, int slot_id, char* key,
     }
 
     if (!tapi_is_valid_slotid(slot_id)) {
-        tapi_log_error("invalid slot id %d", slot_id);
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
         return -EINVAL;
     }
 
@@ -2796,7 +2796,7 @@ int tapi_get_carrier_config_string(tapi_context context, int slot_id, char* key,
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
