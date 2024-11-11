@@ -478,7 +478,7 @@ static void apn_list_loaded(DBusMessage* message, void* user_data)
 
     dbus_error_init(&err);
     if (dbus_set_error_from_message(&err, message) == true) {
-        tapi_log_error("%s: %s\n", err.name, err.message);
+        tapi_log_error("error from message in %s, %s: %s", __func__, err.name, err.message);
         dbus_error_free(&err);
         ar->status = ERROR;
         goto done;
@@ -558,7 +558,7 @@ static void apn_list_changed(DBusMessage* message, void* user_data)
 
     dbus_error_init(&err);
     if (dbus_set_error_from_message(&err, message) == true) {
-        tapi_log_error("%s: %s\n", err.name, err.message);
+        tapi_log_error("error from message in %s, %s: %s", __func__, err.name, err.message);
         dbus_error_free(&err);
         ar->status = ERROR;
     }
@@ -587,7 +587,7 @@ static void apn_context_append(DBusMessageIter* iter, void* user_data)
 
     dc = ar->data;
     if (dc == NULL) {
-        tapi_log_error("invalid apn settings ... \n");
+        tapi_log_error("dc in %s is null", __func__);
         return;
     }
 
@@ -668,7 +668,7 @@ static void apn_context_edit(DBusMessageIter* iter, void* user_data)
 
     dc = ar->data;
     if (dc == NULL) {
-        tapi_log_error("invalid apn settings ... \n");
+        tapi_log_error("dc in %s is null", __func__);
         return;
     }
 
@@ -734,7 +734,7 @@ static void data_connection_list_query_done(DBusMessage* message, void* user_dat
 
     dbus_error_init(&err);
     if (dbus_set_error_from_message(&err, message) == true) {
-        tapi_log_error("%s: %s\n", err.name, err.message);
+        tapi_log_error("error from message in %s, %s: %s", __func__, err.name, err.message);
         dbus_error_free(&err);
         ar->status = ERROR;
         goto done;
@@ -837,7 +837,7 @@ int tapi_data_load_apn_contexts(tapi_context context,
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_DATA];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -893,13 +893,13 @@ int tapi_data_add_apn_context(tapi_context context,
     }
 
     if (tapi_utils_apn_type_to_string(apn->type) == NULL) {
-        tapi_log_error("invalid apn argument ...\n");
+        tapi_log_error("invalid apn argument in %s", __func__);
         return -EINVAL;
     }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_DATA];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -957,7 +957,7 @@ int tapi_data_remove_apn_context(tapi_context context,
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_DATA];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1014,13 +1014,13 @@ int tapi_data_edit_apn_context(tapi_context context,
     }
 
     if (tapi_utils_apn_type_to_string(apn->type) == NULL) {
-        tapi_log_error("invalid apn argument ...\n");
+        tapi_log_error("invalid apn argument in %s", __func__);
         return -EINVAL;
     }
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_DATA];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1073,7 +1073,7 @@ int tapi_data_reset_apn_contexts(tapi_context context,
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_DATA];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1129,7 +1129,7 @@ int tapi_data_is_registered(tapi_context context, int slot_id, bool* out)
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_DATA];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1169,7 +1169,7 @@ int tapi_data_is_data_emergency_only(tapi_context context, int slot_id, bool* ou
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_DATA];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1211,7 +1211,7 @@ int tapi_data_get_network_type(tapi_context context, int slot_id, tapi_network_t
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_DATA];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1250,7 +1250,7 @@ int tapi_data_is_data_roaming(tapi_context context, int slot_id, bool* out)
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_DATA];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1287,7 +1287,7 @@ int tapi_data_request_network(tapi_context context, int slot_id, const char* typ
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_DATA];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1322,7 +1322,7 @@ int tapi_data_release_network(tapi_context context, int slot_id, const char* typ
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_DATA];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1355,7 +1355,7 @@ int tapi_data_get_data_connection_list(tapi_context context, int slot_id, int ev
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_DATA];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1415,7 +1415,7 @@ int tapi_data_set_preferred_apn(tapi_context context,
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_DATA];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1452,7 +1452,7 @@ int tapi_data_get_preferred_apn(tapi_context context, int slot_id, char** out)
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_DATA];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1486,7 +1486,7 @@ int tapi_data_enable_data(tapi_context context, bool enabled)
     for (int i = 0; i < CONFIG_MODEM_ACTIVE_COUNT; i++) {
         proxy = ctx->dbus_proxy[i][DBUS_PROXY_DATA];
         if (proxy == NULL) {
-            tapi_log_error("no available proxy ...\n");
+            tapi_log_error("no available proxy in %s", __func__);
             return -EIO;
         }
 
@@ -1519,7 +1519,7 @@ int tapi_data_get_enabled(tapi_context context, bool* out)
 
     proxy = ctx->dbus_proxy[DEFAULT_SLOT_ID][DBUS_PROXY_DATA];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1555,7 +1555,7 @@ int tapi_data_enable_roaming(tapi_context context, bool enabled)
     for (int i = 0; i < CONFIG_MODEM_ACTIVE_COUNT; i++) {
         proxy = ctx->dbus_proxy[i][DBUS_PROXY_DATA];
         if (proxy == NULL) {
-            tapi_log_error("no available proxy ...\n");
+            tapi_log_error("no available proxy in %s", __func__);
             return -EIO;
         }
 
@@ -1588,7 +1588,7 @@ int tapi_data_get_roaming_enabled(tapi_context context, bool* out)
 
     proxy = ctx->dbus_proxy[DEFAULT_SLOT_ID][DBUS_PROXY_DATA];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1611,7 +1611,7 @@ int tapi_data_set_default_slot(tapi_context context, int slot_id)
 
     proxy = ctx->dbus_proxy_manager;
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1644,7 +1644,7 @@ int tapi_data_get_default_slot(tapi_context context, int* out)
 
     proxy = ctx->dbus_proxy_manager;
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1689,7 +1689,7 @@ int tapi_data_set_data_allow(tapi_context context, int slot_id,
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_DATA];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1746,7 +1746,7 @@ int tapi_data_register(tapi_context context,
 
     modem_path = tapi_utils_get_modem_path(slot_id);
     if (modem_path == NULL) {
-        tapi_log_error("no available modem ...\n");
+        tapi_log_error("no available modem in %s", __func__);
         return -EIO;
     }
 

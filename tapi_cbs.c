@@ -173,7 +173,7 @@ int tapi_sms_set_cell_broadcast_power_on(tapi_context context, int slot_id, bool
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CBS];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -203,7 +203,7 @@ int tapi_sms_get_cell_broadcast_power_on(tapi_context context, int slot_id, bool
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CBS];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EISCONN;
     }
 
@@ -238,7 +238,7 @@ int tapi_sms_set_cell_broadcast_topics(tapi_context context, int slot_id, char* 
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CBS];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -268,7 +268,7 @@ int tapi_sms_get_cell_broadcast_topics(tapi_context context, int slot_id, char**
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CBS];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EISCONN;
     }
 
@@ -302,7 +302,7 @@ int tapi_cbs_register(tapi_context context, int slot_id, tapi_indication_msg msg
 
     path = tapi_utils_get_modem_path(slot_id);
     if (path == NULL) {
-        tapi_log_error("no available modem ...\n");
+        tapi_log_error("no available modem in %s", __func__);
         return -EIO;
     }
 
