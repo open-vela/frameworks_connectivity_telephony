@@ -76,7 +76,18 @@ static int tapi_call_property_change(DBusMessage* message, tapi_async_handler* h
 
 static int call_strcpy(char* dst, const char* src, int dst_size)
 {
-    if (dst == NULL || src == NULL || strlen(src) > dst_size) {
+    if (dst == NULL) {
+        tapi_log_error("dst in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (src == NULL) {
+        tapi_log_error("src in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (strlen(src) > dst_size) {
+        tapi_log_error("src length is too long");
         return -EINVAL;
     }
 
@@ -100,8 +111,18 @@ static void call_param_append(DBusMessageIter* iter, void* user_data)
     call_param* param;
     char* number;
 
-    if (handler == NULL || handler->result == NULL || handler->result->data == NULL) {
-        tapi_log_error("invalid dial request argument !!");
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
+        return;
+    }
+
+    if (handler->result == NULL) {
+        tapi_log_error("result in %s is null", __func__);
+        return;
+    }
+
+    if (handler->result->data == NULL) {
+        tapi_log_error("data in %s is null", __func__);
         return;
     }
 
@@ -131,7 +152,7 @@ static void answer_hangup_param_append(DBusMessageIter* iter, void* user_data)
     char* path = user_data;
 
     if (path == NULL) {
-        tapi_log_error("invalid answer_hangup request argument !!");
+        tapi_log_error("invalid answer_hangup request argument in %s!!", __func__);
         return;
     }
 
@@ -145,8 +166,18 @@ static void dtmf_param_append(DBusMessageIter* iter, void* user_data)
     unsigned char digit;
     int flag;
 
-    if (handler == NULL || handler->result == NULL || handler->result->data == NULL) {
-        tapi_log_error("invalid dtmf request argument !!");
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
+        return;
+    }
+
+    if (handler->result == NULL) {
+        tapi_log_error("result in %s is null", __func__);
+        return;
+    }
+
+    if (handler->result->data == NULL) {
+        tapi_log_error("data in %s is null", __func__);
         return;
     }
 
@@ -167,7 +198,7 @@ static void deflect_param_append_0(DBusMessageIter* iter, void* user_data)
     char *path, *number;
 
     if (param == NULL) {
-        tapi_log_error("invalid deflect request argument !!");
+        tapi_log_error("param in %s is null", __func__);
         return;
     }
 
@@ -203,7 +234,7 @@ static void conference_param_append(DBusMessageIter* iter, void* user_data)
 
     ims_conference_participants = user_data;
     if (ims_conference_participants == NULL) {
-        tapi_log_error("invalid conference request argument !!");
+        tapi_log_error("ims_conference_participants in %s is null", __func__);
         return;
     }
 
@@ -244,7 +275,7 @@ static int tapi_call_default_voicecall_slot_change(DBusMessage* message, tapi_as
     }
 
     if (!dbus_message_iter_init(message, &iter)) {
-        tapi_log_error("dbus message iter init failed");
+        tapi_log_error("dbus message iter init failed in %s", __func__);
         return false;
     }
 
@@ -287,7 +318,6 @@ static int ring_back_tone_change(DBusMessage* message, tapi_async_handler* handl
 
     if (is_call_signal_message(message, &iter, DBUS_TYPE_INT32)) {
         dbus_message_iter_get_basic(&iter, &ar->arg2);
-
         ar->status = OK;
         cb(ar);
     }
@@ -356,7 +386,7 @@ static int call_state_changed(DBusConnection* connection, DBusMessage* message, 
     }
 
     if (!dbus_message_iter_init(message, &iter)) {
-        tapi_log_error("dbus message iter init failed");
+        tapi_log_error("dbus message iter init failed in %s", __func__);
         return 0;
     }
 
@@ -398,14 +428,14 @@ static void dial_call_callback(DBusMessage* message, void* user_data)
 
     dbus_error_init(&err);
     if (dbus_set_error_from_message(&err, message) == true) {
-        tapi_log_error("%s: %s\n", err.name, err.message);
+        tapi_log_error("error from message in %s, %s: %s", __func__, err.name, err.message);
         dbus_error_free(&err);
         ar->status = ERROR;
         goto done;
     }
 
     if (dbus_message_iter_init(message, &iter) == false) {
-        tapi_log_error("dbus message iter init failed");
+        tapi_log_error("dbus message iter init failed in %s", __func__);
         ar->status = ERROR;
         goto done;
     }
@@ -447,7 +477,7 @@ static void play_dtmf_callback(DBusMessage* message, void* user_data)
     ar->status = OK;
     dbus_error_init(&err);
     if (dbus_set_error_from_message(&err, message) == true) {
-        tapi_log_error("%s: %s\n", err.name, err.message);
+        tapi_log_error("error from message in %s, %s: %s", __func__, err.name, err.message);
         dbus_error_free(&err);
         ar->status = ERROR;
     }
@@ -484,20 +514,20 @@ static void merge_call_complete(DBusMessage* message, void* user_data)
 
     dbus_error_init(&err);
     if (dbus_set_error_from_message(&err, message) == true) {
-        tapi_log_error("%s: %s\n", err.name, err.message);
+        tapi_log_error("error from message in %s, %s: %s", __func__, err.name, err.message);
         dbus_error_free(&err);
         ar->status = ERROR;
         goto done;
     }
 
     if (dbus_message_has_signature(message, "ao") == false) {
-        tapi_log_error("dbus message has wrong signature");
+        tapi_log_error("dbus message has wrong signature in %s", __func__);
         ar->status = ERROR;
         goto done;
     }
 
     if (dbus_message_iter_init(message, &iter) == false) {
-        tapi_log_error("dbus message iter init failed");
+        tapi_log_error("dbus message iter init failed in %s", __func__);
         ar->status = ERROR;
         goto done;
     }
@@ -550,18 +580,18 @@ static void call_list_query_complete(DBusMessage* message, void* user_data)
     // start to handle response message.
     dbus_error_init(&err);
     if (dbus_set_error_from_message(&err, message) == true) {
-        tapi_log_error("%s: %s\n", err.name, err.message);
+        tapi_log_error("error from message in %s, %s: %s", __func__, err.name, err.message);
         dbus_error_free(&err);
         goto done;
     }
 
     if (dbus_message_has_signature(message, "a(oa{sv})") == false) {
-        tapi_log_error("dbus message has wrong signature");
+        tapi_log_error("dbus message has wrong signature in %s", __func__);
         goto done;
     }
 
     if (dbus_message_iter_init(message, &args) == false) {
-        tapi_log_error("dbus message iter init failed");
+        tapi_log_error("dbus message iter init failed in %s", __func__);
         goto done;
     }
 
@@ -758,13 +788,13 @@ static int tapi_register_manager_call_signal(tapi_context context, int slot_id, 
 
     member = get_call_signal_member(msg);
     if (member == NULL) {
-        tapi_log_error("no signal member found ...\n");
+        tapi_log_error("member in %s is null", __func__);
         return -EINVAL;
     }
 
     modem_path = tapi_utils_get_modem_path(slot_id);
     if (modem_path == NULL) {
-        tapi_log_error("no available modem ...\n");
+        tapi_log_error("modem_path in %s is null", __func__);
         return -EIO;
     }
 
@@ -866,11 +896,12 @@ static int manage_call_proxy_method(tapi_context context, int slot_id, const cha
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
     if (!g_dbus_proxy_method_call(proxy, member, NULL, no_operate_callback, NULL, NULL)) {
+        tapi_log_error("dbus method call fail in %s", __func__);
         report_data_logging_for_call_if(!strcmp("HangupAll", member), ctx, OFONO_CALL_TYPE_UNKNOW,
             OFONO_DIRECTION_UNKNOW, OFONO_VOICE, OFONO_HANGUP_FAIL, "dbus method call fail");
         report_data_logging_for_call_if(!strcmp("ReleaseAndAnswer", member)
@@ -911,7 +942,7 @@ static int manager_conference(tapi_context context, int slot_id,
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -953,7 +984,7 @@ static int call_play_dtmf(tapi_context context, int slot_id, unsigned char digit
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1025,7 +1056,7 @@ int tapi_call_dial(tapi_context context, int slot_id, char* number, int hide_cal
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1169,7 +1200,7 @@ int tapi_call_get_all_calls(tapi_context context, int slot_id, int event_id,
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1224,7 +1255,7 @@ int tapi_call_merge_call(tapi_context context,
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1283,7 +1314,7 @@ int tapi_call_separate_call(tapi_context context,
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1337,7 +1368,7 @@ int tapi_call_send_tones(void* context, int slot_id, char* tones)
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1374,7 +1405,7 @@ int tapi_call_get_ecc_list(tapi_context context, int slot_id, ecc_info* out)
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1382,7 +1413,7 @@ int tapi_call_get_ecc_list(tapi_context context, int slot_id, ecc_info* out)
         syslog(LOG_DEBUG, "no EmergencyNumbers in CALL,use default");
         proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
         if (proxy == NULL) {
-            tapi_log_error("no available proxy ...\n");
+            tapi_log_error("no available proxy in %s", __func__);
             return -EIO;
         }
         if (!g_dbus_proxy_get_property(proxy, "EmergencyNumbers", &list)) {
@@ -1567,7 +1598,7 @@ int tapi_call_register_call_state_change(tapi_context context, int slot_id,
 
     modem_path = tapi_utils_get_modem_path(slot_id);
     if (modem_path == NULL) {
-        tapi_log_error("no available modem ...\n");
+        tapi_log_error("no available modem in %s", __func__);
         return -EIO;
     }
 
@@ -1626,7 +1657,7 @@ int tapi_call_answer_by_id(tapi_context context, int slot_id, char* call_id)
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1663,7 +1694,7 @@ int tapi_call_hangup_by_id(tapi_context context, int slot_id, char* call_id)
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1706,7 +1737,7 @@ int tapi_call_deflect_by_id(tapi_context context, int slot_id, char* call_id, ch
 
     proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1749,7 +1780,7 @@ int tapi_call_set_default_slot(tapi_context context, int slot_id)
 
     proxy = ctx->dbus_proxy_manager;
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 
@@ -1783,7 +1814,7 @@ int tapi_call_get_default_slot(tapi_context context, int* out)
 
     proxy = ctx->dbus_proxy_manager;
     if (proxy == NULL) {
-        tapi_log_error("no available proxy ...\n");
+        tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
     }
 

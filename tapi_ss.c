@@ -966,12 +966,12 @@ static bool is_ussd_signal_message(DBusMessage* message,
     DBusMessageIter* iter, int msg_type)
 {
     if (!dbus_message_iter_init(message, iter)) {
-        tapi_log_error("ussd_signal message has no param");
+        tapi_log_error("message iter init failed in %s", __func__);
         return false;
     }
 
     if (dbus_message_iter_get_arg_type(iter) != msg_type) {
-        tapi_log_error("ussd_signal param is not right");
+        tapi_log_error("arg type in %s is invalid", __func__);
         return false;
     }
 
@@ -2000,6 +2000,7 @@ int tapi_ss_get_call_waiting(tapi_context context, int slot_id, int event_id,
 
     ar = malloc(sizeof(tapi_async_result));
     if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
         free(handler);
         return -ENOMEM;
     }
