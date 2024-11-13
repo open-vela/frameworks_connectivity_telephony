@@ -26,18 +26,21 @@ TAPI 提供了一组功能丰富的工具和接口，涵盖网络服务、通话
 │   ├── tapi_sms.h
 │   ├── tapi_ss.h
 │   └── tapi_stk.h
-├── tapi_call.c
-├── tapi_cbs.c
-├── tapi_data.c
-├── tapi_ims.c
-├── tapi_manager.c
-├── tapi_network.c
-├── tapi_phonebook.c
-├── tapi_sim.c
-├── tapi_sms.c
-├── tapi_ss.c
-├── tapi_stk.c
-├── tapi_utils.c
+├── src
+│   ├── tapi_call.c
+│   ├── tapi_cbs.c
+│   ├── tapi_data.c
+│   ├── tapi_ims.c
+│   ├── tapi_manager.c
+│   ├── tapi_network.c
+│   ├── tapi_phonebook.c
+│   ├── tapi_sim.c
+│   ├── tapi_sms.c
+│   ├── tapi_ss.c
+│   ├── tapi_stk.c
+│   └── tapi_utils.c
+├── tools
+│   └── telephony_tool.c
 ├── README.md
 └── README_zh-cn.md
 ```
@@ -56,7 +59,8 @@ TAPI 提供了一组功能丰富的工具和接口，涵盖网络服务、通话
 | SMS | tapi_sms.c/h | 短信服务接口 |
 | IMS | tapi_ims.c/h | IMS 服务接口  |
 | Phonebook | tapi_phonebook.c/h | 电话簿接口  |
-| <div style="width: 120pt">Telephony 工具类| tapi_utils.c/h | Telephony 工具类接口  |
+| <div style="width: 120pt">Telephony Utils| tapi_utils.c/h | Telephony 工具类接口  |
+| Telephony Tools| telephony_tool.c | Telephony 内部接口测试  |
 
 ### **功能介绍**
 
@@ -101,8 +105,11 @@ TAPI 提供了一组功能丰富的工具和接口，涵盖网络服务、通话
 #### Phonebook Api
 - SIM 卡联系人管理：SIM 卡上的联系人进行增删改查的相关操作。
 
-#### Utils Api
+#### Telephony Utils Api
 - 双向数据类型转换：Telephony 内部结构体参数与基本类型之间的双向转换，以满足不同数据处理需求。
+
+#### Telephony Tools
+- 内部接口测试：用于内部所有 TAPI 接口测试。
 
 ## **TAPI 工作模型**
 

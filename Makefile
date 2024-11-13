@@ -25,11 +25,10 @@ CFLAGS += ${INCDIR_PREFIX}$(APPDIR)/external/ofono/include
 CFLAGS += ${INCDIR_PREFIX}$(APPDIR)/frameworks/system/utils/gdbus
 CFLAGS += ${INCDIR_PREFIX}$(APPDIR)/frameworks/connectivity/telephony
 
-CSRCS += tapi_manager.c tapi_utils.c tapi_call.c tapi_data.c tapi_sim.c tapi_stk.c
-CSRCS += tapi_cbs.c tapi_sms.c tapi_network.c tapi_ss.c tapi_ims.c tapi_phonebook.c
+CSRCS += $(wildcard src/*.c)
 
 ifneq ($(CONFIG_TELEPHONY_TOOL),)
-  MAINSRC   += telephony_tool.c
+  MAINSRC   += tools/telephony_tool.c
   PROGNAME  += telephonytool
   PRIORITY  += $(CONFIG_TELEPHONY_TOOL_PRIORITY)
   STACKSIZE += $(CONFIG_TELEPHONY_TOOL_STACKSIZE)

@@ -25,18 +25,21 @@ TAPI provides a set of feature-rich tools and interfaces, covering network servi
 │   ├── tapi_sms.h
 │   ├── tapi_ss.h
 │   └── tapi_stk.h
-├── tapi_call.c
-├── tapi_cbs.c
-├── tapi_data.c
-├── tapi_ims.c
-├── tapi_manager.c
-├── tapi_network.c
-├── tapi_phonebook.c
-├── tapi_sim.c
-├── tapi_sms.c
-├── tapi_ss.c
-├── tapi_stk.c
-├── tapi_utils.c
+├── src
+│   ├── tapi_call.c
+│   ├── tapi_cbs.c
+│   ├── tapi_data.c
+│   ├── tapi_ims.c
+│   ├── tapi_manager.c
+│   ├── tapi_network.c
+│   ├── tapi_phonebook.c
+│   ├── tapi_sim.c
+│   ├── tapi_sms.c
+│   ├── tapi_ss.c
+│   ├── tapi_stk.c
+│   └── tapi_utils.c
+├── tools
+│   └── telephony_tool.c
 ├── README.md
 └── README_zh-cn.md
 ```
@@ -55,7 +58,8 @@ TAPI provides a set of feature-rich tools and interfaces, covering network servi
 | SMS | tapi_sms.c/h | SMS service interface |
 | IMS | tapi_ims.c/h | IMS service interface  |
 | Phonebook | tapi_phonebook.c/h | Phonebook interface  |
-| <div style="width: 120pt">Utils| tapi_utils.c/h |Telephony util interface |
+| <div style="width: 120pt">Telephony Utils| tapi_utils.c/h |Telephony util interface |
+| Telephony Tools| telephony_tool.c | Telephony internal interface test  |
 
 ### **Function Introduction**
 
@@ -100,8 +104,11 @@ TAPI provides a set of feature-rich tools and interfaces, covering network servi
 #### Phonebook Api
 - SIM card contact management: perform operations related to adding, deleting, modifying and checking contacts on the SIM card.
 
-#### Utils Api
+#### Telephony Utils Api
 - Bidirectional data type conversion: Bidirectional conversion between Telephony internal structure parameters and basic types to meet different data processing requirements.
+
+#### Telephony Tools
+- Internal interface test: Used for testing all internal TAPI interfaces.
 
 ## **TAPI Workflow**
 
