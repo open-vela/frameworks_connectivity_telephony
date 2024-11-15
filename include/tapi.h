@@ -315,7 +315,7 @@ typedef void* tapi_context;
 const char* tapi_utils_network_mode_to_string(tapi_pref_net_mode mode);
 tapi_pref_net_mode tapi_utils_network_mode_from_string(const char* mode);
 tapi_network_type tapi_utils_network_type_from_ril_tech(int type);
-const char* tapi_utils_registration_status_to_string(int status);
+const char* tapi_utils_get_registration_status_string(int status);
 tapi_registration_state tapi_utils_registration_status_from_string(const char* status);
 tapi_selection_mode tapi_utils_registration_mode_from_string(const char* mode);
 tapi_operator_status tapi_utils_operator_status_from_string(const char* mode);
