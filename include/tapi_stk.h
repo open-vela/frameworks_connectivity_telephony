@@ -46,10 +46,10 @@ typedef struct {
 } tapi_stk_menu_item;
 
 typedef struct {
-    char* text;
+    char* info;
     unsigned char icon_id;
     int urgent;
-} tapi_stk_display_text_params;
+} tapi_stk_display_info_params;
 
 typedef struct {
     char* alpha;
@@ -60,14 +60,14 @@ typedef struct {
     char* alpha;
     char* def_input;
     char icon_id;
-    char min_chars;
-    char max_chars;
+    char min_len;
+    char max_len;
     int hide_typing;
 } tapi_stk_request_input_params;
 
 typedef struct {
     char* tone;
-    char* text;
+    char* info;
     unsigned char icon_id;
 } tapi_stk_play_tone_params;
 
@@ -79,7 +79,7 @@ typedef struct {
 } tapi_stk_request_selection_params;
 
 typedef struct {
-    char* information;
+    char* info;
     unsigned char icon_id;
     char* url;
 } tapi_stk_confirm_launch_browser_params;
