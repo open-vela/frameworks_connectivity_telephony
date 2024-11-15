@@ -59,25 +59,25 @@ static DBusMessage* stk_agent_release(DBusConnection* conn,
     DBusMessage* msg, void* user_data);
 static DBusMessage* stk_agent_cancel(DBusConnection* conn,
     DBusMessage* msg, void* user_data);
-static DBusMessage* stk_agent_display_text(DBusConnection* conn,
+static DBusMessage* stk_agent_show_information(DBusConnection* conn,
     DBusMessage* msg, void* user_data);
-static DBusMessage* stk_agent_request_digit(DBusConnection* conn,
+static DBusMessage* stk_agent_handle_request_digit(DBusConnection* conn,
     DBusMessage* msg, void* user_data);
-static DBusMessage* stk_agent_request_key(DBusConnection* conn,
+static DBusMessage* stk_agent_handle_request_key(DBusConnection* conn,
     DBusMessage* msg, void* user_data);
-static DBusMessage* stk_agent_request_confirmation(DBusConnection* conn,
+static DBusMessage* stk_agent_handle_request_confirmation(DBusConnection* conn,
     DBusMessage* msg, void* user_data);
-static DBusMessage* stk_agent_request_input(DBusConnection* conn,
+static DBusMessage* stk_agent_handle_request_input(DBusConnection* conn,
     DBusMessage* msg, void* user_data);
-static DBusMessage* stk_agent_request_digits(DBusConnection* conn,
+static DBusMessage* stk_agent_handle_request_digits(DBusConnection* conn,
     DBusMessage* msg, void* user_data);
-static DBusMessage* stk_agent_play_tone(DBusConnection* conn,
+static DBusMessage* stk_agent_handle_play_tone(DBusConnection* conn,
     DBusMessage* msg, void* user_data);
-static DBusMessage* stk_agent_loop_tone(DBusConnection* conn,
+static DBusMessage* stk_agent_handle_loop_tone(DBusConnection* conn,
     DBusMessage* msg, void* user_data);
-static DBusMessage* stk_agent_request_selection(DBusConnection* conn,
+static DBusMessage* stk_agent_handle_request_selection(DBusConnection* conn,
     DBusMessage* msg, void* user_data);
-static DBusMessage* stk_agent_request_quick_digit(DBusConnection* conn,
+static DBusMessage* stk_agent_handle_request_quick_digit(DBusConnection* conn,
     DBusMessage* msg, void* user_data);
 static DBusMessage* stk_agent_confirm_call_setup(DBusConnection* conn,
     DBusMessage* msg, void* user_data);
@@ -94,58 +94,58 @@ static DBusMessage* stk_agent_confirm_open_channel(DBusConnection* conn,
  * Private Data
  ****************************************************************************/
 
-static const GDBusMethodTable stk_agent_methods[] = {
-    { GDBUS_METHOD("Release", NULL, NULL, stk_agent_release) },
-    { GDBUS_ASYNC_METHOD("DisplayText",
-        GDBUS_ARGS({ "text", "s" }, { "icon_id", "y" }, { "urgent", "b" }),
-        NULL, stk_agent_display_text) },
-    { GDBUS_ASYNC_METHOD("RequestDigit",
+static const GDBusMethodTable agent_methods[] = {
+    { GDBUS_METHOD("AgentRelease", NULL, NULL, stk_agent_release) },
+    { GDBUS_ASYNC_METHOD("ConfirmCallSetup",
+        GDBUS_ARGS({ "info", "s" }, { "icon_id", "y" }),
+        GDBUS_ARGS({ "confirm", "b" }), stk_agent_confirm_call_setup) },
+    { GDBUS_ASYNC_METHOD("ConfirmLaunchBrowser",
+        GDBUS_ARGS({ "info", "s" }, { "icon_id", "y" }, { "url", "s" }),
+        GDBUS_ARGS({ "confirm", "b" }), stk_agent_confirm_launch_browser) },
+    { GDBUS_ASYNC_METHOD("ConfirmOpenChannel",
+        GDBUS_ARGS({ "info", "s" }, { "icon_id", "y" }),
+        GDBUS_ARGS({ "confirm", "b" }), stk_agent_confirm_open_channel) },
+    { GDBUS_ASYNC_METHOD("ConfirmRequest",
         GDBUS_ARGS({ "alpha", "s" }, { "icon_id", "y" }),
-        GDBUS_ARGS({ "digit", "s" }), stk_agent_request_digit) },
-    { GDBUS_ASYNC_METHOD("RequestKey",
+        GDBUS_ARGS({ "confirmation", "b" }), stk_agent_handle_request_confirmation) },
+    { GDBUS_ASYNC_METHOD("DisplayAction",
+        GDBUS_ARGS({ "info", "s" }, { "icon_id", "y" }),
+        NULL, stk_agent_display_action) },
+    { GDBUS_ASYNC_METHOD("DisplayActionInformation",
+        GDBUS_ARGS({ "info", "s" }, { "icon_id", "y" }),
+        NULL, stk_agent_display_action_information) },
+    { GDBUS_ASYNC_METHOD("RequestLoopTone",
+        GDBUS_ARGS({ "tone", "s" }, { "info", "s" }, { "icon_id", "y" }),
+        NULL, stk_agent_handle_loop_tone) },
+    { GDBUS_ASYNC_METHOD("RequestPlayTone",
+        GDBUS_ARGS({ "tone", "s" }, { "info", "s" }, { "icon_id", "y" }),
+        NULL, stk_agent_handle_play_tone) },
+    { GDBUS_ASYNC_METHOD("RequestQuickDigit",
         GDBUS_ARGS({ "alpha", "s" }, { "icon_id", "y" }),
-        GDBUS_ARGS({ "key", "s" }), stk_agent_request_key) },
-    { GDBUS_ASYNC_METHOD("RequestConfirmation",
-        GDBUS_ARGS({ "alpha", "s" }, { "icon_id", "y" }),
-        GDBUS_ARGS({ "confirmation", "b" }), stk_agent_request_confirmation) },
-    { GDBUS_ASYNC_METHOD("RequestInput",
-        GDBUS_ARGS({ "alpha", "s" }, { "icon_id", "y" },
-            { "default", "s" }, { "min_chars", "y" },
-            { "max_chars", "y" }, { "hide_typing", "b" }),
-        GDBUS_ARGS({ "input", "s" }), stk_agent_request_input) },
-    { GDBUS_ASYNC_METHOD("RequestDigits",
-        GDBUS_ARGS({ "alpha", "s" }, { "icon_id", "y" },
-            { "default", "s" }, { "min_chars", "y" },
-            { "max_chars", "y" }, { "hide_typing", "b" }),
-        GDBUS_ARGS({ "digits", "s" }), stk_agent_request_digits) },
-    { GDBUS_ASYNC_METHOD("PlayTone",
-        GDBUS_ARGS({ "tone", "s" }, { "text", "s" }, { "icon_id", "y" }),
-        NULL, stk_agent_play_tone) },
-    { GDBUS_ASYNC_METHOD("LoopTone",
-        GDBUS_ARGS({ "tone", "s" }, { "text", "s" }, { "icon_id", "y" }),
-        NULL, stk_agent_loop_tone) },
+        GDBUS_ARGS({ "digit", "s" }), stk_agent_handle_request_quick_digit) },
     { GDBUS_ASYNC_METHOD("RequestSelection",
         GDBUS_ARGS({ "title", "s" }, { "icon_id", "y" },
             { "items", "a(sy)" }, { "default", "n" }),
-        GDBUS_ARGS({ "selection", "y" }), stk_agent_request_selection) },
-    { GDBUS_ASYNC_METHOD("RequestQuickDigit",
+        GDBUS_ARGS({ "selection", "y" }), stk_agent_handle_request_selection) },
+    { GDBUS_ASYNC_METHOD("RequestWithDigit",
         GDBUS_ARGS({ "alpha", "s" }, { "icon_id", "y" }),
-        GDBUS_ARGS({ "digit", "s" }), stk_agent_request_quick_digit) },
-    { GDBUS_ASYNC_METHOD("ConfirmCallSetup",
-        GDBUS_ARGS({ "information", "s" }, { "icon_id", "y" }),
-        GDBUS_ARGS({ "confirm", "b" }), stk_agent_confirm_call_setup) },
-    { GDBUS_ASYNC_METHOD("DisplayActionInformation",
-        GDBUS_ARGS({ "text", "s" }, { "icon_id", "y" }),
-        NULL, stk_agent_display_action_information) },
-    { GDBUS_ASYNC_METHOD("ConfirmLaunchBrowser",
-        GDBUS_ARGS({ "information", "s" }, { "icon_id", "y" }, { "url", "s" }),
-        GDBUS_ARGS({ "confirm", "b" }), stk_agent_confirm_launch_browser) },
-    { GDBUS_ASYNC_METHOD("DisplayAction",
-        GDBUS_ARGS({ "text", "s" }, { "icon_id", "y" }),
-        NULL, stk_agent_display_action) },
-    { GDBUS_ASYNC_METHOD("ConfirmOpenChannel",
-        GDBUS_ARGS({ "information", "s" }, { "icon_id", "y" }),
-        GDBUS_ARGS({ "confirm", "b" }), stk_agent_confirm_open_channel) },
+        GDBUS_ARGS({ "digit", "s" }), stk_agent_handle_request_digit) },
+    { GDBUS_ASYNC_METHOD("RequestWithDigits",
+        GDBUS_ARGS({ "alpha", "s" }, { "icon_id", "y" },
+            { "default", "s" }, { "min_len", "y" },
+            { "max_len", "y" }, { "hide_typing", "b" }),
+        GDBUS_ARGS({ "digits", "s" }), stk_agent_handle_request_digits) },
+    { GDBUS_ASYNC_METHOD("RequestWithInput",
+        GDBUS_ARGS({ "alpha", "s" }, { "icon_id", "y" },
+            { "default", "s" }, { "min_len", "y" },
+            { "max_len", "y" }, { "hide_typing", "b" }),
+        GDBUS_ARGS({ "input", "s" }), stk_agent_handle_request_input) },
+    { GDBUS_ASYNC_METHOD("RequestWithKey",
+        GDBUS_ARGS({ "alpha", "s" }, { "icon_id", "y" }),
+        GDBUS_ARGS({ "key", "s" }), stk_agent_handle_request_key) },
+    { GDBUS_ASYNC_METHOD("ShowInformation",
+        GDBUS_ARGS({ "info", "s" }, { "icon_id", "y" }, { "urgent", "b" }),
+        NULL, stk_agent_show_information) },
     { GDBUS_NOREPLY_METHOD("Cancel", NULL, NULL, stk_agent_cancel) },
     {},
 };
@@ -419,11 +419,11 @@ done:
     return reply;
 }
 
-static DBusMessage* stk_agent_display_text(DBusConnection* conn,
+static DBusMessage* stk_agent_show_information(DBusConnection* conn,
     DBusMessage* msg, void* user_data)
 {
     tapi_async_handler* handler = user_data;
-    tapi_stk_display_text_params* params;
+    tapi_stk_display_info_params* params;
     tapi_async_function cb;
     tapi_async_result* ar;
     DBusMessage* reply;
@@ -465,7 +465,7 @@ static DBusMessage* stk_agent_display_text(DBusConnection* conn,
         goto done;
     }
 
-    params = malloc(sizeof(tapi_stk_display_text_params));
+    params = malloc(sizeof(tapi_stk_display_info_params));
     if (params == NULL) {
         tapi_log_error("params in %s is null", __func__);
         ar->status = ERROR;
@@ -473,7 +473,7 @@ static DBusMessage* stk_agent_display_text(DBusConnection* conn,
         goto done;
     }
 
-    if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_STRING, &params->text,
+    if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_STRING, &params->info,
             DBUS_TYPE_BYTE, &params->icon_id,
             DBUS_TYPE_BOOLEAN, &params->urgent,
             DBUS_TYPE_INVALID)) {
@@ -496,7 +496,7 @@ done:
     return reply;
 }
 
-static DBusMessage* stk_agent_request_digit(DBusConnection* conn,
+static DBusMessage* stk_agent_handle_request_digit(DBusConnection* conn,
     DBusMessage* msg, void* user_data)
 {
     tapi_async_handler* handler = user_data;
@@ -572,7 +572,7 @@ done:
     return reply;
 }
 
-static DBusMessage* stk_agent_request_key(DBusConnection* conn,
+static DBusMessage* stk_agent_handle_request_key(DBusConnection* conn,
     DBusMessage* msg, void* user_data)
 {
     tapi_async_handler* handler = user_data;
@@ -648,7 +648,7 @@ done:
     return reply;
 }
 
-static DBusMessage* stk_agent_request_confirmation(DBusConnection* conn,
+static DBusMessage* stk_agent_handle_request_confirmation(DBusConnection* conn,
     DBusMessage* msg, void* user_data)
 {
     tapi_async_handler* handler = user_data;
@@ -724,7 +724,7 @@ done:
     return reply;
 }
 
-static DBusMessage* stk_agent_request_input(DBusConnection* conn,
+static DBusMessage* stk_agent_handle_request_input(DBusConnection* conn,
     DBusMessage* msg, void* user_data)
 {
     tapi_async_handler* handler = user_data;
@@ -781,8 +781,8 @@ static DBusMessage* stk_agent_request_input(DBusConnection* conn,
     if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_STRING, &params->alpha,
             DBUS_TYPE_BYTE, &params->icon_id,
             DBUS_TYPE_STRING, &params->def_input,
-            DBUS_TYPE_BYTE, &params->min_chars,
-            DBUS_TYPE_BYTE, &params->max_chars,
+            DBUS_TYPE_BYTE, &params->min_len,
+            DBUS_TYPE_BYTE, &params->max_len,
             DBUS_TYPE_BOOLEAN, &params->hide_typing,
             DBUS_TYPE_INVALID)) {
         tapi_log_error("failed to get args in %s", __func__);
@@ -804,7 +804,7 @@ done:
     return reply;
 }
 
-static DBusMessage* stk_agent_request_digits(DBusConnection* conn,
+static DBusMessage* stk_agent_handle_request_digits(DBusConnection* conn,
     DBusMessage* msg, void* user_data)
 {
     tapi_async_handler* handler = user_data;
@@ -861,8 +861,8 @@ static DBusMessage* stk_agent_request_digits(DBusConnection* conn,
     if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_STRING, &params->alpha,
             DBUS_TYPE_BYTE, &params->icon_id,
             DBUS_TYPE_STRING, &params->def_input,
-            DBUS_TYPE_BYTE, &params->min_chars,
-            DBUS_TYPE_BYTE, &params->max_chars,
+            DBUS_TYPE_BYTE, &params->min_len,
+            DBUS_TYPE_BYTE, &params->max_len,
             DBUS_TYPE_BOOLEAN, &params->hide_typing,
             DBUS_TYPE_INVALID)) {
         tapi_log_error("failed to get args in %s", __func__);
@@ -884,7 +884,7 @@ done:
     return reply;
 }
 
-static DBusMessage* stk_agent_play_tone(DBusConnection* conn,
+static DBusMessage* stk_agent_handle_play_tone(DBusConnection* conn,
     DBusMessage* msg, void* user_data)
 {
     tapi_async_handler* handler = user_data;
@@ -939,7 +939,7 @@ static DBusMessage* stk_agent_play_tone(DBusConnection* conn,
     }
 
     if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_STRING, &params->tone,
-            DBUS_TYPE_STRING, &params->text,
+            DBUS_TYPE_STRING, &params->info,
             DBUS_TYPE_BYTE, &params->icon_id,
             DBUS_TYPE_INVALID)) {
         tapi_log_error("failed to get args in %s", __func__);
@@ -961,7 +961,7 @@ done:
     return reply;
 }
 
-static DBusMessage* stk_agent_loop_tone(DBusConnection* conn,
+static DBusMessage* stk_agent_handle_loop_tone(DBusConnection* conn,
     DBusMessage* msg, void* user_data)
 {
     tapi_async_handler* handler = user_data;
@@ -1016,7 +1016,7 @@ static DBusMessage* stk_agent_loop_tone(DBusConnection* conn,
     }
 
     if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_STRING, &params->tone,
-            DBUS_TYPE_STRING, &params->text,
+            DBUS_TYPE_STRING, &params->info,
             DBUS_TYPE_BYTE, &params->icon_id,
             DBUS_TYPE_INVALID)) {
         tapi_log_error("failed to get args in %s", __func__);
@@ -1038,7 +1038,7 @@ done:
     return reply;
 }
 
-static DBusMessage* stk_agent_request_selection(DBusConnection* conn,
+static DBusMessage* stk_agent_handle_request_selection(DBusConnection* conn,
     DBusMessage* msg, void* user_data)
 {
     tapi_stk_request_selection_params* params;
@@ -1162,7 +1162,7 @@ done:
     return reply;
 }
 
-static DBusMessage* stk_agent_request_quick_digit(DBusConnection* conn,
+static DBusMessage* stk_agent_handle_request_quick_digit(DBusConnection* conn,
     DBusMessage* msg, void* user_data)
 {
     tapi_async_handler* handler = user_data;
@@ -1318,7 +1318,7 @@ static DBusMessage* stk_agent_display_action_information(DBusConnection* conn,
     DBusMessage* msg, void* user_data)
 {
     tapi_async_handler* handler = user_data;
-    tapi_stk_display_text_params* params;
+    tapi_stk_display_info_params* params;
     tapi_async_function cb;
     tapi_async_result* ar;
     DBusMessage* reply;
@@ -1360,7 +1360,7 @@ static DBusMessage* stk_agent_display_action_information(DBusConnection* conn,
         goto done;
     }
 
-    params = malloc(sizeof(tapi_stk_display_text_params));
+    params = malloc(sizeof(tapi_stk_display_info_params));
     if (params == NULL) {
         tapi_log_error("params in %s is null", __func__);
         ar->status = ERROR;
@@ -1368,7 +1368,7 @@ static DBusMessage* stk_agent_display_action_information(DBusConnection* conn,
         goto done;
     }
 
-    if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_STRING, &params->text,
+    if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_STRING, &params->info,
             DBUS_TYPE_BYTE, &params->icon_id,
             DBUS_TYPE_INVALID)) {
         tapi_log_error("dbus message get args failed in %s", __func__);
@@ -1444,7 +1444,7 @@ static DBusMessage* stk_agent_confirm_launch_browser(DBusConnection* conn,
         goto done;
     }
 
-    if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_STRING, &params->information,
+    if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_STRING, &params->info,
             DBUS_TYPE_BYTE, &params->icon_id,
             DBUS_TYPE_STRING, &params->url,
             DBUS_TYPE_INVALID)) {
@@ -1471,7 +1471,7 @@ static DBusMessage* stk_agent_display_action(DBusConnection* conn,
     DBusMessage* msg, void* user_data)
 {
     tapi_async_handler* handler = user_data;
-    tapi_stk_display_text_params* params;
+    tapi_stk_display_info_params* params;
     tapi_async_function cb;
     tapi_async_result* ar;
     DBusMessage* reply;
@@ -1513,7 +1513,7 @@ static DBusMessage* stk_agent_display_action(DBusConnection* conn,
         goto done;
     }
 
-    params = malloc(sizeof(tapi_stk_display_text_params));
+    params = malloc(sizeof(tapi_stk_display_info_params));
     if (params == NULL) {
         tapi_log_error("params in %s is null", __func__);
         ar->status = ERROR;
@@ -1521,7 +1521,7 @@ static DBusMessage* stk_agent_display_action(DBusConnection* conn,
         goto done;
     }
 
-    if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_STRING, &params->text,
+    if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_STRING, &params->info,
             DBUS_TYPE_BYTE, &params->icon_id,
             DBUS_TYPE_INVALID)) {
         tapi_log_error("dbus message get args failed in %s", __func__);
@@ -1660,7 +1660,7 @@ int tapi_stk_agent_interface_register(tapi_context context, int slot_id,
     tapi_log_debug("starting stk agent interface in %s,  slot : %d, agent id : %s",
         __func__, slot_id, agent_id);
     if (!g_dbus_register_interface(ctx->connection, agent_id, OFONO_SIM_APP_INTERFACE,
-            stk_agent_methods, NULL, NULL, user_data, handler_free)) {
+            agent_methods, NULL, NULL, user_data, handler_free)) {
         tapi_log_error("Unable to register stk agent %s in %s", agent_id, __func__);
         return -EINVAL;
     }
