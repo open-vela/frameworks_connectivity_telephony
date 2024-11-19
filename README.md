@@ -4,13 +4,13 @@
 
 ## **Overview**
 
-Telephony is a framework and API set for handling call and communication functions in the Vela system. Framework/telephony is the interface layer that Vela provides to upper-layer applications, also known as TAPI (Telephony API).
+Telephony is a framework and API set for handling phone and communication functions in the `openvela` operating system. `Framework/telephony` is the interface layer provided by `openvela` communication to the application layer, also known as `TAPI (Telephony API)`.
 
-TAPI provides a set of feature-rich tools and interfaces, covering network services, call services, SMS services, data services, SIM card services and other related functions. These interface allow application developers to easily obtain Telephony-related information and complete application development by calling APIs without having to deeply understand the internal implementation of Telephony (Telephony is implemented by Ofono). In addition, Telephony also supports flexible expansion and customization to realize ever-changing communication requirements.
+`TAPI` provides a set of feature-rich tools and interfaces, covering network services, call services, SMS services, data services, SIM card services and other related functions. These interface designs allow application developers to easily obtain information related to Telephony and complete application development by calling `API` without having to deeply understand the internal business logic of Telephony (Telephony internal business is implemented by `Ofono`). In addition, Telephony also supports flexible expansion and customization to meet changing communication needs.
 
 ![TelephonyFramework](./TelephonyFramework.jpg)
 
-## **Project Directory**
+## **Code Directory**
 ```tree
 ├── include
 │   ├── tapi_call.h
@@ -65,7 +65,7 @@ TAPI provides a set of feature-rich tools and interfaces, covering network servi
 
 #### Common Api
 - Telephony service interface: provides an interface for obtaining and releasing Telephony services.
-- Obtain communications equipment related information: such as IMEI, MODEL, MSISDN, PhoneNumber, Modem parameters, etc.
+- Obtain communications equipment related information: such as `IMEI`, `MODEL`, `MSISDN`, `PhoneNumber`, `Modem` parameters, etc.
 - Communication capability management: turn on/off flight mode, turn on/off cellular communication capability, etc.
 
 #### Call Api
@@ -114,25 +114,25 @@ TAPI provides a set of feature-rich tools and interfaces, covering network servi
 
 ![TelephonyApi](./TapiEn.jpg)
 
-## **TAPI Code Demonstration**
-### **How to use**
-1. Call tapi_open function to get tapi_context
-```c
+## **TAPI code demonstration**
+### **Usage steps**
+1. Call the `tapi_open` function to get the `tapi_context`.
+    ```c
     tapi_context context;
     char* dbus_name = "vela.telephony.tool";
     context = tapi_open(dbus_name, on_tapi_client_ready, NULL);
-```
+    ```
 
-2. Transfer parameters to TAPI interface functions through tapi_context to operate Telephony services
-```c
+2. Pass the `tapi_context` parameter to the `TAPI` interface function to operate the `Telephony` service.
+    ```c
     tapi_radio_state current = RADIO_STATE_UNAVAILABLE;
     tapi_get_radio_state(t_context, get_used_slot_id(), &current);
-```
+    ```
 
-3. Call tapi_close function to release tapi_context
-```c
+3. Call the `tapi_close` function to release the `tapi_context`.
+    ```c
     tapi_close(context);
-```
+    ```
 
 ### **Complete sample code**
 ```c

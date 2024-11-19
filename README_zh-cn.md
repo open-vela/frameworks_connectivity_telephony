@@ -5,13 +5,13 @@
 
 ## **概述**
 
-Telephony 是 Vela 操作系统中用于处理电话和通信功能的框架和 API 集合。Framework/telephony 是 Vela 通信对应用层提供的接口层，又称为 TAPI（Telephony API）。
+Telephony 是 `openvela` 操作系统中用于处理电话和通信功能的框架和 `API` 集合。`Framework/telephony` 是 `openvela` 通信对应用层提供的接口层，又称为 `TAPI（Telephony API）`。
 
-TAPI 提供了一组功能丰富的工具和接口，涵盖网络服务、通话服务、短信服务、数据服务、SIM 卡服务及其他相关功能。这些接口设计使得应用开发者无需深入了解 Telephony 的内部业务逻辑（Telephony 内部业务由 Ofono 实现），只需调用 API 即可轻松获取与 Telephony 相关的信息，完成应用开发。另外，Telephony 还支持灵活的扩展和定制，可满足不断变化的通信需求。
+`TAPI` 提供了一组功能丰富的工具和接口，涵盖网络服务、通话服务、短信服务、数据服务、SIM 卡服务及其他相关功能。这些接口设计使得应用开发者无需深入了解 Telephony 的内部业务逻辑（Telephony 内部业务由 `Ofono` 实现），只需调用 API 即可轻松获取与 Telephony 相关的信息，完成应用开发。另外，Telephony 还支持灵活的扩展和定制，可满足不断变化的通信需求。
 
 ![Telephony架构图](./TelephonyFramework.jpg)
 
-## **项目目录**
+## **代码目录**
 ```tree
 ├── include
 │   ├── tapi_call.h
@@ -66,7 +66,7 @@ TAPI 提供了一组功能丰富的工具和接口，涵盖网络服务、通话
 
 #### Common Api
 - Telephony 服务接口：提供 Telephony 服务获取以及释放的接口。
-- 获取通讯设备相关信息：如 IMEI、MODEL、MSISDN、PhoneNumber、Modem 参数等信息。
+- 获取通讯设备相关信息：如 `IMEI`、`MODEL`、`MSISDN`、`PhoneNumber`、`Modem` 参数等信息。
 - 设备通讯能力管理：开启/关闭飞行模式、蜂窝通信能力等功能。
 
 #### Call Api
@@ -117,23 +117,23 @@ TAPI 提供了一组功能丰富的工具和接口，涵盖网络服务、通话
 
 ## **TAPI 代码演示**
 ### **使用步骤**
-1. 调用 tapi_open 函数获取 tapi_context
-```c
+1. 调用 `tapi_open` 函数获取 `tapi_context`。
+    ```c
     tapi_context context;
     char* dbus_name = "vela.telephony.tool";
     context = tapi_open(dbus_name, on_tapi_client_ready, NULL);
-```
+    ```
 
-2. 通过 tapi_context 传参到TAPI接口函数进行 Telephony 服务的操作
-```c
+2. 通过 `tapi_context` 传参到 `TAPI` 接口函数进行 `Telephony` 服务的操作。
+    ```c
     tapi_radio_state current = RADIO_STATE_UNAVAILABLE;
     tapi_get_radio_state(t_context, get_used_slot_id(), &current);
-```
+    ```
 
-3. 调用 tapi_close 函数释放 tapi_context
-```c
+3. 调用 `tapi_close` 函数释放 `tapi_context`。
+    ```c
     tapi_close(context);
-```
+    ```
 
 ### **完整示例代码**
 ```c
