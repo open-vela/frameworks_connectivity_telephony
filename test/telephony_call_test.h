@@ -85,7 +85,7 @@ int call_dial_second_call_and_hangup_by_caller_before_answering(int slot_id);
 int call_dial_second_call_active_and_hangup_by_caller(int slot_id);
 int call_hangup_hold_call_in_two_calls(int slot_id);
 int call_dial_to_empty_number(int slot_id);
-int call_incoming_answer_and_hangup(int slot_id);
+int incoming_call_answer_and_hangup(int slot_id);
 int call_display_the_network_of_incoming_call_in_call_process(int slot_id,
     char* network_name);
 int call_check_status_in_dialing(int slot_id);
