@@ -2,8 +2,6 @@
 #include <string.h>
 
 extern char* phone_num;
-extern int sock_fd;
-char modem_command_buf[512];
 
 extern struct judge_type judge_data;
 
