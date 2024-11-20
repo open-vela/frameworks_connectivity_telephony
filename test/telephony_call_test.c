@@ -3088,6 +3088,37 @@ on_exit:
     return res;
 }
 
+int incoming_call_and_local_hangup(int slot_id)
+{
+    int res = 0;
+    judge_data_init();
+    test_case_data_init();
+    judge_data.expect = NEW_CALL_INCOMING;
+
+    remote_call_operation(slot_id, phone_num, INCOMING_CALL);
+    if (judge()) {
+        syslog(LOG_ERR, "No incoming call message received in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge_data.result) {
+        syslog(LOG_ERR, "Unsolicited message error in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (tapi_call_hanup_current_call_test(slot_id) < 0) {
+        syslog(LOG_ERR, "Hangup call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
 // 67
 int call_listen_and_unlisten_ss(int slot_id)
 {
