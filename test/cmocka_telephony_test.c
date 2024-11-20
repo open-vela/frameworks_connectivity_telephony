@@ -420,6 +420,12 @@ static void TestNuttxCallConnectAndLocalHangup(void** state)
     assert_int_equal(ret, 0);
 }
 
+static void TestNuttxDialAndRemoteHangup(void** state)
+{
+    int ret = dial_and_remote_hangup(0);
+    assert_int_equal(ret, 0);
+}
+
 // static void TestNuttxRemoteHangupThenIncomingNewCall(void **state) {
 //     int ret = call_dial_caller_reject_and_incoming(0);
 //     assert_int_equal(ret, 0);
@@ -2083,6 +2089,7 @@ int main(int argc, char* argv[])
         cmocka_unit_test(TestNuttxIncomingCallAnswerAndRemoteHangup),
         cmocka_unit_test(TestNuttxOutgoingCallRemoteAnswerAndHangup),
         cmocka_unit_test(TestNuttxCallConnectAndLocalHangup),
+        cmocka_unit_test(TestNuttxDialAndRemoteHangup),
         cmocka_unit_test(TestNuttxUnlistenCall),
 #if 0
 

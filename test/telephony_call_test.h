@@ -112,4 +112,5 @@ int tapi_call_set_default_voicecall_slot_test(int slot_id);
 int tapi_call_get_default_voicecall_slot_test(int expect_res);
 int call_clear_voicecall_slot_set(void);
 int call_connect_and_local_hangup(int slot_id);
+int dial_and_remote_hangup(int slot_id);
 #endif

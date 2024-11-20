@@ -3059,6 +3059,35 @@ on_exit:
     return res;
 }
 
+int dial_and_remote_hangup(int slot_id)
+{
+    int res = 0;
+    if (tapi_call_dial_test(slot_id, phone_num, 0) < 0) {
+        syslog(LOG_ERR, "dail fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(5);
+    judge_data_init();
+    judge_data.expect = CALL_REMOTE_HANGUP;
+    remote_call_operation(slot_id, phone_num, REJECT_CALL);
+    if (judge()) {
+        syslog(LOG_ERR, "No hangup call message received in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge_data.result) {
+        syslog(LOG_ERR, "Unsolicited message error in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
 // 67
 int call_listen_and_unlisten_ss(int slot_id)
 {
