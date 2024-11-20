@@ -40,6 +40,11 @@ config TELEPHONY_TOOL
 	bool "Telephony tool"
 	default n
 
+config TELEPHONY_TEST
+	bool "enbale telephony test"
+	default n
+	depends on TELEPHONY && TESTING_CMOCKA
+
 if TELEPHONY_TOOL
 
 config TELEPHONY_TOOL_STACKSIZE
@@ -49,6 +54,22 @@ config TELEPHONY_TOOL_STACKSIZE
 config TELEPHONY_TOOL_PRIORITY
 	int "Telephony tool priority"
 	default 100
+
+endif
+
+if TELEPHONY_TEST
+
+config TELEPHONY_TEST_PRIORITY
+	int "Testsuites task priority"
+	default 99
+
+config TELEPHONY_TEST_STACKSIZE
+	int "Testsuites stack size"
+	default 16384
+
+config TEST_PHONE_NUMBER
+	string "test phone number"
+	default "10086"
 
 endif
 endif
