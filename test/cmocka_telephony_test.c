@@ -386,10 +386,11 @@ static void TestNuttxHangupBetweenDialingAndAnswering(void** state)
     assert_int_equal(ret, 0);
 }
 
-// static void TestNuttxAnswerAndHangupTheIncomingCall(void ** state) {
-//     int ret = call_incoming_answer_and_hangup(0);
-//     assert_int_equal(ret, 0);
-// }
+static void TestNuttxIncomingCallAnswerAndHangup(void** state)
+{
+    int ret = incoming_call_answer_and_hangup(0);
+    assert_int_equal(ret, 0);
+}
 
 // static void TestNuttxDialAgainAfterRemoteHangup(void **state) {
 //     int ret = call_dial_after_caller_reject(0);
@@ -2065,6 +2066,7 @@ int main(int argc, char* argv[])
         cmocka_unit_test(TestNuttxClearVoicecallSlotSet),
         // hangup between dialing and answering
         cmocka_unit_test(TestNuttxHangupBetweenDialingAndAnswering),
+        cmocka_unit_test(TestNuttxIncomingCallAnswerAndHangup),
         cmocka_unit_test(TestNuttxUnlistenCall),
 #if 0
 
