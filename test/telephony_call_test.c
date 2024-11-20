@@ -969,37 +969,49 @@ error:
     return -1;
 }
 
-int call_dial_active_and_hangup_by_caller(int slot_id)
+int outgoing_call_remote_answer_and_hangup(int slot_id)
 {
-    int ret1 = tapi_call_listen_call_test(slot_id);
-    int ret2 = tapi_call_dial_test(slot_id, phone_num, 0);
-    judge_data_init();
-    judge_data.expect = CALL_STATE_CHANGE_TO_ACTIVE;
-
-    if ((judge() || ret1 || ret2 || judge_data.result) != 0)
-        goto error;
-
-    judge_data_init();
-    judge_data.expect = CALL_REMOTE_HANGUP;
-
-    int integer_call_id = atoi(test_case_data.call_id + 16);
-    hangup_remote_call(integer_call_id);
-
-    if (judge())
-        return -1;
-
-    int ret3 = tapi_call_unlisten_call_test();
-    if ((judge_data.result || ret3) != 0)
-        goto error;
-
-    return 0;
-
-error:
-    if (tapi_get_call_count(slot_id)) {
-        tapi_call_hangup_all_test(slot_id);
+    int res = 0;
+    if (tapi_call_dial_test(slot_id, phone_num, 0) < 0) {
+        syslog(LOG_ERR, "dail fail in %s", __func__);
+        res = -1;
+        goto on_exit;
     }
 
-    return -1;
+    sleep(5);
+    judge_data_init();
+    judge_data.expect = CALL_STATE_CHANGE_TO_ACTIVE;
+    remote_call_operation(slot_id, phone_num, ACTIVE_CALL);
+    if (judge()) {
+        syslog(LOG_ERR, "No active call message received in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge_data.result) {
+        syslog(LOG_ERR, "Unsolicited message error in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    judge_data_init();
+    judge_data.expect = CALL_REMOTE_HANGUP;
+    remote_call_operation(slot_id, phone_num, REJECT_CALL);
+    if (judge()) {
+        syslog(LOG_ERR, "No hangup call message received in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge_data.result) {
+        syslog(LOG_ERR, "Unsolicited message error in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
 }
 
 int call_dial_caller_reject_and_incoming(int slot_id)
