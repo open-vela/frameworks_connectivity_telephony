@@ -1,7 +1,7 @@
-#include "telephony_call_test.h"
-#include "remote_operation.h"
-
 #include <string.h>
+
+#include "remote_operation.h"
+#include "telephony_call_test.h"
 
 extern char* phone_num;
 
@@ -1421,39 +1421,51 @@ on_exit:
     return res;
 }
 
-// todo
-int call_incoming_answer_and_hangup_by_dialer(int slot_id)
+int incoming_call_answer_and_remote_hangup(int slot_id)
 {
-    int ret1 = tapi_call_listen_call_test(slot_id);
+    int res = 0;
     judge_data_init();
     test_case_data_init();
     judge_data.expect = NEW_CALL_INCOMING;
 
-    // todo: incoming call
+    remote_call_operation(slot_id, phone_num, INCOMING_CALL);
+    if (judge()) {
+        syslog(LOG_ERR, "No incoming call message received in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
 
-    if (judge() != 0)
-        return -1;
+    if (judge_data.result) {
+        syslog(LOG_ERR, "Unsolicited message error in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
 
-    if ((ret1 || judge_data.result) != 0)
-        return -1;
+    sleep(3);
+    if (tapi_call_answer_call_test(slot_id, test_case_data.call_id) < 0) {
+        syslog(LOG_ERR, "Answer call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
 
-    sleep(10);
-    int ret2 = tapi_call_answer_call_test(slot_id, test_case_data.call_id);
-
+    sleep(3);
     judge_data_init();
     judge_data.expect = CALL_REMOTE_HANGUP;
+    remote_call_operation(slot_id, phone_num, REJECT_CALL);
+    if (judge()) {
+        syslog(LOG_ERR, "No incoming call message received in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
 
-    // todo: dialer hangup
+    if (judge_data.result) {
+        syslog(LOG_ERR, "Unsolicited message error in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
 
-    if (judge() != 0)
-        return -1;
-
-    int ret3 = tapi_call_unlisten_call_test();
-
-    if ((ret2 || ret3 || judge_data.result) != 0)
-        return -1;
-
-    return 0;
+on_exit:
+    return res;
 }
 
 // todo

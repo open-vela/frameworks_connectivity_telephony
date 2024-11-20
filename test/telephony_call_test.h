@@ -57,7 +57,7 @@ int call_hangup_after_caller_answer(int slot_id);
 int call_dial_active_and_hangup_by_caller(int slot_id);
 int call_dial_caller_reject_and_incoming(int slot_id);
 int call_dial_caller_reject_and_dial_another(int slot_id);
-int call_incoming_answer_and_hangup_by_dialer(int slot_id);
+int incoming_call_answer_and_remote_hangup(int slot_id);
 int call_dial_to_phone_in_call(int slot_id);
 int call_dial_to_phone_out_of_service(int slot_id);
 int call_dial_without_sim_card(int slot_id);
