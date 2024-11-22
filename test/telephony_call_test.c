@@ -284,6 +284,14 @@ static void tele_call_async_fun(tapi_async_result* result)
             judge_data.flag = EVENT_REQUEST_STOP_DTMF_DONE;
         }
         break;
+    case EVENT_REQUEST_CALL_MERGE_DONE:
+        syslog(LOG_DEBUG, "%s: EVENT_REQUEST_CALL_MERGE_DONE status: %d\n",
+            __func__, result->status);
+        if (judge_data.expect == EVENT_REQUEST_CALL_MERGE_DONE) {
+            judge_data.result = status;
+            judge_data.flag = EVENT_REQUEST_CALL_MERGE_DONE;
+        }
+        break;
     default:
         break;
     }
@@ -493,6 +501,37 @@ int tapi_call_unhold_test(int slot_id)
 
     if (judge()) {
         syslog(LOG_DEBUG, "tapi_call_unhold_test is not executed in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge_data.result) {
+        syslog(LOG_ERR, "async result is invalid in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
+int tapi_call_merge_call_test(int slot_id)
+{
+    int res = 0;
+    judge_data_init();
+    judge_data.expect = EVENT_REQUEST_CALL_MERGE_DONE;
+    int ret = tapi_call_merge_call(get_tapi_ctx(), slot_id, EVENT_REQUEST_CALL_MERGE_DONE,
+        tele_call_async_fun);
+
+    if (ret) {
+        syslog(LOG_ERR, "tapi_call_merge_call_test execute fail in %s, ret: %d",
+            __func__, ret);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge()) {
+        syslog(LOG_DEBUG, "tapi_call_merge_call_test is not executed in %s", __func__);
         res = -1;
         goto on_exit;
     }
@@ -2341,6 +2380,67 @@ int outgoing_call_hold_and_unhold_by_caller(int slot_id)
 
     if (tapi_call_hangup_all_test(slot_id) < 0) {
         syslog(LOG_ERR, "hangup call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
+int call_merge_by_user(int slot_id)
+{
+    int res = 0;
+    if (tapi_call_dial_test(slot_id, phone_num, 0) < 0) {
+        syslog(LOG_ERR, "dail fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (call_check_alerting_status() < 0) {
+        syslog(LOG_ERR, "check alerting fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (remote_operation_call_active_test(slot_id) < 0) {
+        syslog(LOG_ERR, "active call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (tapi_call_hold_test(slot_id) < 0) {
+        syslog(LOG_ERR, "hold call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (remote_operation_call_waiting_test(slot_id) < 0) {
+        syslog(LOG_ERR, "waiting call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (tapi_call_hold_and_answer_test(slot_id) < 0) {
+        syslog(LOG_ERR, "hold and answer call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (tapi_call_merge_call_test(slot_id) < 0) {
+        syslog(LOG_ERR, "merge call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (tapi_call_hangup_all_test(slot_id) < 0) {
+        syslog(LOG_ERR, "hangup all call fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
