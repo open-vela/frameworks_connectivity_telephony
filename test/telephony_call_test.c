@@ -546,6 +546,36 @@ on_exit:
     return res;
 }
 
+int tapi_call_release_and_swap_test(int slot_id)
+{
+    int res = 0;
+    judge_data_init();
+    judge_data.expect = CALL_STATE_CHANGE_TO_ACTIVE;
+    int ret = tapi_call_release_and_swap(get_tapi_ctx(), slot_id);
+
+    if (ret) {
+        syslog(LOG_ERR, "tapi_call_release_and_swap_test execute fail in %s, ret: %d",
+            __func__, ret);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge()) {
+        syslog(LOG_DEBUG, "tapi_call_release_and_swap_test is not executed in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge_data.result) {
+        syslog(LOG_ERR, "async result is invalid in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
 int tapi_call_hold_and_answer_test(int slot_id)
 {
     int res = 0;
@@ -2434,6 +2464,60 @@ int call_merge_by_user(int slot_id)
     sleep(3);
     if (tapi_call_merge_call_test(slot_id) < 0) {
         syslog(LOG_ERR, "merge call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (tapi_call_hangup_all_test(slot_id) < 0) {
+        syslog(LOG_ERR, "hangup all call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
+int call_release_and_swap_other_call(int slot_id)
+{
+    int res = 0;
+    if (tapi_call_dial_test(slot_id, phone_num, 0) < 0) {
+        syslog(LOG_ERR, "dail fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (call_check_alerting_status() < 0) {
+        syslog(LOG_ERR, "check alerting fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (remote_operation_call_active_test(slot_id) < 0) {
+        syslog(LOG_ERR, "active call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (remote_operation_call_waiting_test(slot_id) < 0) {
+        syslog(LOG_ERR, "waiting call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (tapi_call_hold_and_answer_test(slot_id) < 0) {
+        syslog(LOG_ERR, "hold and answer call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (tapi_call_release_and_swap_test(slot_id) < 0) {
+        syslog(LOG_ERR, "release and swap call fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
