@@ -998,6 +998,29 @@ on_exit:
     return res;
 }
 
+int remote_operation_call_incoming_test(int slot_id)
+{
+    int res = 0;
+    judge_data_init();
+    test_case_data_init();
+    judge_data.expect = NEW_CALL_INCOMING;
+
+    remote_call_operation(slot_id, phone_num, INCOMING_CALL);
+    if (judge()) {
+        syslog(LOG_ERR, "No incoming call message received in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge_data.result) {
+        syslog(LOG_ERR, "Unsolicited message error in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+on_exit:
+    return res;
+}
+
 int remote_operation_call_active_test(int slot_id)
 {
     int res = 0;
@@ -3254,19 +3277,8 @@ on_exit:
 int incoming_call_and_local_hangup(int slot_id)
 {
     int res = 0;
-    judge_data_init();
-    test_case_data_init();
-    judge_data.expect = NEW_CALL_INCOMING;
-
-    remote_call_operation(slot_id, phone_num, INCOMING_CALL);
-    if (judge()) {
-        syslog(LOG_ERR, "No incoming call message received in %s", __func__);
-        res = -1;
-        goto on_exit;
-    }
-
-    if (judge_data.result) {
-        syslog(LOG_ERR, "Unsolicited message error in %s", __func__);
+    if (remote_operation_call_incoming_test(slot_id) < 0) {
+        syslog(LOG_ERR, "incoming call fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
