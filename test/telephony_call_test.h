@@ -18,8 +18,9 @@
 #define NEW_CALL_WAITING 0x12
 #define NEW_CALL_DIALING 0x13
 #define NEW_CALL_ALERTING 0x14
-#define EVENT_REQUEST_START_DTMF_DONE 0x15
-#define EVENT_REQUEST_STOP_DTMF_DONE 0x16
+#define NEW_CONFERENCE_CALL 0x15
+#define EVENT_REQUEST_START_DTMF_DONE 0x30
+#define EVENT_REQUEST_STOP_DTMF_DONE 0x31
 
 int tapi_call_listen_call_test(int slot_id);
 int tapi_call_dial_test(int slot_id, char* phone_number, int hide_caller_id);
@@ -37,6 +38,7 @@ int tapi_dial_with_disabled_hide_callerid(int slot_id);
 int tapi_dial_with_default_hide_callerid(int slot_id);
 int tapi_dial_with_long_phone_number(int slot_id);
 int tapi_dial_with_short_phone_number(int slot_id);
+int tapi_call_dial_conference_test(int slot_id);
 int tapi_start_dtmf_test(int slot_id);
 int tapi_stop_dtmf_test(int slot_id);
 int tapi_call_load_ecc_list_test(int slot_id);
