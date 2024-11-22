@@ -576,6 +576,16 @@ static void TestNuttxDialWithNumerousCode(void** state)
     assert_int_equal(ret, OK);
 }
 
+static void TestNuttxDialConference(void** state)
+{
+    (void)state;
+    int ret = tapi_call_dial_conference_test(0);
+    assert_int_equal(ret, OK);
+    sleep(2);
+    ret = tapi_call_hangup_all_test(0);
+    assert_int_equal(ret, OK);
+}
+
 static void TestNuttCheckAleringStatusAfterDial(void** state)
 {
     (void)state;
@@ -2080,6 +2090,7 @@ int main(int argc, char* argv[])
         cmocka_unit_test(TestNuttxDialWithPauseCode),
         cmocka_unit_test(TestNuttxDialWithWaitCode),
         cmocka_unit_test(TestNuttxDialWithNumerousCode),
+        cmocka_unit_test(TestNuttxDialConference),
         cmocka_unit_test(TestNuttCheckAleringStatusAfterDial),
         cmocka_unit_test(TestNuttxStartDtmf),
         cmocka_unit_test(TestNuttxStopDtmf),

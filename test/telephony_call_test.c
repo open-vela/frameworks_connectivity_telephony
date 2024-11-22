@@ -125,6 +125,12 @@ static void call_state_change_cb(tapi_async_result* result)
         }
 
         judge_data.flag = judge_data.expect;
+    } else if (judge_data.expect == NEW_CONFERENCE_CALL) {
+        if (call_info->multiparty == 1) {
+            judge_data.result = 0;
+        }
+
+        judge_data.flag = judge_data.expect;
     }
 }
 
@@ -743,6 +749,39 @@ int tapi_call_dial_using_phone_number_with_numerous_code_test(int slot_id)
 {
     int ret = tapi_call_dial_test(slot_id, "10086,001;001", 0);
     return ret;
+}
+
+int tapi_call_dial_conference_test(int slot_id)
+{
+    int res = 0;
+    test_case_data_init();
+    judge_data_init();
+    judge_data.expect = NEW_CONFERENCE_CALL;
+
+    char* number[2] = { "10086", "10010" };
+    int ret = tapi_call_dial_conferece(get_tapi_ctx(), slot_id, number, 2);
+
+    if (ret) {
+        syslog(LOG_ERR, "tapi_call_dial_conference_test execute fail in %s, ret: %d",
+            __func__, ret);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge()) {
+        syslog(LOG_DEBUG, "tapi_call_dial_conference_test is not executed in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge_data.result) {
+        syslog(LOG_ERR, "async result is invalid in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
 }
 
 int tapi_call_load_ecc_list_test(int slot_id)
