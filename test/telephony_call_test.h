@@ -57,6 +57,7 @@ int call_dial_with_area_code(int slot_id);
 int call_dial_after_caller_reject(int slot_id);
 int call_hangup_after_caller_answer(int slot_id);
 int outgoing_call_remote_answer_and_hangup(int slot_id);
+int outgoing_call_hold_and_unhold_by_caller(int slot_id);
 int call_dial_caller_reject_and_incoming(int slot_id);
 int call_dial_caller_reject_and_dial_another(int slot_id);
 int incoming_call_answer_and_remote_hangup(int slot_id);
