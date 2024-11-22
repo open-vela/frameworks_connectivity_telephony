@@ -400,6 +400,13 @@ static void TestNuttxIncomingCallAnswerAndRemoteHangup(void** state)
     assert_int_equal(ret, 0);
 }
 
+static void TestNuttxCallReleaseAndAnswer(void** state)
+{
+    (void)state;
+    int ret = call_release_and_answer(0);
+    assert_int_equal(ret, 0);
+}
+
 static void TestNuttxCallHoldAndAnswerOtherCall(void** state)
 {
     (void)state;
@@ -2150,6 +2157,7 @@ int main(int argc, char* argv[])
         cmocka_unit_test(TestNuttxIncomingCallAnswerAndHangup),
         cmocka_unit_test(TestNuttxIncomingCallAnswerAndRemoteHangup),
         cmocka_unit_test(TestNuttxEnableCallWaiting),
+        cmocka_unit_test(TestNuttxCallReleaseAndAnswer),
         cmocka_unit_test(TestNuttxCallHoldAndAnswerOtherCall),
         cmocka_unit_test(TestNuttxCallMergeByUser),
         cmocka_unit_test(TestNuttxCallSeparateByUser),
