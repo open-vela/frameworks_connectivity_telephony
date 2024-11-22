@@ -507,6 +507,13 @@ on_exit:
     return res;
 }
 
+int tapi_call_send_tones_test(int slot_id)
+{
+    int ret = tapi_call_send_tones(get_tapi_ctx(), slot_id, "11");
+    syslog(LOG_DEBUG, "%s, ret: %d", __func__, ret);
+    return ret;
+}
+
 int tapi_call_hanup_current_call_test(int slot_id)
 {
     syslog(LOG_DEBUG, "%s called, current call id: %s\n",
@@ -2247,6 +2254,43 @@ int outgoing_call_hold_and_unhold_by_caller(int slot_id)
 
     if (tapi_call_unhold_test(slot_id) < 0) {
         syslog(LOG_ERR, "unhold call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (tapi_call_hangup_all_test(slot_id) < 0) {
+        syslog(LOG_ERR, "hangup call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
+int outgoing_call_active_and_send_tones(int slot_id)
+{
+    int res = 0;
+    if (tapi_call_dial_test(slot_id, phone_num, 0) < 0) {
+        syslog(LOG_ERR, "dail fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (call_check_alerting_status() < 0) {
+        syslog(LOG_ERR, "check alerting fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (remote_operation_call_active_test(slot_id) < 0) {
+        syslog(LOG_ERR, "active call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (tapi_call_send_tones_test(slot_id) < 0) {
+        syslog(LOG_ERR, "send tones fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
