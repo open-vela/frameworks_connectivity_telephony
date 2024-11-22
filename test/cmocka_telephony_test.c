@@ -442,6 +442,7 @@ static void TestNuttxDialAndRemoteHangup(void** state)
 
 static void TestNuttxIncomingCallandLocalHangup(void** state)
 {
+    (void)state;
     int ret = incoming_call_and_local_hangup(0);
     assert_int_equal(ret, 0);
 }
