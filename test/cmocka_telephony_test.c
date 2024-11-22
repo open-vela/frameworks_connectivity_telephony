@@ -414,6 +414,13 @@ static void TestNuttxCallMergeByUser(void** state)
     assert_int_equal(ret, 0);
 }
 
+static void TestNuttxCallReleaseAndSwapOtherCall(void** state)
+{
+    (void)state;
+    int ret = call_release_and_swap_other_call(0);
+    assert_int_equal(ret, 0);
+}
+
 // static void TestNuttxDialAgainAfterRemoteHangup(void **state) {
 //     int ret = call_dial_after_caller_reject(0);
 //     assert_int_equal(ret, 0);
@@ -2138,6 +2145,7 @@ int main(int argc, char* argv[])
         cmocka_unit_test(TestNuttxEnableCallWaiting),
         cmocka_unit_test(TestNuttxCallHoldAndAnswerOtherCall),
         cmocka_unit_test(TestNuttxCallMergeByUser),
+        cmocka_unit_test(TestNuttxCallReleaseAndSwapOtherCall),
         cmocka_unit_test(TestNuttxDisableCallWaiting),
         cmocka_unit_test(TestNuttxOutgoingCallRemoteAnswerAndHangup),
         cmocka_unit_test(TestNuttxOutgoingCallHoldAndHangup),

@@ -80,6 +80,7 @@ int call_swap_dial_reject_swap(int slot_id);
 int call_release_and_answer(int slot_id);
 int call_hold_and_hangup(int slot_id);
 int call_merge_by_user(int slot_id);
+int call_release_and_swap_other_call(int slot_id);
 int call_hold_incoming_hangup_second_recover_first(int slot_id);
 int call_hold_incoming_answer_hangup_second_recover_first(int slot_id);
 int call_incoming_second_call_swap_answer_hangup_swap(int slot_id);
