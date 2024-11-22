@@ -21,6 +21,7 @@
 #define NEW_CONFERENCE_CALL 0x15
 #define EVENT_REQUEST_START_DTMF_DONE 0x30
 #define EVENT_REQUEST_STOP_DTMF_DONE 0x31
+#define EVENT_REQUEST_CALL_MERGE_DONE 0x32
 
 int tapi_call_listen_call_test(int slot_id);
 int tapi_call_dial_test(int slot_id, char* phone_number, int hide_caller_id);
@@ -78,6 +79,7 @@ int call_incoming_hold_and_recover_by_caller(int slot_id);
 int call_swap_dial_reject_swap(int slot_id);
 int call_release_and_answer(int slot_id);
 int call_hold_and_hangup(int slot_id);
+int call_merge_by_user(int slot_id);
 int call_hold_incoming_hangup_second_recover_first(int slot_id);
 int call_hold_incoming_answer_hangup_second_recover_first(int slot_id);
 int call_incoming_second_call_swap_answer_hangup_swap(int slot_id);
