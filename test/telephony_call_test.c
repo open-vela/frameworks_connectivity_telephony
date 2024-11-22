@@ -998,6 +998,29 @@ on_exit:
     return res;
 }
 
+int remote_operation_call_reject_test(int slot_id)
+{
+    int res = 0;
+    judge_data_init();
+    judge_data.expect = CALL_REMOTE_HANGUP;
+    remote_call_operation(slot_id, phone_num, REJECT_CALL);
+
+    if (judge()) {
+        syslog(LOG_ERR, "No hangup call message received in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge_data.result) {
+        syslog(LOG_ERR, "Unsolicited message error in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
 int remote_operation_call_incoming_test(int slot_id)
 {
     int res = 0;
@@ -1147,17 +1170,8 @@ int outgoing_call_remote_answer_and_hangup(int slot_id)
     }
 
     sleep(3);
-    judge_data_init();
-    judge_data.expect = CALL_REMOTE_HANGUP;
-    remote_call_operation(slot_id, phone_num, REJECT_CALL);
-    if (judge()) {
-        syslog(LOG_ERR, "No hangup call message received in %s", __func__);
-        res = -1;
-        goto on_exit;
-    }
-
-    if (judge_data.result) {
-        syslog(LOG_ERR, "Unsolicited message error in %s", __func__);
+    if (remote_operation_call_reject_test(slot_id) < 0) {
+        syslog(LOG_ERR, "Remote call reject fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
@@ -1613,17 +1627,8 @@ int incoming_call_answer_and_remote_hangup(int slot_id)
     }
 
     sleep(3);
-    judge_data_init();
-    judge_data.expect = CALL_REMOTE_HANGUP;
-    remote_call_operation(slot_id, phone_num, REJECT_CALL);
-    if (judge()) {
-        syslog(LOG_ERR, "No incoming call message received in %s", __func__);
-        res = -1;
-        goto on_exit;
-    }
-
-    if (judge_data.result) {
-        syslog(LOG_ERR, "Unsolicited message error in %s", __func__);
+    if (remote_operation_call_reject_test(slot_id) < 0) {
+        syslog(LOG_ERR, "Remote call reject fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
@@ -3255,17 +3260,8 @@ int dial_and_remote_hangup(int slot_id)
     }
 
     sleep(5);
-    judge_data_init();
-    judge_data.expect = CALL_REMOTE_HANGUP;
-    remote_call_operation(slot_id, phone_num, REJECT_CALL);
-    if (judge()) {
-        syslog(LOG_ERR, "No hangup call message received in %s", __func__);
-        res = -1;
-        goto on_exit;
-    }
-
-    if (judge_data.result) {
-        syslog(LOG_ERR, "Unsolicited message error in %s", __func__);
+    if (remote_operation_call_reject_test(slot_id) < 0) {
+        syslog(LOG_ERR, "Remote call reject fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
