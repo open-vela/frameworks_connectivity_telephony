@@ -447,6 +447,66 @@ on_exit:
     return res;
 }
 
+int tapi_call_hold_test(int slot_id)
+{
+    int res = 0;
+    judge_data_init();
+    judge_data.expect = CALL_STATE_CHANGE_TO_HOLD;
+    int ret = tapi_call_hold_call(get_tapi_ctx(), slot_id);
+
+    if (ret) {
+        syslog(LOG_ERR, "tapi_call_hold_test execute fail in %s, ret: %d",
+            __func__, ret);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge()) {
+        syslog(LOG_DEBUG, "tapi_call_hold_test is not executed in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge_data.result) {
+        syslog(LOG_ERR, "async result is invalid in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
+int tapi_call_unhold_test(int slot_id)
+{
+    int res = 0;
+    judge_data_init();
+    judge_data.expect = CALL_STATE_CHANGE_TO_ACTIVE;
+    int ret = tapi_call_unhold_call(get_tapi_ctx(), slot_id);
+
+    if (ret) {
+        syslog(LOG_ERR, "tapi_call_unhold_test execute fail in %s, ret: %d",
+            __func__, ret);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge()) {
+        syslog(LOG_DEBUG, "tapi_call_unhold_test is not executed in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge_data.result) {
+        syslog(LOG_ERR, "async result is invalid in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
 int tapi_call_hanup_current_call_test(int slot_id)
 {
     syslog(LOG_DEBUG, "%s called, current call id: %s\n",
@@ -927,6 +987,29 @@ int call_check_alerting_status(void)
         goto on_exit;
     }
 
+on_exit:
+    return res;
+}
+
+int remote_operation_call_active_test(int slot_id)
+{
+    int res = 0;
+    judge_data_init();
+    judge_data.expect = CALL_STATE_CHANGE_TO_ACTIVE;
+
+    remote_call_operation(slot_id, phone_num, ACTIVE_CALL);
+
+    if (judge()) {
+        syslog(LOG_ERR, "No active call message received in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge_data.result) {
+        syslog(LOG_ERR, "Unsolicited message error in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
 on_exit:
     return res;
 }
@@ -2135,50 +2218,47 @@ int call_incoming_hold_and_recover_by_dialer(int slot_id)
     return ret3 || ret4;
 }
 
-// todo: 45
-int call_dialer_hold_recover_and_hold_by_caller(int slot_id)
+int outgoing_call_hold_and_unhold_by_caller(int slot_id)
 {
-    int ret1 = tapi_call_listen_call_test(slot_id);
-    int ret2 = tapi_call_dial_test(slot_id, phone_num, 0);
+    int res = 0;
+    if (tapi_call_dial_test(slot_id, phone_num, 0) < 0) {
+        syslog(LOG_ERR, "dail fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
 
-    sleep(5);
-    judge_data_init();
-    judge_data.expect = CALL_STATE_CHANGE_TO_ACTIVE;
+    if (call_check_alerting_status() < 0) {
+        syslog(LOG_ERR, "check alerting fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
 
-    // todo: caller answer
+    if (remote_operation_call_active_test(slot_id) < 0) {
+        syslog(LOG_ERR, "active call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
 
-    if ((judge() || ret1 || ret2 || judge_data.result) != 0)
-        return -1;
+    if (tapi_call_hold_test(slot_id) < 0) {
+        syslog(LOG_ERR, "hold call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
 
-    sleep(10);
-    judge_data_init();
-    judge_data.expect = CALL_STATE_CHANGE_TO_HOLD;
-    int ret3 = tapi_call_hold_call(get_tapi_ctx(), slot_id);
+    if (tapi_call_unhold_test(slot_id) < 0) {
+        syslog(LOG_ERR, "unhold call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
 
-    if ((ret3 || judge() || judge_data.result) != 0)
-        return -1;
+    if (tapi_call_hangup_all_test(slot_id) < 0) {
+        syslog(LOG_ERR, "hangup call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
 
-    sleep(10);
-    judge_data_init();
-    judge_data.expect = CALL_STATE_CHANGE_TO_ACTIVE;
-    int ret4 = tapi_call_unhold_call(get_tapi_ctx(), slot_id);
-
-    if ((ret4 || judge() || judge_data.result) != 0)
-        return -1;
-
-    sleep(10);
-    judge_data_init();
-    judge_data.expect = CALL_STATE_CHANGE_TO_HOLD;
-
-    // todo: caller hold
-
-    if ((judge() || judge_data.result) != 0)
-        return -1;
-
-    int ret5 = tapi_call_hangup_all_test(slot_id);
-    int ret6 = tapi_call_unlisten_call_test();
-
-    return ret5 || ret6;
+on_exit:
+    return res;
 }
 
 // todo: 47
