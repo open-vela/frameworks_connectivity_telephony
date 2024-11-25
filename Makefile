@@ -34,28 +34,21 @@ ifneq ($(CONFIG_TELEPHONY_TOOL),)
   STACKSIZE += $(CONFIG_TELEPHONY_TOOL_STACKSIZE)
 endif
 
-ASRCS := $(wildcard $(ASRCS))
-CSRCS := $(wildcard $(CSRCS))
-CXXSRCS := $(wildcard $(CXXSRCS))
-MAINSRC := $(wildcard $(MAINSRC))
-NOEXPORTSRCS = $(ASRCS)$(CSRCS)$(CXXSRCS)$(MAINSRC)
-
-ifneq ($(NOEXPORTSRCS),)
-BIN := $(APPDIR)/staging/libframework.a
-endif
-
 ifneq ($(CONFIG_TELEPHONY_TEST),)
   CFLAGS += ${INCDIR_PREFIX}$(APPDIR)/testing/cmocka/cmocka/include
   CSRCS  += $(filter-out test/*_telephony_test.c, $(wildcard test/*.c))
 
-  PRIORITY  += $(CONFIG_TELEPHONY_TEST_PRIORITY)
-  STACKSIZE += $(CONFIG_TELEPHONY_TEST_STACKSIZE)
-  PROGNAME  += cmocka_telephony_test
   ifneq ($(CONFIG_GOLDFISH_RIL),)
   MAINSRC   += $(CURDIR)/test/cmocka_telephony_test.c
   else
   MAINSRC   += $(CURDIR)/test/product_telephony_test.c
   endif
+  PROGNAME  += cmocka_telephony_test
+  PRIORITY  += $(CONFIG_TELEPHONY_TEST_PRIORITY)
+  STACKSIZE += $(CONFIG_TELEPHONY_TEST_STACKSIZE)
+
+depend::
+	$(Q) touch $(CSRCS)
 endif
 
 EXPORT_FILES := include

@@ -60,11 +60,11 @@ endif
 if TELEPHONY_TEST
 
 config TELEPHONY_TEST_PRIORITY
-	int "Testsuites task priority"
+	int "cmocka_telephony_test priority"
 	default 99
 
 config TELEPHONY_TEST_STACKSIZE
-	int "Testsuites stack size"
+	int "cmocka_telephony_test stack size"
 	default 16384
 
 config TEST_PHONE_NUMBER
