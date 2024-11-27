@@ -1363,7 +1363,7 @@ static int telephonytool_cmd_stop_dtmf(tapi_context context, char* pargs)
     if (!is_valid_slot_id_str(dst[0]))
         return -EINVAL;
 
-    syslog(LOG_DEBUG, "%s, slotId : %s digit : %s\n", __func__, dst[0], dst[1]);
+    syslog(LOG_DEBUG, "%s, slotId : %s\n", __func__, dst[0]);
     return tapi_call_stop_dtmf(context, atoi(slot_id), EVENT_REQUEST_STOP_DTMF_DONE,
         tele_call_async_fun);
 }
