@@ -245,7 +245,7 @@ static int data_property_changed(DBusConnection* connection,
         ar->arg2 = tapi_utils_get_slot_id(slot);
         isvalid = true;
     } else if ((ar->msg_id == MSG_DATA_NETWORK_TYPE_CHANGE_IND)
-        && (strcmp(property, "Bearer") == 0)) {
+        && (strcmp(property, "Technology") == 0)) {
         ar->status = OK;
 
         dbus_message_iter_get_basic(&var, &value_int);
