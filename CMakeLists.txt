@@ -22,7 +22,6 @@ if(CONFIG_TELEPHONY)
   set(CSRCS)
   file(GLOB APPEND_FILES ${CMAKE_CURRENT_LIST_DIR}/src/*.c)
   list(APPEND CSRCS ${APPEND_FILES})
-  list(REMOVE_ITEM CSRCS ${CMAKE_CURRENT_LIST_DIR}/tools/telephony_tool.c)
   set(INCDIR
       ${NUTTX_APPS_DIR}/external/dbus/dbus
       ${NUTTX_APPS_DIR}/external/ofono/include
@@ -47,6 +46,36 @@ if(CONFIG_TELEPHONY)
       ${INCDIR}
       DEPENDS
       tapi)
+  endif()
+
+  if(CONFIG_TELEPHONY_TEST)
+    file(GLOB APPEND_FILES ${CMAKE_CURRENT_LIST_DIR}/test/*.c)
+    list(APPEND CSRCS ${APPEND_FILES})
+    list(REMOVE_ITEM CSRCS ${CMAKE_CURRENT_LIST_DIR}/test/cmocka_telephony_test.c
+                           ${CMAKE_CURRENT_LIST_DIR}/test/product_telephony_test.c)
+    set(MAINSRC)
+
+    if(CONFIG_GOLDFISH_RIL)
+      list(APPEND MAINSRC test/cmocka_telephony_test.c)
+    else()
+      list(APPEND MAINSRC test/product_telephony_test.c)
+    endif()
+
+    nuttx_add_application(
+      MODULE
+      ${CONFIG_TELEPHONY_TEST}
+      NAME
+      cmocka_telephony_test
+      STACKSIZE
+      ${CONFIG_TELEPHONY_TEST_STACKSIZE}
+      PRIORITY
+      ${CONFIG_TELEPHONY_TEST_PRIORITY}
+      SRCS
+      ${MAINSRC}
+      INCLUDE_DIRECTORIES
+      ${INCDIR}
+      DEPENDS
+      tapi cmocka)
   endif()
 
   target_include_directories(tapi PRIVATE ${INCDIR})
