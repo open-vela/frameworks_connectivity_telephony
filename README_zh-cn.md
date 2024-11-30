@@ -41,6 +41,25 @@ Telephony 是 `openvela` 操作系统中用于处理电话和通信功能的框�
 │   └── tapi_utils.c
 ├── tools
 │   └── telephony_tool.c
+├── test
+│   ├── cmocka_telephony_test.c
+│   ├── telephony_call_test.c
+│   ├── telephony_call_test.h
+│   ├── telephony_common_test.c
+│   ├── telephony_common_test.h
+│   ├── telephony_data_test.c
+│   ├── telephony_data_test.h
+│   ├── telephony_ims_test.c
+│   ├── telephony_ims_test.h
+│   ├── telephony_network_test.c
+│   ├── telephony_network_test.h
+│   ├── telephony_sim_test.c
+│   ├── telephony_sim_test.h
+│   ├── telephony_sms_test.c
+│   ├── telephony_sms_test.h
+│   ├── telephony_ss_test.c
+│   ├── telephony_ss_test.h
+│   └── telephony_test.h
 ├── README.md
 └── README_zh-cn.md
 ```
@@ -59,8 +78,9 @@ Telephony 是 `openvela` 操作系统中用于处理电话和通信功能的框�
 | SMS | tapi_sms.c/h | 短信服务接口 |
 | IMS | tapi_ims.c/h | IMS 服务接口  |
 | Phonebook | tapi_phonebook.c/h | 电话簿接口  |
-| <div style="width: 120pt">Telephony Utils| tapi_utils.c/h | Telephony 工具类接口  |
+| <div style="width: 120pt">Telephony Utils| tapi_utils.c | Telephony 工具类接口  |
 | Telephony Tools| telephony_tool.c | Telephony 内部接口测试  |
+| Telephony Test Case| test/* | Telephony 内部测试用例 |
 
 ### **功能介绍**
 
@@ -110,6 +130,10 @@ Telephony 是 `openvela` 操作系统中用于处理电话和通信功能的框�
 
 #### Telephony Tools
 - 内部接口测试：用于内部所有 TAPI 接口测试。
+
+#### Telephony Test Case
+- 内部测试用例: 用于内部所有 Telephony 场景的测试用例。
+
 
 ## **TAPI 工作模型**
 

@@ -40,6 +40,25 @@ Telephony is a framework and API set for handling phone and communication functi
 │   └── tapi_utils.c
 ├── tools
 │   └── telephony_tool.c
+├── test
+│   ├── cmocka_telephony_test.c
+│   ├── telephony_call_test.c
+│   ├── telephony_call_test.h
+│   ├── telephony_common_test.c
+│   ├── telephony_common_test.h
+│   ├── telephony_data_test.c
+│   ├── telephony_data_test.h
+│   ├── telephony_ims_test.c
+│   ├── telephony_ims_test.h
+│   ├── telephony_network_test.c
+│   ├── telephony_network_test.h
+│   ├── telephony_sim_test.c
+│   ├── telephony_sim_test.h
+│   ├── telephony_sms_test.c
+│   ├── telephony_sms_test.h
+│   ├── telephony_ss_test.c
+│   ├── telephony_ss_test.h
+│   └── telephony_test.h
 ├── README.md
 └── README_zh-cn.md
 ```
@@ -58,8 +77,9 @@ Telephony is a framework and API set for handling phone and communication functi
 | SMS | tapi_sms.c/h | SMS service interface |
 | IMS | tapi_ims.c/h | IMS service interface  |
 | Phonebook | tapi_phonebook.c/h | Phonebook interface  |
-| <div style="width: 120pt">Telephony Utils| tapi_utils.c/h |Telephony util interface |
+| <div style="width: 120pt">Telephony Utils| tapi_utils.c |Telephony util interface |
 | Telephony Tools| telephony_tool.c | Telephony internal interface test  |
+| Telephony Test Case| test/* | Telephony internal test case |
 
 ### **Function Introduction**
 
@@ -109,6 +129,9 @@ Telephony is a framework and API set for handling phone and communication functi
 
 #### Telephony Tools
 - Internal interface test: Used for testing all internal TAPI interfaces.
+
+#### Telephony Test Case
+- Internal test case: Used for testing all internal Telephony scenarios.
 
 ## **TAPI Workflow**
 
