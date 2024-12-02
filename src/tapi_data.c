@@ -1179,7 +1179,8 @@ int tapi_data_is_data_emergency_only(tapi_context context, int slot_id, bool* ou
         *out = (result == NETWORK_REGISTRATION_STATUS_NOT_REGISTERED_EM
             || result == NETWORK_REGISTRATION_STATUS_SEARCHING_EM
             || result == NETWORK_REGISTRATION_STATUS_DENIED_EM
-            || result == NETWORK_REGISTRATION_STATUS_UNKNOWN_EM);
+            || result == NETWORK_REGISTRATION_STATUS_UNKNOWN_EM
+            || result == NETWORK_REGISTRATION_STATUS_REGISTED_EM);
         return OK;
     }
 

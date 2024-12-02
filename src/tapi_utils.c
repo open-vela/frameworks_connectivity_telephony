@@ -163,7 +163,7 @@ tapi_network_type tapi_utils_network_type_from_ril_tech(int type)
 const char* tapi_utils_get_registration_status_string(int status)
 {
     if (status == NETWORK_REGISTRATION_STATUS_NOT_REGISTERED) {
-        return "not_registered";
+        return "unregistered";
     } else if (status == NETWORK_REGISTRATION_STATUS_REGISTERED) {
         return "registered";
     } else if (status == NETWORK_REGISTRATION_STATUS_SEARCHING) {
@@ -174,8 +174,10 @@ const char* tapi_utils_get_registration_status_string(int status)
         return "unknown";
     } else if (status == NETWORK_REGISTRATION_STATUS_ROAMING) {
         return "roaming";
+    } else if (status == NETWORK_REGISTRATION_STATUS_REGISTED_EM) {
+        return "registered_em";
     } else if (status == NETWORK_REGISTRATION_STATUS_NOT_REGISTERED_EM) {
-        return "not_registered_em";
+        return "unregistered_em";
     } else if (status == NETWORK_REGISTRATION_STATUS_SEARCHING_EM) {
         return "searching_em";
     } else if (status == NETWORK_REGISTRATION_STATUS_DENIED_EM) {
@@ -204,6 +206,8 @@ tapi_registration_state tapi_utils_registration_status_from_string(const char* s
         return NETWORK_REGISTRATION_STATUS_UNKNOWN;
     } else if (strcmp(status, "roaming") == 0) {
         return NETWORK_REGISTRATION_STATUS_ROAMING;
+    } else if (strcmp(status, "registered_em") == 0) {
+        return NETWORK_REGISTRATION_STATUS_REGISTED_EM;
     } else if (strcmp(status, "unregistered_em") == 0) {
         return NETWORK_REGISTRATION_STATUS_NOT_REGISTERED_EM;
     } else if (strcmp(status, "searching_em") == 0) {

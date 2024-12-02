@@ -1256,7 +1256,8 @@ int tapi_network_is_voice_emergency_only(tapi_context context, int slot_id, bool
     *out = (reg_state == NETWORK_REGISTRATION_STATUS_NOT_REGISTERED_EM
         || reg_state == NETWORK_REGISTRATION_STATUS_SEARCHING_EM
         || reg_state == NETWORK_REGISTRATION_STATUS_DENIED_EM
-        || reg_state == NETWORK_REGISTRATION_STATUS_UNKNOWN_EM);
+        || reg_state == NETWORK_REGISTRATION_STATUS_UNKNOWN_EM
+        || reg_state == NETWORK_REGISTRATION_STATUS_REGISTED_EM);
 
     return OK;
 }
