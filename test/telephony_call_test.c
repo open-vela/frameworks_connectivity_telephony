@@ -2,6 +2,7 @@
 
 #include "remote_operation.h"
 #include "telephony_call_test.h"
+#include "telephony_ss_test.h"
 
 extern char* phone_num;
 
@@ -1478,7 +1479,7 @@ error:
     return -1;
 }
 
-int call_hangup_between_dialing_and_answering(int slot_id)
+int call_hangup_after_dialing(int slot_id)
 {
     int res = 0;
     int ret = tapi_call_dial_test(slot_id, phone_num, 0);
@@ -2402,6 +2403,12 @@ int call_incoming_hangup_first_answer_second(int slot_id)
 int call_release_and_answer(int slot_id)
 {
     int res = 0;
+    if (tapi_ss_set_call_waiting_test(0, true) < 0) {
+        syslog(LOG_ERR, "Set call waiting fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
     if (remote_operation_call_incoming_test(slot_id) < 0) {
         syslog(LOG_ERR, "Incoming call fail in %s", __func__);
         res = -1;
@@ -2461,6 +2468,12 @@ int call_release_and_answer(int slot_id)
         goto on_exit;
     }
     sleep(3);
+
+    if (tapi_ss_set_call_waiting_test(0, false) < 0) {
+        syslog(LOG_ERR, "Set call waiting fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
 
 on_exit:
     return res;
@@ -2553,6 +2566,12 @@ on_exit:
 int call_merge_by_user(int slot_id)
 {
     int res = 0;
+    if (tapi_ss_set_call_waiting_test(0, true) < 0) {
+        syslog(LOG_ERR, "Set call waiting fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
     if (tapi_call_dial_test(slot_id, phone_num, 0) < 0) {
         syslog(LOG_ERR, "dail fail in %s", __func__);
         res = -1;
@@ -2607,6 +2626,12 @@ int call_merge_by_user(int slot_id)
         goto on_exit;
     }
 
+    if (tapi_ss_set_call_waiting_test(0, false) < 0) {
+        syslog(LOG_ERR, "Set call waiting fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
 on_exit:
     return res;
 }
@@ -2614,6 +2639,12 @@ on_exit:
 int call_separate_by_user(int slot_id)
 {
     int res = 0;
+    if (tapi_ss_set_call_waiting_test(0, true) < 0) {
+        syslog(LOG_ERR, "Set call waiting fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
     if (tapi_call_dial_test(slot_id, phone_num, 0) < 0) {
         syslog(LOG_ERR, "dail fail in %s", __func__);
         res = -1;
@@ -2675,6 +2706,12 @@ int call_separate_by_user(int slot_id)
         goto on_exit;
     }
 
+    if (tapi_ss_set_call_waiting_test(0, false) < 0) {
+        syslog(LOG_ERR, "Set call waiting fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
 on_exit:
     return res;
 }
@@ -2682,6 +2719,12 @@ on_exit:
 int call_release_and_swap_other_call(int slot_id)
 {
     int res = 0;
+    if (tapi_ss_set_call_waiting_test(0, true) < 0) {
+        syslog(LOG_ERR, "Set call waiting fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
     if (tapi_call_dial_test(slot_id, phone_num, 0) < 0) {
         syslog(LOG_ERR, "dail fail in %s", __func__);
         res = -1;
@@ -2725,6 +2768,12 @@ int call_release_and_swap_other_call(int slot_id)
     sleep(3);
     if (tapi_call_hangup_all_test(slot_id) < 0) {
         syslog(LOG_ERR, "hangup all call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (tapi_ss_set_call_waiting_test(0, false) < 0) {
+        syslog(LOG_ERR, "Set call waiting fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
@@ -3116,6 +3165,12 @@ int call_incoming_and_hangup_new_call(int slot_id)
 int call_hold_first_call_and_answer_second_call(int slot_id)
 {
     int res = 0;
+    if (tapi_ss_set_call_waiting_test(0, true) < 0) {
+        syslog(LOG_ERR, "Set call waiting fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
     if (remote_operation_call_incoming_test(slot_id) < 0) {
         syslog(LOG_ERR, "Incoming call fail in %s", __func__);
         res = -1;
@@ -3157,6 +3212,12 @@ int call_hold_first_call_and_answer_second_call(int slot_id)
 
     if (tapi_call_hangup_all_test(slot_id) < 0) {
         syslog(LOG_ERR, "Hangup all call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (tapi_ss_set_call_waiting_test(0, false) < 0) {
+        syslog(LOG_ERR, "Set call waiting fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
