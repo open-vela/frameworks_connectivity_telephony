@@ -54,7 +54,7 @@ int judge_callback_result(void);
 void incoming_first_call(void);
 void incoming_another_call(void);
 int call_check_alerting_status_after_dial(int slot_id);
-int call_hangup_between_dialing_and_answering(int slot_id);
+int call_hangup_after_dialing(int slot_id);
 int call_dial_with_area_code(int slot_id);
 int call_dial_after_caller_reject(int slot_id);
 int call_hangup_after_caller_answer(int slot_id);
