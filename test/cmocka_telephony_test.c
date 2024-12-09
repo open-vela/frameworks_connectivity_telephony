@@ -24,17 +24,29 @@
 #define REPEAT_TEST_MORE_FOR for (int _i = 0; _i < 10; _i++)
 #define REPEAT_TEST_LESS_FOR for (int _i = 0; _i < 3; _i++)
 
+#define TAPI_TEST_NAME_MAX_LEN 256
+#define TAPI_TEST_DBUS_NAME "vela.telephony.test"
+
 char* phone_num = NULL;
+static bool g_uv_exit_flag = false;
 static uv_async_t g_uv_exit;
+static uv_async_t g_uv_cmd_tapi;
 static int ready_done;
-tapi_context context = NULL;
+tapi_context g_context = NULL;
 static int count = 0;
+
 typedef enum {
     CASE_NORMAL_MODE = 0,
     CASE_AIRPLANE_MODE = 1,
     CASE_CALL_DIALING = 2,
     CASE_MODEM_POWEROFF = 3,
 } case_type;
+
+struct uv_tapi_cmd_data_s {
+    unsigned int spec_service;
+    char dbus_name[TAPI_TEST_NAME_MAX_LEN];
+    bool is_open;
+};
 
 struct judge_type judge_data;
 
@@ -61,13 +73,19 @@ char* long_chinese_text = "测试测试测试测试测试测试测试测试测�
 
 static void exit_async_cleanup(uv_async_t* handle)
 {
-    tapi_close(context);
-    context = NULL;
+    if (g_context) {
+        g_uv_exit_flag = true;
+        tapi_close(g_context);
+        g_context = NULL;
+    } else {
+        syslog(LOG_ERR, "tapi is already close, stop default loop");
+        uv_stop(uv_default_loop());
+    }
 }
 
 tapi_context get_tapi_ctx(void)
 {
-    return context;
+    return g_context;
 }
 
 int judge(void)
@@ -1281,7 +1299,7 @@ static void TestTeleFunc_SmsGetDefaultSlot(void** state)
 {
     (void)state;
     int result = -1;
-    int ret = tapi_sms_get_default_slot(context, &result);
+    int ret = tapi_sms_get_default_slot(get_tapi_ctx(), &result);
     syslog(LOG_INFO, "%s, ret: %d, result: %d", __func__, ret, result);
     assert_int_equal(ret, 0);
     assert_int_equal(result, 0);
@@ -2021,20 +2039,24 @@ static void on_tapi_client_ready(const char* client_name, void* user_data)
      * so we here need to stop the default loop
      */
     if (client_name == NULL && user_data == NULL) {
-        if (context != NULL) {
-            syslog(LOG_ERR, "recieve dbus disconnected msg, free tapi context");
-            tapi_close(context);
-            context = NULL;
+        if (g_context != NULL) {
+            syslog(LOG_ERR, "recieve dbus disconnected msg, free tapi g_context");
+            tapi_close(g_context);
+            g_context = NULL;
         }
-        syslog(LOG_INFO, "tapi already closed, stop default loop");
-        uv_stop(uv_default_loop());
+
+        if (g_uv_exit_flag) {
+            syslog(LOG_INFO, "tapi already closed, stop default loop");
+            uv_stop(uv_default_loop());
+            g_uv_exit_flag = false;
+        }
     }
 }
 
 static void* run_test_loop(void* args)
 {
-    context = tapi_open("vela.telephony.test", on_tapi_client_ready, NULL);
-    if (context == NULL) {
+    g_context = tapi_open(TAPI_TEST_DBUS_NAME, on_tapi_client_ready, NULL);
+    if (g_context == NULL) {
         return NULL;
     }
 
@@ -2042,6 +2064,186 @@ static void* run_test_loop(void* args)
     uv_loop_close(uv_default_loop());
 
     return NULL;
+}
+
+static int tapi_close_test(void)
+{
+    struct uv_tapi_cmd_data_s* cmd_data;
+
+    if (get_tapi_ctx() == NULL) {
+        syslog(LOG_ERR, "context is already null!");
+        return -EINVAL;
+    }
+
+    cmd_data = malloc(sizeof(struct uv_tapi_cmd_data_s));
+    if (cmd_data == NULL) {
+        syslog(LOG_ERR, "malloc cmd_data: failed");
+        return -ENOMEM;
+    }
+
+    memset(cmd_data, 0, sizeof(struct uv_tapi_cmd_data_s));
+    cmd_data->is_open = false;
+
+    syslog(LOG_INFO, "tapi_close_test: send close tapi context(%p)", get_tapi_ctx());
+    g_uv_cmd_tapi.data = cmd_data;
+    if (uv_async_send(&g_uv_cmd_tapi) != 0) {
+        syslog(LOG_ERR, "tapi_close_test: uv_async_send failed");
+        free(cmd_data);
+        return -EINVAL;
+    }
+
+    return 0;
+}
+
+static int tapi_open_test(char* tapi_name, unsigned int spec_service)
+{
+    struct uv_tapi_cmd_data_s* cmd_data;
+
+    if (get_tapi_ctx() != NULL) {
+        syslog(LOG_ERR, "context(%p) is not null, first call tapi-close!", get_tapi_ctx());
+        return -EINVAL;
+    }
+
+    cmd_data = malloc(sizeof(struct uv_tapi_cmd_data_s));
+    if (cmd_data == NULL) {
+        syslog(LOG_ERR, "malloc cmd_data: failed");
+        return -ENOMEM;
+    }
+    memset(cmd_data, 0, sizeof(struct uv_tapi_cmd_data_s));
+    strncpy(cmd_data->dbus_name, tapi_name, sizeof(cmd_data->dbus_name) - 1);
+    cmd_data->is_open = true;
+    cmd_data->spec_service = spec_service;
+
+    syslog(LOG_INFO, "tapi_open_test:name=%s spec_service=0x%x", cmd_data->dbus_name, cmd_data->spec_service);
+    g_uv_cmd_tapi.data = cmd_data;
+    if (uv_async_send(&g_uv_cmd_tapi) != 0) {
+        syslog(LOG_ERR, "tapi_open_test: uv_async_send failed");
+        free(cmd_data);
+        return -EINVAL;
+    }
+
+    return 0;
+}
+
+static int async_cmd_tapi_open_handler(struct uv_tapi_cmd_data_s* data)
+{
+    if (g_context != NULL) {
+        syslog(LOG_ERR, "g_context(%p) is not null, first call tapi-close cmd!", g_context);
+        return -EINVAL;
+    }
+
+    if (data->spec_service == TAPI_SERVICE_NONE || data->spec_service == TAPI_SERVICE_FULL)
+        g_context = tapi_open(data->dbus_name, on_tapi_client_ready, NULL);
+    else
+        g_context = tapi_open_service(data->dbus_name, on_tapi_client_ready, NULL, data->spec_service);
+
+    if (g_context == NULL) {
+        syslog(LOG_ERR, "tapi_open: g_context is null");
+        return -EINVAL;
+    }
+    syslog(LOG_INFO, "tapi_open: created tapi g_context(%p) ", g_context);
+
+    return 0;
+}
+
+static int async_cmd_tapi_close_handler(struct uv_tapi_cmd_data_s* data)
+{
+    if (g_context == NULL) {
+        syslog(LOG_ERR, "g_context is already null");
+        return -EINVAL;
+    }
+
+    syslog(LOG_DEBUG, "tapi_close: free g_context(%p)", g_context);
+    tapi_close(g_context);
+    g_context = NULL;
+
+    return 0;
+}
+
+static void async_cmd_tapi(uv_async_t* handle)
+{
+    struct uv_tapi_cmd_data_s* data = handle->data;
+
+    if (data == NULL) {
+        syslog(LOG_ERR, "async_cmd_tapi: data is null");
+        return;
+    }
+
+    if (data->is_open) {
+        async_cmd_tapi_open_handler(data);
+    } else {
+        async_cmd_tapi_close_handler(data);
+    }
+
+    free(data);
+}
+
+static void TestTeleFunc_CloseTapi(void** state)
+{
+    (void)state;
+    int ret = tapi_close_test();
+    assert_int_equal(ret, OK);
+
+    sleep(2);
+    assert_true(get_tapi_ctx() == NULL);
+}
+
+static void TestTeleFunc_CI_DefaultOpenTapi(void** state)
+{
+    if (get_tapi_ctx() != NULL) {
+        TestTeleFunc_CloseTapi(state);
+    }
+
+    int ret = tapi_open_test(TAPI_TEST_DBUS_NAME, 0);
+    assert_int_equal(ret, OK);
+
+    sleep(2);
+    assert_true(get_tapi_ctx() != NULL);
+
+    tapi_enable_modem(get_tapi_ctx(), 0, 0, 1, NULL); // eanble modem anyway
+    sleep(5);
+
+    ret = tapi_sim_has_icc_card_test(0);
+    assert_int_equal(ret, OK);
+}
+
+static int TearDown_OpenDefaultTapi(void** state)
+{
+    /* recover tapi to default open */
+    sleep(3);
+    TestTeleFunc_CI_DefaultOpenTapi(state);
+    return 0;
+}
+
+static void TestTeleFunc_CI_BtTeleOpenTapi(void** state)
+{
+    int ret;
+    unsigned int tapi_service;
+    bool result = false;
+
+    if (get_tapi_ctx() != NULL) {
+        TestTeleFunc_CloseTapi(state);
+    }
+
+    tapi_service = TAPI_SERVICE_MODEM | TAPI_SERVICE_CALL | TAPI_SERVICE_NETREG;
+    ret = tapi_open_test("vela.bt.tele", tapi_service);
+    assert_int_equal(ret, OK);
+
+    sleep(2);
+    assert_true(get_tapi_ctx() != NULL);
+
+    tapi_enable_modem(get_tapi_ctx(), 0, 0, 0, NULL); // disable modem anyway
+    sleep(2);
+    TestTeleFunc_CI_ModemEnable(state);
+
+    /* No sim service, so return no availble proxy failure */
+    ret = tapi_sim_has_icc_card(get_tapi_ctx(), 0, &result);
+    assert_int_equal(ret, -EIO);
+
+    /* modem, call and net can get proxy value success */
+    TestTeleFunc_CI_ModemGetRevision(state);
+    TestTeleFunc_CI_NetGetOperatorName(state);
+    TestTeleFunc_CI_NetGetVoiceRegistered(state);
 }
 
 int main(int argc, char* argv[])
@@ -2059,6 +2261,7 @@ int main(int argc, char* argv[])
      * in case we have some race issues
      */
     uv_async_init(uv_default_loop(), &g_uv_exit, exit_async_cleanup);
+    uv_async_init(uv_default_loop(), &g_uv_cmd_tapi, async_cmd_tapi);
 
     pthread_t thread;
     pthread_attr_t attr;
@@ -2386,6 +2589,11 @@ int main(int argc, char* argv[])
         cmocka_unit_test(TestTeleFunc_CI_ModemSetRadioPowerOnOffNTimes),
         cmocka_unit_test(TestTeleFunc_CI_ModemSetRadioPowerOn),
         cmocka_unit_test(TestTeleFunc_CI_ModemDisable),
+        cmocka_unit_test(TestTeleFunc_CI_DefaultOpenTapi),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_BtTeleOpenTapi,
+            NULL, TearDown_OpenDefaultTapi),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CloseTapi,
+            NULL, TearDown_OpenDefaultTapi),
 
         //         cmocka_unit_test_setup_teardown(TestTeleModemSetRadioPowerOnOffRepeatedly,
         //             setup_normal_mode, free_mode),
@@ -2431,6 +2639,7 @@ int main(int argc, char* argv[])
     cmocka_run_group_tests(CommonTestSuites, NULL, NULL);
 
 do_exit:
+    tapi_enable_modem(get_tapi_ctx(), 0, 0, 0, NULL); // disable modem anyway
     uv_async_send(&g_uv_exit);
 
     pthread_join(thread, NULL);

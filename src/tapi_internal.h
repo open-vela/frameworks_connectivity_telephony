@@ -78,8 +78,9 @@ typedef struct {
     GDBusProxy* dbus_proxy_manager;
     GDBusProxy* dbus_proxy[CONFIG_MODEM_ACTIVE_COUNT][DBUS_PROXY_MAX_COUNT];
     tapi_modem_state modem_state[CONFIG_MODEM_ACTIVE_COUNT];
-    bool client_ready;
+    tapi_service_module service_module;
     tapi_async_function logging_over_miwear_cb;
+    bool client_ready;
 } dbus_context;
 
 typedef struct {
@@ -109,6 +110,10 @@ bool is_interface_supported(const char* interface);
 int get_modem_id_by_proxy(dbus_context* context, GDBusProxy* proxy);
 int get_op_code_base_mcc_mnc(const char* mcc, const char* mnc);
 void get_covered_plmn(const char* mcc, const char* mnc, char* covered_plmn);
+tapi_service_module get_service_module_by_proxy_type(enum dbus_proxy_type type);
+const char* get_dbus_proxy_type_interface(enum dbus_proxy_type type);
+bool tapi_support_proxy_type(enum dbus_proxy_type type);
+bool tapi_support_interface(const char* interface);
 
 /**
  * Power on or off modem.

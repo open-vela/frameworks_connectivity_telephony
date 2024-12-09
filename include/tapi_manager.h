@@ -58,6 +58,19 @@ tapi_context tapi_open(const char* client_name,
     tapi_client_ready_function callback, void* user_data);
 
 /**
+ * Init telephony library with specific tapi serivice module.
+ * @param[in] client_name        Calling context name.
+ * Must contain one dot character at least. For example, miot.app
+ * @param[in] user_data          user data pointer
+ * @param[in] callback           callback function one tapi is ready.
+ * @param[in] tapi_service       tapi service mask. refer to tapi_service_module
+ * @return Pointer to created context or NULL on failure.
+ */
+tapi_context tapi_open_service(const char* client_name,
+    tapi_client_ready_function callback, void* user_data,
+    unsigned int tapi_service);
+
+/**
  * Close telephony library.
  * @param[in] context        Telephony api context.
  * @return Zero on success; a negated errno value on failure.
