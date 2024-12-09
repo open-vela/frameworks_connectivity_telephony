@@ -1395,6 +1395,24 @@ static int telephonytool_cmd_get_default_voicecall_slot(tapi_context context, ch
     return 0;
 }
 
+static int telephonytool_cmd_deflect_call(tapi_context context, char* pargs)
+{
+    char dst[3][MAX_INPUT_ARGS_LEN];
+    int cnt = split_input(dst, 3, pargs, " ");
+    char* slot_id;
+
+    if (cnt != 3)
+        return -EINVAL;
+
+    slot_id = dst[0];
+    if (!is_valid_slot_id_str(dst[0]))
+        return -EINVAL;
+
+    syslog(LOG_DEBUG, "%s, slotId: %s, call_id: %s, phone_number: %s", __func__, slot_id, (char*)dst[1], (char*)dst[2]);
+
+    return tapi_call_deflect_by_id(context, atoi(slot_id), (char*)dst[1], (char*)dst[2]);
+}
+
 static int telephonytool_cmd_query_modem_list(tapi_context context, char* pargs)
 {
     if (strlen(pargs) > 0)
@@ -4487,6 +4505,9 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     { "get-voicecall-slot", CALL_CMD,
         telephonytool_cmd_get_default_voicecall_slot,
         "get default data slot (enter example : get-voicecall-slot)" },
+    { "deflect", CALL_CMD,
+        telephonytool_cmd_deflect_call,
+        "call deflect (enter example : deflect 0 /ril_0/voicecall01 15512345678)" },
 
     /* Data Command */
     { "listen-data", DATA_CMD,
