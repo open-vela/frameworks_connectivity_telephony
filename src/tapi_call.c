@@ -207,8 +207,6 @@ static void deflect_param_append_0(DBusMessageIter* iter, void* user_data)
 
     dbus_message_iter_append_basic(iter, DBUS_TYPE_OBJECT_PATH, &path);
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &number);
-
-    free(param);
 }
 
 static void separate_param_append(DBusMessageIter* iter, void* user_data)
