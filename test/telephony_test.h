@@ -11,8 +11,6 @@
 #include <unistd.h>
 #include <uv.h>
 
-#define context tapi_test_context
-
 // Generic Callback Event
 #define EVENT_MODEM_LIST_QUERY_DONE 0x1001
 #define EVENT_RADIO_STATE_SET_DONE 0x1002

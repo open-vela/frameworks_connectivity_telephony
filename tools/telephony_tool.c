@@ -123,6 +123,8 @@
 
 #define MAX_INPUT_ARGS_LEN 128
 
+#define TAPI_DBUS_NAME_MAX_LEN 256
+#define TAPI_DBUS_NAME_DEFAULT "vela.telephony.tool"
 /****************************************************************************
  * Public Type Declarations
  ****************************************************************************/
@@ -137,8 +139,9 @@ enum cmd_type {
     SS_CMD,
     IMS_CMD,
     PHONEBOOK_CMD,
+    TAPI_CMD,
     QUIT_CMD,
-    HELP_CMD
+    HELP_CMD,
 };
 
 typedef int (*telephonytool_cmd_func)(tapi_context context, char* pargs);
@@ -149,12 +152,20 @@ struct telephonytool_cmd_s {
     const char* help; /* The help text */
 };
 
+struct uv_tapi_cmd_data_s {
+    unsigned int spec_service;
+    char dbus_name[TAPI_DBUS_NAME_MAX_LEN];
+    bool is_open;
+};
 /****************************************************************************
  * Private Declarations
  ****************************************************************************/
 
 static uv_async_t g_uv_exit;
+static uv_async_t g_uv_cmd_tapi;
 static bool g_should_exit;
+static tapi_context g_context = NULL;
+
 static struct telephonytool_cmd_s g_telephonytool_cmds[];
 static int telephonytool_cmd_help(tapi_context context, char* pargs);
 static void telephonytool_execute(tapi_context context, char* cmd, char* arg);
@@ -163,7 +174,6 @@ static void* read_stdin(pthread_addr_t pvarg);
 /****************************************************************************
  * Private Function
  ****************************************************************************/
-
 static void exit_async_cleanup(uv_async_t* handle)
 {
     /* let's close the handle and stop the loop here as
@@ -178,6 +188,68 @@ static void on_tapi_client_ready(const char* client_name, void* user_data)
 {
     if (client_name != NULL)
         syslog(LOG_DEBUG, "tapi is ready for %s\n", client_name);
+
+    if (client_name == NULL && user_data == NULL) {
+        if (g_context != NULL) {
+            syslog(LOG_ERR, "recieve dbus disconnected msg, free tapi g_context");
+            tapi_close(g_context);
+            g_context = NULL;
+        }
+        syslog(LOG_INFO, "tapi is closed");
+    }
+}
+
+static int async_cmd_tapi_open_handler(struct uv_tapi_cmd_data_s* data)
+{
+    if (g_context != NULL) {
+        syslog(LOG_ERR, "g_context(%p) is not null, first call tapi-close cmd!", g_context);
+        return -EINVAL;
+    }
+
+    if (data->spec_service == TAPI_SERVICE_NONE || data->spec_service == TAPI_SERVICE_FULL)
+        g_context = tapi_open(data->dbus_name, on_tapi_client_ready, NULL);
+    else
+        g_context = tapi_open_service(data->dbus_name, on_tapi_client_ready, NULL, data->spec_service);
+
+    if (g_context == NULL) {
+        syslog(LOG_ERR, "telephonytool_cmd_open: g_context is null");
+        return -EINVAL;
+    }
+    syslog(LOG_INFO, "telephonytool_cmd_open: created tapi g_context(%p) ", g_context);
+
+    return 0;
+}
+
+static int async_cmd_tapi_close_handler(struct uv_tapi_cmd_data_s* data)
+{
+    if (g_context == NULL) {
+        syslog(LOG_ERR, "g_context is already null");
+        return -EINVAL;
+    }
+
+    syslog(LOG_DEBUG, "telephonytool_cmd_close: free g_context(%p)", g_context);
+    tapi_close(g_context);
+    g_context = NULL;
+
+    return 0;
+}
+
+static void async_cmd_tapi(uv_async_t* handle)
+{
+    struct uv_tapi_cmd_data_s* data = handle->data;
+
+    if (data == NULL) {
+        syslog(LOG_ERR, "%s: data is null", __func__);
+        return;
+    }
+
+    if (data->is_open) {
+        async_cmd_tapi_open_handler(data);
+    } else {
+        async_cmd_tapi_close_handler(data);
+    }
+
+    free(data);
 }
 
 static bool is_valid_dtmf_char(char c)
@@ -4322,6 +4394,83 @@ static int telephonytool_cmd_delete_fdn_entry(tapi_context context, char* pargs)
         atoi(fdn_idx), pin2, tele_phonebook_async_fun);
 }
 
+static int telephonytool_cmd_close(tapi_context context, char* pargs)
+{
+    struct uv_tapi_cmd_data_s* cmd_data;
+
+    if (context == NULL) {
+        syslog(LOG_ERR, "context is already null!");
+        return -EINVAL;
+    }
+
+    cmd_data = malloc(sizeof(struct uv_tapi_cmd_data_s));
+    if (cmd_data == NULL) {
+        syslog(LOG_ERR, "malloc cmd_data: failed");
+        return -ENOMEM;
+    }
+
+    memset(cmd_data, 0, sizeof(struct uv_tapi_cmd_data_s));
+    cmd_data->is_open = false;
+
+    syslog(LOG_INFO, "telephonytool_cmd_close: send close tapi context(%p)", context);
+    g_uv_cmd_tapi.data = cmd_data;
+    if (uv_async_send(&g_uv_cmd_tapi) != 0) {
+        syslog(LOG_ERR, "telephonytool_cmd_close: uv_async_send failed");
+        free(cmd_data);
+        return -EINVAL;
+    }
+
+    return 0;
+}
+
+static int telephonytool_cmd_open(tapi_context context, char* pargs)
+{
+    char* dbus_name;
+    char dst[1][MAX_INPUT_ARGS_LEN];
+    unsigned int spec_service_id = 0;
+    int cnt;
+    struct uv_tapi_cmd_data_s* cmd_data;
+
+    if (context != NULL) {
+        syslog(LOG_ERR, "context(%p) is not null, first call tapi-close cmd!", context);
+        return -EINVAL;
+    }
+
+    cnt = split_input(dst, 1, pargs, " ");
+    switch (cnt) {
+    case 0:
+        spec_service_id = TAPI_SERVICE_FULL;
+        dbus_name = TAPI_DBUS_NAME_DEFAULT;
+        break;
+    case 1:
+        spec_service_id = strtoul(dst[0], NULL, 0);
+        dbus_name = TAPI_DBUS_NAME_DEFAULT;
+        break;
+    default:
+        return -EINVAL;
+    }
+
+    cmd_data = malloc(sizeof(struct uv_tapi_cmd_data_s));
+    if (cmd_data == NULL) {
+        syslog(LOG_ERR, "malloc cmd_data: failed");
+        return -ENOMEM;
+    }
+    memset(cmd_data, 0, sizeof(struct uv_tapi_cmd_data_s));
+    strncpy(cmd_data->dbus_name, dbus_name, sizeof(cmd_data->dbus_name) - 1);
+    cmd_data->is_open = true;
+    cmd_data->spec_service = spec_service_id;
+
+    syslog(LOG_INFO, "telephonytool_cmd_open: name=%s spec_service=0x%x", dbus_name, spec_service_id);
+    g_uv_cmd_tapi.data = cmd_data;
+    if (uv_async_send(&g_uv_cmd_tapi) != 0) {
+        syslog(LOG_ERR, "telephonytool_cmd_open: uv_async_send failed");
+        free(cmd_data);
+        return -EINVAL;
+    }
+
+    return 0;
+}
+
 static void telephonytool_menu(void)
 {
     printf("=========  Telephony Tool Manual  =========\n");
@@ -4334,8 +4483,9 @@ static void telephonytool_menu(void)
     printf("***** 7: SS TAPI Instruction          *****\n");
     printf("***** 8: IMS TAPI Instruction         *****\n");
     printf("***** 9: Phonebook TAPI Instruction   *****\n");
-    printf("***** 10: Quit                        *****\n");
-    printf("***** 11: Help                        *****\n");
+    printf("***** 10: TAPI open&close Instruction *****\n");
+    printf("***** 11: Quit                        *****\n");
+    printf("***** 12: Help                        *****\n");
     printf("Please enter your choice: (1~11) \n");
 }
 
@@ -4377,9 +4527,13 @@ static void telephonytool_execute(tapi_context context, char* cmd, char* arg)
 
     for (i = 0; g_telephonytool_cmds[i].cmd; i++) {
         if (strcmp(cmd, g_telephonytool_cmds[i].cmd) == 0) {
+            if (g_telephonytool_cmds[i].type != TAPI_CMD && context == NULL) {
+                printf("tapi context is NULL, please open tapi first\n");
+                return;
+            }
+
             if (g_telephonytool_cmds[i].pfunc(context, arg) < 0)
                 printf("cmd:%s input parameter:%s invalid \n", cmd, arg);
-
             return;
         }
     }
@@ -4397,7 +4551,6 @@ static void* read_stdin(pthread_addr_t pvarg)
 {
     int arg_len, len;
     char *cmd, *arg, *buffer;
-    tapi_context context = (void*)pvarg;
 
     buffer = malloc(CONFIG_NSH_LINELEN);
     if (buffer == NULL) {
@@ -4438,7 +4591,7 @@ static void* read_stdin(pthread_addr_t pvarg)
             break;
 
         arg[arg_len] = '\0';
-        telephonytool_execute(context, cmd, arg);
+        telephonytool_execute(g_context, cmd, arg);
     }
 
     free(buffer);
@@ -4994,6 +5147,14 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         "delete fdn entry (enter example : delete-fdn 0 1 1234"
         "[slot_id][fdn_idx][pin2])" },
 
+    /* tapi open or close command */
+    { "tapi-open", TAPI_CMD,
+        telephonytool_cmd_open,
+        "open tapi instance (enter example : tapi-open [0x105])" },
+    { "tapi-close", TAPI_CMD,
+        telephonytool_cmd_close,
+        "close tapi instance (enter example : tapi-close )" },
+
     { "q", QUIT_CMD, NULL, "Quit (pls enter : q)" },
     { "help", HELP_CMD, telephonytool_cmd_help,
         "Show this message (pls enter : help)" },
@@ -5007,7 +5168,6 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
 int main(int argc, char* argv[])
 {
     struct sched_param param;
-    tapi_context context;
     pthread_attr_t attr;
     pthread_t thread;
     char* dbus_name;
@@ -5018,32 +5178,35 @@ int main(int argc, char* argv[])
         return -errno;
     }
 
-    dbus_name = "vela.telephony.tool";
+    dbus_name = TAPI_DBUS_NAME_DEFAULT;
     if (argc == 2)
         dbus_name = argv[1];
 
-    context = tapi_open(dbus_name, on_tapi_client_ready, NULL);
-    if (context == NULL) {
+    g_context = tapi_open(dbus_name, on_tapi_client_ready, NULL);
+    if (g_context == NULL) {
         return 0;
     }
+    syslog(LOG_INFO, "tapi context(%p) created", g_context);
 
     /* initialize async handler before the thread creation
      * in case we have some race issues
      */
     uv_async_init(uv_default_loop(), &g_uv_exit, exit_async_cleanup);
+    uv_async_init(uv_default_loop(), &g_uv_cmd_tapi, async_cmd_tapi);
 
     pthread_attr_init(&attr);
     param.sched_priority = CONFIG_TELEPHONY_TOOL_PRIORITY;
     pthread_attr_setschedparam(&attr, &param);
     pthread_attr_setstacksize(&attr, CONFIG_TELEPHONY_TOOL_STACKSIZE);
 
-    ret = pthread_create(&thread, &attr, read_stdin, context);
+    ret = pthread_create(&thread, &attr, read_stdin, g_context);
     if (ret != 0) {
-        tapi_close(context);
+        tapi_close(g_context);
         return ret;
     }
 
     uv_run(uv_default_loop(), UV_RUN_DEFAULT);
+    uv_close((uv_handle_t*)&g_uv_cmd_tapi, NULL);
     uv_loop_close(uv_default_loop());
 
     /* wait for read_stdin to exit :-) */
@@ -5055,7 +5218,10 @@ int main(int argc, char* argv[])
      * which will exit the current task. Hence,
      * the uv loop will not be closed properly.
      */
-    tapi_close(context);
+    if (g_context != NULL) {
+        tapi_close(g_context);
+        g_context = NULL;
+    }
 
     return ret;
 }
