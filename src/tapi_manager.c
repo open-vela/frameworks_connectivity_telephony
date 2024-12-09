@@ -37,7 +37,7 @@
 
 typedef struct {
     dbus_context* context;
-    const char* client_name;
+    char* client_name;
     void* user_data;
     tapi_client_ready_function callback;
 } client_ready_cb_data;
@@ -58,7 +58,50 @@ typedef struct {
  * Private Functions
  ****************************************************************************/
 
-static int object_filter(GDBusProxy* proxy)
+static bool interface_in_tapi_service_module(dbus_context* ctx, const char* interface)
+{
+    tapi_service_module module = TAPI_SERVICE_NONE;
+
+    /* default support ofono.manager interface */
+    if (strcmp(interface, OFONO_MANAGER_INTERFACE) == 0)
+        return true;
+
+    for (int i = DBUS_PROXY_MODEM; i < DBUS_PROXY_MAX_COUNT; i++) {
+        if (strcmp(interface, get_dbus_proxy_type_interface(i)) == 0) {
+            module = get_service_module_by_proxy_type(i);
+            break;
+        }
+    }
+
+    return (ctx->service_module & module) != 0;
+}
+
+/* return TRUE: will filter out, return FALSE: will be not filter out and create proxy */
+static gboolean tapi_proxy_filter(const char* path, const char* interface,
+    void* user_data)
+{
+    if (!tapi_support_interface(interface)) {
+        tapi_log_info("interface: %s is not supported, filter out", interface);
+        return TRUE;
+    }
+
+    if (!interface_in_tapi_service_module(user_data, interface)) {
+        tapi_log_info("interface: %s is not in service module, filter out", interface);
+        return TRUE;
+    }
+
+    if (strcmp(interface, OFONO_MODEM_INTERFACE) == 0
+        && strcmp(path, tapi_utils_get_modem_path(SLOT_ID_1)) != 0
+        && strcmp(path, tapi_utils_get_modem_path(SLOT_ID_2)) != 0) {
+        tapi_log_info("modem path: %s is not supported, filter out", path);
+        return TRUE;
+    }
+
+    tapi_log_info("create proxy path:%s, interface:%s", path, interface);
+    return FALSE;
+}
+
+static int object_filter(GDBusProxy* proxy, void* user_data)
 {
     const char* interface = g_dbus_proxy_get_interface(proxy);
     if (interface == NULL) {
@@ -66,11 +109,20 @@ static int object_filter(GDBusProxy* proxy)
         return false;
     }
 
+    if (!tapi_support_interface(interface)) {
+        return true;
+    }
+
     // ss and sms related interface skip get properties
     if ((strcmp(interface, OFONO_CALL_BARRING_INTERFACE) == 0)
         || (strcmp(interface, OFONO_CALL_FORWARDING_INTERFACE) == 0)
         || (strcmp(interface, OFONO_CALL_SETTINGS_INTERFACE) == 0)
         || (strcmp(interface, OFONO_MESSAGE_MANAGER_INTERFACE) == 0)) {
+        return true;
+    }
+
+    if (!interface_in_tapi_service_module(user_data, interface)) {
+        tapi_log_info("interface: %s is not in service module, not getprop", interface);
         return true;
     }
 
@@ -107,34 +159,15 @@ static void release_persistent_dbus_proxy(dbus_context* ctx)
 
 static void get_mutable_dbus_proxy(dbus_context* ctx)
 {
-    const char* dbus_proxy_server[] = {
-        OFONO_MODEM_INTERFACE,
-        OFONO_RADIO_SETTINGS_INTERFACE,
-        OFONO_VOICECALL_MANAGER_INTERFACE,
-        OFONO_SIM_MANAGER_INTERFACE,
-        OFONO_STK_INTERFACE,
-        OFONO_CONNECTION_MANAGER_INTERFACE,
-        OFONO_MESSAGE_MANAGER_INTERFACE,
-        OFONO_CELL_BROADCAST_INTERFACE,
-        OFONO_NETWORK_REGISTRATION_INTERFACE,
-        OFONO_NETMON_INTERFACE,
-        OFONO_CALL_BARRING_INTERFACE,
-        OFONO_CALL_FORWARDING_INTERFACE,
-        OFONO_SUPPLEMENTARY_SERVICES_INTERFACE,
-        OFONO_CALL_SETTINGS_INTERFACE,
-        OFONO_IMS_INTERFACE,
-        OFONO_PHONEBOOK_INTERFACE,
-    };
-
     for (int i = 0; i < CONFIG_MODEM_ACTIVE_COUNT; i++) {
-        for (int j = 1; j < DBUS_PROXY_MAX_COUNT; j++) {
-            if (!is_interface_supported(dbus_proxy_server[j])) {
+        for (int j = DBUS_PROXY_RADIO; j < DBUS_PROXY_MAX_COUNT; j++) {
+            if (!tapi_support_proxy_type(j)) {
                 ctx->dbus_proxy[i][j] = NULL;
                 continue;
             }
 
             ctx->dbus_proxy[i][j] = g_dbus_proxy_new(
-                ctx->client, tapi_utils_get_modem_path(i), dbus_proxy_server[j]);
+                ctx->client, tapi_utils_get_modem_path(i), get_dbus_proxy_type_interface(j));
         }
     }
 }
@@ -142,7 +175,7 @@ static void get_mutable_dbus_proxy(dbus_context* ctx)
 static void release_mutable_dbus_proxy(dbus_context* ctx)
 {
     for (int i = 0; i < CONFIG_MODEM_ACTIVE_COUNT; i++) {
-        for (int j = 1; j < DBUS_PROXY_MAX_COUNT; j++) {
+        for (int j = DBUS_PROXY_RADIO; j < DBUS_PROXY_MAX_COUNT; j++) {
             if (ctx->dbus_proxy[i][j] != NULL) {
                 g_dbus_proxy_unref(ctx->dbus_proxy[i][j]);
                 ctx->dbus_proxy[i][j] = NULL;
@@ -1024,6 +1057,7 @@ static void on_dbus_client_ready(GDBusClient* client, void* user_data)
     if (cb != NULL)
         cb(cbd->client_name, cbd->user_data);
 
+    free(cbd->client_name);
     free(cbd);
 }
 
@@ -1157,9 +1191,9 @@ static void system_dbus_disconnected(DBusConnection* conn, void* user_data)
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
-
-tapi_context tapi_open(const char* client_name,
-    tapi_client_ready_function callback, void* user_data)
+tapi_context tapi_open_service(const char* client_name,
+    tapi_client_ready_function callback, void* user_data,
+    unsigned int tapi_service)
 {
     DBusConnection* connection;
     GDBusClient* client;
@@ -1222,16 +1256,19 @@ tapi_context tapi_open(const char* client_name,
         break;
     }
 
+    ctx->service_module = tapi_service;
+    g_dbus_client_set_proxy_filter(client, tapi_proxy_filter, ctx);
     g_dbus_client_set_proxy_handlers(client, object_add, object_remove,
-        object_filter, NULL, NULL);
+        object_filter, NULL, ctx);
 
-    cbd->client_name = client_name;
+    cbd->client_name = strdup(client_name);
     cbd->context = ctx;
     cbd->user_data = user_data;
     cbd->callback = callback;
     if (!g_dbus_client_set_ready_watch(client, on_dbus_client_ready, cbd)) {
         tapi_log_error("set ready watch failed! \n");
         g_dbus_client_unref(client);
+        free(cbd->client_name);
         goto error;
     }
 
@@ -1263,6 +1300,11 @@ error:
 
     tapi_log_error("dbus connection open error \n");
     return NULL;
+}
+tapi_context tapi_open(const char* client_name,
+    tapi_client_ready_function callback, void* user_data)
+{
+    return tapi_open_service(client_name, callback, user_data, TAPI_SERVICE_FULL);
 }
 
 int tapi_close(tapi_context context)

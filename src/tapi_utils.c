@@ -657,3 +657,78 @@ int get_op_code_base_mcc_mnc(const char* mcc, const char* mnc)
 
     return OP_UNKNOW;
 }
+
+tapi_service_module get_service_module_by_proxy_type(enum dbus_proxy_type type)
+{
+    unsigned int service_table[] = {
+        TAPI_SERVICE_MODEM,
+        TAPI_SERVICE_RADIO,
+        TAPI_SERVICE_CALL,
+        TAPI_SERVICE_SIM,
+        TAPI_SERVICE_STK,
+        TAPI_SERVICE_DATA,
+        TAPI_SERVICE_SMS,
+        TAPI_SERVICE_CBS,
+        TAPI_SERVICE_NETREG,
+        TAPI_SERVICE_NETMON,
+        TAPI_SERVICE_CALL_BARRING,
+        TAPI_SERVICE_CALL_FORWARDING,
+        TAPI_SERVICE_SS,
+        TAPI_SERVICE_CALL_SETTING,
+        TAPI_SERVICE_IMS,
+        TAPI_SERVICE_PHONEBOOK,
+    };
+
+    if (type >= DBUS_PROXY_MAX_COUNT)
+        return TAPI_SERVICE_NONE;
+
+    return service_table[type];
+}
+
+const char* get_dbus_proxy_type_interface(enum dbus_proxy_type type)
+{
+    const char* dbus_proxy_server[] = {
+        OFONO_MODEM_INTERFACE,
+        OFONO_RADIO_SETTINGS_INTERFACE,
+        OFONO_VOICECALL_MANAGER_INTERFACE,
+        OFONO_SIM_MANAGER_INTERFACE,
+        OFONO_STK_INTERFACE,
+        OFONO_CONNECTION_MANAGER_INTERFACE,
+        OFONO_MESSAGE_MANAGER_INTERFACE,
+        OFONO_CELL_BROADCAST_INTERFACE,
+        OFONO_NETWORK_REGISTRATION_INTERFACE,
+        OFONO_NETMON_INTERFACE,
+        OFONO_CALL_BARRING_INTERFACE,
+        OFONO_CALL_FORWARDING_INTERFACE,
+        OFONO_SUPPLEMENTARY_SERVICES_INTERFACE,
+        OFONO_CALL_SETTINGS_INTERFACE,
+        OFONO_IMS_INTERFACE,
+        OFONO_PHONEBOOK_INTERFACE,
+    };
+
+    if (type >= DBUS_PROXY_MAX_COUNT)
+        return NULL;
+
+    return dbus_proxy_server[type];
+}
+
+bool tapi_support_proxy_type(enum dbus_proxy_type type)
+{
+    const char* interface = get_dbus_proxy_type_interface(type);
+
+    return is_interface_supported(interface);
+}
+
+bool tapi_support_interface(const char* interface)
+{
+    if (strcmp(interface, OFONO_MANAGER_INTERFACE) == 0)
+        return true;
+
+    for (int i = DBUS_PROXY_MODEM; i < DBUS_PROXY_MAX_COUNT; i++) {
+        if (strcmp(interface, get_dbus_proxy_type_interface(i)) == 0
+            && is_interface_supported(interface))
+            return true;
+    }
+
+    return false;
+}
