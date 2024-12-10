@@ -1346,7 +1346,7 @@ int tapi_call_separate_call(tapi_context context,
 
 int tapi_call_hangup_multiparty(tapi_context context, int slot_id)
 {
-    return manage_call_proxy_method(context, slot_id, "multiparty_hangup");
+    return manage_call_proxy_method(context, slot_id, "HangupMultiparty");
 }
 
 int tapi_call_send_tones(void* context, int slot_id, char* tones)
