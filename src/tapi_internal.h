@@ -108,6 +108,7 @@ const char* get_env_interface_support_string(const char* interface);
 bool is_interface_supported(const char* interface);
 int get_modem_id_by_proxy(dbus_context* context, GDBusProxy* proxy);
 int get_op_code_base_mcc_mnc(const char* mcc, const char* mnc);
+void get_covered_plmn(const char* mcc, const char* mnc, char* covered_plmn);
 
 /**
  * Power on or off modem.
