@@ -617,6 +617,19 @@ int get_modem_id_by_proxy(dbus_context* context, GDBusProxy* proxy)
     return 0;
 }
 
+void get_covered_plmn(const char* mcc, const char* mnc, char* covered_plmn)
+{
+    char* ptr = covered_plmn;
+
+    for (int i = 0; mcc[i] != '\0'; i++) {
+        *ptr++ = mcc[i] - '0' + 'a';
+    }
+    for (int i = 0; mnc[i] != '\0'; i++) {
+        *ptr++ = mnc[i] - '0' + 'a';
+    }
+    *ptr = '\0';
+}
+
 int get_op_code_base_mcc_mnc(const char* mcc, const char* mnc)
 {
     tapi_plmn_op_code_info plmn_op_info_list[] = {
