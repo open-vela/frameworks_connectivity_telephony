@@ -1030,6 +1030,22 @@ static int telephonytool_cmd_hangup_all(tapi_context context, char* pargs)
     return tapi_call_hangup_all_calls(context, atoi(slot_id));
 }
 
+static int telephonytool_cmd_hangup_multiparty(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    char* temp;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", &temp);
+    if (!is_valid_slot_id_str(slot_id))
+        return -EINVAL;
+
+    syslog(LOG_DEBUG, "%s, slotId : %s\n", __func__, slot_id);
+    return tapi_call_hangup_multiparty(context, atoi(slot_id));
+}
+
 static int telephonytool_cmd_hangup_by_id(tapi_context context, char* pargs)
 {
     char dst[2][MAX_INPUT_ARGS_LEN];
@@ -4465,6 +4481,9 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     { "hangup-all", CALL_CMD,
         telephonytool_cmd_hangup_all,
         "hangup all call (enter example : hangup-all 0 [slot_id])" },
+    { "hangup-all-multiparty", CALL_CMD,
+        telephonytool_cmd_hangup_multiparty,
+        "hang up all multiparty calls (enter example : hangup-multiparty 0 [slot_id])" },
     { "get-call", CALL_CMD,
         telephonytool_cmd_get_call,
         "get call list/call info (enter example : get-call 0 "
