@@ -15,3 +15,13 @@ void remote_call_operation(int slot_id, const char* phone_number, enum REMOTE_CA
     tapi_invoke_oem_ril_request_strings(get_tapi_ctx(), slot_id,
         EVENT_OEM_RIL_REQUEST_STRINGS_DONE, oem_req, 1, NULL);
 }
+
+void remote_call_hangup_with_disconnect_reason(int slot_id, const char* phone_number, int disconnect_reason)
+{
+    char* oem_req[1];
+    oem_req[0] = remote_command_buf;
+    memset(remote_command_buf, 0, sizeof(remote_command_buf));
+    sprintf(remote_command_buf, "AT+REMOTECALL=6,0,0,%s,129,%d", phone_number, disconnect_reason);
+    tapi_invoke_oem_ril_request_strings(get_tapi_ctx(), slot_id,
+        EVENT_OEM_RIL_REQUEST_STRINGS_DONE, oem_req, 1, NULL);
+}
