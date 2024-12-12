@@ -1180,7 +1180,7 @@ int remote_operation_call_reject_test(int slot_id)
     judge_data_init();
     judge_data.expect = CALL_REMOTE_HANGUP;
 
-    remote_call_operation(slot_id, phone_num, REJECT_CALL);
+    remote_call_hangup_with_disconnect_reason(slot_id, phone_num, DISCONNECT_REASON_REMOTE_HANGUP);
 
     if (judge()) {
         syslog(LOG_ERR, "No hangup call message received in %s", __func__);
@@ -1384,17 +1384,8 @@ int outgoing_call_remote_answer_and_hangup(int slot_id)
     }
 
     sleep(5);
-    judge_data_init();
-    judge_data.expect = CALL_STATE_CHANGE_TO_ACTIVE;
-    remote_call_operation(slot_id, phone_num, ACTIVE_CALL);
-    if (judge()) {
-        syslog(LOG_ERR, "No active call message received in %s", __func__);
-        res = -1;
-        goto on_exit;
-    }
-
-    if (judge_data.result) {
-        syslog(LOG_ERR, "Unsolicited message error in %s", __func__);
+    if (remote_operation_call_active_test(slot_id) < 0) {
+        syslog(LOG_ERR, "Remote call active fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
@@ -1794,19 +1785,8 @@ int call_incoming_and_hangup_by_dialer_before_answer_numerous(int slot_id)
 int incoming_call_answer_and_hangup(int slot_id)
 {
     int res = 0;
-    judge_data_init();
-    test_case_data_init();
-    judge_data.expect = NEW_CALL_INCOMING;
-
-    remote_call_operation(slot_id, phone_num, INCOMING_CALL);
-    if (judge()) {
-        syslog(LOG_ERR, "No incoming call message received in %s", __func__);
-        res = -1;
-        goto on_exit;
-    }
-
-    if (judge_data.result) {
-        syslog(LOG_ERR, "Unsolicited message error in %s", __func__);
+    if (remote_operation_call_incoming_test(slot_id) < 0) {
+        syslog(LOG_ERR, "Incoming call fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
@@ -1832,19 +1812,8 @@ on_exit:
 int incoming_call_answer_and_remote_hangup(int slot_id)
 {
     int res = 0;
-    judge_data_init();
-    test_case_data_init();
-    judge_data.expect = NEW_CALL_INCOMING;
-
-    remote_call_operation(slot_id, phone_num, INCOMING_CALL);
-    if (judge()) {
-        syslog(LOG_ERR, "No incoming call message received in %s", __func__);
-        res = -1;
-        goto on_exit;
-    }
-
-    if (judge_data.result) {
-        syslog(LOG_ERR, "Unsolicited message error in %s", __func__);
+    if (remote_operation_call_incoming_test(slot_id) < 0) {
+        syslog(LOG_ERR, "Incoming call fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
@@ -3728,17 +3697,8 @@ int call_connect_and_local_hangup(int slot_id)
     }
 
     sleep(5);
-    judge_data_init();
-    judge_data.expect = CALL_STATE_CHANGE_TO_ACTIVE;
-    remote_call_operation(slot_id, phone_num, ACTIVE_CALL);
-    if (judge()) {
-        syslog(LOG_ERR, "No active call message received in %s", __func__);
-        res = -1;
-        goto on_exit;
-    }
-
-    if (judge_data.result) {
-        syslog(LOG_ERR, "Unsolicited message error in %s", __func__);
+    if (remote_operation_call_active_test(slot_id) < 0) {
+        syslog(LOG_ERR, "remote call active fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
