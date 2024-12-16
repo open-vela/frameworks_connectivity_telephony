@@ -311,97 +311,6 @@ static void enable_fdn_param_append(DBusMessageIter* iter, void* user_data)
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &passwd);
 }
 
-static void fill_ss_cb_cf_response_info(DBusMessageIter* iter,
-    tapi_ss_initiate_info* info)
-{
-    while (dbus_message_iter_get_arg_type(iter) == DBUS_TYPE_DICT_ENTRY) {
-        DBusMessageIter entry, value;
-
-        dbus_message_iter_recurse(iter, &entry);
-        dbus_message_iter_get_basic(&entry, &info->append_service);
-
-        dbus_message_iter_next(&entry);
-        dbus_message_iter_recurse(&entry, &value);
-        dbus_message_iter_get_basic(&value, &info->append_service_value);
-
-        dbus_message_iter_next(iter);
-    }
-}
-
-static void fill_ss_initiate_cb_or_cf_service(DBusMessageIter* iter,
-    tapi_ss_initiate_info* info)
-{
-    while (dbus_message_iter_get_arg_type(iter) == DBUS_TYPE_STRUCT) {
-        DBusMessageIter entry, value, dict;
-
-        dbus_message_iter_recurse(iter, &entry);
-        dbus_message_iter_get_basic(&entry, &info->ss_service_operation);
-
-        dbus_message_iter_next(&entry);
-        dbus_message_iter_recurse(&entry, &value);
-        dbus_message_iter_get_basic(&value, &info->service_operation_requested);
-
-        dbus_message_iter_next(&value);
-        dbus_message_iter_recurse(&value, &dict);
-
-        fill_ss_cb_cf_response_info(&dict, info);
-
-        dbus_message_iter_next(iter);
-    }
-}
-
-static void fill_ss_initiate_cw_append_service(DBusMessageIter* iter,
-    tapi_ss_initiate_info* info)
-{
-    while (dbus_message_iter_get_arg_type(iter) == DBUS_TYPE_DICT_ENTRY) {
-        DBusMessageIter entry, value;
-
-        dbus_message_iter_recurse(iter, &entry);
-        dbus_message_iter_get_basic(&entry, &info->append_service);
-
-        dbus_message_iter_next(&entry);
-        dbus_message_iter_recurse(&entry, &value);
-        dbus_message_iter_get_basic(&value, &info->append_service_value);
-
-        dbus_message_iter_next(iter);
-    }
-}
-
-static void fill_ss_initiate_cw_service(DBusMessageIter* iter,
-    tapi_ss_initiate_info* info)
-{
-    while (dbus_message_iter_get_arg_type(iter) == DBUS_TYPE_STRUCT) {
-        DBusMessageIter entry, value;
-
-        dbus_message_iter_recurse(iter, &entry);
-        dbus_message_iter_get_basic(&entry, &info->ss_service_operation);
-
-        dbus_message_iter_next(&entry);
-        dbus_message_iter_recurse(&entry, &value);
-
-        fill_ss_initiate_cw_append_service(&value, info);
-
-        dbus_message_iter_next(iter);
-    }
-}
-
-static void fill_ss_initiate_cs_service(DBusMessageIter* iter,
-    tapi_ss_initiate_info* info)
-{
-    while (dbus_message_iter_get_arg_type(iter) == DBUS_TYPE_STRUCT) {
-        DBusMessageIter entry, value;
-
-        dbus_message_iter_recurse(iter, &entry);
-        dbus_message_iter_get_basic(&entry, &info->ss_service_operation);
-
-        dbus_message_iter_next(&entry);
-        dbus_message_iter_recurse(&entry, &value);
-        dbus_message_iter_get_basic(&value, &info->call_setting_status);
-
-        dbus_message_iter_next(iter);
-    }
-}
-
 static void method_call_complete(DBusMessage* message, void* user_data)
 {
     tapi_async_handler* handler = user_data;
@@ -534,7 +443,8 @@ static void ss_initiate_complete(DBusMessage* message, void* user_data)
     tapi_async_handler* handler;
     tapi_async_result* ar;
     tapi_async_function cb;
-    DBusMessageIter iter, value, var;
+    const char* name;
+    DBusMessageIter iter, var;
     DBusError err;
 
     handler = user_data;
@@ -576,25 +486,35 @@ static void ss_initiate_complete(DBusMessage* message, void* user_data)
         goto done;
     }
 
-    dbus_message_iter_recurse(&iter, &value);
-    dbus_message_iter_get_basic(&value, &info->ss_service_type);
-
-    dbus_message_iter_next(&value);
-    dbus_message_iter_recurse(&value, &var);
-
-    if (dbus_message_iter_get_arg_type(&var) == DBUS_TYPE_VARIANT) {
-        if (strcmp(info->ss_service_type, "CallBarring") == 0
-            || strcmp(info->ss_service_type, "CallForwarding") == 0) {
-            fill_ss_initiate_cb_or_cf_service(&var, info);
-        } else if (strcmp(info->ss_service_type, "CallWaiting") == 0) {
-            fill_ss_initiate_cw_service(&var, info);
-        } else if (strcmp(info->ss_service_type, "USSD") == 0) {
-            dbus_message_iter_get_basic(&var, &info->ussd_response);
-        } else {
-            fill_ss_initiate_cs_service(&var, info);
-        }
+    if (dbus_message_iter_get_arg_type(&iter) != DBUS_TYPE_STRING) {
+        tapi_log_error("message iter type is not string in %s", __func__);
+        ar->status = ERROR;
+        goto done;
     }
 
+    dbus_message_iter_get_basic(&iter, &name);
+    dbus_message_iter_next(&iter);
+
+    if (dbus_message_iter_get_arg_type(&iter) != DBUS_TYPE_VARIANT) {
+        tapi_log_error("message iter type is not variant in %s", __func__);
+        ar->status = ERROR;
+        goto done;
+    }
+
+    dbus_message_iter_recurse(&iter, &var);
+    if (strcmp(name, "USSD")) {
+        tapi_log_error("reponse is not ussd str in %s", __func__);
+        ar->status = ERROR;
+        goto done;
+    }
+
+    if (dbus_message_iter_get_arg_type(&var) != DBUS_TYPE_STRING) {
+        tapi_log_error("get ussd str failed in %s", __func__);
+        ar->status = ERROR;
+        goto done;
+    }
+
+    dbus_message_iter_get_basic(&var, &info->ussd_response);
     ar->data = info;
     ar->status = OK;
 
@@ -606,7 +526,7 @@ done:
 
 static void ss_send_ussd_cb(DBusMessage* message, void* user_data)
 {
-    DBusMessageIter iter, value;
+    DBusMessageIter iter;
     tapi_async_handler* handler;
     tapi_async_result* ar;
     tapi_async_function cb;
@@ -645,8 +565,13 @@ static void ss_send_ussd_cb(DBusMessage* message, void* user_data)
         goto done;
     }
 
-    dbus_message_iter_recurse(&iter, &value);
-    dbus_message_iter_get_basic(&value, &response);
+    if (dbus_message_iter_get_arg_type(&iter) != DBUS_TYPE_STRING) {
+        tapi_log_error("message iter type is not string in %s", __func__);
+        ar->status = ERROR;
+        goto done;
+    }
+
+    dbus_message_iter_get_basic(&iter, &response);
 
     ar->data = response;
     ar->status = OK;
