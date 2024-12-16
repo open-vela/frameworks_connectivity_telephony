@@ -577,21 +577,7 @@ static void ss_event_response(tapi_async_result* result)
             break;
         case EVENT_INITIATE_SERVICE_DONE:
             info = (tapi_ss_initiate_info*)result->data;
-            if (strcmp(info->ss_service_type, "CallBarring") == 0
-                || strcmp(info->ss_service_type, "CallForwarding") == 0) {
-                syslog(LOG_DEBUG, "service type : %s (%s, %s, %s, %s) \n", info->ss_service_type,
-                    info->ss_service_operation, info->service_operation_requested,
-                    info->append_service, info->append_service_value);
-            } else if (strcmp(info->ss_service_type, "CallWaiting") == 0) {
-                syslog(LOG_DEBUG, "service type : %s (%s, %s, %s) \n", info->ss_service_type,
-                    info->ss_service_operation, info->append_service, info->append_service_value);
-            } else if (strcmp(info->ss_service_type, "USSD") == 0) {
-                syslog(LOG_DEBUG, "service type : %s (%s) \n",
-                    info->ss_service_type, info->ussd_response);
-            } else {
-                syslog(LOG_DEBUG, "service type : %s (%s, %s) \n", info->ss_service_type,
-                    info->ss_service_operation, info->call_setting_status);
-            }
+            syslog(LOG_DEBUG, "USSD response: %s", info->ussd_response);
             break;
         case EVENT_QUERY_FDN_DONE:
             syslog(LOG_DEBUG, "fdn enabled or disabled : %d \n", param);
