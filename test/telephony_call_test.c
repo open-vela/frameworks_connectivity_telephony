@@ -1427,32 +1427,6 @@ on_exit:
     return res;
 }
 
-int call_hangup_after_caller_answer(int slot_id)
-{
-    int ret1 = tapi_call_listen_call_test(slot_id);
-    int ret2 = tapi_call_dial_test(slot_id, phone_num, 0);
-    judge_data_init();
-    judge_data.expect = CALL_STATE_CHANGE_TO_ACTIVE;
-
-    if ((judge() || ret1 || ret2 || judge_data.result) != 0)
-        goto error;
-
-    int ret4 = tapi_call_hanup_current_call_test(slot_id);
-    int ret5 = tapi_call_unlisten_call_test();
-
-    if ((ret4 || ret5) != 0)
-        goto error;
-
-    return 0;
-
-error:
-    if (tapi_get_call_count(slot_id)) {
-        tapi_call_hangup_all_test(slot_id);
-    }
-
-    return -1;
-}
-
 int outgoing_call_remote_answer_and_hangup(int slot_id)
 {
     int res = 0;
@@ -1480,43 +1454,38 @@ on_exit:
     return res;
 }
 
-int call_dial_caller_reject_and_incoming(int slot_id)
+int call_incoming_after_remote_hangup(int slot_id)
 {
-    int ret1 = tapi_call_listen_call_test(slot_id);
-    int ret2 = tapi_call_dial_test(slot_id, phone_num, 0);
-
-    judge_data_init();
-    judge_data.expect = CALL_REMOTE_HANGUP;
-
-    int integer_call_id = atoi(test_case_data.call_id + 16);
-    hangup_remote_call(integer_call_id);
-
-    if ((judge() || ret1 || ret2 || judge_data.result) != 0)
-        goto error;
-
-    judge_data_init();
-    test_case_data_init();
-    judge_data.expect = NEW_CALL_INCOMING;
-
-    incoming_call("10010");
-
-    if (judge() || judge_data.result)
-        goto error;
-
-    int ret3 = tapi_call_hanup_current_call_test(slot_id);
-    int ret4 = tapi_call_unlisten_call_test();
-
-    if ((ret3 || ret4) != 0)
-        goto error;
-
-    return 0;
-
-error:
-    if (tapi_get_call_count(slot_id)) {
-        tapi_call_hangup_all_test(slot_id);
+    int res = 0;
+    if (tapi_call_dial_test(slot_id, phone_num, 0)) {
+        syslog(LOG_ERR, "Dail call execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
     }
 
-    return -1;
+    sleep(3);
+    if (remote_operation_call_reject_test(slot_id)) {
+        syslog(LOG_ERR, "Remote hangup with disconnect reason execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (remote_operation_call_incoming_test(slot_id)) {
+        syslog(LOG_ERR, "Remote call incoming fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (tapi_call_hanup_current_call_test(slot_id)) {
+        syslog(LOG_ERR, "Hangup all call execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
 }
 
 int call_dial_caller_reject_and_dial_another(int slot_id)
