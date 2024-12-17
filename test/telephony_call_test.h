@@ -61,6 +61,7 @@ int outgoing_call_remote_answer_and_hangup(int slot_id);
 int outgoing_call_hold_and_unhold_by_caller(int slot_id);
 int outgoing_call_active_and_send_tones(int slot_id);
 int call_dial_caller_reject_and_dial_another(int slot_id);
+int call_dial_another_after_reject(int slot_id);
 int incoming_call_answer_and_remote_hangup(int slot_id);
 int call_dial_to_phone_out_of_service(int slot_id);
 int call_dial_without_sim_card(int slot_id);
