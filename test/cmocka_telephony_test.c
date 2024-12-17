@@ -341,68 +341,96 @@ static void TestTeleFunc_SimDeleteFdnEntry(void** state)
 //     assert_int_equal(ret, OK);
 // }
 
-// static void TestTeleLoadEccList(void** state)
-// {
-//     (void)state;
-//     int ret = tapi_call_load_ecc_list_test(0);
-//     assert_int_equal(ret, 0);
-// }
-
-static void TestTeleFunc_CallSetVoicecallSlot(void** state)
+// call testcases
+static void TestTeleFunc_CI_CallDialNumber(void** state)
 {
     (void)state;
-    int ret = tapi_call_set_default_voicecall_slot_test(0);
-    assert_int_equal(ret, 0);
-}
-
-static void TestTeleFunc_CallGetVoicecallSlot(void** state)
-{
-    (void)state;
-    int ret = tapi_call_get_default_voicecall_slot_test(0);
-    assert_int_equal(ret, 0);
-}
-
-static void TestTeleFunc_CallClearVoicecallSlot(void** state)
-{
-    (void)state;
-    int ret = call_clear_voicecall_slot_set();
-    assert_int_equal(ret, 0);
-}
-
-static void TestTeleFunc_CI_CallListen(void** state)
-{
-    (void)state;
-    int ret = tapi_call_listen_call_test(0);
-    assert_int_equal(ret, 0);
-}
-
-static void TestTeleFunc_CI_CallUnlisten(void** state)
-{
-    (void)state;
-    int ret = tapi_call_unlisten_call_test();
-    assert_int_equal(ret, 0);
-}
-
-static void TestTeleFunc_CI_CallStartDtmf(void** state)
-{
-    (void)state;
-    int ret = tapi_start_dtmf_test(0);
+    int ret = call_dial_number_test(0);
     assert_int_equal(ret, OK);
 }
 
-static void TestTeleFunc_CI_CallStopDtmf(void** state)
+static void TestTeleFunc_CI_CallDialEccNumber(void** state)
 {
     (void)state;
-    int ret = tapi_stop_dtmf_test(0);
+    int ret = call_dial_ecc_number_test(0);
     assert_int_equal(ret, OK);
 }
 
-static void TestTeleFunc_CI_CallHangupAfterDialing(void** state)
+static void TestTeleFunc_CallDialLongPhoneNumber(void** state)
 {
     (void)state;
-    sleep(2);
-    int ret = call_hangup_after_dialing(0);
-    assert_int_equal(ret, 0);
+    int ret = call_dial_long_phone_number_test(0);
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_CallDialShotPhoneNumber(void** state)
+{
+    (void)state;
+    int ret = call_dial_short_phone_number_test(0);
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_CallDialWithEnableHideCallId(void** state)
+{
+    (void)state;
+    int ret = call_dial_with_enable_hide_callerid_test(0);
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_CallDialWithDisabledHideCallId(void** state)
+{
+    (void)state;
+    int ret = call_dial_with_disabled_hide_callerid_test(0);
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_CallDialWithDefaultHideCallId(void** state)
+{
+    (void)state;
+    int ret = call_dial_with_default_hide_callerid_test(0);
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_CallDialWithAreaCode(void** state)
+{
+    (void)state;
+    int ret = call_dial_with_area_code_test(0);
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_CallDialWithPauseCode(void** state)
+{
+    (void)state;
+    int ret = call_dial_with_pause_code_test(0);
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_CallDialWithWaitCode(void** state)
+{
+    (void)state;
+    int ret = call_dial_with_wait_code_test(0);
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_CI_CallDialWithNumerousCode(void** state)
+{
+    (void)state;
+    int ret = call_dial_with_numerous_code_test(0);
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_CallDialConference(void** state)
+{
+    (void)state;
+    int ret = call_dial_conference_test(0);
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_CI_CallDtmfAfterDial(void** state)
+{
+    (void)state;
+    int ret = call_dtmf_after_dial_test(0);
+    assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_CallIncomingAnswerAndHangup(void** state)
@@ -454,16 +482,6 @@ static void TestTeleFunc_CallReleaseAndSwap(void** state)
     assert_int_equal(ret, 0);
 }
 
-// static void TestTeleDialAgainAfterRemoteHangup(void **state) {
-//     int ret = call_dial_after_caller_reject(0);
-//     assert_int_equal(ret, 0);
-// }
-
-// static void TestTeleHangupCallAfterRemoteAnswer(void **state) {
-//     int ret = call_hangup_after_caller_answer(0);
-//     assert_int_equal(ret, 0);
-// }
-
 static void TestTeleFunc_CallRemoteAnswerAndHangup(void** state)
 {
     int ret = outgoing_call_remote_answer_and_hangup(0);
@@ -503,6 +521,58 @@ static void TestTeleFunc_CallIncomingandLocalHangup(void** state)
     assert_int_equal(ret, 0);
 }
 
+// static void TestTeleLoadEccList(void** state)
+// {
+//     (void)state;
+//     int ret = tapi_call_load_ecc_list_test(0);
+//     assert_int_equal(ret, 0);
+// }
+
+static void TestTeleFunc_CallSetVoicecallSlot(void** state)
+{
+    (void)state;
+    int ret = tapi_call_set_default_voicecall_slot_test(0);
+    assert_int_equal(ret, 0);
+}
+
+static void TestTeleFunc_CallGetVoicecallSlot(void** state)
+{
+    (void)state;
+    int ret = tapi_call_get_default_voicecall_slot_test(0);
+    assert_int_equal(ret, 0);
+}
+
+static void TestTeleFunc_CallClearVoicecallSlot(void** state)
+{
+    (void)state;
+    int ret = call_clear_voicecall_slot_set();
+    assert_int_equal(ret, 0);
+}
+
+static void TestTeleFunc_CI_CallListen(void** state)
+{
+    (void)state;
+    int ret = tapi_call_listen_call_test(0);
+    assert_int_equal(ret, 0);
+}
+
+static void TestTeleFunc_CI_CallUnlisten(void** state)
+{
+    (void)state;
+    int ret = tapi_call_unlisten_call_test();
+    assert_int_equal(ret, 0);
+}
+
+// static void TestTeleDialAgainAfterRemoteHangup(void **state) {
+//     int ret = call_dial_after_caller_reject(0);
+//     assert_int_equal(ret, 0);
+// }
+
+// static void TestTeleHangupCallAfterRemoteAnswer(void **state) {
+//     int ret = call_hangup_after_caller_answer(0);
+//     assert_int_equal(ret, 0);
+// }
+
 // static void TestTeleRemoteHangupThenIncomingNewCall(void **state) {
 //     int ret = call_dial_caller_reject_and_incoming(0);
 //     assert_int_equal(ret, 0);
@@ -513,151 +583,10 @@ static void TestTeleFunc_CallIncomingandLocalHangup(void** state)
 //     assert_int_equal(ret, 0);
 // }
 
-static void TestTeleFunc_CI_CallHangupAll(void** state)
-{
-    (void)state;
-    int ret = tapi_call_hangup_all_test(0);
-    assert_int_equal(ret, OK);
-}
-
-static void TestTeleFunc_CI_CallGetCount(void** state)
-{
-    (void)state;
-    int ret = tapi_get_call_count(0);
-    assert_true(ret >= 0);
-}
-
-static void TestTeleFunc_CI_CallDialNumber(void** state)
-{
-    (void)state;
-    int ret = tapi_dial_number(0);
-    assert_int_equal(ret, OK);
-    sleep(2);
-    ret = tapi_call_hanup_current_call_test(0);
-    assert_int_equal(ret, OK);
-}
-
-static void TestTeleFunc_CI_CallDialEccNumber(void** state)
-{
-    (void)state;
-    int ret = tapi_dial_ecc_number(0);
-    assert_int_equal(ret, OK);
-    sleep(2);
-    ret = tapi_call_hanup_current_call_test(0);
-    assert_int_equal(ret, OK);
-}
-
-static void TestTeleFunc_CallDialLongPhoneNumber(void** state)
-{
-    (void)state;
-    int ret = tapi_dial_with_long_phone_number(0);
-    assert_int_equal(ret, OK);
-    sleep(2);
-    ret = tapi_call_hanup_current_call_test(0);
-    assert_int_equal(ret, OK);
-}
-
-static void TestTeleFunc_CallDialShotPhoneNumber(void** state)
-{
-    (void)state;
-    int ret = tapi_dial_with_short_phone_number(0);
-    assert_int_equal(ret, OK);
-    sleep(2);
-    ret = tapi_call_hanup_current_call_test(0);
-    assert_int_equal(ret, OK);
-}
-
-static void TestTeleFunc_CallDialWithEnableHideCallId(void** state)
-{
-    (void)state;
-    int ret = tapi_dial_with_enable_hide_callerid(0);
-    assert_int_equal(ret, OK);
-    sleep(2);
-    ret = tapi_call_hanup_current_call_test(0);
-    assert_int_equal(ret, OK);
-}
-
-static void TestTeleFunc_CallDialWithDisabledHideCallId(void** state)
-{
-    (void)state;
-    int ret = tapi_dial_with_disabled_hide_callerid(0);
-    assert_int_equal(ret, OK);
-    sleep(2);
-    ret = tapi_call_hanup_current_call_test(0);
-    assert_int_equal(ret, OK);
-}
-
-static void TestTeleFunc_CallDialWithDefaultHideCallId(void** state)
-{
-    (void)state;
-    int ret = tapi_dial_with_default_hide_callerid(0);
-    assert_int_equal(ret, OK);
-    sleep(2);
-    ret = tapi_call_hanup_current_call_test(0);
-    assert_int_equal(ret, OK);
-}
-
 // static void TestTeleIncomingNewCallThenRemoteHangup(void **state) {
 //     int ret = call_incoming_and_hangup_by_dialer_before_answer(0);
 //     assert_int_equal(ret, 0);
 // }
-
-static void TestTeleFunc_CallDialWithAreaCode(void** state)
-{
-    (void)state;
-    int ret = tapi_call_dial_using_phone_number_with_area_code_test(0);
-    assert_int_equal(ret, OK);
-    sleep(2);
-    ret = tapi_call_hanup_current_call_test(0);
-    assert_int_equal(ret, OK);
-}
-
-static void TestTeleFunc_CallDialWithPauseCode(void** state)
-{
-    (void)state;
-    int ret = tapi_call_dial_using_phone_number_with_pause_code_test(0);
-    assert_int_equal(ret, OK);
-    sleep(2);
-    ret = tapi_call_hanup_current_call_test(0);
-    assert_int_equal(ret, OK);
-}
-
-static void TestTeleFunc_CallDialWithWaitCode(void** state)
-{
-    (void)state;
-    int ret = tapi_call_dial_using_phone_number_with_wait_code_test(0);
-    assert_int_equal(ret, OK);
-    sleep(2);
-    ret = tapi_call_hanup_current_call_test(0);
-    assert_int_equal(ret, OK);
-}
-
-static void TestTeleFunc_CI_CallDialWithNumerousCode(void** state)
-{
-    (void)state;
-    int ret = tapi_call_dial_using_phone_number_with_numerous_code_test(0);
-    assert_int_equal(ret, OK);
-    sleep(2);
-    ret = tapi_call_hanup_current_call_test(0);
-    assert_int_equal(ret, OK);
-}
-
-static void TestTeleFunc_CallDialConference(void** state)
-{
-    (void)state;
-    int ret = tapi_call_dial_conference_test(0);
-    assert_int_equal(ret, OK);
-    sleep(2);
-    ret = tapi_call_hangup_all_test(0);
-    assert_int_equal(ret, OK);
-}
-
-static void TestTeleFunc_CI_CallCheckAleringStatus(void** state)
-{
-    (void)state;
-    int ret = call_check_alerting_status_after_dial(0);
-    assert_int_equal(ret, OK);
-}
 
 // static void TestTeleCheckStatusInDialing(void **state)
 // {
@@ -2328,72 +2257,65 @@ int main(int argc, char* argv[])
     };
 
     const struct CMUnitTest CallTestSuites[] = {
-        cmocka_unit_test(TestTeleFunc_CI_CallListen),
-        cmocka_unit_test(TestTeleFunc_CI_CallDialNumber),
-        cmocka_unit_test(TestTeleFunc_CI_CallDialEccNumber),
-        cmocka_unit_test(TestTeleFunc_CallDialLongPhoneNumber),
-        cmocka_unit_test(TestTeleFunc_CallDialShotPhoneNumber),
-        cmocka_unit_test(TestTeleFunc_CallDialWithEnableHideCallId),
-        cmocka_unit_test(TestTeleFunc_CallDialWithDisabledHideCallId),
-        cmocka_unit_test(TestTeleFunc_CallDialWithDefaultHideCallId),
-        cmocka_unit_test(TestTeleFunc_CallDialWithAreaCode),
-        cmocka_unit_test(TestTeleFunc_CallDialWithPauseCode),
-        cmocka_unit_test(TestTeleFunc_CallDialWithWaitCode),
-        cmocka_unit_test(TestTeleFunc_CI_CallDialWithNumerousCode),
-        cmocka_unit_test(TestTeleFunc_CallDialConference),
-        cmocka_unit_test(TestTeleFunc_CI_CallCheckAleringStatus),
-        cmocka_unit_test(TestTeleFunc_CI_CallStartDtmf),
-        cmocka_unit_test(TestTeleFunc_CI_CallStopDtmf),
-        cmocka_unit_test(TestTeleFunc_CI_CallGetCount),
-        cmocka_unit_test(TestTeleFunc_CI_CallHangupAll),
-        // cmocka_unit_test(TestTeleLoadEccList),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_CallDialNumber, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_CallDialEccNumber, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialLongPhoneNumber, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialShotPhoneNumber, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialWithEnableHideCallId, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialWithDisabledHideCallId, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialWithDefaultHideCallId, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialWithAreaCode, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialWithPauseCode, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialWithWaitCode, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_CallDialWithNumerousCode, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialConference, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_CallDtmfAfterDial, setup_call, teardown_call),
+        // cmocka_unit_test_setup_teardown(TestTeleLoadEccList, setup_call, teardown_call),
         // hangup between dialing and answering
-        cmocka_unit_test(TestTeleFunc_CI_CallHangupAfterDialing),
-        cmocka_unit_test(TestTeleFunc_CallIncomingAnswerAndHangup),
-        cmocka_unit_test(TestTeleFunc_CallIncomingAnswerAndRemoteHangup),
-        cmocka_unit_test(TestTeleFunc_CallReleaseAndAnswer),
-        cmocka_unit_test(TestTeleFunc_CallHoldAndAnswer),
-        cmocka_unit_test(TestTeleFunc_CallMergeByUser),
-        cmocka_unit_test(TestTeleFunc_CallSeparateByUser),
-        cmocka_unit_test(TestTeleFunc_CallReleaseAndSwap),
-        cmocka_unit_test(TestTeleFunc_CallRemoteAnswerAndHangup),
-        cmocka_unit_test(TestTeleFunc_CallHoldAndHangup),
-        cmocka_unit_test(TestTeleFunc_CallActiveAndSendtones),
-        cmocka_unit_test(TestTeleFunc_CallConnectAndLocalHangup),
-        cmocka_unit_test(TestTeleFunc_CallDialAndRemoteHangup),
-        cmocka_unit_test(TestTeleFunc_CallIncomingandLocalHangup),
-        cmocka_unit_test(TestTeleFunc_CallSetVoicecallSlot),
-        cmocka_unit_test(TestTeleFunc_CallGetVoicecallSlot),
-        cmocka_unit_test(TestTeleFunc_CallClearVoicecallSlot),
-        cmocka_unit_test(TestTeleFunc_CI_CallUnlisten),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingAnswerAndHangup, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingAnswerAndRemoteHangup, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallReleaseAndAnswer, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallHoldAndAnswer, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallMergeByUser, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallSeparateByUser, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallReleaseAndSwap, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallRemoteAnswerAndHangup, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallHoldAndHangup, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallActiveAndSendtones, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallConnectAndLocalHangup, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialAndRemoteHangup, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingandLocalHangup, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallSetVoicecallSlot, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallGetVoicecallSlot, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallClearVoicecallSlot, setup_call, teardown_call),
 #if 0
 
         // answer the incoming call then hangup it
-        cmocka_unit_test(TestTeleAnswerAndHangupTheIncomingCall),
+        cmocka_unit_test_setup_teardown(TestTeleAnswerAndHangupTheIncomingCall, setup_call, teardown_call),
 
         // dial again after remote hangup
-        // cmocka_unit_test(TestTeleDialAgainAfterRemoteHangup),
+        // cmocka_unit_test_setup_teardown(TestTeleDialAgainAfterRemoteHangup, setup_call, teardown_call),
 
         // hangup after remote answer
-        cmocka_unit_test(TestTeleHangupCallAfterRemoteAnswer),
+        cmocka_unit_test_setup_teardown(TestTeleHangupCallAfterRemoteAnswer, setup_call, teardown_call),
 
         // dial then remote answer and hangup
-        // cmocka_unit_test(TestTeleDialThenRemoteAnswerAndHangup),
+        // cmocka_unit_test_setup_teardown(TestTeleDialThenRemoteAnswerAndHangup, setup_call, teardown_call),
 
         // remote hangup then incoming new call
-        // cmocka_unit_test(TestTeleRemoteHangupThenIncomingNewCall),
+        // cmocka_unit_test_setup_teardown(TestTeleRemoteHangupThenIncomingNewCall, setup_call, teardown_call),
 
         // remote hangup then dial another
-        // cmocka_unit_test(TestTeleRemoteHangupThenDialAnother),
+        // cmocka_unit_test_setup_teardown(TestTeleRemoteHangupThenDialAnother, setup_call, teardown_call),
 
         // dial with numerous hide call id
-        cmocka_unit_test(TestTeleDialWithNumerousHideCallId),
+        cmocka_unit_test_setup_teardown(TestTeleDialWithNumerousHideCallId, setup_call, teardown_call),
 
         // incoming new call then remote hangup
-        // cmocka_unit_test(TestTeleIncomingNewCallThenRemoteHangup),
+        // cmocka_unit_test_setup_teardown(TestTeleIncomingNewCallThenRemoteHangup, setup_call, teardown_call),
 
         // dial using a phone number with area code
-        cmocka_unit_test(TestTeleFunc_CallDialWithAreaCode),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialWithAreaCode, setup_call, teardown_call),
 #endif
     };
 
