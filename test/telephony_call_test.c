@@ -1524,20 +1524,6 @@ on_exit:
 }
 
 // todo
-int call_dial_to_phone_in_call(int slot_id)
-{
-    // todo: caller in process
-
-    int ret1 = tapi_call_listen_call_test(slot_id);
-    int ret2 = tapi_call_dial_test(slot_id, phone_num, 0);
-    sleep(5);
-    int ret3 = tapi_call_hanup_current_call_test(slot_id);
-    int ret4 = tapi_call_unlisten_call_test();
-
-    return ret1 || ret2 || ret3 || ret4;
-}
-
-// todo
 int call_dial_to_phone_out_of_service(int slot_id)
 {
     // todo: caller out of service
@@ -3766,30 +3752,4 @@ int call_listen_and_unlisten_ss(int slot_id)
 int call_listen_error_ss_code(int slot_id)
 {
     return tapi_ss_listen_error_code_test(slot_id);
-}
-
-void set_callback_data(int expect)
-{
-    judge_data_init();
-    judge_data.expect = expect;
-}
-
-int judge_callback_result(void)
-{
-    if ((judge() || judge_data.result) != 0)
-        return -1;
-
-    return 0;
-}
-
-void incoming_first_call(void)
-{
-    test_case_data_init();
-    set_callback_data(NEW_CALL_INCOMING);
-}
-
-void incoming_another_call(void)
-{
-    test_case_data_init();
-    set_callback_data(NEW_CALL_WAITING);
 }
