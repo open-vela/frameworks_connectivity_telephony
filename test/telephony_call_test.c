@@ -1362,20 +1362,6 @@ on_exit:
     return res;
 }
 
-int call_check_alerting_status_after_dial(int slot_id)
-{
-    int ret1 = tapi_call_dial_test(slot_id, phone_num, 0);
-
-    int ret2 = call_check_alerting_status();
-    syslog(LOG_INFO, "%s, ret1 : %d  ret2 : %d \n", __func__, ret1, ret2);
-
-    if (ret1 != 0 || ret2 != 0) {
-        return -1;
-    }
-
-    return 0;
-}
-
 int call_dtmf_after_dial_test(int slot_id)
 {
     int res = 0;
@@ -1409,39 +1395,36 @@ on_exit:
 
 int call_dial_after_caller_reject(int slot_id)
 {
-    int ret1, ret2, ret3, ret4, ret5;
-    ret1 = ret2 = ret3 = ret4 = ret5 = -1;
-
-    for (int i = 0; i < 5; ++i) {
-        ret1 = tapi_call_listen_call_test(slot_id);
-        ret2 = tapi_call_dial_test(slot_id, phone_num, 0);
-
-        judge_data_init();
-        judge_data.expect = CALL_REMOTE_HANGUP;
-
-        int integer_call_id = atoi(test_case_data.call_id + 16);
-        hangup_remote_call(integer_call_id);
-
-        if (judge() || judge_data.result || ret1 || ret2)
-            goto error;
-
-        ret3 = tapi_call_dial_test(slot_id, phone_num, 0);
-        ret4 = tapi_call_hanup_current_call_test(slot_id);
-        ret5 = tapi_call_unlisten_call_test();
-
-        if ((ret3 || ret4 || ret5) != 0) {
-            goto error;
-        }
+    int res = 0;
+    if (tapi_call_dial_test(slot_id, phone_num, 0)) {
+        syslog(LOG_ERR, "Dial call execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
     }
 
-    return 0;
-
-error:
-    if (tapi_get_call_count(slot_id)) {
-        tapi_call_hangup_all_test(slot_id);
+    sleep(3);
+    if (remote_operation_call_reject_test(slot_id)) {
+        syslog(LOG_ERR, "Remote call reject execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
     }
 
-    return -1;
+    sleep(3);
+    if (tapi_call_dial_test(slot_id, phone_num, 0)) {
+        syslog(LOG_ERR, "Dial call execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (tapi_call_hanup_current_call_test(slot_id)) {
+        syslog(LOG_ERR, "Hangup current call execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
 }
 
 int call_hangup_after_caller_answer(int slot_id)
