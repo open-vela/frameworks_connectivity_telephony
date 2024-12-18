@@ -37,16 +37,6 @@ static void test_case_data_init(void)
     test_case_data.current_call_state = -1;
 }
 
-static int incoming_call(char* incoming_number)
-{
-    return 0;
-}
-
-static int hangup_remote_call(int call_id)
-{
-    return 0;
-}
-
 static void call_state_change_cb(tapi_async_result* result)
 {
     tapi_call_info* call_info;
@@ -1619,29 +1609,6 @@ int call_dial_ecc_number_without_sim_card(int slot_id)
     return ret1 || ret2 || ret3 || ret4;
 }
 
-// todo
-int call_dial_to_empty_number(int slot_id)
-{
-    char* empty_phone_number = "123456";
-
-    // todo: 123456 is empty phone number
-
-    int ret1 = tapi_call_listen_call_test(slot_id);
-
-    if (ret1 != 0)
-        return -1;
-
-    int ret2 = tapi_call_dial_test(slot_id, empty_phone_number, 0);
-
-    if (ret2 == 0) {
-        tapi_call_hangup_all_test(slot_id);
-        tapi_call_unlisten_call_test();
-        return -1;
-    }
-
-    return tapi_call_unlisten_call_test();
-}
-
 int call_dial_number_test(int slot_id)
 {
     int res = 0;
@@ -1791,43 +1758,6 @@ int tapi_stop_dtmf_test(int slot_id)
 
 on_exit:
     return res;
-}
-
-// todo: unsolicited message error, need gaojiawei fix
-int call_incoming_and_hangup_by_dialer_before_answer(int slot_id)
-{
-    int ret1 = tapi_call_listen_call_test(slot_id);
-    judge_data_init();
-    test_case_data_init();
-    judge_data.expect = NEW_CALL_INCOMING;
-
-    incoming_call("10010");
-
-    if ((judge() || ret1 || judge_data.result) != 0)
-        goto error;
-
-    judge_data_init();
-    judge_data.expect = CALL_REMOTE_HANGUP;
-
-    int integer_call_id = atoi(test_case_data.call_id + 16);
-    hangup_remote_call(integer_call_id);
-
-    if (judge() != 0)
-        goto error;
-
-    int ret2 = tapi_call_unlisten_call_test();
-
-    if ((ret2 || judge_data.result) != 0)
-        goto error;
-
-    return 0;
-
-error:
-    if (tapi_get_call_count(slot_id)) {
-        tapi_call_hangup_all_test(slot_id);
-    }
-
-    return -1;
 }
 
 int call_incoming_and_hangup_by_dialer_before_answer_numerous(int slot_id)
@@ -2052,28 +1982,6 @@ int call_dial_active_hangup_due_to_caller_network_exception(int slot_id)
     return tapi_call_unlisten_call_test();
 }
 
-// todo 30
-int call_check_status_in_dialing(int slot_id)
-{
-    int ret1 = tapi_call_listen_call_test(slot_id);
-    int ret2 = tapi_call_dial_test(slot_id, phone_num, 0);
-    sleep(5);
-
-    int call_state = get_current_call_state_test(slot_id);
-
-    if ((ret1 || ret2) != 0
-        || call_state != CALL_STATUS_DIALING) {
-        tapi_call_hangup_all_test(slot_id);
-        tapi_call_unlisten_call_test();
-        return -1;
-    }
-
-    int ret3 = tapi_call_hangup_all_test(slot_id);
-    int ret4 = tapi_call_unlisten_call_test();
-
-    return ret3 || ret4;
-}
-
 // todo 31
 int call_dial_and_check_status_in_call_process(int slot_id)
 {
@@ -2092,216 +2000,6 @@ int call_dial_and_check_status_in_call_process(int slot_id)
     int call_state = get_current_call_state_test(slot_id);
 
     if (call_state != CALL_STATUS_ACTIVE) {
-        tapi_call_hangup_all_test(slot_id);
-        tapi_call_unlisten_call_test();
-        return -1;
-    }
-
-    int ret3 = tapi_call_hangup_all_test(slot_id);
-    int ret4 = tapi_call_unlisten_call_test();
-
-    return ret3 || ret4;
-}
-
-// todo 32
-int call_incoming_answer_and_check_status_in_call_process(int slot_id)
-{
-    int ret1 = tapi_call_listen_call_test(slot_id);
-    judge_data_init();
-    test_case_data_init();
-    judge_data.expect = NEW_CALL_INCOMING;
-
-    // todo: incoming call
-
-    if ((ret1 || judge() || judge_data.result) != 0)
-        return -1;
-
-    sleep(10);
-    int ret2 = tapi_call_answer_call_test(slot_id, test_case_data.call_id);
-    sleep(10);
-    int call_state = get_current_call_state_test(slot_id);
-
-    if (ret2 || call_state != CALL_STATUS_ACTIVE) {
-        tapi_call_hangup_all_test(slot_id);
-        tapi_call_unlisten_call_test();
-        return -1;
-    }
-
-    int ret3 = tapi_call_hangup_all_test(slot_id);
-    int ret4 = tapi_call_unlisten_call_test();
-
-    return ret3 || ret4;
-}
-
-// todo 33
-int call_check_status_in_incoming(int slot_id)
-{
-    int ret1 = tapi_call_listen_call_test(slot_id);
-    judge_data_init();
-    test_case_data_init();
-    judge_data.expect = NEW_CALL_INCOMING;
-
-    // todo: incoming call
-
-    if ((ret1 || judge() || judge_data.result) != 0)
-        return -1;
-
-    sleep(10);
-    int call_state = get_current_call_state_test(slot_id);
-
-    if (call_state != CALL_STATUS_INCOMING) {
-        tapi_call_hangup_all_test(slot_id);
-        tapi_call_unlisten_call_test();
-        return -1;
-    }
-
-    int ret2 = tapi_call_hangup_all_test(slot_id);
-    int ret3 = tapi_call_unlisten_call_test();
-
-    return ret2 || ret3;
-}
-
-// todo 34
-int call_incoming_answer_caller_hold_and_check_status(int slot_id)
-{
-    int ret1 = tapi_call_listen_call_test(slot_id);
-    judge_data_init();
-    test_case_data_init();
-    judge_data.expect = NEW_CALL_INCOMING;
-
-    // todo: incoming call
-
-    if ((ret1 || judge() || judge_data.result) != 0)
-        return -1;
-    sleep(10);
-    int ret2 = tapi_call_answer_call_test(slot_id, test_case_data.call_id);
-    sleep(10);
-    int ret3 = tapi_call_hold_call(get_tapi_ctx(), slot_id);
-    sleep(10);
-    int call_state = get_current_call_state_test(slot_id);
-
-    if ((ret2 || ret3) != 0 || call_state != CALL_STATUS_HELD) {
-        tapi_call_hangup_all_test(slot_id);
-        tapi_call_unlisten_call_test();
-        return -1;
-    }
-
-    int ret4 = tapi_call_hangup_all_test(slot_id);
-    int ret5 = tapi_call_unlisten_call_test();
-
-    return ret4 || ret5;
-}
-
-// todo: 35
-int call_incoming_answer_dialer_hold_and_check_status(int slot_id)
-{
-    int ret1 = tapi_call_listen_call_test(slot_id);
-    judge_data_init();
-    test_case_data_init();
-    judge_data.expect = NEW_CALL_INCOMING;
-
-    // todo: incoming call
-
-    if ((ret1 || judge() || judge_data.result) != 0)
-        return -1;
-    sleep(10);
-    int ret2 = tapi_call_answer_call_test(slot_id, test_case_data.call_id);
-    sleep(10);
-    judge_data_init();
-    judge_data.expect = CALL_STATE_CHANGE_TO_HOLD;
-
-    // todo: dialer hold
-
-    sleep(10);
-    int call_state = get_current_call_state_test(slot_id);
-
-    if (ret2 != 0 || call_state != CALL_STATUS_HELD) {
-        tapi_call_hangup_all_test(slot_id);
-        tapi_call_unlisten_call_test();
-        return -1;
-    }
-
-    int ret3 = tapi_call_hangup_all_test(slot_id);
-    int ret4 = tapi_call_unlisten_call_test();
-
-    return ret3 || ret4;
-}
-
-// todo: 36
-int call_check_call_status_in_multi_call(int slot_id)
-{
-    int ret1 = tapi_call_listen_call_test(slot_id);
-    judge_data_init();
-    test_case_data_init();
-    judge_data.expect = NEW_CALL_INCOMING;
-
-    // todo: incoming call
-
-    if ((ret1 || judge() || judge_data.result) != 0)
-        return -1;
-    sleep(5);
-    int ret2 = tapi_call_answer_call_test(slot_id, test_case_data.call_id);
-    sleep(10);
-    judge_data_init();
-    test_case_data_init();
-    judge_data.expect = NEW_CALL_WAITING;
-
-    // todo: another incoming call
-
-    if ((judge() || judge_data.result || ret2) != 0)
-        return -1;
-
-    sleep(10);
-    judge_data_init();
-    judge_data.expect = CALL_STATE_CHANGE_TO_ACTIVE;
-    int ret3 = tapi_call_hold_and_answer(get_tapi_ctx(), slot_id);
-
-    if ((judge() || ret3 || judge_data.result) != 0) {
-        tapi_call_hangup_all_test(slot_id);
-        tapi_call_unlisten_call_test();
-        return -1;
-    }
-
-    if (tapi_get_call_count(slot_id) != 2 || tapi_get_two_call_state(slot_id) != 1) {
-        tapi_call_hangup_all_test(slot_id);
-        tapi_call_unlisten_call_test();
-        return -1;
-    }
-
-    int ret4 = tapi_call_hangup_all_test(slot_id);
-    int ret5 = tapi_call_unlisten_call_test();
-
-    return ret4 || ret5;
-}
-
-// todo: 37
-int call_check_call_status_in_call_waiting_with_multi_call(int slot_id)
-{
-    int ret1 = tapi_call_listen_call_test(slot_id);
-    judge_data_init();
-    test_case_data_init();
-    judge_data.expect = NEW_CALL_INCOMING;
-
-    // todo: incoming call
-
-    if ((ret1 || judge() || judge_data.result) != 0)
-        return -1;
-    sleep(5);
-    int ret2 = tapi_call_answer_call_test(slot_id, test_case_data.call_id);
-    sleep(10);
-    judge_data_init();
-    test_case_data_init();
-    judge_data.expect = NEW_CALL_WAITING;
-
-    // todo: another incoming call
-
-    if ((ret2 || judge() || judge_data.result) != 0)
-        return -1;
-
-    sleep(10);
-
-    if (tapi_get_call_count(slot_id) != 2
-        || tapi_get_two_call_state(slot_id) != 5) {
         tapi_call_hangup_all_test(slot_id);
         tapi_call_unlisten_call_test();
         return -1;
@@ -2337,51 +2035,6 @@ int call_check_call_status_in_dialing_with_multi_call(int slot_id)
 
     if (tapi_get_call_count(slot_id) != 2
         || tapi_get_two_call_state(slot_id) != 3) {
-        tapi_call_hangup_all_test(slot_id);
-        tapi_call_unlisten_call_test();
-        return -1;
-    }
-
-    int ret4 = tapi_call_hangup_all_test(slot_id);
-    int ret5 = tapi_call_unlisten_call_test();
-
-    return ret4 || ret5;
-}
-
-// todo: 39
-int call_hold_old_call_incoming_new_call_and_check_status(int slot_id)
-{
-    int ret1 = tapi_call_listen_call_test(slot_id);
-    judge_data_init();
-    test_case_data_init();
-    judge_data.expect = NEW_CALL_INCOMING;
-
-    // todo: incoming call
-
-    if ((ret1 || judge() || judge_data.result) != 0)
-        return -1;
-    sleep(5);
-    int ret2 = tapi_call_answer_call_test(slot_id, test_case_data.call_id);
-    sleep(10);
-
-    judge_data_init();
-    judge_data.expect = CALL_STATE_CHANGE_TO_HOLD;
-    int ret3 = tapi_call_hold_call(get_tapi_ctx(), slot_id);
-
-    if ((ret2 || ret3 || judge() || judge_data.result) != 0)
-        return -1;
-
-    judge_data_init();
-    judge_data.expect = NEW_CALL_WAITING;
-
-    // todo: another incoming call
-
-    if ((judge() || judge_data.result) != 0)
-        return -1;
-
-    sleep(10);
-    if (tapi_get_call_count(slot_id) != 2
-        || tapi_get_two_call_state(slot_id) != 5) {
         tapi_call_hangup_all_test(slot_id);
         tapi_call_unlisten_call_test();
         return -1;
@@ -3590,87 +3243,6 @@ int call_hangup_current_call_and_recover_hold_call(int slot_id)
     int ret5 = tapi_call_unlisten_call_test();
 
     return ret4 || ret5;
-}
-
-// todo: 61
-int call_hangup_all_call_in_two_calling(int slot_id)
-{
-    int ret1 = tapi_call_listen_call_test(slot_id);
-    judge_data_init();
-    test_case_data_init();
-    judge_data.expect = NEW_CALL_INCOMING;
-
-    // todo: incoming call
-
-    if ((ret1 || judge() || judge_data.result) != 0)
-        return -1;
-
-    sleep(10);
-
-    if (tapi_call_answer_call_test(slot_id, test_case_data.call_id) != 0)
-        return -1;
-    sleep(10);
-    judge_data_init();
-    test_case_data_init();
-    judge_data.expect = NEW_CALL_WAITING;
-
-    // todo: incoming another call
-    if ((judge() || judge_data.result) != 0)
-        return -1;
-    sleep(10);
-    if (tapi_call_answer_call_test(slot_id, test_case_data.call_id) != 0)
-        return -1;
-    sleep(10);
-
-    if (tapi_get_call_count(slot_id) != 2 || tapi_get_two_call_state(slot_id) != 1) {
-        tapi_call_hangup_all_test(slot_id);
-        tapi_call_unlisten_call_test();
-        return -1;
-    }
-
-    int ret2 = tapi_call_hangup_all_test(slot_id);
-    int ret3 = tapi_call_unlisten_call_test();
-
-    return ret2 || ret3;
-}
-
-// todo: 62
-int incoming_new_call_in_calling_and_hangup_all_call(int slot_id)
-{
-    int ret1 = tapi_call_listen_call_test(slot_id);
-    judge_data_init();
-    test_case_data_init();
-    judge_data.expect = NEW_CALL_INCOMING;
-
-    // todo: incoming call
-
-    if ((ret1 || judge() || judge_data.result) != 0)
-        return -1;
-
-    sleep(10);
-
-    if (tapi_call_answer_call_test(slot_id, test_case_data.call_id) != 0)
-        return -1;
-    sleep(10);
-    judge_data_init();
-    test_case_data_init();
-    judge_data.expect = NEW_CALL_WAITING;
-
-    // todo: incoming another call
-
-    if ((judge() || judge_data.result) != 0)
-        return -1;
-    sleep(10);
-    if (tapi_get_call_count(slot_id) != 2 || tapi_get_two_call_state(slot_id) != 5) {
-        tapi_call_hangup_all_test(slot_id);
-        tapi_call_unlisten_call_test();
-        return -1;
-    }
-
-    int ret2 = tapi_call_hangup_all_test(slot_id);
-    int ret3 = tapi_call_unlisten_call_test();
-
-    return ret2 || ret3;
 }
 
 // todo: 63
