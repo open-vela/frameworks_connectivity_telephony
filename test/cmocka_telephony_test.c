@@ -584,11 +584,6 @@ static void TestTeleFunc_CI_CallUnlisten(void** state)
     assert_int_equal(ret, 0);
 }
 
-// static void TestTeleDialAgainAfterRemoteHangup(void **state) {
-//     int ret = call_dial_after_caller_reject(0);
-//     assert_int_equal(ret, 0);
-// }
-
 // static void TestTeleHangupCallAfterRemoteAnswer(void **state) {
 //     int ret = call_hangup_after_caller_answer(0);
 //     assert_int_equal(ret, 0);
@@ -601,17 +596,6 @@ static void TestTeleFunc_CI_CallUnlisten(void** state)
 
 // static void TestTeleRemoteHangupThenDialAnother(void **state) {
 //     int ret = call_dial_caller_reject_and_dial_another(0);
-//     assert_int_equal(ret, 0);
-// }
-
-// static void TestTeleIncomingNewCallThenRemoteHangup(void **state) {
-//     int ret = call_incoming_and_hangup_by_dialer_before_answer(0);
-//     assert_int_equal(ret, 0);
-// }
-
-// static void TestTeleCheckStatusInDialing(void **state)
-// {
-//     int ret = call_check_status_in_dialing(0);
 //     assert_int_equal(ret, 0);
 // }
 
@@ -2317,9 +2301,6 @@ int main(int argc, char* argv[])
         // answer the incoming call then hangup it
         cmocka_unit_test_setup_teardown(TestTeleAnswerAndHangupTheIncomingCall, setup_call, teardown_call),
 
-        // dial again after remote hangup
-        // cmocka_unit_test_setup_teardown(TestTeleDialAgainAfterRemoteHangup, setup_call, teardown_call),
-
         // hangup after remote answer
         cmocka_unit_test_setup_teardown(TestTeleHangupCallAfterRemoteAnswer, setup_call, teardown_call),
 
@@ -2334,9 +2315,6 @@ int main(int argc, char* argv[])
 
         // dial with numerous hide call id
         cmocka_unit_test_setup_teardown(TestTeleDialWithNumerousHideCallId, setup_call, teardown_call),
-
-        // incoming new call then remote hangup
-        // cmocka_unit_test_setup_teardown(TestTeleIncomingNewCallThenRemoteHangup, setup_call, teardown_call),
 
         // dial using a phone number with area code
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialWithAreaCode, setup_call, teardown_call),
