@@ -299,7 +299,7 @@ static void TestNuttxDialCall(void** state)
 static void TestNuttxHangupCall(void** state)
 {
     (void)state;
-    int ret = tapi_call_hanup_current_call_test(0);
+    int ret = tapi_call_hangup_current_call_test(0);
     assert_int_equal(ret, 0);
     sleep(30);
 }
