@@ -28,7 +28,7 @@ int setup_call(void** state);
 int teardown_call(void** state);
 int tapi_call_listen_call_test(int slot_id);
 int tapi_call_dial_test(int slot_id, char* phone_number, int hide_caller_id);
-int tapi_call_hanup_current_call_test(int slot_id);
+int tapi_call_hangup_current_call_test(int slot_id);
 int tapi_call_hangup_all_test(int slot_id);
 int tapi_call_unlisten_call_test(void);
 int tapi_call_dial_conference_test(int slot_id);
@@ -96,7 +96,7 @@ int call_display_the_network_of_incoming_call_in_call_process(int slot_id,
 int call_dial_and_check_status_in_call_process(int slot_id);
 int call_check_call_status_in_dialing_with_multi_call(int slot);
 int call_swap_in_two_calling(int slot_id);
-int call_hangup_current_call_and_recover_hold_call(int slot_id);
+int call_hangup_current_call_and_resume_call(int slot_id);
 int call_hangup_all_call_in_two_calling(int slot_id);
 int call_dial_third_call(int slot_id);
 int call_incoming_third_call(int slot_id);
