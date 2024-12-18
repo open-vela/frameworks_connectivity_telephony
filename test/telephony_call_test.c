@@ -1229,13 +1229,13 @@ on_exit:
     return res;
 }
 
-int remote_operation_call_reject_test(int slot_id)
+int remote_operation_call_reject_test(int slot_id, char* phone_number)
 {
     int res = 0;
     judge_data_init();
     judge_data.expect = CALL_REMOTE_HANGUP;
 
-    remote_call_hangup_with_disconnect_reason(slot_id, phone_num, DISCONNECT_REASON_REMOTE_HANGUP);
+    remote_call_hangup_with_disconnect_reason(slot_id, phone_number, DISCONNECT_REASON_REMOTE_HANGUP);
 
     if (judge()) {
         syslog(LOG_ERR, "No hangup call message received in %s", __func__);
@@ -1253,14 +1253,14 @@ on_exit:
     return res;
 }
 
-int remote_operation_call_waiting_test(int slot_id)
+int remote_operation_call_waiting_test(int slot_id, char* phone_number)
 {
     int res = 0;
     judge_data_init();
     test_case_data_init();
     judge_data.expect = NEW_CALL_WAITING;
 
-    remote_call_operation(slot_id, "10010", INCOMING_CALL);
+    remote_call_operation(slot_id, phone_number, INCOMING_CALL);
 
     if (judge()) {
         syslog(LOG_ERR, "No waiting call message received in %s", __func__);
@@ -1278,14 +1278,14 @@ on_exit:
     return res;
 }
 
-int remote_operation_third_call_waiting_test(int slot_id)
+int remote_operation_third_call_waiting_test(int slot_id, char* phone_number)
 {
     int res = 0;
     judge_data_init();
     test_case_data_init();
     judge_data.expect = NEW_CALL_WAITING;
 
-    remote_call_operation(slot_id, "10001", INCOMING_CALL);
+    remote_call_operation(slot_id, phone_number, INCOMING_CALL);
 
     if (judge()) {
         syslog(LOG_ERR, "No waiting call message received in %s", __func__);
@@ -1303,14 +1303,14 @@ on_exit:
     return res;
 }
 
-int remote_operation_call_incoming_test(int slot_id)
+int remote_operation_call_incoming_test(int slot_id, char* phone_number)
 {
     int res = 0;
     judge_data_init();
     test_case_data_init();
     judge_data.expect = NEW_CALL_INCOMING;
 
-    remote_call_operation(slot_id, phone_num, INCOMING_CALL);
+    remote_call_operation(slot_id, phone_number, INCOMING_CALL);
 
     if (judge()) {
         syslog(LOG_ERR, "No incoming call message received in %s", __func__);
@@ -1328,13 +1328,13 @@ on_exit:
     return res;
 }
 
-int remote_operation_call_active_test(int slot_id)
+int remote_operation_call_active_test(int slot_id, char* phone_number)
 {
     int res = 0;
     judge_data_init();
     judge_data.expect = CALL_STATE_CHANGE_TO_ACTIVE;
 
-    remote_call_operation(slot_id, phone_num, ACTIVE_CALL);
+    remote_call_operation(slot_id, phone_number, ACTIVE_CALL);
 
     if (judge()) {
         syslog(LOG_ERR, "No active call message received in %s", __func__);
@@ -1393,7 +1393,7 @@ int call_dial_after_caller_reject(int slot_id)
     }
 
     sleep(3);
-    if (remote_operation_call_reject_test(slot_id)) {
+    if (remote_operation_call_reject_test(slot_id, phone_num)) {
         syslog(LOG_ERR, "Remote call reject execute fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -1427,14 +1427,14 @@ int outgoing_call_remote_answer_and_hangup(int slot_id)
     }
 
     sleep(3);
-    if (remote_operation_call_active_test(slot_id) < 0) {
+    if (remote_operation_call_active_test(slot_id, phone_num)) {
         syslog(LOG_ERR, "Remote call active fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
     sleep(3);
-    if (remote_operation_call_reject_test(slot_id) < 0) {
+    if (remote_operation_call_reject_test(slot_id, phone_num)) {
         syslog(LOG_ERR, "Remote call reject fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -1454,14 +1454,14 @@ int call_incoming_after_remote_hangup(int slot_id)
     }
 
     sleep(3);
-    if (remote_operation_call_reject_test(slot_id)) {
+    if (remote_operation_call_reject_test(slot_id, phone_num)) {
         syslog(LOG_ERR, "Remote hangup with disconnect reason execute fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
     sleep(3);
-    if (remote_operation_call_incoming_test(slot_id)) {
+    if (remote_operation_call_incoming_test(slot_id, phone_num)) {
         syslog(LOG_ERR, "Remote call incoming fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -1488,7 +1488,7 @@ int call_dial_another_after_reject(int slot_id)
     }
 
     sleep(3);
-    if (remote_operation_call_reject_test(slot_id)) {
+    if (remote_operation_call_reject_test(slot_id, phone_num)) {
         syslog(LOG_ERR, "Remote hangup with disconnect reason execute fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -1797,21 +1797,21 @@ int call_incoming_and_hangup_by_dialer_before_answer_numerous(int slot_id)
 int incoming_call_answer_and_hangup(int slot_id)
 {
     int res = 0;
-    if (remote_operation_call_incoming_test(slot_id) < 0) {
+    if (remote_operation_call_incoming_test(slot_id, phone_num)) {
         syslog(LOG_ERR, "Incoming call fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
     sleep(3);
-    if (tapi_call_answer_call_test(slot_id, test_case_data.call_id) < 0) {
+    if (tapi_call_answer_call_test(slot_id, test_case_data.call_id)) {
         syslog(LOG_ERR, "Answer call fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
     sleep(3);
-    if (tapi_call_hanup_current_call_test(slot_id) < 0) {
+    if (tapi_call_hanup_current_call_test(slot_id)) {
         syslog(LOG_ERR, "Hangup call fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -1824,15 +1824,22 @@ on_exit:
 int incoming_call_answer_and_remote_hangup(int slot_id)
 {
     int res = 0;
-    if (remote_operation_call_incoming_test(slot_id) < 0) {
+    if (remote_operation_call_incoming_test(slot_id, phone_num)) {
         syslog(LOG_ERR, "Incoming call fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
     sleep(3);
-    if (tapi_call_answer_call_test(slot_id, test_case_data.call_id) < 0) {
+    if (tapi_call_answer_call_test(slot_id, test_case_data.call_id)) {
         syslog(LOG_ERR, "Answer call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (remote_operation_call_reject_test(slot_id, phone_num)) {
+        syslog(LOG_ERR, "Remote call reject fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
@@ -2106,42 +2113,42 @@ int call_release_and_answer(int slot_id)
         goto on_exit;
     }
 
-    if (remote_operation_call_incoming_test(slot_id) < 0) {
+    if (remote_operation_call_incoming_test(slot_id, phone_num)) {
         syslog(LOG_ERR, "Incoming call fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
     sleep(3);
-    if (tapi_call_answer_call_test(slot_id, test_case_data.call_id) < 0) {
+    if (tapi_call_answer_call_test(slot_id, test_case_data.call_id)) {
         syslog(LOG_ERR, "Answer call fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
     sleep(3);
-    if (remote_operation_call_waiting_test(slot_id) < 0) {
+    if (remote_operation_call_waiting_test(slot_id, "10010")) {
         syslog(LOG_ERR, "Waiting call fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
     sleep(3);
-    if (tapi_call_hold_and_answer_test(slot_id) < 0) {
+    if (tapi_call_hold_and_answer_test(slot_id)) {
         syslog(LOG_ERR, "Hold and answer call fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
     sleep(3);
-    if (remote_operation_third_call_waiting_test(slot_id) < 0) {
+    if (remote_operation_third_call_waiting_test(slot_id, "10001")) {
         syslog(LOG_ERR, "Waiting third call fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
     sleep(3);
-    if (tapi_call_release_and_answer_test(slot_id) < 0) {
+    if (tapi_call_release_and_answer_test(slot_id)) {
         syslog(LOG_ERR, "Release and answer call fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -2155,6 +2162,12 @@ int call_release_and_answer(int slot_id)
 
     if (tapi_get_call_count(slot_id) != 2) {
         syslog(LOG_ERR, "Get call count fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (tapi_call_hangup_all_test(slot_id)) {
+        syslog(LOG_ERR, "Hangup all call fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
@@ -2219,31 +2232,31 @@ int outgoing_call_hold_and_unhold_by_caller(int slot_id)
         goto on_exit;
     }
 
-    if (call_check_alerting_status() < 0) {
+    if (call_check_alerting_status()) {
         syslog(LOG_ERR, "Check alerting fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
-    if (remote_operation_call_active_test(slot_id) < 0) {
+    if (remote_operation_call_active_test(slot_id, phone_num)) {
         syslog(LOG_ERR, "Active call fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
-    if (tapi_call_hold_test(slot_id) < 0) {
+    if (tapi_call_hold_test(slot_id)) {
         syslog(LOG_ERR, "Hold call fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
-    if (tapi_call_unhold_test(slot_id) < 0) {
+    if (tapi_call_unhold_test(slot_id)) {
         syslog(LOG_ERR, "Unhold call fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
-    if (tapi_call_hangup_all_test(slot_id) < 0) {
+    if (tapi_call_hangup_all_test(slot_id)) {
         syslog(LOG_ERR, "Hangup call fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -2262,49 +2275,56 @@ int call_merge_by_user(int slot_id)
         goto on_exit;
     }
 
-    if (tapi_call_dial_test(slot_id, phone_num, 0) < 0) {
+    if (tapi_call_dial_test(slot_id, phone_num, 0)) {
         syslog(LOG_ERR, "Dail fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
-    if (call_check_alerting_status() < 0) {
+    if (call_check_alerting_status()) {
         syslog(LOG_ERR, "Check alerting fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
     sleep(3);
-    if (remote_operation_call_active_test(slot_id) < 0) {
+    if (remote_operation_call_active_test(slot_id, phone_num)) {
         syslog(LOG_ERR, "Active call fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
     sleep(3);
-    if (tapi_call_hold_test(slot_id) < 0) {
+    if (tapi_call_hold_test(slot_id)) {
         syslog(LOG_ERR, "Hold call fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
     sleep(3);
-    if (remote_operation_call_waiting_test(slot_id) < 0) {
+    if (remote_operation_call_waiting_test(slot_id, "10010")) {
         syslog(LOG_ERR, "Waiting call fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
     sleep(3);
-    if (tapi_call_hold_and_answer_test(slot_id) < 0) {
+    if (tapi_call_hold_and_answer_test(slot_id)) {
         syslog(LOG_ERR, "Hold and answer call fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
     sleep(3);
-    if (tapi_call_merge_call_test(slot_id) < 0) {
+    if (tapi_call_merge_call_test(slot_id)) {
         syslog(LOG_ERR, "Merge call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (tapi_call_hangup_all_test(slot_id)) {
+        syslog(LOG_ERR, "Hangup all call fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
@@ -2328,56 +2348,63 @@ int call_separate_by_user(int slot_id)
         goto on_exit;
     }
 
-    if (tapi_call_dial_test(slot_id, phone_num, 0) < 0) {
+    if (tapi_call_dial_test(slot_id, phone_num, 0)) {
         syslog(LOG_ERR, "Dail fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
-    if (call_check_alerting_status() < 0) {
+    if (call_check_alerting_status()) {
         syslog(LOG_ERR, "Check alerting fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
     sleep(3);
-    if (remote_operation_call_active_test(slot_id) < 0) {
+    if (remote_operation_call_active_test(slot_id, phone_num)) {
         syslog(LOG_ERR, "Active call fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
     sleep(3);
-    if (remote_operation_call_waiting_test(slot_id) < 0) {
+    if (remote_operation_call_waiting_test(slot_id, "10010")) {
         syslog(LOG_ERR, "Waiting call fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
     sleep(3);
-    if (tapi_call_hold_and_answer_test(slot_id) < 0) {
+    if (tapi_call_hold_and_answer_test(slot_id)) {
         syslog(LOG_ERR, "Hold and answer call fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
     sleep(3);
-    if (tapi_call_merge_call_test(slot_id) < 0) {
+    if (tapi_call_merge_call_test(slot_id)) {
         syslog(LOG_ERR, "Merge call fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
     sleep(3);
-    if (get_current_call_state_test(slot_id) < 0) {
+    if (get_current_call_state_test(slot_id)) {
         syslog(LOG_ERR, "Call state is not in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
     sleep(3);
-    if (tapi_call_separate_call_test(slot_id) < 0) {
+    if (tapi_call_separate_call_test(slot_id)) {
         syslog(LOG_ERR, "Separate call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (tapi_call_hangup_all_test(slot_id)) {
+        syslog(LOG_ERR, "Hangup all call fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
@@ -2401,42 +2428,49 @@ int call_release_and_swap_other_call(int slot_id)
         goto on_exit;
     }
 
-    if (tapi_call_dial_test(slot_id, phone_num, 0) < 0) {
+    if (tapi_call_dial_test(slot_id, phone_num, 0)) {
         syslog(LOG_ERR, "Dail fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
-    if (call_check_alerting_status() < 0) {
+    if (call_check_alerting_status()) {
         syslog(LOG_ERR, "Check alerting fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
     sleep(3);
-    if (remote_operation_call_active_test(slot_id) < 0) {
+    if (remote_operation_call_active_test(slot_id, phone_num)) {
         syslog(LOG_ERR, "Active call fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
     sleep(3);
-    if (remote_operation_call_waiting_test(slot_id) < 0) {
+    if (remote_operation_call_waiting_test(slot_id, "10010")) {
         syslog(LOG_ERR, "Waiting call fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
     sleep(3);
-    if (tapi_call_hold_and_answer_test(slot_id) < 0) {
+    if (tapi_call_hold_and_answer_test(slot_id)) {
         syslog(LOG_ERR, "Hold and answer call fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
     sleep(3);
-    if (tapi_call_release_and_swap_test(slot_id) < 0) {
+    if (tapi_call_release_and_swap_test(slot_id)) {
         syslog(LOG_ERR, "Release and swap call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (tapi_call_hangup_all_test(slot_id)) {
+        syslog(LOG_ERR, "Hangup all call fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
@@ -2460,21 +2494,27 @@ int outgoing_call_active_and_send_tones(int slot_id)
         goto on_exit;
     }
 
-    if (call_check_alerting_status() < 0) {
+    if (call_check_alerting_status()) {
         syslog(LOG_ERR, "Check alerting execute fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
     sleep(3);
-    if (remote_operation_call_active_test(slot_id) < 0) {
+    if (remote_operation_call_active_test(slot_id, phone_num)) {
         syslog(LOG_ERR, "Active call execute fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
-    if (tapi_call_send_tones_test(slot_id) < 0) {
+    if (tapi_call_send_tones_test(slot_id)) {
         syslog(LOG_ERR, "Send tones execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (tapi_call_hangup_all_test(slot_id)) {
+        syslog(LOG_ERR, "Hangup call execute fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
@@ -2835,28 +2875,28 @@ int call_hold_first_call_and_answer_second_call(int slot_id)
         goto on_exit;
     }
 
-    if (remote_operation_call_incoming_test(slot_id) < 0) {
+    if (remote_operation_call_incoming_test(slot_id, phone_num)) {
         syslog(LOG_ERR, "Incoming call fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
     sleep(3);
-    if (tapi_call_answer_call_test(slot_id, test_case_data.call_id) < 0) {
+    if (tapi_call_answer_call_test(slot_id, test_case_data.call_id)) {
         syslog(LOG_ERR, "Answer call fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
     sleep(3);
-    if (remote_operation_call_waiting_test(slot_id) < 0) {
+    if (remote_operation_call_waiting_test(slot_id, "10010")) {
         syslog(LOG_ERR, "Waiting call fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
     sleep(3);
-    if (tapi_call_hold_and_answer_test(slot_id) < 0) {
+    if (tapi_call_hold_and_answer_test(slot_id)) {
         syslog(LOG_ERR, "Hold and answer call fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -2870,6 +2910,12 @@ int call_hold_first_call_and_answer_second_call(int slot_id)
 
     if (tapi_get_call_count(slot_id) != 2) {
         syslog(LOG_ERR, "Get call count fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (tapi_call_hangup_all_test(slot_id)) {
+        syslog(LOG_ERR, "Hangup all call fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
@@ -3305,14 +3351,14 @@ int call_connect_and_local_hangup(int slot_id)
     }
 
     sleep(3);
-    if (remote_operation_call_active_test(slot_id) < 0) {
+    if (remote_operation_call_active_test(slot_id, phone_num)) {
         syslog(LOG_ERR, "Remote call active fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
     sleep(3);
-    if (tapi_call_hanup_current_call_test(slot_id) < 0) {
+    if (tapi_call_hanup_current_call_test(slot_id)) {
         syslog(LOG_ERR, "Local hangup fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -3332,7 +3378,7 @@ int dial_and_remote_hangup(int slot_id)
     }
 
     sleep(3);
-    if (remote_operation_call_reject_test(slot_id) < 0) {
+    if (remote_operation_call_reject_test(slot_id, phone_num)) {
         syslog(LOG_ERR, "Remote call reject fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -3345,14 +3391,14 @@ on_exit:
 int incoming_call_and_local_hangup(int slot_id)
 {
     int res = 0;
-    if (remote_operation_call_incoming_test(slot_id) < 0) {
+    if (remote_operation_call_incoming_test(slot_id, phone_num)) {
         syslog(LOG_ERR, "Incoming call fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
     sleep(3);
-    if (tapi_call_hanup_current_call_test(slot_id) < 0) {
+    if (tapi_call_hanup_current_call_test(slot_id)) {
         syslog(LOG_ERR, "Hangup call fail in %s", __func__);
         res = -1;
         goto on_exit;
