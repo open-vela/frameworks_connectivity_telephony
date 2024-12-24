@@ -549,6 +549,13 @@ static void TestTeleFunc_CallDialOtherAfterReject(void** state)
     assert_int_equal(ret, 0);
 }
 
+static void TestTeleFunc_CallDialSecondCallAndHangupByCaller(void** state)
+{
+    (void)state;
+    int ret = call_dial_second_call_active_and_hangup_by_caller(0);
+    assert_int_equal(ret, 0);
+}
+
 static void TestTeleFunc_CallIncomingandLocalHangup(void** state)
 {
     (void)state;
@@ -2312,6 +2319,7 @@ int main(int argc, char* argv[])
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallHangupHoldCallInTwoCalls, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallActiveAndSendtones, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallConnectAndLocalHangup, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialSecondCallAndHangupByCaller, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialAndRemoteHangup, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialAfterReject, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialOtherAfterReject, setup_call, teardown_call),
