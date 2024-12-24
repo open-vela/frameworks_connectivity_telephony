@@ -2822,48 +2822,63 @@ int call_hold_current_call_and_reject_new_incoming(int slot_id)
     return ret4 || ret5;
 }
 
-// todo: 53
 int call_incoming_and_hangup_new_call(int slot_id)
 {
-    int ret1 = tapi_call_listen_call_test(slot_id);
-    judge_data_init();
-    test_case_data_init();
-    judge_data.expect = NEW_CALL_INCOMING;
+    int res = 0;
+    if (tapi_ss_set_call_waiting_test(0, true) < 0) {
+        syslog(LOG_ERR, "Set call waiting true fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
 
-    // todo: incoming call
+    if (remote_operation_call_incoming_test(slot_id, phone_num)) {
+        syslog(LOG_ERR, "Incoming call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
 
-    if (judge() != 0 || judge_data.result != 0 || ret1)
-        return -1;
+    sleep(3);
+    if (tapi_call_answer_call_test(slot_id, test_case_data.call_id)) {
+        syslog(LOG_ERR, "Answer call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
 
-    sleep(10);
+    sleep(3);
+    if (remote_operation_call_waiting_test(slot_id, "10010")) {
+        syslog(LOG_ERR, "Waiting call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
 
-    if (tapi_call_answer_call_test(slot_id, test_case_data.call_id) != 0)
-        return -1;
+    sleep(3);
+    if (tapi_call_hangup_current_call_test(slot_id)) {
+        syslog(LOG_ERR, "Hangup current call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
 
-    sleep(10);
-    judge_data_init();
-    test_case_data_init();
-    judge_data.expect = NEW_CALL_WAITING;
+    sleep(3);
+    if (tapi_get_call_count(slot_id) != 1) {
+        syslog(LOG_ERR, "Get call count fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
 
-    // todo: incoming new call
+    if (tapi_call_hangup_all_test(slot_id)) {
+        syslog(LOG_ERR, "Hangup all call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
 
-    if (judge() != 0 || judge_data.result != 0)
-        return -1;
+    if (tapi_ss_set_call_waiting_test(0, false) < 0) {
+        syslog(LOG_ERR, "Set call waiting false fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
 
-    sleep(10);
-
-    if (tapi_call_hangup_current_call_test(slot_id) != 0)
-        return -1;
-
-    sleep(10);
-
-    if (tapi_get_call_count(slot_id) != 1)
-        return -1;
-
-    int ret2 = tapi_call_hangup_all_test(slot_id);
-    int ret3 = tapi_call_unlisten_call_test();
-
-    return ret2 || ret3;
+on_exit:
+    return res;
 }
 
 int call_hold_first_call_and_answer_second_call(int slot_id)
