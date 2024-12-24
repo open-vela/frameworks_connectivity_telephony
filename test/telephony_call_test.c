@@ -2978,47 +2978,51 @@ int call_dial_second_call_active_and_hangup_by_dialer(int slot_id)
     return ret2 || ret3;
 }
 
-// todo: 56
-int call_dial_second_call_and_hangup_by_caller_before_answering(int slot_id)
+int call_dial_second_call_and_reject_by_caller(int slot_id)
 {
-    int ret1 = tapi_call_listen_call_test(slot_id);
-    judge_data_init();
-    test_case_data_init();
-    judge_data.expect = NEW_CALL_INCOMING;
+    int res = 0;
+    if (remote_operation_call_incoming_test(slot_id, phone_num)) {
+        syslog(LOG_ERR, "Incoming call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
 
-    // todo: incoming call
+    sleep(3);
+    if (tapi_call_answer_call_test(slot_id, test_case_data.call_id)) {
+        syslog(LOG_ERR, "Caller answer fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
 
-    if (judge() != 0 || judge_data.result != 0 || ret1)
-        return -1;
+    sleep(3);
+    if (tapi_call_dial_test(slot_id, "10010", 0)) {
+        syslog(LOG_ERR, "Dial fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
 
-    sleep(10);
+    sleep(3);
+    if (remote_operation_call_reject_test(slot_id, "10010")) {
+        syslog(LOG_ERR, "Caller hangup fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
 
-    if (tapi_call_answer_call_test(slot_id, test_case_data.call_id) != 0)
-        return -1;
+    sleep(3);
+    if (tapi_get_call_count(slot_id) != 1) {
+        syslog(LOG_ERR, "Get call count fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
 
-    sleep(10);
-    if (tapi_call_dial_test(slot_id, phone_num, 0))
-        return -1;
+    if (tapi_call_hangup_all_test(slot_id)) {
+        syslog(LOG_ERR, "Hangup call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
 
-    sleep(10);
-    judge_data_init();
-    judge_data.expect = CALL_REMOTE_HANGUP;
-
-    // todo caller reject
-
-    if ((judge() || judge_data.result) != 0)
-        return -1;
-
-    sleep(5);
-
-    if (tapi_get_call_count(slot_id) != 1
-        || get_current_call_state_test(slot_id) != CALL_STATUS_ACTIVE)
-        return -1;
-
-    int ret2 = tapi_call_hangup_all_test(slot_id);
-    int ret3 = tapi_call_unlisten_call_test();
-
-    return ret2 || ret3;
+on_exit:
+    return res;
 }
 
 int call_dial_second_call_active_and_hangup_by_caller(int slot_id)
