@@ -87,7 +87,7 @@ int call_hold_current_call_and_reject_new_incoming(int slot_id);
 int call_incoming_and_hangup_new_call(int slot_id);
 int call_hold_first_call_and_answer_second_call(int slot_id);
 int call_dial_second_call_active_and_hangup_by_dialer(int slot_id);
-int call_dial_second_call_and_hangup_by_caller_before_answering(int slot_id);
+int call_dial_second_call_and_reject_by_caller(int slot_id);
 int call_dial_second_call_active_and_hangup_by_caller(int slot_id);
 int call_hangup_hold_call_in_two_calls(int slot_id);
 int incoming_call_answer_and_hangup(int slot_id);
