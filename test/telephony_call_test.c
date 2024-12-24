@@ -1760,40 +1760,6 @@ on_exit:
     return res;
 }
 
-int call_incoming_and_hangup_by_dialer_before_answer_numerous(int slot_id)
-{
-    for (int i = 0; i < 5; i++) {
-        int ret1 = tapi_call_listen_call_test(slot_id);
-        judge_data_init();
-        test_case_data_init();
-        judge_data.expect = NEW_CALL_INCOMING;
-
-        // todo: incoming call from different phone number
-
-        if (judge() != 0)
-            return -1;
-
-        if ((ret1 || judge_data.result) != 0)
-            return -1;
-
-        sleep(5);
-        judge_data_init();
-        judge_data.expect = CALL_REMOTE_HANGUP;
-
-        // todo: dialer hangup
-
-        if (judge() != 0)
-            return -1;
-
-        int ret2 = tapi_call_unlisten_call_test();
-
-        if ((ret2 || judge_data.result) != 0)
-            return -1;
-    }
-
-    return 0;
-}
-
 int incoming_call_answer_and_hangup(int slot_id)
 {
     int res = 0;
@@ -1989,33 +1955,37 @@ int call_dial_active_hangup_due_to_caller_network_exception(int slot_id)
     return tapi_call_unlisten_call_test();
 }
 
-// todo 31
-int call_dial_and_check_status_in_call_process(int slot_id)
+int call_dial_and_check_status_in_call_active(int slot_id)
 {
-    int ret1 = tapi_call_listen_call_test(slot_id);
-    int ret2 = tapi_call_dial_test(slot_id, phone_num, 0);
-    sleep(5);
-    judge_data_init();
-    judge_data.expect = CALL_STATE_CHANGE_TO_ACTIVE;
-
-    // todo: caller answer
-
-    if ((ret1 || ret2 || judge() || judge_data.result) != 0)
-        return -1;
-
-    sleep(5);
-    int call_state = get_current_call_state_test(slot_id);
-
-    if (call_state != CALL_STATUS_ACTIVE) {
-        tapi_call_hangup_all_test(slot_id);
-        tapi_call_unlisten_call_test();
-        return -1;
+    int res = 0;
+    if (tapi_call_dial_test(slot_id, phone_num, 0)) {
+        syslog(LOG_ERR, "Dail fail in %s", __func__);
+        res = -1;
+        goto on_exit;
     }
 
-    int ret3 = tapi_call_hangup_all_test(slot_id);
-    int ret4 = tapi_call_unlisten_call_test();
+    sleep(3);
+    if (remote_operation_call_active_test(slot_id, phone_num)) {
+        syslog(LOG_ERR, "Call active fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
 
-    return ret3 || ret4;
+    sleep(3);
+    if (get_current_call_state_test(slot_id) != CALL_STATUS_ACTIVE) {
+        syslog(LOG_ERR, "Get current call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (tapi_call_hangup_all_test(slot_id)) {
+        syslog(LOG_ERR, "Hangup fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
 }
 
 // todo: 38
