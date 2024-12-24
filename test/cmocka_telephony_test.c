@@ -482,6 +482,13 @@ static void TestTeleFunc_CallReleaseAndSwap(void** state)
     assert_int_equal(ret, 0);
 }
 
+static void TestTeleFunc_CallSwapInTwoCalling(void** state)
+{
+    (void)state;
+    int ret = call_swap_in_two_calling(0);
+    assert_int_equal(ret, 0);
+}
+
 static void TestTeleFunc_CallRemoteAnswerAndHangup(void** state)
 {
     int ret = outgoing_call_remote_answer_and_hangup(0);
@@ -2291,6 +2298,7 @@ int main(int argc, char* argv[])
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallMergeByUser, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallSeparateByUser, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallReleaseAndSwap, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallSwapInTwoCalling, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallRemoteAnswerAndHangup, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallHoldAndHangup, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallHangupAndResumeCall, setup_call, teardown_call),
