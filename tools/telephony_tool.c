@@ -420,6 +420,24 @@ static void tele_sms_async_fun(tapi_async_result* result)
     if (result->msg_id == MSG_DEFAULT_SMS_SLOT_CHANGED_IND) {
         syslog(LOG_DEBUG, "default sms slot: %d\n", result->arg2);
         return;
+    } else if (result->msg_id == MSG_STATUS_REPORT_MESSAGE_IND) {
+        char* report = result->data;
+        if (!strcmp(report, "1")) {
+            syslog(LOG_DEBUG, "delivery report: message received");
+        } else {
+            syslog(LOG_DEBUG, "delivery report: message not received");
+        }
+
+        return;
+    } else if (result->msg_id == MSG_SMS_REPORT_SWITCH_CHANGED_IND) {
+        int delivery_status = result->arg2;
+        if (delivery_status) {
+            syslog(LOG_DEBUG, "sms delivery report switch on");
+        } else {
+            syslog(LOG_DEBUG, "sms delivery report switch off");
+        }
+
+        return;
     }
 
     syslog(LOG_DEBUG, "%s msg id : %d \n", __func__, result->msg_id);
@@ -2889,6 +2907,54 @@ static int telephonytool_cmd_unlisten_sim(tapi_context context, char* pargs)
     return ret;
 }
 
+static int telephonytool_cmd_listen_sms(tapi_context context, char* pargs)
+{
+    char dst[2][MAX_INPUT_ARGS_LEN];
+    char* slot_id;
+    char* target_state;
+    int watch_id;
+    int cnt;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    cnt = split_input(dst, 2, pargs, " ");
+    if (cnt != 2)
+        return -EINVAL;
+
+    slot_id = dst[0];
+    target_state = dst[1];
+    if (!is_valid_slot_id_str(slot_id))
+        return -EINVAL;
+
+    watch_id = tapi_sms_register(context, atoi(slot_id), atoi(target_state),
+        NULL, tele_sms_async_fun);
+    syslog(LOG_DEBUG, "start to watch sms event : %d , return watch_id : %d \n",
+        atoi(target_state), watch_id);
+
+    return watch_id;
+}
+
+static int telephonytool_cmd_unlisten_sms(tapi_context context, char* pargs)
+{
+    char* watch_id;
+    int ret;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    watch_id = strtok_r(pargs, " ", NULL);
+    if (watch_id == NULL)
+        return -EINVAL;
+
+    ret = tapi_sms_unregister(context, atoi(watch_id));
+    syslog(LOG_DEBUG, "stop to watch sms event with watch_id : "
+                      "%s with return value : %d \n",
+        watch_id, ret);
+
+    return ret;
+}
+
 static int telephonytool_tapi_sms_send_message(tapi_context context, char* pargs)
 {
     char* slot_id;
@@ -2945,6 +3011,48 @@ static int telephonytool_tapi_sms_send_data_message(tapi_context context, char* 
     return ret;
 }
 
+static int telephonytool_tapi_sms_enable_delivery_report(tapi_context context, char* pargs)
+{
+    char dst[2][MAX_INPUT_ARGS_LEN];
+    char* slot_id;
+    char* target_state;
+    int cnt;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    cnt = split_input(dst, 2, pargs, " ");
+    if (cnt != 2)
+        return -EINVAL;
+
+    slot_id = dst[0];
+    target_state = dst[1];
+    if (!is_valid_slot_id_str(slot_id))
+        return -EINVAL;
+
+    syslog(LOG_DEBUG, "%s, slotId : %s target_state: %s", __func__, slot_id, target_state);
+    return tapi_sms_enable_delivery_report(context, atoi(slot_id), atoi(target_state));
+}
+
+static int telephonytool_tapi_sms_get_delivery_status(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    bool result;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", NULL);
+    if (!is_valid_slot_id_str(slot_id))
+        return -EINVAL;
+
+    result = false;
+    tapi_sms_get_delivery_report_status(context, atoi(slot_id), &result);
+    syslog(LOG_DEBUG, "%s, slotId : %s  result: %d \n", __func__, slot_id, result);
+
+    return 0;
+}
+
 static int telephonytool_tapi_sms_get_service_center_number(tapi_context context, char* pargs)
 {
     char* slot_id;
@@ -2994,13 +3102,13 @@ static int telephonytool_tapi_sms_register(tapi_context context, char* pargs)
         return -EINVAL;
 
     slot_id = pargs;
-    syslog(LOG_DEBUG, "telephonytool_tapi_sms_register slotId : %s\n", slot_id);
     if (!is_valid_slot_id_str(slot_id))
         return -EINVAL;
 
     syslog(LOG_DEBUG, "%s, slotId : %s \n", __func__, slot_id);
     tapi_sms_register(context, atoi(slot_id), MSG_INCOMING_MESSAGE_IND, NULL, tele_sms_async_fun);
     tapi_sms_register(context, atoi(slot_id), MSG_IMMEDIATE_MESSAGE_IND, NULL, tele_sms_async_fun);
+    tapi_sms_register(context, atoi(slot_id), MSG_STATUS_REPORT_MESSAGE_IND, NULL, tele_sms_async_fun);
 
     return 0;
 }
@@ -4658,12 +4766,25 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         "[slot_id][state, 0:disable uicc app 1:enable uicc app])" },
 
     /* Sms & Cbs Command */
+    { "listen-sms", SMS_AND_CBS_CMD,
+        telephonytool_cmd_listen_sms,
+        "Register sms event (enter example: listen-sms 0 52 "
+        "[slot_id][event_id])" },
+    { "unlisten-sms", SMS_AND_CBS_CMD,
+        telephonytool_cmd_unlisten_sms,
+        "UnRegister sms event (enter example : unlisten-sms [watch_id])" },
     { "send-sms", SMS_AND_CBS_CMD,
         telephonytool_tapi_sms_send_message,
         "send message (enter example : send-sms 0 10086 hello)" },
     { "send-data-sms", SMS_AND_CBS_CMD,
         telephonytool_tapi_sms_send_data_message,
         "send message (enter example : send-data-sms 0 10086 hello 0)" },
+    { "enable-delivery-report", SMS_AND_CBS_CMD,
+        telephonytool_tapi_sms_enable_delivery_report,
+        "enable delivery report (enter example : enable-delivery-report 0 1)" },
+    { "get-delivery-status", SMS_AND_CBS_CMD,
+        telephonytool_tapi_sms_get_delivery_status,
+        "get sms delivery report status (enter example : get-delivery-status 0)" },
     { "get-service-center-number", SMS_AND_CBS_CMD,
         telephonytool_tapi_sms_get_service_center_number,
         "get service center number ? (enter example : get-service-center-number 0)" },
