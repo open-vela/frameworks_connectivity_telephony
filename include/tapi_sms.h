@@ -108,6 +108,22 @@ bool tapi_sms_set_service_center_address(tapi_context context, int slot_id, char
 int tapi_sms_get_service_center_address(tapi_context context, int slot_id, char** number);
 
 /**
+ * enable SMS delivery report.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] enable         Indicate whether to SMS delivery report.
+ */
+int tapi_sms_enable_delivery_report(tapi_context context, int slot_id, bool enable);
+
+/**
+ * get SMS delivery report status.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[out] out           SMS delivery report switch status.
+ */
+int tapi_sms_get_delivery_report_status(tapi_context context, int slot_id, bool* out);
+
+/**
  * get all sim messages
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
