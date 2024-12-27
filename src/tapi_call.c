@@ -796,7 +796,7 @@ static int tapi_register_manager_call_signal(tapi_context context, int slot_id, 
         return -EIO;
     }
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         return -ENOMEM;
@@ -846,7 +846,7 @@ static void report_data_logging_for_call(dbus_context* ctx, int type, int direct
     char out_data[MIWEAR_LOG_IND_BUF_SIZE] = { 0 };
 
     if (ctx->logging_over_miwear_cb != NULL) {
-        temp_ar = malloc(sizeof(tapi_async_result));
+        temp_ar = calloc(1, sizeof(tapi_async_result));
         if (temp_ar == NULL) {
             tapi_log_error("Memory allocation failed");
         } else {
@@ -995,7 +995,7 @@ static int call_play_dtmf(tapi_context context, int slot_id, unsigned char digit
     param->digit = digit;
     param->flag = flag;
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("ar in %s is null", __func__);
         free(param);
@@ -1067,7 +1067,7 @@ int tapi_call_dial(tapi_context context, int slot_id, char* number, int hide_cal
     snprintf(param->number, sizeof(param->number), "%s", number);
     param->hide_callerid = hide_callerid;
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(param);
@@ -1202,7 +1202,7 @@ int tapi_call_get_all_calls(tapi_context context, int slot_id, int event_id,
         return -EIO;
     }
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         return -ENOMEM;
@@ -1257,7 +1257,7 @@ int tapi_call_merge_call(tapi_context context,
         return -EIO;
     }
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         return -ENOMEM;
@@ -1316,7 +1316,7 @@ int tapi_call_separate_call(tapi_context context,
         return -EIO;
     }
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         return -ENOMEM;
@@ -1607,7 +1607,7 @@ int tapi_call_register_call_state_change(tapi_context context, int slot_id,
     }
 
     handler->cb_function = p_handle;
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(handler);

@@ -392,7 +392,7 @@ int tapi_phonebook_load_adn_entries(tapi_context context,
         return -EIO;
     }
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         return -ENOMEM;
@@ -443,7 +443,7 @@ int tapi_phonebook_load_fdn_entries(tapi_context context,
         return -EIO;
     }
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         return -ENOMEM;
@@ -521,7 +521,7 @@ int tapi_phonebook_insert_fdn_entry(tapi_context context, int slot_id,
     fdn_record->number = number;
     fdn_record->pin2 = pin2;
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(fdn_record);
@@ -594,7 +594,7 @@ int tapi_phonebook_delete_fdn_entry(tapi_context context, int slot_id,
     fdn_record->fdn_idx = fdn_idx;
     fdn_record->pin2 = pin2;
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(fdn_record);
@@ -679,7 +679,7 @@ int tapi_phonebook_update_fdn_entry(tapi_context context, int slot_id, int event
     fdn_record->number = new_number;
     fdn_record->pin2 = pin2;
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(fdn_record);

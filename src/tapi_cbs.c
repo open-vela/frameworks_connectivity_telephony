@@ -313,7 +313,7 @@ int tapi_cbs_register(tapi_context context, int slot_id, tapi_indication_msg msg
     }
 
     user_data->cb_function = p_handle;
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(user_data);

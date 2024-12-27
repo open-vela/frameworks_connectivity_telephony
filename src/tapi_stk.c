@@ -1646,7 +1646,7 @@ int tapi_stk_agent_interface_register(tapi_context context, int slot_id,
         return -ENOMEM;
     }
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(user_data);
@@ -1778,7 +1778,7 @@ int tapi_stk_agent_register(tapi_context context, int slot_id,
         return -ENOMEM;
     }
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(user_data);
@@ -1836,7 +1836,7 @@ int tapi_stk_agent_unregister(tapi_context context, int slot_id,
         return -ENOMEM;
     }
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(user_data);
@@ -1949,7 +1949,7 @@ int tapi_stk_select_item(tapi_context context, int slot_id,
     select_item_param->item = item;
     select_item_param->agent_id = agent_id;
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(select_item_param);
