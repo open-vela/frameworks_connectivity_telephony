@@ -556,7 +556,7 @@ static void report_data_logging_for_sms(dbus_context* ctx, int slot_id, int sms_
     char out_data[MIWEAR_LOG_IND_BUF_SIZE] = { 0 };
 
     if (ctx->logging_over_miwear_cb != NULL) {
-        temp_ar = malloc(sizeof(tapi_async_result));
+        temp_ar = calloc(1, sizeof(tapi_async_result));
         if (temp_ar == NULL) {
             tapi_log_error("Memory allocation failed");
         } else {
@@ -620,7 +620,7 @@ int tapi_sms_send_message(tapi_context context, int slot_id, int sms_id,
     message->number = strdup0(number);
     message->text = strdup0(text);
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         message_free(message);
@@ -702,7 +702,7 @@ int tapi_sms_send_data_message(tapi_context context, int slot_id, int sms_id,
     data_message->data = strdup0(text);
     data_message->port = port;
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         data_message_free(data_message);
@@ -904,7 +904,7 @@ int tapi_sms_get_all_messages_from_sim(tapi_context context, int slot_id,
     }
 
     user_data->cb_function = p_handle;
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(user_data);
@@ -1056,7 +1056,7 @@ int tapi_sms_register(tapi_context context, int slot_id,
     }
 
     user_data->cb_function = p_handle;
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(user_data);

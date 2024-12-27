@@ -944,7 +944,7 @@ int tapi_network_select_auto(tapi_context context,
         return -ENOMEM;
     }
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(handler);
@@ -1007,7 +1007,7 @@ int tapi_network_select_manual(tapi_context context,
         return -ENOMEM;
     }
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(handler);
@@ -1060,7 +1060,7 @@ int tapi_network_scan(tapi_context context,
         return -ENOMEM;
     }
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(handler);
@@ -1112,7 +1112,7 @@ int tapi_network_get_serving_cellinfos(tapi_context context,
         return -ENOMEM;
     }
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(handler);
@@ -1164,7 +1164,7 @@ int tapi_network_get_neighbouring_cellinfos(tapi_context context,
         return -ENOMEM;
     }
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(handler);
@@ -1562,7 +1562,7 @@ int tapi_network_get_registration_info(tapi_context context,
         return -ENOMEM;
     }
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(handler);
@@ -1615,7 +1615,7 @@ int tapi_network_set_cell_info_list_rate(tapi_context context, int slot_id,
         return -ENOMEM;
     }
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(handler);
@@ -1676,7 +1676,7 @@ int tapi_network_register(tapi_context context,
     }
 
     handler->cb_function = p_handle;
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(handler);
