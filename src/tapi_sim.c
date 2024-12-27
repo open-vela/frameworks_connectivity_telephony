@@ -856,7 +856,7 @@ int tapi_sim_register(tapi_context context, int slot_id,
     }
     handler->cb_function = p_handle;
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(handler);
@@ -969,7 +969,7 @@ int tapi_sim_change_pin(tapi_context context, int slot_id,
     change_pin_param->old_pin = old_pin;
     change_pin_param->new_pin = new_pin;
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(change_pin_param);
@@ -1051,7 +1051,7 @@ int tapi_sim_enter_pin(tapi_context context, int slot_id,
     enter_pin_param->pin_type = pin_type;
     enter_pin_param->new_pin = pin;
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(enter_pin_param);
@@ -1139,7 +1139,7 @@ int tapi_sim_reset_pin(tapi_context context, int slot_id,
     reset_pin_param->puk = puk;
     reset_pin_param->new_pin = new_pin;
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(reset_pin_param);
@@ -1221,7 +1221,7 @@ int tapi_sim_lock_pin(tapi_context context, int slot_id,
     lock_pin_param->pin_type = pin_type;
     lock_pin_param->new_pin = pin;
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(lock_pin_param);
@@ -1303,7 +1303,7 @@ int tapi_sim_unlock_pin(tapi_context context, int slot_id,
     unlock_pin_param->pin_type = pin_type;
     unlock_pin_param->new_pin = pin;
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(unlock_pin_param);
@@ -1380,7 +1380,7 @@ int tapi_sim_open_logical_channel(tapi_context context, int slot_id,
     open_channel_param->apdu_data = aid;
     open_channel_param->len = len;
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(open_channel_param);
@@ -1444,7 +1444,7 @@ int tapi_sim_close_logical_channel(tapi_context context, int slot_id,
         return -EIO;
     }
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         return -ENOMEM;
@@ -1521,7 +1521,7 @@ int tapi_sim_transmit_apdu_logical_channel(tapi_context context, int slot_id,
     transmit_apdu_param->apdu_data = pdu;
     transmit_apdu_param->len = len;
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(transmit_apdu_param);
@@ -1599,7 +1599,7 @@ int tapi_sim_transmit_apdu_basic_channel(tapi_context context, int slot_id,
     transmit_apdu_param->apdu_data = pdu;
     transmit_apdu_param->len = len;
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(transmit_apdu_param);
@@ -1723,7 +1723,7 @@ int tapi_sim_set_uicc_enablement(tapi_context context,
         return -ENOMEM;
     }
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(handler);

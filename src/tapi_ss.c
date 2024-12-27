@@ -989,7 +989,7 @@ static void report_data_logging_for_ss(dbus_context* ctx, char* type, char* fail
     char out_data[MIWEAR_LOG_IND_BUF_SIZE] = { 0 };
 
     if (ctx->logging_over_miwear_cb != NULL) {
-        temp_ar = malloc(sizeof(tapi_async_result));
+        temp_ar = calloc(1, sizeof(tapi_async_result));
         if (temp_ar == NULL) {
             tapi_log_error("Memory allocation failed");
         } else {
@@ -1047,7 +1047,7 @@ int tapi_ss_initiate_service(tapi_context context, int slot_id, int event_id,
         return -ENOMEM;
     }
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(handler);
@@ -1104,7 +1104,7 @@ int tapi_ss_request_call_barring(tapi_context context, int slot_id, int event_id
         return -ENOMEM;
     }
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(handler);
@@ -1173,7 +1173,7 @@ int tapi_ss_set_call_barring_option(tapi_context context, int slot_id, int event
         return -ENOMEM;
     }
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(handler);
@@ -1314,7 +1314,7 @@ int tapi_ss_change_call_barring_password(tapi_context context, int slot_id, int 
         return -ENOMEM;
     }
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(handler);
@@ -1386,7 +1386,7 @@ int tapi_ss_disable_all_call_barrings(tapi_context context, int slot_id, int eve
         return -ENOMEM;
     }
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(handler);
@@ -1447,7 +1447,7 @@ int tapi_ss_disable_all_incoming(tapi_context context, int slot_id,
         return -ENOMEM;
     }
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(handler);
@@ -1508,7 +1508,7 @@ int tapi_ss_disable_all_outgoing(tapi_context context, int slot_id,
         return -ENOMEM;
     }
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(handler);
@@ -1570,7 +1570,7 @@ int tapi_ss_query_call_forwarding_option(tapi_context context, int slot_id, int 
         return -ENOMEM;
     }
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(handler);
@@ -1643,7 +1643,7 @@ int tapi_ss_set_call_forwarding_option(tapi_context context, int slot_id, int ev
         return -ENOMEM;
     }
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(handler);
@@ -1745,7 +1745,7 @@ int tapi_ss_send_ussd(tapi_context context, int slot_id, int event_id, char* rep
         return -ENOMEM;
     }
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(handler);
@@ -1801,7 +1801,7 @@ int tapi_ss_cancel_ussd(tapi_context context, int slot_id, int event_id,
         return -ENOMEM;
     }
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(handler);
@@ -1862,7 +1862,7 @@ int tapi_ss_set_call_waiting(tapi_context context, int slot_id, int event_id, bo
         return -ENOMEM;
     }
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(handler);
@@ -1923,7 +1923,7 @@ int tapi_ss_get_call_waiting(tapi_context context, int slot_id, int event_id,
         return -ENOMEM;
     }
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(handler);
@@ -2025,7 +2025,7 @@ int tapi_ss_set_calling_line_restriction(tapi_context context, int slot_id, int 
         return -ENOMEM;
     }
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(handler);
@@ -2086,7 +2086,7 @@ int tapi_ss_get_calling_line_restriction_info(tapi_context context, int slot_id,
         return -ENOMEM;
     }
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(handler);
@@ -2144,7 +2144,7 @@ int tapi_ss_enable_fdn(tapi_context context, int slot_id, int event_id,
         return -ENOMEM;
     }
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(handler);
@@ -2197,7 +2197,7 @@ int tapi_ss_query_fdn(tapi_context context, int slot_id, int event_id,
         return -ENOMEM;
     }
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(handler);
@@ -2257,7 +2257,7 @@ int tapi_ss_register(tapi_context context,
 
     handler->cb_function = p_handle;
 
-    ar = malloc(sizeof(tapi_async_result));
+    ar = calloc(1, sizeof(tapi_async_result));
     if (ar == NULL) {
         tapi_log_error("async result in %s is null", __func__);
         free(handler);
