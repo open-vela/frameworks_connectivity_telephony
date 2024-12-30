@@ -1988,39 +1988,50 @@ on_exit:
     return res;
 }
 
-// todo: 38
-int call_check_call_status_in_dialing_with_multi_call(int slot_id)
+int call_check_dialing_status_with_multi_call(int slot_id)
 {
-    int ret1 = tapi_call_listen_call_test(slot_id);
-    judge_data_init();
-    test_case_data_init();
-    judge_data.expect = NEW_CALL_INCOMING;
-
-    // todo: incoming call
-
-    if ((ret1 || judge() || judge_data.result) != 0)
-        return -1;
-    sleep(5);
-    int ret2 = tapi_call_answer_call_test(slot_id, test_case_data.call_id);
-    sleep(10);
-    int ret3 = tapi_call_dial_test(slot_id, phone_num, 0);
-
-    if ((ret2 || ret3 || judge()) != 0)
-        return -1;
-
-    sleep(5);
-
-    if (tapi_get_call_count(slot_id) != 2
-        || tapi_get_two_call_state(slot_id) != 3) {
-        tapi_call_hangup_all_test(slot_id);
-        tapi_call_unlisten_call_test();
-        return -1;
+    int res = 0;
+    if (remote_operation_call_incoming_test(slot_id, phone_num)) {
+        syslog(LOG_ERR, "Call incoming fail in %s", __func__);
+        res = -1;
+        goto on_exit;
     }
 
-    int ret4 = tapi_call_hangup_all_test(slot_id);
-    int ret5 = tapi_call_unlisten_call_test();
+    sleep(3);
+    if (tapi_call_answer_call_test(slot_id, test_case_data.call_id)) {
+        syslog(LOG_ERR, "Call answer fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
 
-    return ret4 || ret5;
+    sleep(3);
+    if (tapi_call_dial_test(slot_id, "10010", 0)) {
+        syslog(LOG_ERR, "Dial fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (tapi_get_call_count(slot_id) != 2) {
+        syslog(LOG_ERR, "Get call count fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (tapi_get_two_call_state(slot_id) != 4) {
+        syslog(LOG_ERR, "Get call state fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (tapi_call_hangup_all_test(slot_id)) {
+        syslog(LOG_ERR, "Hangup fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
 }
 
 // todo: 42
