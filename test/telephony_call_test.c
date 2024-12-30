@@ -2519,46 +2519,48 @@ on_exit:
     return res;
 }
 
-// todo: 47
-int call_incoming_hold_and_recover_by_caller(int slot_id)
+int call_incoming_hold_and_resume_by_caller(int slot_id)
 {
-    int ret1 = tapi_call_listen_call_test(slot_id);
-    judge_data_init();
-    test_case_data_init();
-    judge_data.expect = NEW_CALL_INCOMING;
-
-    // todo: incoming call
-
-    if ((ret1 || judge() || judge_data.result) != 0)
-        return -1;
-
-    sleep(5);
-    if (tapi_call_answer_call_test(slot_id, test_case_data.call_id))
-        return -1;
-    sleep(5);
-
-    for (int i = 0; i < 3; i++) {
-        sleep(5);
-        judge_data_init();
-        judge_data.expect = CALL_STATE_CHANGE_TO_HOLD;
-        int ret2 = tapi_call_hold_call(get_tapi_ctx(), slot_id);
-
-        if ((ret2 || judge() || judge_data.result) != 0)
-            return -1;
-
-        sleep(5);
-        judge_data_init();
-        judge_data.expect = CALL_STATE_CHANGE_TO_ACTIVE;
-        int ret3 = tapi_call_unhold_call(get_tapi_ctx(), slot_id);
-
-        if ((ret3 || judge() || judge_data.result) != 0)
-            return -1;
+    int res = 0;
+    if (remote_operation_call_incoming_test(slot_id, phone_num)) {
+        syslog(LOG_ERR, "Incoming call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
     }
 
-    int ret4 = tapi_call_hangup_all_test(slot_id);
-    int ret5 = tapi_call_unlisten_call_test();
+    sleep(3);
+    if (tapi_call_answer_call_test(slot_id, test_case_data.call_id)) {
+        syslog(LOG_ERR, "Answer call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
 
-    return ret4 || ret5;
+    sleep(3);
+    for (int i = 0; i < 3; i++)
+    {
+        sleep(3);
+        if (tapi_call_hold_test(slot_id)) {
+            syslog(LOG_ERR, "Hold call fail in %s", __func__);
+            res = -1;
+            goto on_exit;
+        }
+
+        sleep(3);
+        if (tapi_call_unhold_test(slot_id)) {
+            syslog(LOG_ERR, "Unhold call fail in %s", __func__);
+            res = -1;
+            goto on_exit;
+        }
+    }
+
+    if (tapi_call_hangup_all_test(slot_id)) {
+        syslog(LOG_ERR, "Hangup call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
 }
 
 // todo: 48
