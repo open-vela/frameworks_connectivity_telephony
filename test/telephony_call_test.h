@@ -70,7 +70,7 @@ int call_incoming_and_hangup_by_dialer_before_answer_numerous(int slot_id);
 int call_display_the_network_of_incoming_call(int slot_id, char* network_name);
 int call_dial_active_hangup_due_to_dialer_network_exception(int slot_id);
 int call_dial_active_hangup_due_to_caller_network_exception(int slot_id);
-int call_incoming_hangup_first_answer_second(int slot_id);
+int call_incoming_hangup_first_answer_call(int slot_id);
 int call_incoming_hold_and_recover_by_dialer(int slot_id);
 int call_dialer_hold_recover_and_hold_by_caller(int slot_id);
 int call_incoming_hold_and_recover_by_caller(int slot_id);
