@@ -73,7 +73,7 @@ int call_dial_active_hangup_due_to_caller_network_exception(int slot_id);
 int call_incoming_hangup_first_answer_call(int slot_id);
 int call_incoming_hold_and_recover_by_dialer(int slot_id);
 int call_dialer_hold_recover_and_hold_by_caller(int slot_id);
-int call_incoming_hold_and_recover_by_caller(int slot_id);
+int call_incoming_hold_and_resume_by_caller(int slot_id);
 int call_swap_dial_reject_swap(int slot_id);
 int call_release_and_answer(int slot_id);
 int call_hold_and_hangup(int slot_id);

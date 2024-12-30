@@ -612,6 +612,13 @@ static void TestTeleFunc_CallIncomingHangupFirstAnswerCall(void** state)
     assert_int_equal(ret, 0);
 }
 
+static void TestTeleFunc_CallIncomingHoldAndResume(void** state)
+{
+    (void)state;
+    int ret = call_incoming_hold_and_resume_by_caller(0);
+    assert_int_equal(ret, 0);
+}
+
 // static void TestTeleLoadEccList(void** state)
 // {
 //     (void)state;
@@ -2373,6 +2380,7 @@ int main(int argc, char* argv[])
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingAfterRemoteHangup, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingAndHangupNewCall, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingHangupFirstAnswerCall, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingHoldAndResume, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallSetVoicecallSlot, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallGetVoicecallSlot, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallClearVoicecallSlot, setup_call, teardown_call),
