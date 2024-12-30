@@ -94,7 +94,7 @@ int incoming_call_answer_and_hangup(int slot_id);
 int call_display_the_network_of_incoming_call_in_call_process(int slot_id,
     char* network_name);
 int call_dial_and_check_status_in_call_active(int slot_id);
-int call_check_call_status_in_dialing_with_multi_call(int slot);
+int call_check_dialing_status_with_multi_call(int slot);
 int call_swap_in_two_calling(int slot_id);
 int call_hangup_current_call_and_resume_call(int slot_id);
 int call_hangup_all_call_in_two_calling(int slot_id);
