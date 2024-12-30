@@ -1751,6 +1751,11 @@ int tapi_call_hangup_by_id(tapi_context context, int slot_id, char* call_id)
         return -EINVAL;
     }
 
+    if (property_get_bool("tapi.ignore_hangup", false)) {
+        tapi_log_info("%s: dial from tool, dismiss miwear hangup.", __func__);
+        return -EINVAL;
+    }
+
     if (ctx == NULL) {
         tapi_log_error("context is null in %s", __func__);
         return -EINVAL;
