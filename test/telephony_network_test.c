@@ -154,7 +154,7 @@ int tapi_net_select_manual_test(int slot_id, char* mcc, char* mnc, char* tech)
     int res = 0;
     judge_data_init();
     judge_data.expect = EVENT_REGISTER_MANUAL_DONE;
-    tapi_operator_info* network_info = malloc(sizeof(tapi_operator_info));
+    tapi_operator_info* network_info = calloc(1, sizeof(tapi_operator_info));
     if (network_info == NULL) {
         syslog(LOG_ERR, "tapi_operator_info is null in %s", __func__);
         return -ENOMEM;
