@@ -636,21 +636,21 @@ static void TestTeleFunc_CallIncomingHoldAndResume(void** state)
 static void TestTeleFunc_CallSetVoicecallSlot(void** state)
 {
     (void)state;
-    int ret = tapi_call_set_default_voicecall_slot_test(0);
+    int ret = call_set_voicecall_slot(0);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_CallGetVoicecallSlot(void** state)
 {
     (void)state;
-    int ret = tapi_call_get_default_voicecall_slot_test(0);
+    int ret = tapi_call_get_default_voicecall_slot_test();
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_CallClearVoicecallSlot(void** state)
 {
     (void)state;
-    int ret = call_clear_voicecall_slot_set();
+    int ret = call_clear_voicecall_slot();
     assert_int_equal(ret, 0);
 }
 
