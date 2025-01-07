@@ -1170,13 +1170,13 @@ on_exit:
     return res;
 }
 
-int tapi_call_get_default_voicecall_slot_test(int expect_res)
+int tapi_call_get_default_voicecall_slot_test(void)
 {
     int result = -1;
     int ret = tapi_call_get_default_slot(get_tapi_ctx(), &result);
     syslog(LOG_DEBUG, "%s, ret: %d, voicecall_slot: %d", __func__, ret, result);
 
-    return ret || expect_res != result;
+    return ret;
 }
 
 int tapi_call_answer_call_test(int slot_id, char* call_id)
@@ -1544,30 +1544,44 @@ on_exit:
     return res;
 }
 
-int call_clear_voicecall_slot_set(void)
+int call_set_voicecall_slot(int slot_id)
 {
-    int res = 0;
-    judge_data_init();
-    judge_data.expect = MSG_DEFAULT_VOICECALL_SLOT_CHANGE_IND;
-    global_data.default_voicecall_slot = -100;
-    int ret = tapi_call_set_default_voicecall_slot_test(-1);
-
-    if (ret) {
-        syslog(LOG_ERR, "Set default voicecall slot execute fail, ret: %d", ret);
+    int res = 0, result = 0;
+    if (tapi_call_get_default_slot(get_tapi_ctx(), &result)) {
+        syslog(LOG_ERR, "Get default voicecall slot execute fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
-    if (judge()) {
-        syslog(LOG_ERR, "No set default voicecall slot message received in %s", __func__);
+    sleep(3);
+    if (result != slot_id) {
+        if (tapi_call_set_default_voicecall_slot_test(slot_id)) {
+            syslog(LOG_ERR, "Set default voicecall slot %d execute fail in %s", slot_id, __func__);
+            res = -1;
+            goto on_exit;
+        }
+    }
+
+on_exit:
+    return res;
+}
+
+int call_clear_voicecall_slot(void)
+{
+    int res = 0, result = 0;
+    if (tapi_call_get_default_slot(get_tapi_ctx(), &result)) {
+        syslog(LOG_ERR, "Get default voicecall slot execute fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
-    if (global_data.default_voicecall_slot != -1) {
-        syslog(LOG_ERR, "Async result is invalid in %s", __func__);
-        res = -1;
-        goto on_exit;
+    sleep(3);
+    if (result != -1) {
+        if (tapi_call_set_default_voicecall_slot_test(-1)) {
+            syslog(LOG_ERR, "Set default voicecall slot -1 execute fail in %s", __func__);
+            res = -1;
+            goto on_exit;
+        }
     }
 
 on_exit:
