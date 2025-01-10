@@ -768,6 +768,13 @@ int tapi_call_unlisten_call_test(void)
         goto on_exit;
     }
 
+    ret = tapi_unregister(get_tapi_ctx(), global_data.call_slot_change_watch_id);
+    if (ret) {
+        syslog(LOG_ERR, "unregister slot id change fail in %s, ret: %d", __func__, ret);
+        res = -1;
+        goto on_exit;
+    }
+
 on_exit:
     return res;
 }
