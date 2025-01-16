@@ -436,6 +436,27 @@ on_exit:
     return res;
 }
 
+int modem_reset_test(int slot_id)
+{
+    int res = 0;
+    if (tapi_enable_modem_test(0, 0)) {
+        syslog(LOG_DEBUG, "Modem disable execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+    sleep(10);
+
+    if (tapi_enable_modem_test(0, 1)) {
+        syslog(LOG_DEBUG, "Modem enbale execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+    sleep(10);
+
+on_exit:
+    return res;
+}
+
 int tapi_get_modem_status_test(int slot_id, int* state)
 {
     int res = 0;

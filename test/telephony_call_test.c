@@ -2,6 +2,8 @@
 
 #include "remote_operation.h"
 #include "telephony_call_test.h"
+#include "telephony_common_test.h"
+#include "telephony_sim_test.h"
 #include "telephony_ss_test.h"
 
 extern char* phone_num;
@@ -1090,45 +1092,38 @@ on_exit:
     return res;
 }
 
-int tapi_call_load_ecc_list_test(int slot_id)
+int contain_ecc_list_with_sim_card(void)
 {
-    ecc_info out[MAX_ECC_LIST_SIZE];
-    int size = tapi_call_get_ecc_list(get_tapi_ctx(), slot_id, out);
-
-    if (size <= 0)
-        return -1;
-
     int ret = 0;
-    syslog(LOG_INFO, "ecc list: \n");
-
-    for (int i = 0; i < size; i++) {
-        syslog(LOG_DEBUG, "ecc number : %s,%u,%u \n", out[i].ecc_num, out[i].category, out[i].condition);
-    }
-
     char* correct_ecc_list_with_sim_card[] = { "110", "119", "120", "118", "999", "000", "08", "911", "112" };
-    char* correct_ecc_list_without_sim_card[] = { "119", "118", "999", "110", "08", "000" };
-    char* error_ecc_list[] = { "0", "07", "234" };
 
-    bool has_sim_card = false;
-    tapi_sim_has_icc_card(get_tapi_ctx(), 0, &has_sim_card);
-
-    if (has_sim_card) {
-        for (int i = 0; i < sizeof(correct_ecc_list_with_sim_card) / sizeof(char*); i++) {
-            if (tapi_call_is_emergency_number(get_tapi_ctx(), correct_ecc_list_with_sim_card[i]) == -1) {
-                syslog(LOG_ERR, "%s is not in ecc list\n", correct_ecc_list_with_sim_card[i]);
-                ret |= -1;
-            }
-        }
-    } else {
-        for (int i = 0; i < sizeof(correct_ecc_list_without_sim_card) / sizeof(char*); i++) {
-            if (tapi_call_is_emergency_number(
-                    get_tapi_ctx(), correct_ecc_list_without_sim_card[i])
-                == -1) {
-                syslog(LOG_ERR, "%s is not in ecc list\n", correct_ecc_list_without_sim_card[i]);
-                ret |= -1;
-            }
+    for (int i = 0; i < sizeof(correct_ecc_list_with_sim_card) / sizeof(char*); i++) {
+        if (tapi_call_is_emergency_number(get_tapi_ctx(), correct_ecc_list_with_sim_card[i]) == -1) {
+            syslog(LOG_ERR, "%s is not in ecc list\n", correct_ecc_list_with_sim_card[i]);
+            ret |= -1;
         }
     }
+    return ret;
+}
+
+int contain_ecc_list_without_sim_card(void)
+{
+    int ret = 0;
+    char* correct_ecc_list_without_sim_card[] = { "119", "118", "999", "110", "08", "000" };
+
+    for (int i = 0; i < sizeof(correct_ecc_list_without_sim_card) / sizeof(char*); i++) {
+        if (tapi_call_is_emergency_number(get_tapi_ctx(), correct_ecc_list_without_sim_card[i]) == -1) {
+            syslog(LOG_ERR, "%s is not in ecc list\n", correct_ecc_list_without_sim_card[i]);
+            ret |= -1;
+        }
+    }
+    return ret;
+}
+
+int exclude_error_ecc_list(void)
+{
+    int ret = 0;
+    char* error_ecc_list[] = { "0", "07", "234" };
 
     for (int i = 0; i < sizeof(error_ecc_list) / sizeof(char*); i++) {
         if (tapi_call_is_emergency_number(get_tapi_ctx(), error_ecc_list[i]) != -1) {
@@ -1136,8 +1131,141 @@ int tapi_call_load_ecc_list_test(int slot_id)
             ret |= -1;
         }
     }
-
     return ret;
+}
+
+int call_compare_ecc_list_without_sim_card(int slot_id)
+{
+    int res = 0;
+    if (contain_ecc_list_without_sim_card()) {
+        syslog(LOG_ERR, "contain_ecc_list_without_sim_card fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (exclude_error_ecc_list()) {
+        syslog(LOG_ERR, "exclude_error_ecc_list fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
+int call_compare_ecc_list_with_sim_card(int slot_id)
+{
+    int res = 0;
+    if (contain_ecc_list_with_sim_card()) {
+        syslog(LOG_ERR, "contain_ecc_list_with_sim_card fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (exclude_error_ecc_list()) {
+        syslog(LOG_ERR, "exclude_error_ecc_list fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
+int call_load_and_compare_ecclist_with_china_sim_card_test(int slot_id)
+{
+    int res = 0;
+    ecc_info out[MAX_ECC_LIST_SIZE];
+
+    if (sim_set_operator_test(0, "46000")) {
+        syslog(LOG_ERR, "sim set 46000 operator test fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    int size = tapi_call_get_ecc_list(get_tapi_ctx(), slot_id, out);
+    if (size <= 0) {
+        syslog(LOG_ERR, "get ecclist size is empty in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    syslog(LOG_INFO, "ecc list: \n");
+    for (int i = 0; i < size; i++) {
+        syslog(LOG_DEBUG, "ecc number : %s,%u,%u \n", out[i].ecc_num, out[i].category, out[i].condition);
+    }
+
+    if (call_compare_ecc_list_with_sim_card(slot_id)) {
+        syslog(LOG_ERR, "ecclist compare execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (sim_set_operator_test(0, "000")) {
+        syslog(LOG_ERR, "sim set 000 operator test fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
+int call_load_and_compare_ecclist_without_sim_card_test(int slot_id)
+{
+    int res = 0;
+    if (tapi_sim_listen_sim_test(slot_id)) {
+        syslog(LOG_DEBUG, "Sim listen execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (remote_sim_absent_operation_test(slot_id)) {
+        syslog(LOG_ERR, "sim_absent_test fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    ecc_info out[MAX_ECC_LIST_SIZE];
+    int size = tapi_call_get_ecc_list(get_tapi_ctx(), slot_id, out);
+    if (size <= 0) {
+        syslog(LOG_ERR, "get ecclist size is empty in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    syslog(LOG_INFO, "ecc list: \n");
+    for (int i = 0; i < size; i++) {
+        syslog(LOG_DEBUG, "ecc number : %s,%u,%u \n", out[i].ecc_num, out[i].category, out[i].condition);
+    }
+
+    if (call_compare_ecc_list_without_sim_card(slot_id)) {
+        syslog(LOG_ERR, "ecclist compare execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (remote_sim_insert_operation_test(slot_id)) {
+        syslog(LOG_ERR, "sim_absent_test fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (tapi_sim_unlisten_sim_test()) {
+        syslog(LOG_DEBUG, "Sim unlisten execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(5);
+    if (modem_reset_test(slot_id)) {
+        syslog(LOG_ERR, "modem_reset_test fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
 }
 
 int tapi_call_set_default_voicecall_slot_test(int slot_id)
@@ -2557,8 +2685,7 @@ int call_incoming_hold_and_resume_by_caller(int slot_id)
     }
 
     sleep(3);
-    for (int i = 0; i < 3; i++)
-    {
+    for (int i = 0; i < 3; i++) {
         sleep(3);
         if (tapi_call_hold_test(slot_id)) {
             syslog(LOG_ERR, "Hold call fail in %s", __func__);

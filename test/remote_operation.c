@@ -25,3 +25,36 @@ void remote_call_hangup_with_disconnect_reason(int slot_id, const char* phone_nu
     tapi_invoke_oem_ril_request_strings(get_tapi_ctx(), slot_id,
         EVENT_OEM_RIL_REQUEST_STRINGS_DONE, oem_req, 1, NULL);
 }
+
+int remote_sim_absent_operation(int slot_id)
+{
+    char* oem_req[1];
+    oem_req[0] = "AT+REMOTESIMINSERT=0";
+    int ret = tapi_invoke_oem_ril_request_strings(get_tapi_ctx(), slot_id,
+        EVENT_OEM_RIL_REQUEST_STRINGS_DONE, oem_req, 1, NULL);
+    return ret;
+}
+
+int remote_sim_insert_operation(int slot_id)
+{
+    char* oem_req[1];
+    oem_req[0] = "AT+REMOTESIMINSERT=1";
+    int ret = tapi_invoke_oem_ril_request_strings(get_tapi_ctx(), slot_id,
+        EVENT_OEM_RIL_REQUEST_STRINGS_DONE, oem_req, 1, NULL);
+    return ret;
+}
+
+int remote_sim_set_sim_operator(int slot_id, const char* expect_mccmnc)
+{
+    char req_data[512];
+    char* oem_req[1];
+    oem_req[0] = req_data;
+
+    memset(req_data, 0, sizeof(req_data));
+    sprintf(req_data, "AT+REMOTEIMSI=%s", expect_mccmnc);
+    syslog(LOG_DEBUG, "%s, req_data: %s\n", __func__, req_data);
+
+    int ret = tapi_invoke_oem_ril_request_strings(get_tapi_ctx(), slot_id,
+        EVENT_OEM_RIL_REQUEST_STRINGS_DONE, oem_req, 1, NULL);
+    return ret;
+}

@@ -342,6 +342,20 @@ static void TestTeleFunc_SimDeleteFdnEntry(void** state)
 // }
 
 // call testcases
+static void TestTeleFunc_CallLoadAndCompareEccWithChinaSimCard(void** state)
+{
+    (void)state;
+    int ret = call_load_and_compare_ecclist_with_china_sim_card_test(0);
+    assert_int_equal(ret, 0);
+}
+
+static void TestTeleFunc_CallLoadAndCompareEccWithoutSimCard(void** state)
+{
+    (void)state;
+    int ret = call_load_and_compare_ecclist_without_sim_card_test(0);
+    assert_int_equal(ret, 0);
+}
+
 static void TestTeleFunc_CI_CallDialNumber(void** state)
 {
     (void)state;
@@ -625,13 +639,6 @@ static void TestTeleFunc_CallIncomingHoldAndResume(void** state)
     int ret = call_incoming_hold_and_resume_by_caller(0);
     assert_int_equal(ret, 0);
 }
-
-// static void TestTeleLoadEccList(void** state)
-// {
-//     (void)state;
-//     int ret = tapi_call_load_ecc_list_test(0);
-//     assert_int_equal(ret, 0);
-// }
 
 static void TestTeleFunc_CallSetVoicecallSlot(void** state)
 {
@@ -2346,6 +2353,8 @@ int main(int argc, char* argv[])
     };
 
     const struct CMUnitTest CallTestSuites[] = {
+        cmocka_unit_test(TestTeleFunc_CallLoadAndCompareEccWithChinaSimCard),
+        cmocka_unit_test(TestTeleFunc_CallLoadAndCompareEccWithoutSimCard),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_CallDialNumber, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_CallDialEccNumber, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialLongPhoneNumber, setup_call, teardown_call),
@@ -2359,8 +2368,6 @@ int main(int argc, char* argv[])
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_CallDialWithNumerousCode, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialConference, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_CallDtmfAfterDial, setup_call, teardown_call),
-        // cmocka_unit_test_setup_teardown(TestTeleLoadEccList, setup_call, teardown_call),
-        // hangup between dialing and answering
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingAnswerAndHangup, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingAnswerAndRemoteHangup, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallReleaseAndAnswer, setup_call, teardown_call),
@@ -2392,29 +2399,6 @@ int main(int argc, char* argv[])
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallSetVoicecallSlot, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallGetVoicecallSlot, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallClearVoicecallSlot, setup_call, teardown_call),
-#if 0
-
-        // answer the incoming call then hangup it
-        cmocka_unit_test_setup_teardown(TestTeleAnswerAndHangupTheIncomingCall, setup_call, teardown_call),
-
-        // hangup after remote answer
-        cmocka_unit_test_setup_teardown(TestTeleHangupCallAfterRemoteAnswer, setup_call, teardown_call),
-
-        // dial then remote answer and hangup
-        // cmocka_unit_test_setup_teardown(TestTeleDialThenRemoteAnswerAndHangup, setup_call, teardown_call),
-
-        // remote hangup then incoming new call
-        // cmocka_unit_test_setup_teardown(TestTeleRemoteHangupThenIncomingNewCall, setup_call, teardown_call),
-
-        // remote hangup then dial another
-        // cmocka_unit_test_setup_teardown(TestTeleRemoteHangupThenDialAnother, setup_call, teardown_call),
-
-        // dial with numerous hide call id
-        cmocka_unit_test_setup_teardown(TestTeleDialWithNumerousHideCallId, setup_call, teardown_call),
-
-        // dial using a phone number with area code
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialWithAreaCode, setup_call, teardown_call),
-#endif
     };
 
     const struct CMUnitTest DataTestSuites[] = {
