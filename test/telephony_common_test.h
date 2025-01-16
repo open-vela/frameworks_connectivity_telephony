@@ -4,6 +4,7 @@
 
 #include "telephony_test.h"
 
+int modem_reset_test(int slot_id);
 int tapi_get_imei_test(int slot_id);
 int tapi_get_modem_revision_test(int slot_id);
 int tapi_get_modem_activity_info_test(int slot_id);

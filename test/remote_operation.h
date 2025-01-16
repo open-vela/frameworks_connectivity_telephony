@@ -10,3 +10,6 @@ enum REMOTE_CALL_COMMAND_TYPE {
 
 void remote_call_operation(int slot_id, const char* phone_number, enum REMOTE_CALL_COMMAND_TYPE op);
 void remote_call_hangup_with_disconnect_reason(int slot_id, const char* phone_number, int disconnect_reason);
+int remote_sim_absent_operation(int slot_id);
+int remote_sim_insert_operation(int slot_id);
+int remote_sim_set_sim_operator(int slot_id, const char* expect_mccmnc);

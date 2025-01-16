@@ -1,4 +1,6 @@
 #include "telephony_sim_test.h"
+#include "remote_operation.h"
+#include "telephony_common_test.h"
 
 extern struct judge_type judge_data;
 
@@ -36,6 +38,66 @@ int tapi_sim_multi_has_icc_card_test(int slot_id)
     return ret;
 }
 
+int remote_sim_absent_operation_test(int slot_id)
+{
+    int res = 0;
+    judge_data_init();
+    judge_data.expect = EVENT_SIM_ABSENT_SET_DONE;
+
+    int ret = remote_sim_absent_operation(slot_id);
+    if (ret) {
+        syslog(LOG_ERR, "remote_sim_absent_operation_test execute fail in %s, ret: %d",
+            __func__, ret);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge()) {
+        syslog(LOG_DEBUG, "remote_sim_absent_operation_test is not executed in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge_data.result) {
+        syslog(LOG_ERR, "async result is invalid in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
+int remote_sim_insert_operation_test(int slot_id)
+{
+    int res = 0;
+    judge_data_init();
+    judge_data.expect = EVENT_SIM_INSERT_SET_DONE;
+
+    int ret = remote_sim_insert_operation(slot_id);
+    if (ret) {
+        syslog(LOG_ERR, "remote_sim_insert_test execute fail in %s, ret: %d",
+            __func__, ret);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge()) {
+        syslog(LOG_DEBUG, "remote_sim_insert_test is not executed in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge_data.result) {
+        syslog(LOG_ERR, "async result is invalid in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
 int tapi_sim_get_sim_operator_test(int slot_id, const char* expect_res)
 {
     char operator[MAX_MCC_LENGTH + MAX_MNC_LENGTH + 1];
@@ -45,6 +107,53 @@ int tapi_sim_get_sim_operator_test(int slot_id, const char* expect_res)
     syslog(LOG_DEBUG, "%s, ret: %d, slot_id: %d, operator: %s\n", __func__, ret, slot_id, operator);
 
     return ret || (operator[0] == 0) || strcmp(expect_res, operator);
+}
+
+int sim_set_operator_test(int slot_id, const char* expect_res)
+{
+    int res = 0;
+    if (tapi_sim_listen_sim_test(slot_id)) {
+        syslog(LOG_DEBUG, "Sim listen execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (remote_sim_absent_operation_test(slot_id)) {
+        syslog(LOG_DEBUG, "Remote sim absent execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (remote_sim_set_sim_operator(slot_id, expect_res)) {
+        syslog(LOG_DEBUG, "Remote sim absent execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (remote_sim_insert_operation_test(slot_id)) {
+        syslog(LOG_DEBUG, "Remote sim insert execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(5);
+    if (modem_reset_test(slot_id)) {
+        syslog(LOG_DEBUG, "Modem reset execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(10);
+    if (tapi_sim_unlisten_sim_test()) {
+        syslog(LOG_DEBUG, "Sim unlisten execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
 }
 
 int tapi_sim_multi_get_sim_operator(int slot_id, const char* expect_res)
@@ -197,6 +306,19 @@ static void tele_sim_async_fun(tapi_async_result* result)
         }
 
     } else if (result->msg_id == MSG_SIM_STATE_CHANGE_IND) {
+        syslog(LOG_DEBUG, "sim state change ind : %d \n", result->arg2);
+        if (judge_data.expect == EVENT_SIM_ABSENT_SET_DONE) {
+            if (result->arg2 == SIM_STATE_NOT_PRESENT) {
+                judge_data.result = 0;
+                judge_data.flag = EVENT_SIM_ABSENT_SET_DONE;
+            }
+        } else if (judge_data.expect == EVENT_SIM_INSERT_SET_DONE) {
+            if (result->arg2 == SIM_STATE_INSERTED) {
+                judge_data.result = 0;
+                judge_data.flag = EVENT_SIM_INSERT_SET_DONE;
+            }
+        }
+
         ss = result->data;
         if (ss != NULL) {
             syslog(LOG_DEBUG, "response strings name : %s\n", ss->name);
@@ -257,57 +379,52 @@ static void tele_sim_async_fun(tapi_async_result* result)
     }
 }
 
-int tapi_sim_listen_sim_test(int slot_id, int event_id)
+int tapi_sim_listen_sim_test(int slot_id)
 {
+    int res = 0;
     global_data_init();
 
-    if (event_id != MSG_SIM_STATE_CHANGE_IND && event_id != MSG_SIM_UICC_APP_ENABLED_CHANGE_IND) {
-        syslog(LOG_ERR, "event id error\n");
-        return -1;
+    global_data.sim_state_change_watch_id
+        = tapi_sim_register(get_tapi_ctx(), slot_id, MSG_SIM_STATE_CHANGE_IND, NULL, tele_sim_async_fun);
+    if (global_data.sim_state_change_watch_id < 0) {
+        syslog(LOG_ERR, "%s, slot_id: %d, MSG_SIM_STATE_CHANGE_IND, watch id < 0\n",
+            __func__, slot_id);
+        res = -1;
+        goto on_exit;
     }
 
-    if (event_id == MSG_SIM_STATE_CHANGE_IND) {
-        global_data.sim_state_change_watch_id
-            = tapi_sim_register(get_tapi_ctx(), slot_id, event_id, NULL, tele_sim_async_fun);
-
-        if (global_data.sim_state_change_watch_id < 0) {
-            syslog(LOG_ERR, "%s, slot_id: %d, MSG_SIM_STATE_CHANGE_IND, watch id < 0\n",
-                __func__, slot_id);
-            return -1;
-        }
-    } else {
-        global_data.sim_uicc_app_enabled_change_watch_id = tapi_sim_register(get_tapi_ctx(), slot_id, event_id, NULL, tele_sim_async_fun);
-
-        if (global_data.sim_uicc_app_enabled_change_watch_id < 0) {
-            syslog(LOG_ERR, "%s, slot_id: %d, MSG_SIM_UICC_APP_ENABLED_CHANGE_IND, watch id < 0\n",
-                __func__, slot_id);
-            return -1;
-        }
+    global_data.sim_uicc_app_enabled_change_watch_id
+        = tapi_sim_register(get_tapi_ctx(), slot_id, MSG_SIM_UICC_APP_ENABLED_CHANGE_IND, NULL, tele_sim_async_fun);
+    if (global_data.sim_uicc_app_enabled_change_watch_id < 0) {
+        syslog(LOG_ERR, "%s, slot_id: %d, MSG_SIM_UICC_APP_ENABLED_CHANGE_IND, watch id < 0\n",
+            __func__, slot_id);
+        res = -1;
+        goto on_exit;
     }
 
-    return 0;
+on_exit:
+    return res;
 }
 
-int tapi_sim_unlisten_sim_test(int slot_id, int watch_id)
+int tapi_sim_unlisten_sim_test(void)
 {
-    if (watch_id == -1
-        || (watch_id != global_data.sim_state_change_watch_id
-            && watch_id != global_data.sim_uicc_app_enabled_change_watch_id)) {
-        syslog(LOG_ERR, "watch id error\n");
-        return -1;
+    int ret = -1, res = 0;
+    ret = tapi_sim_unregister(get_tapi_ctx(), global_data.sim_state_change_watch_id);
+    if (ret) {
+        syslog(LOG_ERR, "unregister sim state change fail in %s, ret: %d", __func__, ret);
+        res = -1;
+        goto on_exit;
     }
 
-    int ret = tapi_sim_unregister(get_tapi_ctx(), watch_id);
-
-    if (ret == 0) {
-        if (watch_id == global_data.sim_state_change_watch_id) {
-            global_data.sim_state_change_watch_id = -1;
-        } else {
-            global_data.sim_uicc_app_enabled_change_watch_id = -1;
-        }
+    ret = tapi_sim_unregister(get_tapi_ctx(), global_data.sim_uicc_app_enabled_change_watch_id);
+    if (ret) {
+        syslog(LOG_ERR, "unregister uicc app enable change fail in %s, ret: %d", __func__, ret);
+        res = -1;
+        goto on_exit;
     }
 
-    return ret;
+on_exit:
+    return res;
 }
 
 int tapi_open_logical_channel_test(int slot_id)
