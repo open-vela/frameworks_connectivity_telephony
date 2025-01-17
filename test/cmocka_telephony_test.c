@@ -272,6 +272,7 @@ static void TestTeleFunc_SimUnlockPin(void** state)
 {
     (void)state;
     int ret = tapi_sim_unlock_pin_test(0);
+    sleep(4);
     assert_int_equal(ret, OK);
 }
 
