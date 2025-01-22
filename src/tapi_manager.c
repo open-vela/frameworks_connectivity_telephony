@@ -1875,6 +1875,11 @@ int tapi_get_msisdn_number(tapi_context context, int slot_id, char** out)
             }
         }
 
+        if (**out == 0) {
+            tapi_log_error("%s: msisdn is empty", __func__);
+            return -EINVAL;
+        }
+
         return OK;
     }
 
