@@ -279,7 +279,7 @@ typedef enum {
 
     MSG_DATA_LOGING_IND,
 
-    MSG_MODEM_ECC_LIST_CHANGE_IND = 61,
+    MSG_MODEM_ECC_LIST_CHANGE_IND,
 
     // tapi indication msg value max.
     MSG_IND_MASK,
