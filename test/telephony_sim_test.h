@@ -4,6 +4,8 @@
 #include "telephony_test.h"
 #define TEST_COUNT 10
 
+int setup_sim(void** state);
+int teardown_sim(void** state);
 int tapi_sim_has_icc_card_test(int slot_id);
 int tapi_sim_multi_has_icc_card_test(int slot_id);
 int tapi_sim_get_sim_operator_test(int slot_id, const char* expect_res);
@@ -36,6 +38,7 @@ int tapi_phonebook_delete_fdn_entry_test(int slot_id);
 int tapi_transmit_apdu_logical_channel_test(int slot_id);
 int remote_sim_absent_operation_test(int slot_id);
 int remote_sim_insert_operation_test(int slot_id);
+int remote_sim_absent_insert_operation_test(int slot_id);
 int sim_change_pin_test(int slot_id);
 int sim_open_close_logical_channel_numerous(int slot_id);
 int sim_set_operator_test(int slot_id, const char* expect_res);
