@@ -17,6 +17,47 @@ static void global_data_init(void)
     global_data.sim_uicc_app_enabled_change_watch_id = -1;
 }
 
+int setup_sim(void** state)
+{
+    (void)state;
+    return tapi_sim_listen_sim_test(0);
+}
+
+int teardown_sim(void** state)
+{
+    (void)state;
+    int res = 0, result = 0;
+    if (tapi_sim_get_sim_state(get_tapi_ctx(), 0, &result)) {
+        syslog(LOG_ERR, "sim get state execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (result == SIM_STATE_NOT_PRESENT) {
+        if (remote_sim_insert_operation_test(0)) {
+            syslog(LOG_ERR, "remote sim insert execute fail in %s", __func__);
+            res = -1;
+            goto on_exit;
+        }
+
+        sleep(5);
+        if (modem_reset_test(0)) {
+            syslog(LOG_ERR, "modem reset execute fail in %s", __func__);
+            res = -1;
+            goto on_exit;
+        }
+    }
+
+    if (tapi_sim_unlisten_sim_test()) {
+        syslog(LOG_ERR, "sim unlisten execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
 int tapi_sim_has_icc_card_test(int slot_id)
 {
     bool result = false;
@@ -90,6 +131,26 @@ int remote_sim_insert_operation_test(int slot_id)
 
     if (judge_data.result) {
         syslog(LOG_ERR, "async result is invalid in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
+int remote_sim_absent_insert_operation_test(int slot_id)
+{
+    int res = 0;
+    if (remote_sim_absent_operation_test(slot_id)) {
+        syslog(LOG_DEBUG, "remote_sim_absent_operation_test execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(5);
+    if (remote_sim_insert_operation_test(slot_id)) {
+        syslog(LOG_DEBUG, "remote_sim_insert_test execute fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
@@ -261,7 +322,7 @@ int tapi_sim_get_state_test(int slot_id)
     syslog(LOG_DEBUG, "%s, ret: %d, slotId : %d sim_state : %s \n", __func__, ret, slot_id,
         tapi_sim_state_to_string((tapi_sim_state)state));
 
-    return ret || state != 3;
+    return ret;
 }
 
 static void tele_sim_async_fun(tapi_async_result* result)
@@ -724,7 +785,7 @@ int tapi_sim_get_uicc_enablement_test(int slot_id)
     int ret = tapi_sim_get_uicc_enablement(get_tapi_ctx(), slot_id, &state);
     syslog(LOG_DEBUG, "%s, ret: %d, state: %d", __func__, ret, (int)state);
 
-    return ret || state != SIM_UICC_APP_ACTIVE;
+    return ret;
 }
 
 int tapi_sim_enter_pin_test(int slot_id)

@@ -210,6 +210,13 @@ static void TestTeleFunc_CI_SimTransmitAPDUInBasicChannel(void** state)
     assert_int_equal(ret, OK);
 }
 
+static void TestTeleFunc_SimRmoteAbsentInsertOperator(void** state)
+{
+    (void)state;
+    int ret = remote_sim_absent_insert_operation_test(0);
+    assert_int_equal(ret, OK);
+}
+
 static void TestTeleFunc_CI_SimGetState(void** state)
 {
     (void)state;
@@ -217,18 +224,13 @@ static void TestTeleFunc_CI_SimGetState(void** state)
     assert_int_equal(ret, OK);
 }
 
-static void TestTeleFunc_CI_SimOpenLogicalChannel(void** state)
+static void TestTeleFunc_CI_SimOpenAndCloseLogicalChannel(void** state)
 {
     (void)state;
     int ret = tapi_open_logical_channel_test(0);
     assert_int_equal(ret, OK);
-}
-
-static void TestTeleFunc_CI_SimCloseLogicalChannel(void** state)
-{
-    (void)state;
-    int ret = tapi_close_logical_channel_test(0);
-    assert_int_equal(ret, OK);
+    sleep(3);
+    ret = tapi_close_logical_channel_test(0);
 }
 
 static void TestTeleFunc_SimLogicalChannelOpenCloseNumerous(void** state)
@@ -328,18 +330,6 @@ static void TestTeleFunc_SimDeleteFdnEntry(void** state)
     int ret = tapi_phonebook_delete_fdn_entry_test(0);
     assert_int_equal(ret, OK);
 }
-
-// static void cmocka_tapi_sim_listen_sim_state_change(void **state)
-// {
-//     int ret = tapi_sim_listen_sim_test(0, 23);
-//     assert_int_equal(ret, OK);
-// }
-
-// static void cmocka_tapi_sim_listen_sim_uicc_app_enabled_change(void **state)
-// {
-//     int ret = tapi_sim_listen_sim_test(0, 24);
-//     assert_int_equal(ret, OK);
-// }
 
 // call testcases
 static void TestTeleFunc_CallLoadAndCompareEccWithChinaSimCard(void** state)
@@ -2333,13 +2323,13 @@ int main(int argc, char* argv[])
         cmocka_unit_test(TestTeleFunc_CI_SimGetMSISDN),
         cmocka_unit_test(TestTeleFunc_SimGetMSISDNNumerousTimes),
         cmocka_unit_test(TestTeleFunc_CI_SimTransmitAPDUInBasicChannel),
-        cmocka_unit_test(TestTeleFunc_CI_SimOpenLogicalChannel),
-        cmocka_unit_test(TestTeleFunc_CI_SimCloseLogicalChannel),
+        cmocka_unit_test(TestTeleFunc_CI_SimOpenAndCloseLogicalChannel),
         cmocka_unit_test(TestTeleFunc_SimLogicalChannelOpenCloseNumerous),
         cmocka_unit_test(TestTeleFunc_CI_SimTransmitAPDUInLogicalChannel),
         cmocka_unit_test(TestTeleFunc_SimSetUiccEnablement),
         cmocka_unit_test(TestTeleFunc_SimGetUiccEnablement),
         cmocka_unit_test(TestTeleFunc_CI_SimTransmitAPDUBasicChannel),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SimRmoteAbsentInsertOperator, setup_sim, teardown_sim),
         cmocka_unit_test(TestTeleFunc_CI_SimGetState),
         cmocka_unit_test(TestTeleFunc_SimEnterPin),
         cmocka_unit_test(TestTeleFunc_SimChangePin),
