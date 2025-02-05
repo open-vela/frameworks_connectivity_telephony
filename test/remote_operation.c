@@ -30,31 +30,63 @@ int remote_sim_absent_operation(int slot_id)
 {
     char* oem_req[1];
     oem_req[0] = "AT+REMOTESIMINSERT=0";
-    int ret = tapi_invoke_oem_ril_request_strings(get_tapi_ctx(), slot_id,
+    return tapi_invoke_oem_ril_request_strings(get_tapi_ctx(), slot_id,
         EVENT_OEM_RIL_REQUEST_STRINGS_DONE, oem_req, 1, NULL);
-    return ret;
 }
 
 int remote_sim_insert_operation(int slot_id)
 {
     char* oem_req[1];
     oem_req[0] = "AT+REMOTESIMINSERT=1";
-    int ret = tapi_invoke_oem_ril_request_strings(get_tapi_ctx(), slot_id,
+    return tapi_invoke_oem_ril_request_strings(get_tapi_ctx(), slot_id,
         EVENT_OEM_RIL_REQUEST_STRINGS_DONE, oem_req, 1, NULL);
-    return ret;
 }
 
 int remote_sim_set_sim_operator(int slot_id, const char* expect_mccmnc)
 {
-    char req_data[512];
+    char req_data[30] = { 0 };
     char* oem_req[1];
     oem_req[0] = req_data;
 
-    memset(req_data, 0, sizeof(req_data));
     sprintf(req_data, "AT+REMOTEIMSI=%s", expect_mccmnc);
     syslog(LOG_DEBUG, "%s, req_data: %s\n", __func__, req_data);
 
-    int ret = tapi_invoke_oem_ril_request_strings(get_tapi_ctx(), slot_id,
+    return tapi_invoke_oem_ril_request_strings(get_tapi_ctx(), slot_id,
         EVENT_OEM_RIL_REQUEST_STRINGS_DONE, oem_req, 1, NULL);
-    return ret;
+}
+
+int remote_ss_operation_delay(int slot_id, int delay_sec)
+{
+    char req_data[30] = { 0 };
+    char* oem_req[1];
+    oem_req[0] = req_data;
+
+    sprintf(req_data, "AT+REMOTESSDELAY=%d 1", delay_sec);
+    syslog(LOG_DEBUG, "%s, req_data: %s\n", __func__, req_data);
+    return tapi_invoke_oem_ril_request_strings(get_tapi_ctx(), slot_id,
+        EVENT_OEM_RIL_REQUEST_STRINGS_DONE, oem_req, 1, NULL);
+}
+
+int remote_sms_delay(int slot_id, int delay_sec)
+{
+    char req_data[30] = { 0 };
+    char* oem_req[1];
+    oem_req[0] = req_data;
+
+    sprintf(req_data, "AT+REMOTEDOS=%d 1", delay_sec);
+    syslog(LOG_DEBUG, "%s, req_data: %s\n", __func__, req_data);
+    return tapi_invoke_oem_ril_request_strings(get_tapi_ctx(), slot_id,
+        EVENT_OEM_RIL_REQUEST_STRINGS_DONE, oem_req, 1, NULL);
+}
+
+int remote_radio_on_off_delay(int delay_sec)
+{
+    char req_data[30] = { 0 };
+    char* oem_req[1];
+    oem_req[0] = req_data;
+
+    sprintf(req_data, "AT+REMOTENETDELAY=%d 1", delay_sec);
+    syslog(LOG_DEBUG, "%s, req_data: %s\n", __func__, req_data);
+    return tapi_invoke_oem_ril_request_strings(get_tapi_ctx(), 0,
+        EVENT_OEM_RIL_REQUEST_STRINGS_DONE, oem_req, 1, NULL);
 }
