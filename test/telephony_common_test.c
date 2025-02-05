@@ -1,4 +1,5 @@
 #include "telephony_common_test.h"
+#include "remote_operation.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -178,6 +179,7 @@ int tapi_radio_power_on_off_pending_test(int slot_id)
     int ret = 0;
 
     // precondition
+    remote_radio_on_off_delay(1);
     tapi_enable_modem(get_tapi_ctx(), slot_id,
         EVENT_MODEM_ENABLE_DONE, 1, NULL);
     sleep(5);
@@ -210,6 +212,7 @@ int tapi_radio_power_on_off_pending_test(int slot_id)
 
 on_exit:
     // restore normal status
+    remote_radio_on_off_delay(0);
     tapi_set_radio_power(get_tapi_ctx(), slot_id,
         EVENT_RADIO_STATE_SET_DONE, true, tele_modem_async_fun_continuous);
 
@@ -222,6 +225,7 @@ int tapi_radio_power_on_modem_disable_pending_test(int slot_id)
     int ret = 0;
 
     //precondition
+    remote_radio_on_off_delay(1);
     if (tapi_set_radio_power_test(0, 0)) {
         syslog(LOG_ERR, "precondition set fail");
         res = -1;
@@ -259,6 +263,7 @@ int tapi_radio_power_on_modem_disable_pending_test(int slot_id)
         goto on_exit;
     }
 on_exit:
+    remote_radio_on_off_delay(0);
     return res;
 }
 
@@ -267,6 +272,8 @@ int tapi_modem_disable_power_off_pending_test(int slot_id)
     int res = 0;
     int ret = 0;
     int random_num = 0;
+
+    remote_radio_on_off_delay(1);
     srand(time(NULL)); // 初始化随机数种子
     // precondition
     if (tapi_enable_modem_test(0, 1)) {
@@ -370,6 +377,7 @@ int tapi_modem_disable_power_off_pending_test(int slot_id)
     }
 
 on_exit:
+    remote_radio_on_off_delay(0);
     if (random_num == 0) {
         tapi_set_radio_power(get_tapi_ctx(), slot_id,
             EVENT_RADIO_STATE_SET_DONE, 1, NULL);
