@@ -1,4 +1,5 @@
 #include "telephony_sms_test.h"
+#include "remote_operation.h"
 #include "telephony_call_test.h"
 #include "telephony_common_test.h"
 #include "telephony_ims_test.h"
@@ -226,6 +227,7 @@ int sms_send_short_sms_continuous(int slot_id, char* to)
     char* text = "hello";
     int res = 0;
 
+    remote_sms_delay(0, 1);
     tapi_context context = get_tapi_ctx();
 
     init_response_flag(MAX_MESSAGE_COUNT);
@@ -254,6 +256,7 @@ int sms_send_short_sms_continuous(int slot_id, char* to)
     }
 
 on_exit:
+    remote_sms_delay(0, 0);
     return res;
 }
 
@@ -262,6 +265,7 @@ int sms_send_short_data_sms_continuous(int slot_id, char* to)
     char* text = "hello";
     int res = 0;
 
+    remote_sms_delay(0, 1);
     tapi_context context = get_tapi_ctx();
 
     init_response_flag(MAX_MESSAGE_COUNT);
@@ -296,6 +300,7 @@ int sms_send_short_data_sms_continuous(int slot_id, char* to)
     }
 
 on_exit:
+    remote_sms_delay(0, 0);
     return res;
 }
 
@@ -305,6 +310,7 @@ int sms_send_short_mix_sms_continuous(int slot_id, char* to)
     int res = 0;
     srand(time(NULL));
 
+    remote_sms_delay(0, 1);
     tapi_context context = get_tapi_ctx();
 
     init_response_flag(MAX_MESSAGE_COUNT);
@@ -352,5 +358,6 @@ int sms_send_short_mix_sms_continuous(int slot_id, char* to)
     }
 
 on_exit:
+    remote_sms_delay(0, 0);
     return res;
 }

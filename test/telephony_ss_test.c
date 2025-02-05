@@ -1,4 +1,5 @@
 #include "telephony_ss_test.h"
+#include "remote_operation.h"
 #include <stdlib.h>
 #include <time.h>
 
@@ -506,6 +507,7 @@ int tapi_ss_call_forwarding_continuous_test(int slot_id, char* phone_num)
     bool set_call_forwarding_flag = FALSE;
 
     srand(time(NULL));
+    remote_ss_operation_delay(0, 1);
     tapi_context context = get_tapi_ctx();
     init_response_flag(MAX_MESSAGE_COUNT);
 
@@ -562,6 +564,7 @@ int tapi_ss_call_forwarding_continuous_test(int slot_id, char* phone_num)
     }
 
 on_exit:
+    remote_ss_operation_delay(0, 0);
     return res;
 }
 
@@ -571,6 +574,7 @@ int tapi_ss_call_waiting_continuous_test(int slot_id)
     srand(time(NULL));
     bool set_call_waiting_flag = FALSE;
 
+    remote_ss_operation_delay(0, 1);
     tapi_context context = get_tapi_ctx();
 
     init_response_flag(MAX_MESSAGE_COUNT);
@@ -626,6 +630,7 @@ int tapi_ss_call_waiting_continuous_test(int slot_id)
     }
 
 on_exit:
+    remote_ss_operation_delay(0, 0);
     return res;
 }
 
