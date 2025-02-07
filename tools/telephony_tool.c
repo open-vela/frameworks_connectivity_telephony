@@ -165,6 +165,7 @@ static uv_async_t g_uv_exit;
 static uv_async_t g_uv_cmd_tapi;
 static bool g_should_exit;
 static tapi_context g_context = NULL;
+static bool g_uv_exit_flag = false;
 
 static struct telephonytool_cmd_s g_telephonytool_cmds[];
 static int telephonytool_cmd_help(tapi_context context, char* pargs);
@@ -176,12 +177,16 @@ static void* read_stdin(pthread_addr_t pvarg);
  ****************************************************************************/
 static void exit_async_cleanup(uv_async_t* handle)
 {
-    /* let's close the handle and stop the loop here as
-     * we must be running in the same thread where the `uv_run` is
-     * NOTE that uv_stop is not thread-safe!
-     */
     uv_close((uv_handle_t*)&g_uv_exit, NULL);
-    uv_stop(uv_default_loop());
+
+    if (g_context != NULL) {
+        tapi_close(g_context);
+        g_uv_exit_flag = true;
+        g_context = NULL;
+    } else {
+        syslog(LOG_ERR, "tapi is already close, stop default loop");
+        uv_stop(uv_default_loop());
+    }
 }
 
 static void on_tapi_client_ready(const char* client_name, void* user_data)
@@ -195,7 +200,12 @@ static void on_tapi_client_ready(const char* client_name, void* user_data)
             tapi_close(g_context);
             g_context = NULL;
         }
-        syslog(LOG_INFO, "tapi is closed");
+
+        if (g_uv_exit_flag) {
+            syslog(LOG_INFO, "tapi already closed, stop default loop");
+            uv_stop(uv_default_loop());
+            g_uv_exit_flag = false;
+        }
     }
 }
 
@@ -5211,17 +5221,6 @@ int main(int argc, char* argv[])
 
     /* wait for read_stdin to exit :-) */
     pthread_join(thread, NULL);
-
-    /* close the tapi context here as invoking it will lead to
-     * an *exit on close* in the dbus library
-     * The dbus libarary internally invokes the `_exit()`
-     * which will exit the current task. Hence,
-     * the uv loop will not be closed properly.
-     */
-    if (g_context != NULL) {
-        tapi_close(g_context);
-        g_context = NULL;
-    }
 
     return ret;
 }
