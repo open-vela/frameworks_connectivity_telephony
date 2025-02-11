@@ -2,17 +2,27 @@
 #include "telephony_call_test.h"
 #include "telephony_common_test.h"
 #include "telephony_ims_test.h"
+#include <stdlib.h>
+#include <time.h>
 #include <uv.h>
 
 extern struct judge_type judge_data;
 
-static void tele_sms_event_response(tapi_async_result* result)
+extern bool response_flag[MAX_MESSAGE_COUNT];
+extern int response_ret[MAX_MESSAGE_COUNT];
+
+static void tele_sms_result_print(tapi_async_result* result)
 {
-    syslog(LOG_DEBUG, "%s : \n", __func__);
     syslog(LOG_DEBUG, "result->msg_id : %d\n", result->msg_id);
     syslog(LOG_DEBUG, "result->status : %d\n", result->status);
     syslog(LOG_DEBUG, "result->arg1 : %d\n", result->arg1);
     syslog(LOG_DEBUG, "result->arg2 : %d\n", result->arg2);
+}
+
+static void tele_sms_event_response(tapi_async_result* result)
+{
+    syslog(LOG_DEBUG, "%s : \n", __func__);
+    tele_sms_result_print(result);
 
     if (result->status != OK) {
         syslog(LOG_DEBUG, "%s msg id: %d result err, return.\n", __func__, result->msg_id);
@@ -27,6 +37,28 @@ static void tele_sms_event_response(tapi_async_result* result)
     } else if (result->msg_id == EVENT_SEND_DATA_MESSAGE_DONE) {
         syslog(LOG_DEBUG, "send data message successed");
         judge_data.flag = EVENT_SEND_DATA_MESSAGE_DONE;
+    }
+}
+
+static void tele_sms_event_response_continuous(tapi_async_result* result)
+{
+    syslog(LOG_DEBUG, "%s : \n", __func__);
+    tele_sms_result_print(result);
+
+    if (result->msg_id == EVENT_SEND_MESSAGE_DONE || result->msg_id == EVENT_SEND_DATA_MESSAGE_DONE) {
+        syslog(LOG_DEBUG, "tele_sms_event_response_continuous, uuid : %s\n", (char*)result->data);
+        for (int i = 0; i < MAX_MESSAGE_COUNT; i++) {
+            if (!response_flag[i] && response_ret[i] == result->msg_id) {
+                response_flag[i] = TRUE;
+                if (result->status != OK) {
+                    syslog(LOG_DEBUG, "%s msg id: %d result err, return.\n", __func__, result->msg_id);
+                    response_ret[i] = -1;
+                } else {
+                    response_ret[i] = 0;
+                }
+                break;
+            }
+        }
     }
 }
 
@@ -181,6 +213,140 @@ int sms_send_data_message_in_dialing(int slot_id, char* to, char* text, int port
     if (ret) {
         syslog(LOG_ERR, "tapi_call_hangup_current_call_test execute fail in %s, ret: %d",
             __func__, ret);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
+int sms_send_short_sms_continuous(int slot_id, char* to)
+{
+    char* text = "hello";
+    int res = 0;
+
+    tapi_context context = get_tapi_ctx();
+
+    init_response_flag(MAX_MESSAGE_COUNT);
+
+    if (context == NULL || to == NULL || text == NULL) {
+        syslog(LOG_ERR, "%s, number: %s, text: %s", __func__, to, text);
+        return -EINVAL;
+    }
+
+    for (int i = 0; i < MAX_MESSAGE_COUNT; i++) {
+        response_ret[i] = EVENT_SEND_MESSAGE_DONE;
+        int ret = tapi_sms_send_message(context, slot_id, 0, to, text,
+            EVENT_SEND_MESSAGE_DONE, tele_sms_event_response_continuous);
+        if (ret) {
+            syslog(LOG_ERR, "tapi_sms_send_message execute fail in %s, ret: %d",
+                __func__, ret);
+            res = -1;
+            goto on_exit;
+        }
+    }
+
+    if (wait_response(MAX_MESSAGE_COUNT) != 0) {
+        syslog(LOG_ERR, "tele_sms_event_response_continuous is not executed in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
+int sms_send_short_data_sms_continuous(int slot_id, char* to)
+{
+    char* text = "hello";
+    int res = 0;
+
+    tapi_context context = get_tapi_ctx();
+
+    init_response_flag(MAX_MESSAGE_COUNT);
+
+    if (context == NULL || to == NULL) {
+        syslog(LOG_ERR, "%s, number: %s, text: %s", __func__, to, text);
+        return -EINVAL;
+    }
+
+    for (int i = 0; i < MAX_MESSAGE_COUNT; i++) {
+        response_ret[i] = EVENT_SEND_DATA_MESSAGE_DONE;
+        int ret = tapi_sms_send_data_message(get_tapi_ctx(), slot_id, 0, to, 0, text,
+            EVENT_SEND_DATA_MESSAGE_DONE, tele_sms_event_response_continuous);
+        if (ret) {
+            syslog(LOG_ERR, "tapi_sms_send_data_message execute fail in %s, ret: %d",
+                __func__, ret);
+            res = -1;
+            goto on_exit;
+        }
+        if (i == 2) {
+            sleep(1);
+        }
+        if (i == 3) {
+            sleep(3);
+        }
+    }
+
+    if (wait_response(MAX_MESSAGE_COUNT) != 0) {
+        syslog(LOG_ERR, "tele_sms_event_response_continuous is not executed in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
+int sms_send_short_mix_sms_continuous(int slot_id, char* to)
+{
+    char* text = "hello";
+    int res = 0;
+    srand(time(NULL));
+
+    tapi_context context = get_tapi_ctx();
+
+    init_response_flag(MAX_MESSAGE_COUNT);
+
+    if (context == NULL || to == NULL) {
+        syslog(LOG_ERR, "%s, number: %s, text: %s", __func__, to, text);
+        return -EINVAL;
+    }
+
+    for (int i = 0; i < MAX_MESSAGE_COUNT; i++) {
+        int random_num;
+        random_num = rand() % 2;
+        if (random_num) {
+            response_ret[i] = EVENT_SEND_DATA_MESSAGE_DONE;
+            int ret = tapi_sms_send_data_message(get_tapi_ctx(), slot_id, 0, to, 0, text,
+                EVENT_SEND_DATA_MESSAGE_DONE, tele_sms_event_response_continuous);
+            if (ret) {
+                syslog(LOG_ERR, "tapi_sms_send_data_message execute fail in %s, ret: %d",
+                    __func__, ret);
+                res = -1;
+                goto on_exit;
+            }
+        } else {
+            response_ret[i] = EVENT_SEND_MESSAGE_DONE;
+            int ret = tapi_sms_send_message(context, slot_id, 0, to, text,
+                EVENT_SEND_MESSAGE_DONE, tele_sms_event_response_continuous);
+            if (ret) {
+                syslog(LOG_ERR, "tapi_sms_send_message execute fail in %s, ret: %d",
+                    __func__, ret);
+                res = -1;
+                goto on_exit;
+            }
+        }
+        if (i == 3) {
+            sleep(2);
+        }
+        if (i == 4) {
+            sleep(4);
+        }
+    }
+    if (wait_response(MAX_MESSAGE_COUNT) != 0) {
+        syslog(LOG_ERR, "tele_sms_event_response_continuous is not executed in %s", __func__);
         res = -1;
         goto on_exit;
     }

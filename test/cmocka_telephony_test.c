@@ -50,6 +50,9 @@ struct uv_tapi_cmd_data_s {
 
 struct judge_type judge_data;
 
+bool response_flag[MAX_MESSAGE_COUNT];
+int response_ret[MAX_MESSAGE_COUNT];
+
 char* short_english_text = "test";
 char* long_english_text = "testtesttesttesttesttesttesttesttesttesttesttest"
                           "testtesttesttesttesttesttesttesttesttesttesttesttesttest"
@@ -86,6 +89,56 @@ static void exit_async_cleanup(uv_async_t* handle)
 tapi_context get_tapi_ctx(void)
 {
     return g_context;
+}
+
+void init_response_flag(int wait_message_count)
+{
+    for (int i = 0; i < MAX_MESSAGE_COUNT; i++) {
+        if (i < wait_message_count) {
+            response_flag[i] = FALSE;
+        } else {
+            response_flag[i] = TRUE;
+        }
+    }
+}
+
+int wait_response(int wait_message_count)
+{
+    int timeout;
+    if (wait_message_count == MID_MESSAGE_COUNT) {
+        timeout = MID_TIMEOUT;
+    } else {
+        timeout = MAX_TIMEOUT;
+    }
+
+    while (timeout-- > 0) {
+        bool response = TRUE;
+        for (int i = 0; i < wait_message_count; i++) {
+            if (!response_flag[i]) {
+                response = FALSE;
+                break;
+            }
+        }
+        if (!response) {
+            sleep(1);
+            syslog(LOG_INFO, "There is %d second(s) remain.\n", timeout);
+        } else {
+            break;
+        }
+    }
+
+    if (timeout > 0) {
+        for (int i = 0; i < wait_message_count; i++) {
+            if (response_ret[i] != 0) {
+                syslog(LOG_INFO, "wait response:i=%d,ret=%d", i, response_ret[i]);
+                return response_ret[i];
+            }
+        }
+        return 0;
+    } else {
+        syslog(LOG_INFO, "wait response timeout");
+        return -ETIME;
+    }
 }
 
 int judge(void)
@@ -1078,6 +1131,27 @@ static void TestTeleFunc_SmsSendLongDataMessageInChinese(void** state)
     assert_int_equal(ret, 0);
 }
 
+static void TestTeleFunc_SmsSendMessageContinuous(void** state)
+{
+    (void)state;
+    int ret = sms_send_short_sms_continuous(0, phone_num);
+    assert_int_equal(ret, 0);
+}
+
+static void TestTeleFunc_SmsSendDataMessageContinuous(void** state)
+{
+    (void)state;
+    int ret = sms_send_short_data_sms_continuous(0, phone_num);
+    assert_int_equal(ret, 0);
+}
+
+static void TestTeleFunc_SmsSendDataMessageAndMessageContinuous(void** state)
+{
+    (void)state;
+    int ret = sms_send_short_mix_sms_continuous(0, phone_num);
+    assert_int_equal(ret, 0);
+}
+
 static void TestTeleFunc_SmsSendShortEnglishMessageInDialing(void** state)
 {
     (void)state;
@@ -1513,6 +1587,30 @@ static void TestTeleFunc_CI_ModemSetRadioPowerOn(void** state)
     sleep(10);
 }
 
+static void TestTeleFunc_ModemSetRadioPowerOnAndOffContinuous(void** state)
+{
+    (void)state;
+    int ret = tapi_radio_power_on_off_pending_test(0);
+    assert_int_equal(ret, OK);
+    sleep(10);
+}
+
+static void TestTeleFunc_ModemSetRadioPowerOnAndModemDisable(void** state)
+{
+    (void)state;
+    int ret = tapi_radio_power_on_modem_disable_pending_test(0);
+    assert_int_equal(ret, OK);
+    sleep(10);
+}
+
+static void TestTeleFunc_ModemSetRadioPowerOffOrModemDisableAfterotherAction(void** state)
+{
+    (void)state;
+    int ret = tapi_modem_disable_power_off_pending_test(0);
+    assert_int_equal(ret, OK);
+    sleep(10);
+}
+
 static void TestTeleFunc_CI_ModemSetRadioPowerOff(void** state)
 {
     (void)state;
@@ -1559,6 +1657,14 @@ static void TestTeleFunc_CI_ModemDisable(void** state)
 {
     (void)state;
     int ret = tapi_enable_modem_test(0, 0);
+    assert_int_equal(ret, OK);
+    sleep(10);
+}
+
+static void TestTeleFunc_ModemEnableAndDisableContinuous(void** state)
+{
+    (void)state;
+    int ret = tapi_modem_enable_disable_pending_test(0);
     assert_int_equal(ret, OK);
     sleep(10);
 }
@@ -1871,6 +1977,13 @@ static void TestTeleFunc_CI_SSGetCallForwardingUnConditional(void** state)
     assert_int_equal(ret, 0);
 }
 
+static void TestTeleFunc_CallForwardingContinuous(void** state)
+{
+    (void)state;
+    int ret = tapi_ss_call_forwarding_continuous_test(0, phone_num);
+    assert_int_equal(ret, 0);
+}
+
 static void TestTeleFunc_CI_SSClearCallForwardingUnconditional(void** state)
 {
     (void)state;
@@ -1945,6 +2058,13 @@ static void TestTeleFunc_CI_SSEnableCallWaiting(void** state)
 {
     (void)state;
     int ret = tapi_ss_set_call_waiting_test(0, true);
+    assert_int_equal(ret, 0);
+}
+
+static void TestTeleFunc_CallWaitingContinuous(void** state)
+{
+    (void)state;
+    int ret = tapi_ss_call_waiting_continuous_test(0);
     assert_int_equal(ret, 0);
 }
 
@@ -2473,6 +2593,9 @@ int main(int argc, char* argv[])
         cmocka_unit_test(TestTeleFunc_SmsGetCellBroadcastTopics),
         cmocka_unit_test(TestTeleFunc_CI_ImsResetImsCap),
         cmocka_unit_test(TestTeleFunc_CI_CallUnlisten),
+        cmocka_unit_test(TestTeleFunc_SmsSendMessageContinuous),
+        cmocka_unit_test(TestTeleFunc_SmsSendDataMessageContinuous),
+        cmocka_unit_test(TestTeleFunc_SmsSendDataMessageAndMessageContinuous),
     };
 
     const struct CMUnitTest NetTestSuites[] = {
@@ -2530,6 +2653,8 @@ int main(int argc, char* argv[])
         cmocka_unit_test(TestTeleFunc_SSGetFdnEnabled),
         cmocka_unit_test(TestTeleFunc_SSDisableFdn),
         cmocka_unit_test(TestTeleFunc_SSGetFdnDisabled),
+        cmocka_unit_test(TestTeleFunc_CallForwardingContinuous),
+        cmocka_unit_test(TestTeleFunc_CallWaitingContinuous),
     };
 
     const struct CMUnitTest CommonTestSuites[] = {
@@ -2561,6 +2686,10 @@ int main(int argc, char* argv[])
         cmocka_unit_test(TestTeleFunc_CI_ModemSetRadioPowerOnOffNTimes),
         cmocka_unit_test(TestTeleFunc_CI_ModemSetRadioPowerOn),
         cmocka_unit_test(TestTeleFunc_CI_ModemDisable),
+        cmocka_unit_test(TestTeleFunc_ModemEnableAndDisableContinuous),
+        cmocka_unit_test(TestTeleFunc_ModemSetRadioPowerOnAndOffContinuous),
+        cmocka_unit_test(TestTeleFunc_ModemSetRadioPowerOnAndModemDisable),
+        cmocka_unit_test(TestTeleFunc_ModemSetRadioPowerOffOrModemDisableAfterotherAction),
         cmocka_unit_test(TestTeleFunc_CI_DefaultOpenTapi),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_BtTeleOpenTapi,
             NULL, TearDown_OpenDefaultTapi),

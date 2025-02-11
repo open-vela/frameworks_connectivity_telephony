@@ -18,5 +18,8 @@ int tapi_invoke_oem_ril_request_strings_test(int slot_id, char* req_data, int le
 int tapi_enable_modem_test(int slot_id, int target_state);
 int tapi_get_modem_status_test(int slot_id, int* state);
 int tapi_set_pref_net_mode_test(int slot_id, tapi_pref_net_mode target_state);
-
+int tapi_modem_enable_disable_pending_test(int slot_id);
+int tapi_radio_power_on_off_pending_test(int slot_id);
+int tapi_radio_power_on_modem_disable_pending_test(int slot_id);
+int tapi_modem_disable_power_off_pending_test(int slot_id);
 #endif

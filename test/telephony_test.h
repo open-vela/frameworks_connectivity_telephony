@@ -92,9 +92,19 @@
 #define TIMEOUT 15
 #define INVALID_VALUE -1
 
+#define MIN_MESSAGE_COUNT 2
+#define MIN_TIMEOUT MIN_MESSAGE_COUNT * 5
+#define MID_MESSAGE_COUNT 5
+#define MID_TIMEOUT MID_MESSAGE_COUNT * 5
+#define MAX_MESSAGE_COUNT 10
+#define MAX_TIMEOUT MAX_MESSAGE_COUNT * 5
+
 tapi_context get_tapi_ctx(void);
 int judge(void);
 void judge_data_init(void);
+
+void init_response_flag(int wait_message_count);
+int wait_response(int wait_message_count);
 
 struct judge_type {
     int flag;
