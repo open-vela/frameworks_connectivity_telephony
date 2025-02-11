@@ -5,6 +5,7 @@ extern struct judge_type judge_data;
 
 static struct
 {
+    bool ims_default_enabled;
     int ims_enabled;
     int ims_reg_watch_id;
 } global_data;
@@ -22,6 +23,73 @@ int tapi_ims_listen_ims_test(int slot_id)
     }
 
     return 0;
+}
+
+int tapi_ims_unlisten_ims_test(void)
+{
+    int ret = tapi_unregister(get_tapi_ctx(), global_data.ims_reg_watch_id);
+    syslog(LOG_INFO, "unregister ims state in %s, ret: %d", __func__, ret);
+    return ret;
+}
+
+int setup_ims(void** state)
+{
+    (void)state;
+    int ret = 0;
+    global_data.ims_default_enabled = false;
+
+    if (tapi_ims_get_enabled(get_tapi_ctx(), 0, &global_data.ims_default_enabled)) {
+        syslog(LOG_ERR, "Get ims state execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    if (tapi_ims_listen_ims_test(0)) {
+        syslog(LOG_ERR, "Listen ims state execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    syslog(LOG_ERR, "Get ims state %d in %s", global_data.ims_default_enabled, __func__);
+    return ret;
+}
+
+int teardown_ims(void** state)
+{
+    (void)state;
+    int ret = 0;
+
+    // reset ims default state
+    if (global_data.ims_default_enabled) {
+        if (ims_turn_on_test(0)) {
+            syslog(LOG_ERR, "Turn on ims state execute fail in %s", __func__);
+            ret = -1;
+            goto on_exit;
+        }
+    } else {
+        if (ims_turn_off_test(0)) {
+            syslog(LOG_ERR, "Turn off ims state execute fail in %s", __func__);
+            ret = -1;
+            goto on_exit;
+        }
+    }
+
+    // reset ims cap（5-voice&sms）
+    if (tapi_ims_set_service_status_test(0, 5)) {
+        syslog(LOG_ERR, "Set ims state execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    if (tapi_ims_unlisten_ims_test()) {
+        syslog(LOG_ERR, "Unlisten ims state execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return ret;
 }
 
 int tapi_ims_turn_on_test(int slot_id)
@@ -137,7 +205,6 @@ static void tele_ims_async_fun(tapi_async_result* result)
             judge_data.flag = IMS_REG;
         }
         break;
-        break;
     default:
         break;
     }
@@ -150,4 +217,50 @@ int tapi_ims_get_enabled_test(int slot_id)
     syslog(LOG_DEBUG, "%s, slot_id: %d, ims_enable: %d", __func__, slot_id, result);
 
     return ret || !result;
+}
+
+int ims_turn_on_test(int slot_id)
+{
+    int ret = 0;
+    bool enable = false;
+
+    if (tapi_ims_get_enabled(get_tapi_ctx(), 0, &enable)) {
+        syslog(LOG_ERR, "Get ims enable execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    if (!enable) {
+        if (tapi_ims_turn_on_test(0)) {
+            syslog(LOG_ERR, "Turn on ims execute fail in %s", __func__);
+            ret = -1;
+            goto on_exit;
+        }
+    }
+
+on_exit:
+    return ret;
+}
+
+int ims_turn_off_test(int slot_id)
+{
+    int ret = 0;
+    bool enable = false;
+
+    if (tapi_ims_get_enabled(get_tapi_ctx(), 0, &enable)) {
+        syslog(LOG_ERR, "Get ims enable execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    if (enable) {
+        if (tapi_ims_turn_off_test(0)) {
+            syslog(LOG_ERR, "Turn off ims execute fail in %s", __func__);
+            ret = -1;
+            goto on_exit;
+        }
+    }
+
+on_exit:
+    return ret;
 }
