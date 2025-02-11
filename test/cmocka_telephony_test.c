@@ -1631,25 +1631,6 @@ static void TestTeleFunc_CI_ModemGetRevision(void** state)
 //     }
 // }
 
-// static void TestTeleModemDialCall(void** state)
-// {
-//     int slot_id = 0;
-//     int ret1 = tapi_call_listen_call_test(slot_id);
-//     int ret2 = tapi_call_dial_test(slot_id, phone_num, 0);
-//     int ret = ret1 || ret2;
-//     assert_int_equal(ret, OK);
-//     sleep(2);
-// }
-
-// static void TestTeleModemHangupCall(void** state)
-// {
-//     int slot_id = 0;
-//     int ret1 = tapi_call_hanup_current_call_test(slot_id);
-//     int ret2 = tapi_call_unlisten_call_test();
-//     int ret = ret1 || ret2;
-//     assert_int_equal(ret, OK);
-// }
-
 static void TestTeleFunc_ModemInvokeOemShotRilRequestRaw(void** state)
 {
     int ret = tapi_invoke_oem_ril_request_raw_test(0, "01A0B023", 4);
@@ -1738,7 +1719,7 @@ static void TestTeleFunc_CI_ImsListen(void** state)
 static void TestTeleFunc_CI_ImsTurnOn(void** state)
 {
     (void)state;
-    int ret = tapi_ims_turn_on_test(0);
+    int ret = ims_turn_on_test(0);
     assert_int_equal(ret, 0);
 }
 
@@ -1756,10 +1737,10 @@ static void TestTeleFunc_CI_ImsGetEnabled(void** state)
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleFunc_CI_ImsSetServiceStatus(void** state)
+static void TestTeleFunc_CI_ImsSetVoiceCap(void** state)
 {
     (void)state;
-    int ret = tapi_ims_set_service_status_test(0, 5);
+    int ret = tapi_ims_set_service_status_test(0, 1);
     assert_int_equal(ret, 0);
     sleep(5);
 }
@@ -1781,7 +1762,7 @@ static void TestTeleFunc_CI_ImsSetSmsVoiceCap(void** state)
 static void TestTeleFunc_CI_ImsResetImsCap(void** state)
 {
     (void)state;
-    int ret = tapi_ims_set_service_status_test(0, 1);
+    int ret = tapi_ims_set_service_status_test(0, 5);
     assert_int_equal(ret, 0);
     sleep(10);
 }
@@ -1789,7 +1770,7 @@ static void TestTeleFunc_CI_ImsResetImsCap(void** state)
 static void TestTeleFunc_CI_ImsTurnOff(void** state)
 {
     (void)state;
-    int ret = tapi_ims_turn_off_test(0);
+    int ret = ims_turn_off_test(0);
     assert_int_equal(ret, 0);
 }
 
@@ -2440,7 +2421,6 @@ int main(int argc, char* argv[])
     const struct CMUnitTest SmsTestSuites[] = {
         cmocka_unit_test(TestTeleFunc_CI_CallListen),
         cmocka_unit_test(TestTeleFunc_CI_ImsListen),
-        cmocka_unit_test(TestTeleFunc_CI_ImsTurnOn),
         cmocka_unit_test(TestTeleFunc_CI_SmsSetServiceCenterNum),
         cmocka_unit_test(TestTeleFunc_CI_SmsGetServiceCenterNum),
         cmocka_unit_test(TestTeleFunc_SmsSendShortMessageInEnglish),
@@ -2492,7 +2472,6 @@ int main(int argc, char* argv[])
         cmocka_unit_test(TestTeleFunc_SmsSetCellBroadcastTopics),
         cmocka_unit_test(TestTeleFunc_SmsGetCellBroadcastTopics),
         cmocka_unit_test(TestTeleFunc_CI_ImsResetImsCap),
-        cmocka_unit_test(TestTeleFunc_CI_ImsTurnOff),
         cmocka_unit_test(TestTeleFunc_CI_CallUnlisten),
     };
 
@@ -2512,13 +2491,12 @@ int main(int argc, char* argv[])
     };
 
     const struct CMUnitTest ImsTestSuits[] = {
-        cmocka_unit_test(TestTeleFunc_CI_ImsTurnOn),
-        cmocka_unit_test(TestTeleFunc_CI_ImsGetRegistration),
-        cmocka_unit_test(TestTeleFunc_CI_ImsGetEnabled),
-        cmocka_unit_test(TestTeleFunc_CI_ImsSetServiceStatus),
-        cmocka_unit_test(TestTeleFunc_CI_ImsResetImsCap),
-        cmocka_unit_test(TestTeleFunc_CI_ImsTurnOff),
-        cmocka_unit_test(TestTeleFunc_CI_ImsTurnOnOff),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ImsTurnOn, setup_ims, teardown_ims),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ImsGetRegistration, setup_ims, teardown_ims),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ImsGetEnabled, setup_ims, teardown_ims),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ImsSetVoiceCap, setup_ims, teardown_ims),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ImsTurnOff, setup_ims, teardown_ims),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ImsTurnOnOff, setup_ims, teardown_ims),
     };
 
     const struct CMUnitTest SSTestSuits[] = {
