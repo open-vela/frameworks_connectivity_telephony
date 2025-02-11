@@ -24,15 +24,54 @@ static struct
 
 extern struct judge_type judge_data;
 
-static void radio_signal_change(tapi_async_result* result);
+extern bool response_flag[MAX_MESSAGE_COUNT];
+extern int response_ret[MAX_MESSAGE_COUNT];
 
-static void tele_call_async_fun(tapi_async_result* result)
+static void radio_signal_change(tapi_async_result* result);
+static int hex_string_to_byte_array(char* hex_str, unsigned char* byte_arr, int arr_len);
+
+static void tele_result_print(tapi_async_result* result)
 {
-    syslog(LOG_DEBUG, "%s : \n", __func__);
     syslog(LOG_DEBUG, "result->msg_id : %d\n", result->msg_id);
     syslog(LOG_DEBUG, "result->status : %d\n", result->status);
     syslog(LOG_DEBUG, "result->arg1 : %d\n", result->arg1);
     syslog(LOG_DEBUG, "result->arg2 : %d\n", result->arg2);
+}
+
+static void tele_modem_async_fun_continuous(tapi_async_result* result)
+{
+    int event = result->msg_id;
+
+    syslog(LOG_DEBUG, "%s : \n", __func__);
+    tele_result_print(result);
+
+    switch (event) {
+    case EVENT_MODEM_ENABLE_DONE:
+    case EVENT_RADIO_STATE_SET_DONE:
+    case EVENT_MODEM_ACTIVITY_INFO_QUERY_DONE:
+    case EVENT_MODEM_STATUS_QUERY_DONE:
+    case EVENT_OEM_RIL_REQUEST_RAW_DONE:
+    case EVENT_OEM_RIL_REQUEST_STRINGS_DONE:
+        for (int i = 0; i < MAX_MESSAGE_COUNT; i++) {
+            if (!response_flag[i] && response_ret[i] == result->msg_id) {
+                response_flag[i] = TRUE;
+                if (result->status != OK) {
+                    syslog(LOG_DEBUG, "%s msg id : %d result err, return.\n", __func__, result->msg_id);
+                    response_ret[i] = -1;
+                } else {
+                    response_ret[i] = 0;
+                }
+                break;
+            }
+        }
+        break;
+    }
+}
+
+static void tele_call_async_fun(tapi_async_result* result)
+{
+    syslog(LOG_DEBUG, "%s : \n", __func__);
+    tele_result_print(result);
 
     if (result->status != OK) {
         syslog(LOG_DEBUG, "%s msg id : %d result err, return.\n", __func__, result->msg_id);
@@ -130,6 +169,216 @@ int tapi_get_pref_net_mode_test(int slot_id, tapi_pref_net_mode* value)
     int ret = tapi_get_pref_net_mode(get_tapi_ctx(), slot_id, value);
     syslog(LOG_DEBUG, "%s, slotId : %d value :%d \n", __func__, slot_id, *value);
     return ret;
+}
+
+int tapi_radio_power_on_off_pending_test(int slot_id)
+{
+    int res = 0;
+    bool target_state = true;
+    int ret = 0;
+
+    // precondition
+    tapi_enable_modem(get_tapi_ctx(), slot_id,
+        EVENT_MODEM_ENABLE_DONE, 1, NULL);
+    sleep(5);
+
+    init_response_flag(MID_MESSAGE_COUNT);
+    for (int i = 0; i < MID_MESSAGE_COUNT; i++) {
+        if (i % 2 == 0) {
+            target_state = false;
+        } else {
+            target_state = true;
+        }
+        response_ret[i] = EVENT_RADIO_STATE_SET_DONE;
+
+        ret = tapi_set_radio_power(get_tapi_ctx(), slot_id,
+            EVENT_RADIO_STATE_SET_DONE, target_state, tele_modem_async_fun_continuous);
+        if (ret) {
+            syslog(LOG_ERR, "execute fail in %s, ret: %d",
+                __func__, ret);
+            res = -1;
+            goto on_exit;
+        }
+        if (i == 2)
+            sleep(3);
+    }
+    if (wait_response(MID_MESSAGE_COUNT) != 0) {
+        syslog(LOG_ERR, "tele_call_async_fun is not executed in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    // restore normal status
+    tapi_set_radio_power(get_tapi_ctx(), slot_id,
+        EVENT_RADIO_STATE_SET_DONE, true, tele_modem_async_fun_continuous);
+
+    return res;
+}
+
+int tapi_radio_power_on_modem_disable_pending_test(int slot_id)
+{
+    int res = 0;
+    int ret = 0;
+
+    //precondition
+    if (tapi_set_radio_power_test(0, 0)) {
+        syslog(LOG_ERR, "precondition set fail");
+        res = -1;
+        goto on_exit;
+    }
+    // test
+    init_response_flag(MIN_MESSAGE_COUNT);
+    for (int i = 0; i < MIN_MESSAGE_COUNT; i++) {
+        if (i == 0) {
+            response_ret[i] = EVENT_RADIO_STATE_SET_DONE;
+            ret = tapi_set_radio_power(get_tapi_ctx(), slot_id,
+                EVENT_RADIO_STATE_SET_DONE, 1, tele_modem_async_fun_continuous);
+            if (ret) {
+                syslog(LOG_ERR, "execute fail in %s, ret: %d",
+                    __func__, ret);
+                res = -1;
+                goto on_exit;
+            }
+        } else {
+            response_ret[i] = EVENT_MODEM_ENABLE_DONE;
+            ret = tapi_enable_modem(get_tapi_ctx(), slot_id,
+                EVENT_MODEM_ENABLE_DONE, 0, tele_modem_async_fun_continuous);
+            if (ret) {
+                syslog(LOG_ERR, "execute fail in %s, ret: %d",
+                    __func__, ret);
+                res = -1;
+                goto on_exit;
+            }
+        }
+    }
+
+    if (wait_response(MIN_MESSAGE_COUNT) != 0) {
+        syslog(LOG_ERR, "tele_modem_async_fun_continuous is not executed in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+on_exit:
+    return res;
+}
+
+int tapi_modem_disable_power_off_pending_test(int slot_id)
+{
+    int res = 0;
+    int ret = 0;
+    int random_num = 0;
+    srand(time(NULL)); // 初始化随机数种子
+    // precondition
+    if (tapi_enable_modem_test(0, 1)) {
+        syslog(LOG_ERR, "precondition set fail");
+        res = -1;
+        goto on_exit;
+    }
+    // testing
+    init_response_flag(MIN_MESSAGE_COUNT);
+
+    for (int i = 0; i < MIN_MESSAGE_COUNT; i++) {
+        if (i == 0) {
+            random_num = rand() % 4; // 0-3
+            switch (random_num) {
+            case 0:
+                response_ret[i] = EVENT_MODEM_ACTIVITY_INFO_QUERY_DONE;
+                ret = tapi_get_modem_activity_info(get_tapi_ctx(), slot_id,
+                    EVENT_MODEM_ACTIVITY_INFO_QUERY_DONE, tele_modem_async_fun_continuous);
+                if (ret) {
+                    syslog(LOG_ERR, "execute fail in %s, ret: %d",
+                        __func__, ret);
+                    res = -1;
+                    goto on_exit;
+                }
+                break;
+            case 1:
+                response_ret[i] = EVENT_MODEM_STATUS_QUERY_DONE;
+                ret = tapi_get_modem_status(get_tapi_ctx(), slot_id,
+                    EVENT_MODEM_STATUS_QUERY_DONE, tele_modem_async_fun_continuous);
+                if (ret) {
+                    syslog(LOG_ERR, "execute fail in %s, ret: %d",
+                        __func__, ret);
+                    res = -1;
+                    goto on_exit;
+                }
+
+                break;
+            case 2:
+                response_ret[i] = EVENT_OEM_RIL_REQUEST_RAW_DONE;
+                unsigned char req_data[MAX_INPUT_ARGS_LEN];
+                hex_string_to_byte_array("01A0B023", req_data, MAX_INPUT_ARGS_LEN);
+                ret = tapi_invoke_oem_ril_request_raw(get_tapi_ctx(), slot_id,
+                    EVENT_OEM_RIL_REQUEST_RAW_DONE, req_data, 4, tele_modem_async_fun_continuous);
+
+                if (ret) {
+                    syslog(LOG_ERR, "execute fail in %s, ret: %d",
+                        __func__, ret);
+                    res = -1;
+                    goto on_exit;
+                }
+
+                break;
+            case 3:
+            default:
+
+                char* oem_req[MAX_OEM_RIL_RESP_STRINGS_LENTH];
+                oem_req[0] = "AT+CPIN?";
+                response_ret[i] = EVENT_OEM_RIL_REQUEST_STRINGS_DONE;
+                ret = tapi_invoke_oem_ril_request_strings(get_tapi_ctx(), slot_id,
+                    EVENT_OEM_RIL_REQUEST_STRINGS_DONE, oem_req, 1, tele_modem_async_fun_continuous);
+                if (ret) {
+                    syslog(LOG_ERR, "execute fail in %s, ret: %d",
+                        __func__, ret);
+                    res = -1;
+                    goto on_exit;
+                }
+
+                break;
+            }
+
+        } else {
+            random_num = rand() % 2; // 0-1
+            if (random_num == 0) {
+                response_ret[i] = EVENT_RADIO_STATE_SET_DONE;
+                ret = tapi_set_radio_power(get_tapi_ctx(), slot_id,
+                    EVENT_RADIO_STATE_SET_DONE, 0, tele_modem_async_fun_continuous);
+                if (ret) {
+                    syslog(LOG_ERR, "execute fail in %s, ret: %d",
+                        __func__, ret);
+                    res = -1;
+                    goto on_exit;
+                }
+            } else {
+                response_ret[i] = EVENT_MODEM_ENABLE_DONE;
+                ret = tapi_enable_modem(get_tapi_ctx(), slot_id,
+                    EVENT_MODEM_ENABLE_DONE, 0, tele_modem_async_fun_continuous);
+                if (ret) {
+                    syslog(LOG_ERR, "execute fail in %s, ret: %d",
+                        __func__, ret);
+                    res = -1;
+                    goto on_exit;
+                }
+            }
+        }
+    }
+
+    if (wait_response(MIN_MESSAGE_COUNT) != 0) {
+        syslog(LOG_ERR, "tele_modem_async_fun_continuous is not executed in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    if (random_num == 0) {
+        tapi_set_radio_power(get_tapi_ctx(), slot_id,
+            EVENT_RADIO_STATE_SET_DONE, 1, NULL);
+    } else {
+        tapi_enable_modem(get_tapi_ctx(), slot_id,
+            EVENT_MODEM_ENABLE_DONE, 1, NULL);
+    }
+
+    return res;
 }
 
 int tapi_set_radio_power_test(int slot_id, bool target_state)
@@ -428,6 +677,43 @@ int tapi_enable_modem_test(int slot_id, int target_state)
 
     if (judge_data.result) {
         syslog(LOG_ERR, "async result is invalid in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
+int tapi_modem_enable_disable_pending_test(int slot_id)
+{
+    int res = 0;
+    int target_state = 0;
+
+    // precondition
+    tapi_enable_modem(get_tapi_ctx(), slot_id,
+        EVENT_MODEM_ENABLE_DONE, 0, NULL);
+    sleep(2);
+
+    init_response_flag(MID_MESSAGE_COUNT);
+
+    for (int i = 0; i < MID_MESSAGE_COUNT; i++) {
+        target_state = !target_state;
+        response_ret[i] = EVENT_MODEM_ENABLE_DONE;
+        int ret = tapi_enable_modem(get_tapi_ctx(), slot_id,
+            EVENT_MODEM_ENABLE_DONE, target_state, tele_modem_async_fun_continuous);
+        if (ret) {
+            syslog(LOG_ERR, "execute fail in %s, ret: %d",
+                __func__, ret);
+            res = -1;
+            goto on_exit;
+        }
+        if (i == 2)
+            sleep(3);
+    }
+
+    if (wait_response(MID_MESSAGE_COUNT) != 0) {
+        syslog(LOG_ERR, "tele_modem_async_fun_countinuous is not executed in %s", __func__);
         res = -1;
         goto on_exit;
     }

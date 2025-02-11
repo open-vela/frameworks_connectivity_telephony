@@ -18,5 +18,6 @@ int tapi_ss_set_call_waiting_test(int slot_id, bool enable);
 int tapi_ss_get_call_waiting_test(int slot_id, bool expect);
 int tapi_ss_enable_fdn_test(int slot_id, bool enable, char* passwd);
 int tapi_ss_query_fdn_test(int slot_id, bool expect);
-
+int tapi_ss_call_forwarding_continuous_test(int slot_id, char* phone_num);
+int tapi_ss_call_waiting_continuous_test(int slot_id);
 #endif /* TELEPHONY_SS_TEST_H_ */

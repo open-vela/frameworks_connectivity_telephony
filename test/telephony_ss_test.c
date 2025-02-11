@@ -1,6 +1,11 @@
 #include "telephony_ss_test.h"
+#include <stdlib.h>
+#include <time.h>
 
 extern struct judge_type judge_data;
+
+extern bool response_flag[MAX_MESSAGE_COUNT];
+extern int response_ret[MAX_MESSAGE_COUNT];
 
 static struct {
     int call_barring_property_change_watch_id;
@@ -123,13 +128,18 @@ int tapi_unlisten_ss_test(void)
     return 0;
 }
 
-static void tele_ss_async_fun(tapi_async_result* result)
+static void tele_ss_result_print(tapi_async_result* result)
 {
-    syslog(LOG_DEBUG, "%s : \n", __func__);
     syslog(LOG_DEBUG, "result->msg_id : %d\n", result->msg_id);
     syslog(LOG_DEBUG, "result->status : %d\n", result->status);
     syslog(LOG_DEBUG, "result->arg1 : %d\n", result->arg1);
     syslog(LOG_DEBUG, "result->arg2 : %d\n", result->arg2);
+}
+
+static void tele_ss_async_fun(tapi_async_result* result)
+{
+    syslog(LOG_DEBUG, "%s : \n", __func__);
+    tele_ss_result_print(result);
 
     if (result->status != OK) {
         syslog(LOG_DEBUG, "%s msg id : %d result err, return.\n", __func__, result->msg_id);
@@ -206,6 +216,30 @@ static void tele_ss_async_fun(tapi_async_result* result)
             if (result->arg2 == global_data.fdn_enable) {
                 judge_data.result = 0;
                 judge_data.flag = EVENT_QUERY_FDN_DONE;
+            }
+        }
+    }
+}
+
+static void tele_ss_event_response_continuous(tapi_async_result* result)
+{
+    syslog(LOG_DEBUG, "%s : \n", __func__);
+    tele_ss_result_print(result);
+
+    if (result->msg_id == EVENT_REQUEST_CALL_FORWARDING_DONE
+        || result->msg_id == EVENT_QUERY_CALL_FORWARDING_DONE
+        || result->msg_id == EVENT_QUERY_CALL_WAITING_DONE
+        || result->msg_id == EVENT_REQUEST_CALL_WAITING_DONE) {
+        for (int i = 0; i < MAX_MESSAGE_COUNT; i++) {
+            if (!response_flag[i] && response_ret[i] == result->msg_id) {
+                response_flag[i] = TRUE;
+                if (result->status != OK) {
+                    syslog(LOG_DEBUG, "%s msg id: %d result err, return.\n", __func__, result->msg_id);
+                    response_ret[i] = -1;
+                } else {
+                    response_ret[i] = 0;
+                }
+                break;
             }
         }
     }
@@ -458,6 +492,135 @@ int tapi_ss_get_call_forwarding_option_test(int slot_id, int cf_type)
 
     if (judge_data.result) {
         syslog(LOG_ERR, "async result is invalid in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
+int tapi_ss_call_forwarding_continuous_test(int slot_id, char* phone_num)
+{
+    int res = 0;
+    bool set_call_forwarding_flag = FALSE;
+
+    srand(time(NULL));
+    tapi_context context = get_tapi_ctx();
+    init_response_flag(MAX_MESSAGE_COUNT);
+
+    if (context == NULL) {
+        syslog(LOG_ERR, "%s, number: %s", __func__, phone_num);
+        return -EINVAL;
+    }
+
+    for (int i = 0; i < MAX_MESSAGE_COUNT; i++) {
+        int random_num;
+        random_num = rand() % 2;
+        if (random_num) {
+            response_ret[i] = EVENT_REQUEST_CALL_FORWARDING_DONE;
+            if (set_call_forwarding_flag) {
+                int ret = tapi_ss_set_call_forwarding_option(get_tapi_ctx(), slot_id,
+                    EVENT_REQUEST_CALL_FORWARDING_DONE, 0, BEARER_CLASS_VOICE, "\0",
+                    tele_ss_event_response_continuous);
+                if (ret) {
+                    syslog(LOG_ERR, "%s execute fail, ret: %d", __func__, ret);
+                    res = -1;
+                    goto on_exit;
+                }
+                set_call_forwarding_flag = FALSE;
+            } else {
+                int ret = tapi_ss_set_call_forwarding_option(get_tapi_ctx(), slot_id,
+                    EVENT_REQUEST_CALL_FORWARDING_DONE, 0, BEARER_CLASS_VOICE, phone_num,
+                    tele_ss_event_response_continuous);
+                if (ret) {
+                    syslog(LOG_ERR, "%s execute fail, ret: %d", __func__, ret);
+                    res = -1;
+                    goto on_exit;
+                }
+                set_call_forwarding_flag = TRUE;
+            }
+        } else {
+            response_ret[i] = EVENT_QUERY_CALL_FORWARDING_DONE;
+            int ret = tapi_ss_query_call_forwarding_option(get_tapi_ctx(), slot_id,
+                EVENT_QUERY_CALL_FORWARDING_DONE, 0, BEARER_CLASS_VOICE, tele_ss_event_response_continuous);
+            if (ret) {
+                syslog(LOG_ERR, "%s execute fail, ret: %d", __func__, ret);
+                res = -1;
+                goto on_exit;
+            }
+        }
+        if (i == 2 || i == 5 || i == 7) {
+            sleep(3);
+        }
+    }
+
+    if (wait_response(MAX_MESSAGE_COUNT) != 0) {
+        syslog(LOG_ERR, "tele_ss_event_response_continuous is not executed in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
+int tapi_ss_call_waiting_continuous_test(int slot_id)
+{
+    int res = 0;
+    srand(time(NULL));
+    bool set_call_waiting_flag = FALSE;
+
+    tapi_context context = get_tapi_ctx();
+
+    init_response_flag(MAX_MESSAGE_COUNT);
+
+    if (context == NULL) {
+        syslog(LOG_ERR, "%s context NULL", __func__);
+        return -EINVAL;
+    }
+
+    for (int i = 0; i < MAX_MESSAGE_COUNT; i++) {
+        int random_num;
+        random_num = rand() % 2;
+        if (random_num) {
+            response_ret[i] = EVENT_REQUEST_CALL_WAITING_DONE;
+            if (set_call_waiting_flag) {
+                int ret = tapi_ss_set_call_waiting(get_tapi_ctx(), slot_id,
+                    EVENT_REQUEST_CALL_WAITING_DONE, FALSE, tele_ss_event_response_continuous);
+                if (ret) {
+                    syslog(LOG_ERR, "%s execute fail, ret: %d", __func__, ret);
+                    res = -1;
+                    goto on_exit;
+                }
+                set_call_waiting_flag = FALSE;
+            } else {
+                int ret = tapi_ss_set_call_waiting(get_tapi_ctx(), slot_id,
+                    EVENT_REQUEST_CALL_WAITING_DONE, TRUE, tele_ss_event_response_continuous);
+                if (ret) {
+                    syslog(LOG_ERR, "%s execute fail, ret: %d", __func__, ret);
+                    res = -1;
+                    goto on_exit;
+                }
+                set_call_waiting_flag = TRUE;
+            }
+        } else {
+            response_ret[i] = EVENT_QUERY_CALL_WAITING_DONE;
+            int ret = tapi_ss_get_call_waiting(get_tapi_ctx(), slot_id,
+                EVENT_QUERY_CALL_WAITING_DONE, tele_ss_event_response_continuous);
+            if (ret) {
+                syslog(LOG_ERR, "%s execute fail, ret: %d", __func__, ret);
+                res = -1;
+                goto on_exit;
+            }
+        }
+        if (i == 2 || i == 5 || i == 7) {
+            sleep(3);
+        }
+    }
+
+    if (wait_response(MAX_MESSAGE_COUNT) != 0) {
+        syslog(LOG_ERR, "tele_ss_event_response_continuous is not executed in %s", __func__);
         res = -1;
         goto on_exit;
     }
