@@ -224,7 +224,7 @@ int tapi_radio_power_on_modem_disable_pending_test(int slot_id)
     int res = 0;
     int ret = 0;
 
-    //precondition
+    // precondition
     remote_radio_on_off_delay(1);
     if (tapi_set_radio_power_test(0, 0)) {
         syslog(LOG_ERR, "precondition set fail");
