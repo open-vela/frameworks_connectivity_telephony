@@ -257,7 +257,7 @@ static void modem_activity_info_query_done(DBusMessage* message, void* user_data
     DBusMessageIter iter, array;
     DBusError err;
     modem_activity_info* info;
-    int activity_info[MAX_TX_TIME_ARRAY_LEN + 3];
+    int* activity_info;
     int length;
 
     if (handler == NULL) {
