@@ -63,9 +63,9 @@ static void tele_sms_event_response_continuous(tapi_async_result* result)
     }
 }
 
-int sms_send_message_test(tapi_context context, int slot_id, char* number, char* text)
+int tapi_sms_send_message_test(int slot_id, char* number, char* text)
 {
-    if (context == NULL || number == NULL || text == NULL) {
+    if (number == NULL || text == NULL) {
         syslog(LOG_ERR, "%s, number: %s, text: %s", __func__, number, text);
         return -EINVAL;
     }
@@ -74,7 +74,7 @@ int sms_send_message_test(tapi_context context, int slot_id, char* number, char*
     judge_data_init();
     judge_data.expect = EVENT_SEND_MESSAGE_DONE;
 
-    int ret = tapi_sms_send_message(context, slot_id, 0, number, text,
+    int ret = tapi_sms_send_message(get_tapi_ctx(), slot_id, 0, number, text,
         EVENT_SEND_MESSAGE_DONE, tele_sms_event_response);
     if (ret) {
         syslog(LOG_ERR, "tapi_sms_send_message execute fail in %s, ret: %d",
@@ -99,38 +99,17 @@ on_exit:
     return res;
 }
 
-int sms_set_service_center_number_test(int slot_id)
+int tapi_sms_send_data_message_test(int slot_id, char* to, int port, char* text)
 {
-    int ret = tapi_sms_set_service_center_address(get_tapi_ctx(), slot_id, "10086");
-    syslog(LOG_DEBUG, "%s, slot_id: %d, ret: %d", __func__, slot_id, ret);
-
-    return ret;
-}
-
-int sms_check_service_center_number_test(int slot_id)
-{
-    char* smsc_addr_rtn = NULL;
-    int ret = tapi_sms_get_service_center_address(get_tapi_ctx(), slot_id, &smsc_addr_rtn);
-    syslog(LOG_DEBUG, "%s, slot_id: %d, ret: %d, smsc_addr_rtn: %s", __func__, slot_id, ret, smsc_addr_rtn);
-
-    return ret || strcmp(smsc_addr_rtn, "10086") != 0;
-}
-
-int sms_send_data_message_test(int slot_id, char* to, int port, char* text)
-{
-    if (to == NULL) {
-        syslog(LOG_ERR, "to is null in %s", __func__);
-        return -EINVAL;
-    }
-
-    if (text == NULL) {
-        syslog(LOG_ERR, "text is null in %s", __func__);
+    if (to == NULL || text == NULL) {
+        syslog(LOG_ERR, "%s, number: %s, text: %s", __func__, to, text);
         return -EINVAL;
     }
 
     int res = 0;
     judge_data_init();
     judge_data.expect = EVENT_SEND_DATA_MESSAGE_DONE;
+
     int ret = tapi_sms_send_data_message(get_tapi_ctx(), slot_id, 0, to, port, text,
         EVENT_SEND_DATA_MESSAGE_DONE, tele_sms_event_response);
     if (ret) {
@@ -156,6 +135,40 @@ on_exit:
     return res;
 }
 
+int sms_set_and_get_service_center_number_test(int slot_id)
+{
+    int ret = 0;
+    char* smsc_addr = "10086";
+    char* smsc_addr_rtn = NULL;
+    if (tapi_sms_set_service_center_address(get_tapi_ctx(), slot_id, smsc_addr)) {
+        syslog(LOG_ERR, "set service center address execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    sleep(5);
+    if (tapi_sms_get_service_center_address(get_tapi_ctx(), slot_id, &smsc_addr_rtn)) {
+        syslog(LOG_ERR, "get service center address execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    if (smsc_addr_rtn == NULL) {
+        syslog(LOG_ERR, "smsc_addr_rtn is NULL execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    if (strcmp(smsc_addr_rtn, smsc_addr) != 0) {
+        syslog(LOG_ERR, "smsc_addr_rtn is invalid in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return ret;
+}
+
 int sms_send_message_in_dialing(int slot_id, char* to, char* text)
 {
     int ret = -1;
@@ -169,9 +182,9 @@ int sms_send_message_in_dialing(int slot_id, char* to, char* text)
         goto on_exit;
     }
 
-    ret = sms_send_message_test(get_tapi_ctx(), slot_id, to, text);
+    ret = tapi_sms_send_message_test(slot_id, to, text);
     if (ret) {
-        syslog(LOG_ERR, "sms_send_message_test execute fail in %s, ret: %d",
+        syslog(LOG_ERR, "tapi_sms_send_message_test execute fail in %s, ret: %d",
             __func__, ret);
         res = -1;
         goto on_exit;
@@ -189,6 +202,27 @@ on_exit:
     return res;
 }
 
+int sms_send_message_in_special_ims_cap(int slot_id, char* to, char* text, int ims_cap)
+{
+    int ret = 0;
+
+    if (tapi_ims_set_service_status_test(slot_id, ims_cap)) {
+        syslog(LOG_ERR, "ims set service status execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (tapi_sms_send_message_test(slot_id, to, text)) {
+        syslog(LOG_ERR, "send message execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return ret;
+}
+
 int sms_send_data_message_in_dialing(int slot_id, char* to, char* text, int port)
 {
     int ret = -1;
@@ -202,9 +236,9 @@ int sms_send_data_message_in_dialing(int slot_id, char* to, char* text, int port
         goto on_exit;
     }
 
-    ret = sms_send_data_message_test(slot_id, to, port, text);
+    ret = tapi_sms_send_data_message_test(slot_id, to, port, text);
     if (ret) {
-        syslog(LOG_ERR, "sms_send_data_message_test execute fail in %s, ret: %d",
+        syslog(LOG_ERR, "tapi_sms_send_data_message_test execute fail in %s, ret: %d",
             __func__, ret);
         res = -1;
         goto on_exit;
@@ -220,6 +254,89 @@ int sms_send_data_message_in_dialing(int slot_id, char* to, char* text, int port
 
 on_exit:
     return res;
+}
+
+int sms_send_data_message_in_special_ims_cap(int slot_id, char* to, int port, char* text, int ims_cap)
+{
+    int ret = 0;
+
+    if (tapi_ims_set_service_status_test(slot_id, ims_cap)) {
+        syslog(LOG_ERR, "ims set service status execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (tapi_sms_send_data_message_test(slot_id, to, port, text)) {
+        syslog(LOG_ERR, "send message execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return ret;
+}
+
+int sms_set_and_get_cell_broadcast_power(int slot_id, bool enable)
+{
+    int ret = 0;
+    bool result = false;
+
+    if (tapi_sms_set_cell_broadcast_power_on(get_tapi_ctx(), slot_id, enable)) {
+        syslog(LOG_ERR, "tapi_sms_set_cell_broadcast_power_on execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    sleep(5);
+    if (tapi_sms_get_cell_broadcast_power_on(get_tapi_ctx(), 0, &result)) {
+        syslog(LOG_ERR, "tapi_sms_get_cell_broadcast_power_on execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    if (result != enable) {
+        syslog(LOG_ERR, "result error execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return ret;
+}
+
+int sms_set_and_get_cell_broadcast_topics(int slot_id, char* topics)
+{
+    int ret = 0;
+    char* result = NULL;
+
+    if (tapi_sms_set_cell_broadcast_topics(get_tapi_ctx(), slot_id, topics)) {
+        syslog(LOG_ERR, "tapi_sms_set_cell_broadcast_topics execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    sleep(5);
+    if (tapi_sms_get_cell_broadcast_topics(get_tapi_ctx(), 0, &result)) {
+        syslog(LOG_ERR, "tapi_sms_get_cell_broadcast_power_on execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    if (result == NULL) {
+        syslog(LOG_ERR, "result is NULL execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    if (strcmp(result, topics) != 0) {
+        syslog(LOG_ERR, "result invaild execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return ret;
 }
 
 int sms_send_short_sms_continuous(int slot_id, char* to)

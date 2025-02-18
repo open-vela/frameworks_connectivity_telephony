@@ -1060,74 +1060,66 @@ static void TestTeleFunc_CI_DataDisableRoaming(void** state)
     assert_true(ret == OK);
 }
 
-static void TestTeleFunc_CI_SmsSetServiceCenterNum(void** state)
+static void TestTeleFunc_CI_SmsSetAndGetServiceCenterNum(void** state)
 {
     (void)state;
-    int ret = sms_set_service_center_number_test(0);
-    assert_int_equal(ret, 0);
-}
-
-static void TestTeleFunc_CI_SmsGetServiceCenterNum(void** state)
-{
-    (void)state;
-    sleep(5);
-    int ret = sms_check_service_center_number_test(0);
+    int ret = sms_set_and_get_service_center_number_test(0);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_SmsSendShortMessageInEnglish(void** state)
 {
     (void)state;
-    int ret = sms_send_message_test(get_tapi_ctx(), 0, phone_num, short_english_text);
+    int ret = tapi_sms_send_message_test(0, phone_num, short_english_text);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_CI_SmsSendShortMessageInChinese(void** state)
 {
     (void)state;
-    int ret = sms_send_message_test(get_tapi_ctx(), 0, phone_num, short_chinese_text);
+    int ret = tapi_sms_send_message_test(0, phone_num, short_chinese_text);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_SmsSendShortDataMessageInEnglish(void** state)
 {
     (void)state;
-    int ret = sms_send_data_message_test(0, phone_num, 0, short_english_text);
+    int ret = tapi_sms_send_data_message_test(0, phone_num, 0, short_english_text);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_SmsSendShortDataMessageInChinese(void** state)
 {
     (void)state;
-    int ret = sms_send_data_message_test(0, phone_num, 0, short_chinese_text);
+    int ret = tapi_sms_send_data_message_test(0, phone_num, 0, short_chinese_text);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_SmsSendLongMessageInEnglish(void** state)
 {
     (void)state;
-    int ret = sms_send_message_test(get_tapi_ctx(), 0, phone_num, long_english_text);
+    int ret = tapi_sms_send_message_test(0, phone_num, long_english_text);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_CI_SmsSendLongMessageInChinese(void** state)
 {
     (void)state;
-    int ret = sms_send_message_test(get_tapi_ctx(), 0, phone_num, long_chinese_text);
+    int ret = tapi_sms_send_message_test(0, phone_num, long_chinese_text);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_SmsSendLongDataMessageInEnglish(void** state)
 {
     (void)state;
-    int ret = sms_send_data_message_test(0, phone_num, 0, long_english_text);
+    int ret = tapi_sms_send_data_message_test(0, phone_num, 0, long_english_text);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_SmsSendLongDataMessageInChinese(void** state)
 {
     (void)state;
-    int ret = sms_send_data_message_test(0, phone_num, 0, long_chinese_text);
+    int ret = tapi_sms_send_data_message_test(0, phone_num, 0, long_chinese_text);
     assert_int_equal(ret, 0);
 }
 
@@ -1211,168 +1203,168 @@ static void TestTeleFunc_SmsSendLongChineseDataMessageInDialing(void** state)
 static void TestTeleFunc_SmsSendEnglishMessageInVoiceImsCap(void** state)
 {
     (void)state;
-    int ret = sms_send_message_test(get_tapi_ctx(), 0, phone_num, short_english_text);
+    int ret = sms_send_message_in_special_ims_cap(0, phone_num, short_english_text, 1);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_SmsSendChineseMessageInVoiceImsCap(void** state)
 {
     (void)state;
-    int ret = sms_send_message_test(get_tapi_ctx(), 0, phone_num, short_chinese_text);
+    int ret = sms_send_message_in_special_ims_cap(0, phone_num, short_chinese_text, 1);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_SmsSendLongEnglishMessageInVoiceImsCap(void** state)
 {
     (void)state;
-    int ret = sms_send_message_test(get_tapi_ctx(), 0, phone_num, long_english_text);
+    int ret = sms_send_message_in_special_ims_cap(0, phone_num, long_english_text, 1);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_SmsSendLongChineseMessageInVoiceImsCap(void** state)
 {
     (void)state;
-    int ret = sms_send_message_test(get_tapi_ctx(), 0, phone_num, long_chinese_text);
+    int ret = sms_send_message_in_special_ims_cap(0, phone_num, long_chinese_text, 1);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_SmsSendEnglishDataMessageInVoiceImsCap(void** state)
 {
     (void)state;
-    int ret = sms_send_data_message_test(0, phone_num, 0, short_english_text);
+    int ret = sms_send_data_message_in_special_ims_cap(0, phone_num, 0, short_english_text, 1);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_SmsSendChineseDataMessageInVoiceImsCap(void** state)
 {
     (void)state;
-    int ret = sms_send_data_message_test(0, phone_num, 0, short_chinese_text);
+    int ret = sms_send_data_message_in_special_ims_cap(0, phone_num, 0, short_chinese_text, 1);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_SmsSendLongEnglishDataMessageInVoiceImsCap(void** state)
 {
     (void)state;
-    int ret = sms_send_data_message_test(0, phone_num, 0, long_english_text);
+    int ret = sms_send_data_message_in_special_ims_cap(0, phone_num, 0, long_english_text, 1);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_SmsSendLongChineseDataMessageInVoiceImsCap(void** state)
 {
     (void)state;
-    int ret = sms_send_data_message_test(0, phone_num, 0, long_chinese_text);
+    int ret = sms_send_data_message_in_special_ims_cap(0, phone_num, 0, long_chinese_text, 1);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_SmsSendEnglishMessageInSmsImsCap(void** state)
 {
     (void)state;
-    int ret = sms_send_message_test(get_tapi_ctx(), 0, phone_num, short_english_text);
+    int ret = sms_send_message_in_special_ims_cap(0, phone_num, short_english_text, 4);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_SmsSendChineseMessageInSmsImsCap(void** state)
 {
     (void)state;
-    int ret = sms_send_message_test(get_tapi_ctx(), 0, phone_num, short_chinese_text);
+    int ret = sms_send_message_in_special_ims_cap(0, phone_num, short_chinese_text, 4);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_SmsSendLongEnglishMessageInSmsImsCap(void** state)
 {
     (void)state;
-    int ret = sms_send_message_test(get_tapi_ctx(), 0, phone_num, long_english_text);
+    int ret = sms_send_message_in_special_ims_cap(0, phone_num, long_english_text, 4);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_SmsSendLongChineseMessageInSmsImsCap(void** state)
 {
     (void)state;
-    int ret = sms_send_message_test(get_tapi_ctx(), 0, phone_num, long_chinese_text);
+    int ret = sms_send_message_in_special_ims_cap(0, phone_num, long_chinese_text, 4);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_SmsSendEnglishDataMessageInSmsImsCap(void** state)
 {
     (void)state;
-    int ret = sms_send_data_message_test(0, phone_num, 0, short_english_text);
+    int ret = sms_send_data_message_in_special_ims_cap(0, phone_num, 0, short_english_text, 4);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_SmsSendChineseDataMessageInSmsImsCap(void** state)
 {
     (void)state;
-    int ret = sms_send_data_message_test(0, phone_num, 0, short_chinese_text);
+    int ret = sms_send_data_message_in_special_ims_cap(0, phone_num, 0, short_chinese_text, 4);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_SmsSendLongEnglishDataMessageInSmsImsCap(void** state)
 {
     (void)state;
-    int ret = sms_send_data_message_test(0, phone_num, 0, long_english_text);
+    int ret = sms_send_data_message_in_special_ims_cap(0, phone_num, 0, long_english_text, 4);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_SmsSendLongChineseDataMessageInSmsImsCap(void** state)
 {
     (void)state;
-    int ret = sms_send_data_message_test(0, phone_num, 0, long_chinese_text);
+    int ret = sms_send_data_message_in_special_ims_cap(0, phone_num, 0, long_chinese_text, 4);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_SmsSendEnglishMessageInSmsVoiceCap(void** state)
 {
     (void)state;
-    int ret = sms_send_data_message_test(0, phone_num, 0, short_english_text);
+    int ret = sms_send_message_in_special_ims_cap(0, phone_num, short_english_text, 5);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_SmsSendChineseMessageInSmsVoiceCap(void** state)
 {
     (void)state;
-    int ret = sms_send_data_message_test(0, phone_num, 0, short_chinese_text);
+    int ret = sms_send_message_in_special_ims_cap(0, phone_num, short_chinese_text, 5);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_SmsSendLongEnglishMessageInSmsVoiceCap(void** state)
 {
     (void)state;
-    int ret = sms_send_message_test(get_tapi_ctx(), 0, phone_num, long_english_text);
+    int ret = sms_send_message_in_special_ims_cap(0, phone_num, long_english_text, 5);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_SmsSendLongChineseMessageInSmsVoiceCap(void** state)
 {
     (void)state;
-    int ret = sms_send_message_test(get_tapi_ctx(), 0, phone_num, long_chinese_text);
+    int ret = sms_send_message_in_special_ims_cap(0, phone_num, long_chinese_text, 5);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_SmsSendEnglishDataMessageInSmsVoiceCap(void** state)
 {
     (void)state;
-    int ret = sms_send_data_message_test(0, phone_num, 0, short_english_text);
+    int ret = sms_send_data_message_in_special_ims_cap(0, phone_num, 0, short_english_text, 5);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_SmsSendChineseDataMessageInSmsVoiceCap(void** state)
 {
     (void)state;
-    int ret = sms_send_data_message_test(0, phone_num, 0, short_chinese_text);
+    int ret = sms_send_data_message_in_special_ims_cap(0, phone_num, 0, short_chinese_text, 5);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_SmsSendLongEnglishDataMessageInSmsVoiceCap(void** state)
 {
     (void)state;
-    int ret = sms_send_data_message_test(0, phone_num, 0, long_english_text);
+    int ret = sms_send_data_message_in_special_ims_cap(0, phone_num, 0, long_english_text, 5);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_SmsSendLongChineseDataMessageInSmsVoiceCap(void** state)
 {
     (void)state;
-    int ret = sms_send_data_message_test(0, phone_num, 0, long_chinese_text);
+    int ret = sms_send_data_message_in_special_ims_cap(0, phone_num, 0, long_chinese_text, 5);
     assert_int_equal(ret, 0);
 }
 
@@ -1394,39 +1386,18 @@ static void TestTeleFunc_SmsGetDefaultSlot(void** state)
     assert_int_equal(result, 0);
 }
 
-static void TestTeleFunc_SmsSetCellBroadcastPower(void** state)
+static void TestTeleFunc_SmsSetAndGetCellBroadcastPower(void** state)
 {
     (void)state;
-    int ret = tapi_sms_set_cell_broadcast_power_on(get_tapi_ctx(), 0, 1);
-    sleep(5);
+    int ret = sms_set_and_get_cell_broadcast_power(0, 1);
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleFunc_SmsGetCellBroadcastPower(void** state)
+static void TestTeleFunc_SmsSetAndGetCellBroadcastTopics(void** state)
 {
     (void)state;
-    bool result = false;
-    int ret = tapi_sms_get_cell_broadcast_power_on(get_tapi_ctx(), 0, &result);
-    syslog(LOG_INFO, "%s, ret: %d, result: %d", __func__, 0, (int)result);
+    int ret = sms_set_and_get_cell_broadcast_topics(0, "1");
     assert_int_equal(ret, 0);
-    assert_int_equal(result, 1);
-}
-
-static void TestTeleFunc_SmsSetCellBroadcastTopics(void** state)
-{
-    (void)state;
-    int ret = tapi_sms_set_cell_broadcast_topics(get_tapi_ctx(), 0, "1");
-    sleep(5);
-    assert_int_equal(ret, 0);
-}
-
-static void TestTeleFunc_SmsGetCellBroadcastTopics(void** state)
-{
-    (void)state;
-    char* result = NULL;
-    int ret = tapi_sms_get_cell_broadcast_topics(get_tapi_ctx(), 0, &result);
-    assert_int_equal(ret, 0);
-    assert_int_equal(strcmp(result, "1"), 0);
 }
 
 static void TestTeleFunc_NetSelectAuto(void** state)
@@ -2444,6 +2415,8 @@ int main(int argc, char* argv[])
     };
 
     const struct CMUnitTest CallTestSuites[] = {
+        cmocka_unit_test(TestTeleFunc_CI_CallListen),
+        cmocka_unit_test(TestTeleFunc_CI_CallUnlisten),
         cmocka_unit_test(TestTeleFunc_CallLoadAndCompareEccWithChinaSimCard),
         cmocka_unit_test(TestTeleFunc_CallLoadAndCompareEccWithoutSimCard),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_CallDialNumber, setup_call, teardown_call),
@@ -2539,10 +2512,7 @@ int main(int argc, char* argv[])
     };
 
     const struct CMUnitTest SmsTestSuites[] = {
-        cmocka_unit_test(TestTeleFunc_CI_CallListen),
-        cmocka_unit_test(TestTeleFunc_CI_ImsListen),
-        cmocka_unit_test(TestTeleFunc_CI_SmsSetServiceCenterNum),
-        cmocka_unit_test(TestTeleFunc_CI_SmsGetServiceCenterNum),
+        cmocka_unit_test(TestTeleFunc_CI_SmsSetAndGetServiceCenterNum),
         cmocka_unit_test(TestTeleFunc_SmsSendShortMessageInEnglish),
         cmocka_unit_test(TestTeleFunc_CI_SmsSendShortMessageInChinese),
         cmocka_unit_test(TestTeleFunc_SmsSendShortDataMessageInEnglish),
@@ -2551,48 +2521,42 @@ int main(int argc, char* argv[])
         cmocka_unit_test(TestTeleFunc_CI_SmsSendLongMessageInChinese),
         cmocka_unit_test(TestTeleFunc_SmsSendLongDataMessageInEnglish),
         cmocka_unit_test(TestTeleFunc_SmsSendLongDataMessageInChinese),
-        cmocka_unit_test(TestTeleFunc_SmsSendShortEnglishMessageInDialing),
-        cmocka_unit_test(TestTeleFunc_CI_SmsSendShortChineseMessageInDialing),
-        cmocka_unit_test(TestTeleFunc_SmsSendLongEnglishMessageInDialing),
-        cmocka_unit_test(TestTeleFunc_SmsSendLongChineseMessageInDialing),
-        cmocka_unit_test(TestTeleFunc_SmsSendShortEnglishDataMessageInDialing),
-        cmocka_unit_test(TestTeleFunc_SmsSendShortChineseDataMessageInDialing),
-        cmocka_unit_test(TestTeleFunc_SmsSendLongEnglishDataMessageInDialing),
-        cmocka_unit_test(TestTeleFunc_SmsSendLongChineseDataMessageInDialing),
-        cmocka_unit_test(TestTeleFunc_SmsSendEnglishMessageInVoiceImsCap),
-        cmocka_unit_test(TestTeleFunc_SmsSendChineseMessageInVoiceImsCap),
-        cmocka_unit_test(TestTeleFunc_SmsSendLongEnglishMessageInVoiceImsCap),
-        cmocka_unit_test(TestTeleFunc_SmsSendLongChineseMessageInVoiceImsCap),
-        cmocka_unit_test(TestTeleFunc_SmsSendEnglishDataMessageInVoiceImsCap),
-        cmocka_unit_test(TestTeleFunc_SmsSendChineseDataMessageInVoiceImsCap),
-        cmocka_unit_test(TestTeleFunc_SmsSendLongEnglishDataMessageInVoiceImsCap),
-        cmocka_unit_test(TestTeleFunc_SmsSendLongChineseDataMessageInVoiceImsCap),
-        cmocka_unit_test(TestTeleFunc_CI_ImsSetSmsCap),
-        cmocka_unit_test(TestTeleFunc_SmsSendEnglishMessageInSmsImsCap),
-        cmocka_unit_test(TestTeleFunc_SmsSendChineseMessageInSmsImsCap),
-        cmocka_unit_test(TestTeleFunc_SmsSendLongEnglishMessageInSmsImsCap),
-        cmocka_unit_test(TestTeleFunc_SmsSendLongChineseMessageInSmsImsCap),
-        cmocka_unit_test(TestTeleFunc_SmsSendEnglishDataMessageInSmsImsCap),
-        cmocka_unit_test(TestTeleFunc_SmsSendChineseDataMessageInSmsImsCap),
-        cmocka_unit_test(TestTeleFunc_SmsSendLongEnglishDataMessageInSmsImsCap),
-        cmocka_unit_test(TestTeleFunc_SmsSendLongChineseDataMessageInSmsImsCap),
-        cmocka_unit_test(TestTeleFunc_CI_ImsSetSmsVoiceCap),
-        cmocka_unit_test(TestTeleFunc_SmsSendEnglishMessageInSmsVoiceCap),
-        cmocka_unit_test(TestTeleFunc_SmsSendChineseMessageInSmsVoiceCap),
-        cmocka_unit_test(TestTeleFunc_SmsSendLongEnglishMessageInSmsVoiceCap),
-        cmocka_unit_test(TestTeleFunc_SmsSendLongChineseMessageInSmsVoiceCap),
-        cmocka_unit_test(TestTeleFunc_SmsSendEnglishDataMessageInSmsVoiceCap),
-        cmocka_unit_test(TestTeleFunc_SmsSendChineseDataMessageInSmsVoiceCap),
-        cmocka_unit_test(TestTeleFunc_SmsSendLongEnglishDataMessageInSmsVoiceCap),
-        cmocka_unit_test(TestTeleFunc_SmsSendLongChineseDataMessageInSmsVoiceCap),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendShortEnglishMessageInDialing, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_SmsSendShortChineseMessageInDialing, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendLongEnglishMessageInDialing, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendLongChineseMessageInDialing, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendShortEnglishDataMessageInDialing, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendShortChineseDataMessageInDialing, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendLongEnglishDataMessageInDialing, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendLongChineseDataMessageInDialing, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendEnglishMessageInVoiceImsCap, setup_ims, teardown_ims),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendChineseMessageInVoiceImsCap, setup_ims, teardown_ims),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendLongEnglishMessageInVoiceImsCap, setup_ims, teardown_ims),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendLongChineseMessageInVoiceImsCap, setup_ims, teardown_ims),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendEnglishDataMessageInVoiceImsCap, setup_ims, teardown_ims),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendChineseDataMessageInVoiceImsCap, setup_ims, teardown_ims),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendLongEnglishDataMessageInVoiceImsCap, setup_ims, teardown_ims),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendLongChineseDataMessageInVoiceImsCap, setup_ims, teardown_ims),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendEnglishMessageInSmsImsCap, setup_ims, teardown_ims),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendChineseMessageInSmsImsCap, setup_ims, teardown_ims),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendLongEnglishMessageInSmsImsCap, setup_ims, teardown_ims),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendLongChineseMessageInSmsImsCap, setup_ims, teardown_ims),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendEnglishDataMessageInSmsImsCap, setup_ims, teardown_ims),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendChineseDataMessageInSmsImsCap, setup_ims, teardown_ims),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendLongEnglishDataMessageInSmsImsCap, setup_ims, teardown_ims),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendLongChineseDataMessageInSmsImsCap, setup_ims, teardown_ims),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendEnglishMessageInSmsVoiceCap, setup_ims, teardown_ims),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendChineseMessageInSmsVoiceCap, setup_ims, teardown_ims),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendLongEnglishMessageInSmsVoiceCap, setup_ims, teardown_ims),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendLongChineseMessageInSmsVoiceCap, setup_ims, teardown_ims),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendEnglishDataMessageInSmsVoiceCap, setup_ims, teardown_ims),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendChineseDataMessageInSmsVoiceCap, setup_ims, teardown_ims),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendLongEnglishDataMessageInSmsVoiceCap, setup_ims, teardown_ims),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendLongChineseDataMessageInSmsVoiceCap, setup_ims, teardown_ims),
         cmocka_unit_test(TestTeleFunc_SmsSetDefaultSlot),
         cmocka_unit_test(TestTeleFunc_SmsGetDefaultSlot),
-        cmocka_unit_test(TestTeleFunc_SmsSetCellBroadcastPower),
-        cmocka_unit_test(TestTeleFunc_SmsGetCellBroadcastPower),
-        cmocka_unit_test(TestTeleFunc_SmsSetCellBroadcastTopics),
-        cmocka_unit_test(TestTeleFunc_SmsGetCellBroadcastTopics),
-        cmocka_unit_test(TestTeleFunc_CI_ImsResetImsCap),
-        cmocka_unit_test(TestTeleFunc_CI_CallUnlisten),
+        cmocka_unit_test(TestTeleFunc_SmsSetAndGetCellBroadcastPower),
+        cmocka_unit_test(TestTeleFunc_SmsSetAndGetCellBroadcastTopics),
         cmocka_unit_test(TestTeleFunc_SmsSendMessageContinuous),
         cmocka_unit_test(TestTeleFunc_SmsSendDataMessageContinuous),
         cmocka_unit_test(TestTeleFunc_SmsSendDataMessageAndMessageContinuous),
@@ -2620,6 +2584,9 @@ int main(int argc, char* argv[])
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ImsSetVoiceCap, setup_ims, teardown_ims),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ImsTurnOff, setup_ims, teardown_ims),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ImsTurnOnOff, setup_ims, teardown_ims),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ImsResetImsCap, setup_ims, teardown_ims),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ImsSetSmsVoiceCap, setup_ims, teardown_ims),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ImsSetSmsCap, setup_ims, teardown_ims),
     };
 
     const struct CMUnitTest SSTestSuits[] = {
