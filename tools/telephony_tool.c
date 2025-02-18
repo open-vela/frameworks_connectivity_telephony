@@ -414,6 +414,14 @@ static void tele_call_async_fun(tapi_async_result* result)
         syslog(LOG_DEBUG, "set modem stationary, state : %d\n", result->status);
     } else if (result->msg_id == EVENT_MODEM_SET_MODEM_STATIONARY_THRESHOLD_DONE) {
         syslog(LOG_DEBUG, "set modem stationary threshold, state : %d\n", result->status);
+    } else if (result->msg_id == EVENT_MODEM_ACTIVITY_INFO_QUERY_DONE) {
+        modem_activity_info* info = result->data;
+        syslog(LOG_DEBUG, "modem activity info: ");
+        syslog(LOG_DEBUG, "sleep time: %d", info->sleep_time);
+        syslog(LOG_DEBUG, "idle time: %d", info->idle_time);
+        syslog(LOG_DEBUG, "tx time: %d, %d, %d, %d, %d", info->tx_time[0], info->tx_time[1],
+            info->tx_time[2], info->tx_time[3], info->tx_time[4]);
+        syslog(LOG_DEBUG, "rx time: %d", info->rx_time);
     }
 }
 
