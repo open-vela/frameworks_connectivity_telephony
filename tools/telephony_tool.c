@@ -396,7 +396,7 @@ static void tele_call_async_fun(tapi_async_result* result)
     } else if (result->msg_id == EVENT_REQUEST_DIAL_DONE) {
 
         if (result->status == OK) {
-            syslog(LOG_DEBUG, "dial successed, call id : %s\n", (char*)result->data);
+            printf("dial successed, call id : %s\n", (char*)result->data);
         } else {
             syslog(LOG_DEBUG, "dial failed");
         }
@@ -537,11 +537,11 @@ static void tele_sms_async_fun(tapi_async_result* result)
     syslog(LOG_DEBUG, "%s msg id : %d \n", __func__, result->msg_id);
     message_info = (tapi_message_info*)result->data;
 
-    syslog(LOG_DEBUG, "receive message text: %s\n", message_info->text);
-    syslog(LOG_DEBUG, "receive message sender: %s\n", message_info->sender);
-    syslog(LOG_DEBUG, "receive message at: %s \n", message_info->sent_time);
-    syslog(LOG_DEBUG, "receive send message at local time: %s \n", message_info->local_sent_time);
-    syslog(LOG_DEBUG, "receive message type: %d \n", message_info->sms_type);
+    printf("receive message text: %s\n", message_info->text);
+    printf("receive message sender: %s\n", message_info->sender);
+    printf("receive message at: %s \n", message_info->sent_time);
+    printf("receive send message at local time: %s \n", message_info->local_sent_time);
+    printf("receive message type: %d \n", message_info->sms_type);
 
     if (result->msg_id == MSG_INCOMING_MESSAGE_IND)
         syslog(LOG_DEBUG, "%s incoming message received \n", __func__);
@@ -551,9 +551,7 @@ static void tele_sms_async_fun(tapi_async_result* result)
 
 static void tele_sms_event_response(tapi_async_result* result)
 {
-    syslog(LOG_DEBUG, "%s : \n", __func__);
-    syslog(LOG_DEBUG, "result->msg_id : %d\n", result->msg_id);
-    syslog(LOG_DEBUG, "result->status : %d\n", result->status);
+    printf("%s : result->msg_id : %d, result->status : %d\n", __func__, result->msg_id, result->status);
     syslog(LOG_DEBUG, "result->arg1 : %d\n", result->arg1);
     syslog(LOG_DEBUG, "result->arg2 : %d\n", result->arg2);
 
@@ -564,7 +562,7 @@ static void tele_sms_event_response(tapi_async_result* result)
 
     if (result->msg_id == EVENT_SEND_MESSAGE_DONE
         || result->msg_id == EVENT_SEND_DATA_MESSAGE_DONE)
-        syslog(LOG_DEBUG, "send message successed, uuid : %s\n", (char*)result->data);
+        printf("%s: send message successed, uuid : %s\n", __func__, (char*)result->data);
 }
 
 static void tele_cbs_async_fun(tapi_async_result* result)
@@ -709,7 +707,7 @@ static void ss_event_response(tapi_async_result* result)
             syslog(LOG_DEBUG, "status: %d; cls: %d; \n", status, param);
             break;
         case EVENT_REQUEST_CALL_WAITING_DONE:
-            syslog(LOG_DEBUG, "%s : call waiting set done! \n", __func__);
+            printf("%s : call waiting set done! \n", __func__);
             break;
         case EVENT_QUERY_CALL_WAITING_DONE:
             syslog(LOG_DEBUG, "%s : call waiting query done! \n", __func__);
@@ -733,24 +731,24 @@ static void call_list_query_complete(tapi_async_result* result)
     if (result->status != OK)
         return;
 
-    syslog(LOG_DEBUG, "call count: %d \n\n", result->arg2);
+    printf("call count: %d \n", result->arg2);
 
     call_info = result->data;
 
     for (int i = 0; i < result->arg2; i++) {
 
-        syslog(LOG_DEBUG, "call id: %s \n", call_info[i].call_id);
-        syslog(LOG_DEBUG, "call state: %d \n", call_info[i].state);
-        syslog(LOG_DEBUG, "call LineIdentification: %s \n", call_info[i].lineIdentification);
-        syslog(LOG_DEBUG, "call IncomingLine: %s \n", call_info[i].incoming_line);
-        syslog(LOG_DEBUG, "call Name: %s \n", call_info[i].name);
-        syslog(LOG_DEBUG, "call StartTime: %s \n", call_info[i].start_time);
-        syslog(LOG_DEBUG, "call Multiparty: %d \n", call_info[i].multiparty);
-        syslog(LOG_DEBUG, "call RemoteHeld: %d \n", call_info[i].remote_held);
-        syslog(LOG_DEBUG, "call RemoteMultiparty: %d \n", call_info[i].remote_multiparty);
-        syslog(LOG_DEBUG, "call Information: %s \n", call_info[i].info);
-        syslog(LOG_DEBUG, "call Icon: %d \n", call_info[i].icon);
-        syslog(LOG_DEBUG, "call Emergency: %d \n\n", call_info[i].is_emergency_number);
+        printf("call id: %s \n", call_info[i].call_id);
+        printf("call state: %d \n", call_info[i].state);
+        printf("call LineIdentification: %s \n", call_info[i].lineIdentification);
+        printf("call IncomingLine: %s \n", call_info[i].incoming_line);
+        printf("call Name: %s \n", call_info[i].name);
+        printf("call StartTime: %s \n", call_info[i].start_time);
+        printf("call Multiparty: %d \n", call_info[i].multiparty);
+        printf("call RemoteHeld: %d \n", call_info[i].remote_held);
+        printf("call RemoteMultiparty: %d \n", call_info[i].remote_multiparty);
+        printf("call Information: %s \n", call_info[i].info);
+        printf("call Icon: %d \n", call_info[i].icon);
+        printf("call Emergency: %d \n\n", call_info[i].is_emergency_number);
     }
 }
 
@@ -1242,7 +1240,7 @@ static int telephonytool_cmd_listen_call_manager_change(tapi_context context, ch
         break;
     }
 
-    syslog(LOG_DEBUG, "%s, slot_id : %d, event_id : %d, watch_id : %d \n",
+    printf("%s, slot_id : %d, event_id : %d, watch_id : %d \n",
         __func__, slot_id, event_id, watch_id);
     return watch_id;
 }
@@ -1265,8 +1263,8 @@ static int telephonytool_cmd_unlisten_call_singal(tapi_context context, char* pa
         return -EINVAL;
 
     ret = tapi_unregister(context, atoi(dst[0]));
-    syslog(LOG_DEBUG, "stop to watch call event with watch_id : "
-                      "%s with return value : %d \n",
+    printf("stop to watch call event with watch_id : "
+           "%s with return value : %d \n",
         dst[0], ret);
 
     return ret;
