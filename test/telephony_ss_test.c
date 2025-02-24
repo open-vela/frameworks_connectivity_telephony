@@ -47,7 +47,7 @@ static void ss_signal_change(tapi_async_result* result)
     }
 }
 
-int tapi_listen_ss_test(int slot_id)
+int ss_listen_ss_test(int slot_id)
 {
     global_data.call_barring_property_change_watch_id = -1;
     global_data.call_barring_property_change_watch_id = tapi_ss_register(get_tapi_ctx(), slot_id, MSG_CALL_BARRING_PROPERTY_CHANGE_IND,
@@ -88,7 +88,7 @@ int tapi_listen_ss_test(int slot_id)
     return 0;
 }
 
-int tapi_unlisten_ss_test(void)
+int ss_unlisten_ss_test(void)
 {
     int ret;
     if (global_data.call_barring_property_change_watch_id < 0
@@ -187,6 +187,9 @@ static void tele_ss_async_fun(tapi_async_result* result)
     } else if (result->msg_id == EVENT_QUERY_CALL_FORWARDING_DONE) {
         tapi_call_forward_info* cf_info = result->data;
         if (judge_data.expect == EVENT_QUERY_CALL_FORWARDING_DONE) {
+            syslog(LOG_DEBUG, "global_data.cf_type: %d\n", global_data.cf_type);
+            syslog(LOG_DEBUG, "global_data.cf_number: %s\n", global_data.cf_number);
+            syslog(LOG_DEBUG, "cf_info->phone_number.number: %s\n", cf_info->phone_number.number);
             if (result->arg1 == global_data.cf_type && cf_info != NULL
                 && !strcmp(global_data.cf_number, cf_info->phone_number.number)) {
                 judge_data.result = 0;
@@ -246,7 +249,7 @@ static void tele_ss_event_response_continuous(tapi_async_result* result)
     }
 }
 
-int tapi_ss_request_call_barring_test(int slot_id)
+int ss_request_call_barring_test(int slot_id)
 {
     int res = 0;
     judge_data_init();
@@ -276,13 +279,13 @@ on_exit:
     return res;
 }
 
-int tapi_ss_set_call_barring_option_test(int slot_id, char* facility, char* pin2)
+int ss_set_call_barring_option_test(int slot_id, char* facility, char* pin2)
 {
     int res = 0;
     judge_data_init();
     judge_data.expect = EVENT_REQUEST_CALL_BARRING_DONE;
     int ret = tapi_ss_set_call_barring_option(get_tapi_ctx(), slot_id,
-        EVENT_REQUEST_CALL_BARRING_DONE, "AI", "1234", tele_ss_async_fun);
+        EVENT_REQUEST_CALL_BARRING_DONE, facility, pin2, tele_ss_async_fun);
     if (ret) {
         syslog(LOG_ERR, "tapi_ss_set_call_barring_option execute fail in %s, ret: %d",
             __func__, ret);
@@ -306,15 +309,40 @@ on_exit:
     return res;
 }
 
-int tapi_ss_get_call_barring_option_test(int slot_id, char* key, char* expect)
+int ss_set_and_get_call_barring_option_test(int slot_id, char* facility, char* pin2)
 {
+    int ret = 0;
     char* result = NULL;
-    int ret = tapi_ss_get_call_barring_option(get_tapi_ctx(), slot_id, key, &result);
-    syslog(LOG_INFO, "%s, ret: %d, result: %s", __func__, ret, result);
-    return ret || result == NULL || strcmp(expect, result);
+    if (ss_set_call_barring_option_test(slot_id, facility, pin2)) {
+        syslog(LOG_ERR, "set call barring option_test fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (tapi_ss_get_call_barring_option(get_tapi_ctx(), slot_id, "VoiceIncoming", &result)) {
+        syslog(LOG_ERR, "get call barring option fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    if (result == NULL) {
+        syslog(LOG_ERR, "result is NULL fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    if (strcmp(result, "always")) {
+        syslog(LOG_ERR, "result is %s fail in %s", result, __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return ret;
 }
 
-int tapi_ss_change_call_barring_password_test(int slot_id, char* old_passwd, char* new_passwd)
+int ss_change_call_barring_password_test(int slot_id, char* old_passwd, char* new_passwd)
 {
     int res = 0;
     judge_data_init();
@@ -345,7 +373,27 @@ on_exit:
     return res;
 }
 
-int tapi_ss_disable_all_incoming_test(int slot_id, char* passwd)
+int ss_change_and_reset_call_barring_password_test(int slot_id, char* old_passwd, char* new_passwd)
+{
+    int ret = 0;
+    if (ss_change_call_barring_password_test(slot_id, old_passwd, new_passwd)) {
+        syslog(LOG_ERR, "change call barring password fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (ss_change_call_barring_password_test(slot_id, new_passwd, old_passwd)) {
+        syslog(LOG_ERR, "change call barring password fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return ret;
+}
+
+int ss_disable_all_incoming_test(int slot_id, char* passwd)
 {
     int res = 0;
     judge_data_init();
@@ -375,7 +423,7 @@ on_exit:
     return res;
 }
 
-int tapi_ss_disable_all_outgoing_test(int slot_id, char* passwd)
+int ss_disable_all_outgoing_test(int slot_id, char* passwd)
 {
     int res = 0;
     judge_data_init();
@@ -405,7 +453,7 @@ on_exit:
     return res;
 }
 
-int tapi_ss_disable_all_call_barrings_test(int slot_id, char* passwd)
+int ss_disable_all_call_barrings_test(int slot_id, char* passwd)
 {
     int res = 0;
     judge_data_init();
@@ -435,18 +483,19 @@ on_exit:
     return res;
 }
 
-int tapi_ss_set_call_forwarding_option_test(int slot_id, int cf_type, char* number)
+int ss_set_call_forwarding_option_test(int slot_id, int cf_type, char* number)
 {
     int res = 0;
     judge_data_init();
     judge_data.expect = EVENT_REQUEST_CALL_FORWARDING_DONE;
     memset(global_data.cf_number, 0, sizeof(global_data.cf_number));
     strcpy(global_data.cf_number, number);
+    syslog(LOG_DEBUG, "global_data.cf_number: %s", global_data.cf_number);
     global_data.cf_type = cf_type;
+
     int ret = tapi_ss_set_call_forwarding_option(get_tapi_ctx(), slot_id,
         EVENT_REQUEST_CALL_FORWARDING_DONE, cf_type, BEARER_CLASS_VOICE, number,
         tele_ss_async_fun);
-
     if (ret) {
         syslog(LOG_ERR, "tapi_ss_set_call_forwarding_option execute fail in %s, ret: %d",
             __func__, ret);
@@ -470,12 +519,13 @@ on_exit:
     return res;
 }
 
-int tapi_ss_get_call_forwarding_option_test(int slot_id, int cf_type)
+int ss_get_call_forwarding_option_test(int slot_id, int cf_type)
 {
     int res = 0;
     judge_data_init();
     judge_data.expect = EVENT_QUERY_CALL_FORWARDING_DONE;
     global_data.cf_type = cf_type;
+
     int ret = tapi_ss_query_call_forwarding_option(get_tapi_ctx(), slot_id,
         EVENT_QUERY_CALL_FORWARDING_DONE, cf_type, BEARER_CLASS_VOICE, tele_ss_async_fun);
     if (ret) {
@@ -501,7 +551,39 @@ on_exit:
     return res;
 }
 
-int tapi_ss_call_forwarding_continuous_test(int slot_id, char* phone_num)
+int ss_clear_call_forwarding_option_test(int slot_id, int cf_type)
+{
+    return ss_set_call_forwarding_option_test(slot_id, cf_type, "\0");
+}
+
+int ss_set_and_get_call_forwarding_option_test(int slot_id, int cf_type, char* number)
+{
+    int ret = 0;
+    if (ss_set_call_forwarding_option_test(slot_id, cf_type, number)) {
+        syslog(LOG_ERR, "ss_set_call_forwarding_option_test fail");
+        ret = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (ss_get_call_forwarding_option_test(slot_id, cf_type)) {
+        syslog(LOG_ERR, "ss_get_call_forwarding_option_test fail");
+        ret = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (ss_clear_call_forwarding_option_test(slot_id, cf_type)) {
+        syslog(LOG_ERR, "ss_clear_call_forwarding_option_test fail");
+        ret = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return ret;
+}
+
+int ss_call_forwarding_continuous_test(int slot_id, char* phone_num)
 {
     int res = 0;
     bool set_call_forwarding_flag = FALSE;
@@ -568,7 +650,7 @@ on_exit:
     return res;
 }
 
-int tapi_ss_call_waiting_continuous_test(int slot_id)
+int ss_call_waiting_continuous_test(int slot_id)
 {
     int res = 0;
     srand(time(NULL));
@@ -634,12 +716,13 @@ on_exit:
     return res;
 }
 
-int tapi_ss_set_call_waiting_test(int slot_id, bool enable)
+int ss_set_call_waiting_test(int slot_id, bool enable)
 {
     int res = 0;
     judge_data_init();
     judge_data.expect = EVENT_REQUEST_CALL_WAITING_DONE;
     global_data.cw = (int)enable;
+
     int ret = tapi_ss_set_call_waiting(get_tapi_ctx(), slot_id,
         EVENT_REQUEST_CALL_WAITING_DONE, enable, tele_ss_async_fun);
     if (ret) {
@@ -665,12 +748,13 @@ on_exit:
     return res;
 }
 
-int tapi_ss_get_call_waiting_test(int slot_id, bool expect)
+int ss_get_call_waiting_test(int slot_id, bool expect)
 {
     int res = 0;
     judge_data_init();
     judge_data.expect = EVENT_QUERY_CALL_WAITING_DONE;
     global_data.cw = (int)expect;
+
     int ret = tapi_ss_get_call_waiting(get_tapi_ctx(), slot_id,
         EVENT_QUERY_CALL_WAITING_DONE, tele_ss_async_fun);
     if (ret) {
@@ -696,7 +780,27 @@ on_exit:
     return res;
 }
 
-int tapi_ss_enable_fdn_test(int slot_id, bool enable, char* passwd)
+int ss_set_and_get_call_waiting_test(int slot_id, bool enable)
+{
+    int ret = 0;
+    if (ss_set_call_waiting_test(slot_id, enable)) {
+        syslog(LOG_ERR, "set call waiting test fail");
+        ret = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (ss_get_call_waiting_test(slot_id, enable)) {
+        syslog(LOG_ERR, "get call waiting test fail");
+        ret = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return ret;
+}
+
+int ss_enable_fdn_test(int slot_id, bool enable, char* passwd)
 {
     int res = 0;
     judge_data_init();
@@ -726,7 +830,7 @@ on_exit:
     return res;
 }
 
-int tapi_ss_query_fdn_test(int slot_id, bool expect)
+int ss_query_fdn_test(int slot_id, bool expect)
 {
     int res = 0;
     judge_data_init();
@@ -748,6 +852,26 @@ int tapi_ss_query_fdn_test(int slot_id, bool expect)
 
     if (judge_data.result) {
         syslog(LOG_ERR, "async result is invalid in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
+int ss_set_and_get_fdn_test(int slot_id, bool enable, char* passwd)
+{
+    int res = 0;
+    if (ss_enable_fdn_test(slot_id, enable, passwd)) {
+        syslog(LOG_ERR, "ss_enable_fdn_test fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (ss_query_fdn_test(slot_id, enable)) {
+        syslog(LOG_ERR, "ss_query_fdn_test fail in %s", __func__);
         res = -1;
         goto on_exit;
     }

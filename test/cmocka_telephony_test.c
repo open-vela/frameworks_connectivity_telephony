@@ -1866,225 +1866,116 @@ static void TestTeleFunc_CI_ImsTurnOnOff(void** state)
 static void TestTeleFunc_CI_SSRegister(void** state)
 {
     (void)state;
-    int ret = tapi_listen_ss_test(0);
+    int ret = ss_listen_ss_test(0);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_CI_SSUnRegister(void** state)
 {
     (void)state;
-    int ret = tapi_unlisten_ss_test();
+    int ret = ss_unlisten_ss_test();
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_SSRequestCallBarring(void** state)
 {
     (void)state;
-    int ret = tapi_ss_request_call_barring_test(0);
+    int ret = ss_request_call_barring_test(0);
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleFunc_SSSetCallBarring(void** state)
+static void TestTeleFunc_SSSetAndGetCallBarring(void** state)
 {
     (void)state;
-    int ret = tapi_ss_set_call_barring_option_test(0, "AI", "1234");
+    int ret = ss_set_and_get_call_barring_option_test(0, "AI", "1234");
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleFunc_SSGetCallBarring(void** state)
+static void TestTeleFunc_SSChangeAndResetCallBarringPassword(void** state)
 {
     (void)state;
-    sleep(5);
-    int ret = tapi_ss_get_call_barring_option_test(0, "VoiceIncoming", "always");
-    assert_int_equal(ret, 0);
-}
-
-static void TestTeleFunc_SSChangeCallBarringPassword(void** state)
-{
-    (void)state;
-    int ret = tapi_ss_change_call_barring_password_test(0, "1234", "2345");
-    assert_int_equal(ret, 0);
-}
-
-static void TestTeleFunc_SSResetCallBarringPassword(void** state)
-{
-    (void)state;
-    int ret = tapi_ss_change_call_barring_password_test(0, "2345", "1234");
+    int ret = ss_change_and_reset_call_barring_password_test(0, "1234", "2345");
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_SSDisableAllIncoming(void** state)
 {
     (void)state;
-    int ret = tapi_ss_disable_all_incoming_test(0, "1234");
+    int ret = ss_disable_all_incoming_test(0, "1234");
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_SSDisableAllOutgoing(void** state)
 {
     (void)state;
-    int ret = tapi_ss_disable_all_outgoing_test(0, "1234");
+    int ret = ss_disable_all_outgoing_test(0, "1234");
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_SSDisableAllCallBarrings(void** state)
 {
     (void)state;
-    int ret = tapi_ss_disable_all_call_barrings_test(0, "1234");
+    int ret = ss_disable_all_call_barrings_test(0, "1234");
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleFunc_CI_SSSetCallForwardingUnConditional(void** state)
+static void TestTeleFunc_CI_SSSetAndGetCallForwardingUnConditional(void** state)
 {
     (void)state;
-    int ret = tapi_ss_set_call_forwarding_option_test(0, 0, "10086");
-    assert_int_equal(ret, 0);
-}
-
-static void TestTeleFunc_CI_SSGetCallForwardingUnConditional(void** state)
-{
-    (void)state;
-    int ret = tapi_ss_get_call_forwarding_option_test(0, 0);
+    int ret = ss_set_and_get_call_forwarding_option_test(0, 0, "10086");
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_CallForwardingContinuous(void** state)
 {
     (void)state;
-    int ret = tapi_ss_call_forwarding_continuous_test(0, phone_num);
+    int ret = ss_call_forwarding_continuous_test(0, phone_num);
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleFunc_CI_SSClearCallForwardingUnconditional(void** state)
+static void TestTeleFunc_CI_SSSetAndGetCallForwardingBusy(void** state)
 {
     (void)state;
-    int ret = tapi_ss_set_call_forwarding_option_test(0, 0, "\0");
+    int ret = ss_set_and_get_call_forwarding_option_test(0, 1, "10086");
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleFunc_CI_SSSetCallForwardingBusy(void** state)
+static void TestTeleFunc_CI_SSSetAndGetCallForwardingNoReply(void** state)
 {
     (void)state;
-    int ret = tapi_ss_set_call_forwarding_option_test(0, 1, "10086");
+    int ret = ss_set_and_get_call_forwarding_option_test(0, 2, "10086");
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleFunc_CI_SSGetCallForwardingBusy(void** state)
+static void TestTeleFunc_CI_SSSetAndGetCallForwardingNotReachable(void** state)
 {
     (void)state;
-    int ret = tapi_ss_get_call_forwarding_option_test(0, 1);
+    int ret = ss_set_and_get_call_forwarding_option_test(0, 3, "10086");
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleFunc_CI_SSClearCallForwardingBusy(void** state)
+static void TestTeleFunc_CI_SSEnableAndDisableCallWaiting(void** state)
 {
     (void)state;
-    int ret = tapi_ss_set_call_forwarding_option_test(0, 1, "\0");
+    int ret = ss_set_and_get_call_waiting_test(0, true);
     assert_int_equal(ret, 0);
-}
-
-static void TestTeleFunc_CI_SSSetCallForwardingNoReply(void** state)
-{
-    (void)state;
-    int ret = tapi_ss_set_call_forwarding_option_test(0, 2, "10086");
-    assert_int_equal(ret, 0);
-}
-
-static void TestTeleFunc_CI_SSGetCallForwardingNoReply(void** state)
-{
-    (void)state;
-    int ret = tapi_ss_get_call_forwarding_option_test(0, 2);
-    assert_int_equal(ret, 0);
-}
-
-static void TestTeleFunc_CI_SSClearCallForwardingNoReply(void** state)
-{
-    (void)state;
-    int ret = tapi_ss_set_call_forwarding_option_test(0, 2, "\0");
-    assert_int_equal(ret, 0);
-}
-
-static void TestTeleFunc_CI_SSSetCallForwardingNotReachable(void** state)
-{
-    (void)state;
-    int ret = tapi_ss_set_call_forwarding_option_test(0, 3, "10086");
-    assert_int_equal(ret, 0);
-}
-
-static void TestTeleFunc_CI_SSGetCallForwardingNotReachable(void** state)
-{
-    (void)state;
-    int ret = tapi_ss_get_call_forwarding_option_test(0, 3);
-    assert_int_equal(ret, 0);
-}
-
-static void TestTeleFunc_CI_SSClearCallForwardingNotReachable(void** state)
-{
-    (void)state;
-    int ret = tapi_ss_set_call_forwarding_option_test(0, 3, "\0");
-    assert_int_equal(ret, 0);
-}
-
-static void TestTeleFunc_CI_SSEnableCallWaiting(void** state)
-{
-    (void)state;
-    int ret = tapi_ss_set_call_waiting_test(0, true);
+    ret = ss_set_and_get_call_waiting_test(0, false);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_CallWaitingContinuous(void** state)
 {
     (void)state;
-    int ret = tapi_ss_call_waiting_continuous_test(0);
+    int ret = ss_call_waiting_continuous_test(0);
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleFunc_CI_SSGetEnableCallWaiting(void** state)
+static void TestTeleFunc_SSEnableAndDisableFdn(void** state)
 {
     (void)state;
-    int ret = tapi_ss_get_call_waiting_test(0, true);
+    int ret = ss_set_and_get_fdn_test(0, true, "1234");
     assert_int_equal(ret, 0);
-}
-
-static void TestTeleFunc_CI_SSDisableCallWaiting(void** state)
-{
-    (void)state;
-    int ret = tapi_ss_set_call_waiting_test(0, false);
-    assert_int_equal(ret, 0);
-}
-
-static void TestTeleFunc_CI_SSGetDisableCallWaiting(void** state)
-{
-    (void)state;
-    int ret = tapi_ss_get_call_waiting_test(0, false);
-    assert_int_equal(ret, 0);
-}
-
-static void TestTeleFunc_SSEnableFdn(void** state)
-{
-    (void)state;
-    int ret = tapi_ss_enable_fdn_test(0, true, "1234");
-    assert_int_equal(ret, 0);
-}
-
-static void TestTeleFunc_SSGetFdnEnabled(void** state)
-{
-    (void)state;
-    int ret = tapi_ss_query_fdn_test(0, true);
-    assert_int_equal(ret, 0);
-}
-
-static void TestTeleFunc_SSDisableFdn(void** state)
-{
-    (void)state;
-    int ret = tapi_ss_enable_fdn_test(0, false, "1234");
-    assert_int_equal(ret, 0);
-}
-
-static void TestTeleFunc_SSGetFdnDisabled(void** state)
-{
-    (void)state;
-    int ret = tapi_ss_query_fdn_test(0, false);
+    ret = ss_set_and_get_fdn_test(0, false, "1234");
     assert_int_equal(ret, 0);
 }
 
@@ -2593,33 +2484,17 @@ int main(int argc, char* argv[])
         cmocka_unit_test(TestTeleFunc_CI_SSRegister),
         cmocka_unit_test(TestTeleFunc_CI_SSUnRegister),
         cmocka_unit_test(TestTeleFunc_SSRequestCallBarring),
-        cmocka_unit_test(TestTeleFunc_SSSetCallBarring),
-        cmocka_unit_test(TestTeleFunc_SSGetCallBarring),
-        cmocka_unit_test(TestTeleFunc_SSChangeCallBarringPassword),
-        cmocka_unit_test(TestTeleFunc_SSResetCallBarringPassword),
+        cmocka_unit_test(TestTeleFunc_SSSetAndGetCallBarring),
+        cmocka_unit_test(TestTeleFunc_SSChangeAndResetCallBarringPassword),
         cmocka_unit_test(TestTeleFunc_SSDisableAllIncoming),
         cmocka_unit_test(TestTeleFunc_SSDisableAllOutgoing),
         cmocka_unit_test(TestTeleFunc_SSDisableAllCallBarrings),
-        cmocka_unit_test(TestTeleFunc_CI_SSSetCallForwardingUnConditional),
-        cmocka_unit_test(TestTeleFunc_CI_SSGetCallForwardingUnConditional),
-        cmocka_unit_test(TestTeleFunc_CI_SSClearCallForwardingUnconditional),
-        cmocka_unit_test(TestTeleFunc_CI_SSSetCallForwardingBusy),
-        cmocka_unit_test(TestTeleFunc_CI_SSGetCallForwardingBusy),
-        cmocka_unit_test(TestTeleFunc_CI_SSClearCallForwardingBusy),
-        cmocka_unit_test(TestTeleFunc_CI_SSSetCallForwardingNoReply),
-        cmocka_unit_test(TestTeleFunc_CI_SSGetCallForwardingNoReply),
-        cmocka_unit_test(TestTeleFunc_CI_SSClearCallForwardingNoReply),
-        cmocka_unit_test(TestTeleFunc_CI_SSSetCallForwardingNotReachable),
-        cmocka_unit_test(TestTeleFunc_CI_SSGetCallForwardingNotReachable),
-        cmocka_unit_test(TestTeleFunc_CI_SSClearCallForwardingNotReachable),
-        cmocka_unit_test(TestTeleFunc_CI_SSEnableCallWaiting),
-        cmocka_unit_test(TestTeleFunc_CI_SSGetEnableCallWaiting),
-        cmocka_unit_test(TestTeleFunc_CI_SSDisableCallWaiting),
-        cmocka_unit_test(TestTeleFunc_CI_SSGetDisableCallWaiting),
-        cmocka_unit_test(TestTeleFunc_SSEnableFdn),
-        cmocka_unit_test(TestTeleFunc_SSGetFdnEnabled),
-        cmocka_unit_test(TestTeleFunc_SSDisableFdn),
-        cmocka_unit_test(TestTeleFunc_SSGetFdnDisabled),
+        cmocka_unit_test(TestTeleFunc_CI_SSSetAndGetCallForwardingUnConditional),
+        cmocka_unit_test(TestTeleFunc_CI_SSSetAndGetCallForwardingBusy),
+        cmocka_unit_test(TestTeleFunc_CI_SSSetAndGetCallForwardingNoReply),
+        cmocka_unit_test(TestTeleFunc_CI_SSSetAndGetCallForwardingNotReachable),
+        cmocka_unit_test(TestTeleFunc_CI_SSEnableAndDisableCallWaiting),
+        cmocka_unit_test(TestTeleFunc_SSEnableAndDisableFdn),
         cmocka_unit_test(TestTeleFunc_CallForwardingContinuous),
         cmocka_unit_test(TestTeleFunc_CallWaitingContinuous),
     };
