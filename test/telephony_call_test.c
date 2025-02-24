@@ -2186,7 +2186,7 @@ on_exit:
 int call_incoming_hangup_first_answer_call(int slot_id)
 {
     int res = 0;
-    if (tapi_ss_set_call_waiting_test(0, true) < 0) {
+    if (ss_set_and_get_call_waiting_test(0, true) < 0) {
         syslog(LOG_ERR, "Set call waiting true fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -2239,7 +2239,7 @@ int call_incoming_hangup_first_answer_call(int slot_id)
         goto on_exit;
     }
 
-    if (tapi_ss_set_call_waiting_test(0, false)) {
+    if (ss_set_and_get_call_waiting_test(0, false)) {
         syslog(LOG_ERR, "Set call waiting false fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -2252,7 +2252,7 @@ on_exit:
 int call_release_and_answer(int slot_id)
 {
     int res = 0;
-    if (tapi_ss_set_call_waiting_test(0, true) < 0) {
+    if (ss_set_and_get_call_waiting_test(0, true) < 0) {
         syslog(LOG_ERR, "Set call waiting true fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -2317,7 +2317,7 @@ int call_release_and_answer(int slot_id)
         goto on_exit;
     }
 
-    if (tapi_ss_set_call_waiting_test(0, false) < 0) {
+    if (ss_set_and_get_call_waiting_test(0, false) < 0) {
         syslog(LOG_ERR, "Set call waiting false fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -2414,7 +2414,7 @@ on_exit:
 int call_merge_by_user(int slot_id)
 {
     int res = 0;
-    if (tapi_ss_set_call_waiting_test(0, true) < 0) {
+    if (ss_set_and_get_call_waiting_test(0, true) < 0) {
         syslog(LOG_ERR, "Set call waiting true fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -2474,7 +2474,7 @@ int call_merge_by_user(int slot_id)
         goto on_exit;
     }
 
-    if (tapi_ss_set_call_waiting_test(0, false) < 0) {
+    if (ss_set_and_get_call_waiting_test(0, false) < 0) {
         syslog(LOG_ERR, "Set call waiting false fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -2487,7 +2487,7 @@ on_exit:
 int call_separate_by_user(int slot_id)
 {
     int res = 0;
-    if (tapi_ss_set_call_waiting_test(0, true) < 0) {
+    if (ss_set_and_get_call_waiting_test(0, true) < 0) {
         syslog(LOG_ERR, "Set call waiting true fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -2554,7 +2554,7 @@ int call_separate_by_user(int slot_id)
         goto on_exit;
     }
 
-    if (tapi_ss_set_call_waiting_test(0, false) < 0) {
+    if (ss_set_and_get_call_waiting_test(0, false) < 0) {
         syslog(LOG_ERR, "Set call waiting false fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -2567,7 +2567,7 @@ on_exit:
 int call_release_and_swap_other_call(int slot_id)
 {
     int res = 0;
-    if (tapi_ss_set_call_waiting_test(0, true) < 0) {
+    if (ss_set_and_get_call_waiting_test(0, true) < 0) {
         syslog(LOG_ERR, "Set call waiting true fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -2620,7 +2620,7 @@ int call_release_and_swap_other_call(int slot_id)
         goto on_exit;
     }
 
-    if (tapi_ss_set_call_waiting_test(0, false) < 0) {
+    if (ss_set_and_get_call_waiting_test(0, false) < 0) {
         syslog(LOG_ERR, "Set call waiting false fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -2766,7 +2766,7 @@ int call_swap_dial_reject_swap(int slot_id)
 int call_unhold_first_incoming_call_after_hangup_second_call(int slot_id)
 {
     int res = 0;
-    if (tapi_ss_set_call_waiting_test(slot_id, true)) {
+    if (ss_set_and_get_call_waiting_test(slot_id, true)) {
         syslog(LOG_ERR, "Set call waiting fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -2819,7 +2819,7 @@ int call_unhold_first_incoming_call_after_hangup_second_call(int slot_id)
         goto on_exit;
     }
 
-    if (tapi_ss_set_call_waiting_test(slot_id, false)) {
+    if (ss_set_and_get_call_waiting_test(slot_id, false)) {
         syslog(LOG_ERR, "Set call waiting false fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -2890,7 +2890,7 @@ int call_incoming_second_call_swap_answer_hangup_swap(int slot_id)
 int call_hold_current_call_and_reject_new_incoming(int slot_id)
 {
     int res = 0;
-    if (tapi_ss_set_call_waiting_test(0, true) < 0) {
+    if (ss_set_and_get_call_waiting_test(0, true) < 0) {
         syslog(LOG_ERR, "Set call waiting true fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -2942,7 +2942,7 @@ int call_hold_current_call_and_reject_new_incoming(int slot_id)
         goto on_exit;
     }
 
-    if (tapi_ss_set_call_waiting_test(0, false) < 0) {
+    if (ss_set_and_get_call_waiting_test(0, false) < 0) {
         syslog(LOG_ERR, "Set call waiting false fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -2955,7 +2955,7 @@ on_exit:
 int call_incoming_and_hangup_new_call(int slot_id)
 {
     int res = 0;
-    if (tapi_ss_set_call_waiting_test(0, true) < 0) {
+    if (ss_set_and_get_call_waiting_test(0, true) < 0) {
         syslog(LOG_ERR, "Set call waiting true fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -3001,7 +3001,7 @@ int call_incoming_and_hangup_new_call(int slot_id)
         goto on_exit;
     }
 
-    if (tapi_ss_set_call_waiting_test(0, false) < 0) {
+    if (ss_set_and_get_call_waiting_test(0, false) < 0) {
         syslog(LOG_ERR, "Set call waiting false fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -3014,7 +3014,7 @@ on_exit:
 int call_hold_first_call_and_answer_second_call(int slot_id)
 {
     int res = 0;
-    if (tapi_ss_set_call_waiting_test(0, true) < 0) {
+    if (ss_set_and_get_call_waiting_test(0, true) < 0) {
         syslog(LOG_ERR, "Set call waiting true fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -3065,7 +3065,7 @@ int call_hold_first_call_and_answer_second_call(int slot_id)
         goto on_exit;
     }
 
-    if (tapi_ss_set_call_waiting_test(0, false) < 0) {
+    if (ss_set_and_get_call_waiting_test(0, false) < 0) {
         syslog(LOG_ERR, "Set call waiting false fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -3287,7 +3287,7 @@ on_exit:
 int call_swap_in_two_calling(int slot_id)
 {
     int res = 0;
-    if (tapi_ss_set_call_waiting_test(0, true) < 0) {
+    if (ss_set_and_get_call_waiting_test(0, true) < 0) {
         syslog(LOG_ERR, "Set call waiting true fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -3374,7 +3374,7 @@ int call_swap_in_two_calling(int slot_id)
         goto on_exit;
     }
 
-    if (tapi_ss_set_call_waiting_test(0, false) < 0) {
+    if (ss_set_and_get_call_waiting_test(0, false) < 0) {
         syslog(LOG_ERR, "Set call waiting false fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -3387,7 +3387,7 @@ on_exit:
 int call_hangup_current_call_and_resume_call(int slot_id)
 {
     int res = 0;
-    if (tapi_ss_set_call_waiting_test(slot_id, true)) {
+    if (ss_set_and_get_call_waiting_test(slot_id, true)) {
         syslog(LOG_ERR, "Set call waiting fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -3454,7 +3454,7 @@ int call_hangup_current_call_and_resume_call(int slot_id)
         goto on_exit;
     }
 
-    if (tapi_ss_set_call_waiting_test(slot_id, false)) {
+    if (ss_set_and_get_call_waiting_test(slot_id, false)) {
         syslog(LOG_ERR, "Set call waiting fail in %s", __func__);
         res = -1;
         goto on_exit;
