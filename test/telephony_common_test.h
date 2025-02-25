@@ -22,4 +22,5 @@ int tapi_modem_enable_disable_pending_test(int slot_id);
 int tapi_radio_power_on_off_pending_test(int slot_id);
 int tapi_radio_power_on_modem_disable_pending_test(int slot_id);
 int tapi_modem_disable_power_off_pending_test(int slot_id);
+int get_phone_state_test(int slot_id, tapi_phone_state target);
 #endif

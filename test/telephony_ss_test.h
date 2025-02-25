@@ -14,6 +14,7 @@ int ss_disable_all_outgoing_test(int slot_id, char* passwd);
 int ss_request_call_barring_test(int slot_id);
 int ss_set_and_get_call_barring_option_test(int slot_id, char* facility, char* pin2);
 int ss_set_and_get_call_forwarding_option_test(int slot_id, int cf_type, char* number);
+int ss_clear_call_forwarding_option_test(int slot_id, int cf_type);
 int ss_set_and_get_call_waiting_test(int slot_id, bool enable);
 int ss_set_and_get_fdn_test(int slot_id, bool enable, char* passwd);
 #endif /* TELEPHONY_SS_TEST_H_ */
