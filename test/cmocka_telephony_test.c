@@ -1514,6 +1514,55 @@ static void TestTeleFunc_CI_ModemGetImei(void** state)
 //     assert_int_equal(ret, OK);
 // }
 
+static void TestTeleFunc_CI_ModemVerifyPrefNetMode(void** state)
+{
+    tapi_pref_net_mode value, get_value;
+    int ret;
+
+    (void)state;
+    value = NETWORK_PREF_NET_TYPE_UMTS;
+    ret = tapi_set_pref_net_mode_test(0, value);
+    assert_int_equal(ret, OK);
+    ret = tapi_get_pref_net_mode_test(0, &get_value);
+    assert_int_equal(ret, OK);
+    assert_true(value == get_value);
+
+    value = NETWORK_PREF_NET_TYPE_GSM_ONLY;
+    ret = tapi_set_pref_net_mode_test(0, value);
+    assert_int_equal(ret, OK);
+    ret = tapi_get_pref_net_mode_test(0, &get_value);
+    assert_int_equal(ret, OK);
+    assert_true(value == get_value);
+
+    value = NETWORK_PREF_NET_TYPE_WCDMA_ONLY;
+    ret = tapi_set_pref_net_mode_test(0, value);
+    assert_int_equal(ret, OK);
+    ret = tapi_get_pref_net_mode_test(0, &get_value);
+    assert_int_equal(ret, OK);
+    assert_true(value == get_value);
+
+    value = NETWORK_PREF_NET_TYPE_LTE_GSM_WCDMA;
+    ret = tapi_set_pref_net_mode_test(0, value);
+    assert_int_equal(ret, OK);
+    ret = tapi_get_pref_net_mode_test(0, &get_value);
+    assert_int_equal(ret, OK);
+    assert_true(value == get_value);
+
+    value = NETWORK_PREF_NET_TYPE_LTE_ONLY;
+    ret = tapi_set_pref_net_mode_test(0, value);
+    assert_int_equal(ret, OK);
+    ret = tapi_get_pref_net_mode_test(0, &get_value);
+    assert_int_equal(ret, OK);
+    assert_true(value == get_value);
+
+    value = NETWORK_PREF_NET_TYPE_LTE_WCDMA;
+    ret = tapi_set_pref_net_mode_test(0, value);
+    assert_int_equal(ret, OK);
+    ret = tapi_get_pref_net_mode_test(0, &get_value);
+    assert_int_equal(ret, OK);
+    assert_true(value == get_value);
+}
+
 static void TestTeleFunc_CI_ModemGetPrefNetMode(void** state)
 {
     sleep(5);
@@ -1621,6 +1670,104 @@ static void TestTeleFunc_CI_ModemEnableDisableNTimes(void** state)
         TestTeleFunc_CI_ModemEnableStatus(state);
         TestTeleFunc_CI_ModemDisable(state);
         TestTeleFunc_CI_ModemDsiableStatus(state);
+    }
+}
+
+static void TestTeleFunc_CI_ModemEnableDisableNTimesUnderRadioPowerOff(void** state)
+{
+    (void)state;
+    TestTeleFunc_CI_ModemSetRadioPowerOff(state);
+    TestTeleFunc_CI_ModemDisable(state);
+    TestTeleFunc_CI_ModemDsiableStatus(state);
+    TestTeleFunc_CI_ModemEnableDisableNTimes(state);
+}
+
+static void TestTeleFunc_CI_ModemDisableEnableRadioPowerOff(void** state)
+{
+    (void)state;
+    bool value;
+    int ret;
+
+    TestTeleFunc_CI_ModemDisable(state);
+    TestTeleFunc_CI_ModemDsiableStatus(state);
+    TestTeleFunc_CI_ModemEnable(state);
+    TestTeleFunc_CI_ModemEnableStatus(state);
+    TestTeleFunc_CI_ModemSetRadioPowerOff(state);
+    ret = tapi_get_radio_power_test(0, &value);
+    assert_int_equal(ret, OK);
+    assert_false(value);
+}
+
+static void TestTeleFunc_CI_ModemDisableRadioPowerOff(void** state)
+{
+    (void)state;
+    TestTeleFunc_CI_ModemSetRadioPowerOn(state);
+    TestTeleFunc_CI_ModemDisable(state);
+    TestTeleFunc_CI_ModemDsiableStatus(state);
+    int ret = tapi_set_radio_power_test(0, 0);
+    assert_int_equal(ret, -1);
+    TestTeleFunc_CI_ModemEnable(state);
+    TestTeleFunc_CI_ModemEnableStatus(state);
+    TestTeleFunc_CI_ModemSetRadioPowerOn(state);
+}
+
+static void TestTeleFunc_CI_ModemEnableDisableNTimesUnderDialingCall(void** state)
+{
+    (void)state;
+
+    TestTeleFunc_CI_ModemEnable(state);
+    TestTeleFunc_CI_ModemEnableStatus(state);
+    TestTeleFunc_CI_ModemSetRadioPowerOn(state);
+    TestTeleFunc_CI_CallDialNumber(state);
+    REPEAT_TEST_LESS_FOR
+    {
+        TestTeleFunc_CI_ModemDisable(state);
+        TestTeleFunc_CI_ModemDsiableStatus(state);
+        TestTeleFunc_CI_ModemEnable(state);
+        TestTeleFunc_CI_ModemEnableStatus(state);
+    }
+}
+
+static void TestTeleFunc_CI_SetRadioOffUnderDialingCall(void** state)
+{
+    (void)state;
+    bool value;
+    int ret;
+
+    TestTeleFunc_CI_CallDialNumber(state);
+    TestTeleFunc_CI_ModemSetRadioPowerOff(state);
+    ret = tapi_get_radio_power_test(0, &value);
+    assert_int_equal(ret, OK);
+    assert_false(value);
+    TestTeleFunc_CI_ModemSetRadioPowerOn(state);
+}
+
+static void TestTeleFunc_CI_SetRadioOffUnderOngoingCall(void** state)
+{
+    (void)state;
+    bool value;
+    int ret;
+
+    ret = call_dial_and_keep_in_call_active(0);
+    assert_int_equal(ret, 0);
+    TestTeleFunc_CI_ModemSetRadioPowerOff(state);
+    ret = tapi_get_radio_power_test(0, &value);
+    assert_int_equal(ret, OK);
+    assert_false(value);
+    TestTeleFunc_CI_ModemSetRadioPowerOn(state);
+}
+
+static void TestTeleFunc_CI_ModemEnableDisableNTimesUnderOngoingCall(void** state)
+{
+    (void)state;
+    int ret = call_dial_and_keep_in_call_active(0);
+    assert_int_equal(ret, OK);
+    REPEAT_TEST_LESS_FOR
+    {
+        TestTeleFunc_CI_ModemDisable(state);
+        TestTeleFunc_CI_ModemDsiableStatus(state);
+        TestTeleFunc_CI_ModemEnable(state);
+        TestTeleFunc_CI_ModemEnableStatus(state);
     }
 }
 
@@ -1961,6 +2108,33 @@ static void TestTeleFunc_CI_SSEnableAndDisableCallWaiting(void** state)
     assert_int_equal(ret, 0);
     ret = ss_set_and_get_call_waiting_test(0, false);
     assert_int_equal(ret, 0);
+}
+
+static void TestTeleFunc_CI_GetPhoneState(void** state)
+{
+    tapi_phone_state target;
+    int ret;
+
+    (void)state;
+    target = PHONE_IDLE;
+    ret = get_phone_state_test(0, target);
+    assert_int_equal(ret, OK);
+    target = PHONE_OFFHOOK;
+    TestTeleFunc_CI_CallDialNumber(state);
+    ret = get_phone_state_test(0, target);
+    assert_int_equal(ret, OK);
+    ret = tapi_call_hangup_current_call_test(0);
+    assert_int_equal(ret, OK);
+    ret = ss_clear_call_forwarding_option_test(0, 0);
+    ret = ss_clear_call_forwarding_option_test(0, 1);
+    ret = ss_clear_call_forwarding_option_test(0, 2);
+    ret = ss_clear_call_forwarding_option_test(0, 3);
+    ret = remote_operation_call_incoming_test(0, phone_num);
+    assert_int_equal(ret, OK);
+    target = PHONE_RINGING;
+    ret = get_phone_state_test(0, target);
+    assert_int_equal(ret, OK);
+    ret = tapi_call_hangup_current_call_test(0);
 }
 
 static void TestTeleFunc_CallWaitingContinuous(void** state)
@@ -2529,6 +2703,15 @@ int main(int argc, char* argv[])
             NULL, TearDown_OpenDefaultTapi),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CloseTapi,
             NULL, TearDown_OpenDefaultTapi),
+        cmocka_unit_test(TestTeleFunc_CI_ModemEnableDisableNTimesUnderRadioPowerOff),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ModemEnableDisableNTimesUnderDialingCall, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ModemEnableDisableNTimesUnderOngoingCall, setup_call, teardown_call),
+        cmocka_unit_test(TestTeleFunc_CI_ModemVerifyPrefNetMode),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_GetPhoneState, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_SetRadioOffUnderDialingCall, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_SetRadioOffUnderOngoingCall, setup_call, teardown_call),
+        cmocka_unit_test(TestTeleFunc_CI_ModemDisableEnableRadioPowerOff),
+        cmocka_unit_test(TestTeleFunc_CI_ModemDisableRadioPowerOff),
     };
 
     sleep(3);

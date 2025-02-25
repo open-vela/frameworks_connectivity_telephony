@@ -2215,6 +2215,33 @@ on_exit:
     return res;
 }
 
+int call_dial_and_keep_in_call_active(int slot_id)
+{
+    int res = 0;
+    if (tapi_call_dial_test(slot_id, phone_num, 0)) {
+        syslog(LOG_ERR, "Dail fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (remote_operation_call_active_test(slot_id, phone_num)) {
+        syslog(LOG_ERR, "Call active fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (get_current_call_state_test(slot_id) != CALL_STATUS_ACTIVE) {
+        syslog(LOG_ERR, "Get current call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
 int call_check_dialing_status_with_multi_call(int slot_id)
 {
     int res = 0;
