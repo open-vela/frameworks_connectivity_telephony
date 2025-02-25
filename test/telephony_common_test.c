@@ -76,7 +76,6 @@ static void tele_call_async_fun(tapi_async_result* result)
 
     if (result->status != OK) {
         syslog(LOG_DEBUG, "%s msg id : %d result err, return.\n", __func__, result->msg_id);
-        return;
     }
 
     int event = result->msg_id;
@@ -170,6 +169,14 @@ int tapi_get_pref_net_mode_test(int slot_id, tapi_pref_net_mode* value)
     int ret = tapi_get_pref_net_mode(get_tapi_ctx(), slot_id, value);
     syslog(LOG_DEBUG, "%s, slotId : %d value :%d \n", __func__, slot_id, *value);
     return ret;
+}
+
+int get_phone_state_test(int slot_id, tapi_phone_state target)
+{
+    tapi_phone_state state;
+    int ret = tapi_get_phone_state(get_tapi_ctx(), slot_id, &state);
+    syslog(LOG_DEBUG, "%s, slotId : %d state :%d \n", __func__, slot_id, state);
+    return ret || (state != target);
 }
 
 int tapi_radio_power_on_off_pending_test(int slot_id)
