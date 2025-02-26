@@ -149,14 +149,27 @@ static void call_param_append(DBusMessageIter* iter, void* user_data)
 
 static void answer_hangup_param_append(DBusMessageIter* iter, void* user_data)
 {
-    char* path = user_data;
+    tapi_async_handler* handler = user_data;
+    tapi_async_result* ar;
 
-    if (path == NULL) {
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
+        return;
+    }
+
+    ar = handler->result;
+    if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
+        return;
+    }
+
+    char* call_id = ar->data;
+    if (call_id == NULL) {
         tapi_log_error("invalid answer_hangup request argument in %s!!", __func__);
         return;
     }
 
-    dbus_message_iter_append_basic(iter, DBUS_TYPE_OBJECT_PATH, &path);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_OBJECT_PATH, &call_id);
 }
 
 static void dtmf_param_append(DBusMessageIter* iter, void* user_data)
@@ -1633,8 +1646,16 @@ int tapi_call_register_call_state_change(tapi_context context, int slot_id,
 
 int tapi_call_answer_by_id(tapi_context context, int slot_id, char* call_id)
 {
+    return tapi_call_answer_by_id_async(context, slot_id, call_id, NULL, NULL);
+}
+
+int tapi_call_answer_by_id_async(tapi_context context, int slot_id, char* call_id,
+    void* user_obj, tapi_async_function p_handle)
+{
     dbus_context* ctx = context;
     GDBusProxy* proxy;
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
 
     report_data_logging_for_call(ctx, OFONO_NORMAL_CALL, OFONO_TERMINATE, OFONO_VOICE,
         OFONO_NORMAL, "NA");
@@ -1659,11 +1680,30 @@ int tapi_call_answer_by_id(tapi_context context, int slot_id, char* call_id)
         return -EIO;
     }
 
+    ar = calloc(1, sizeof(tapi_async_result));
+    if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
+        return -ENOMEM;
+    }
+    ar->arg1 = slot_id;
+    ar->data = call_id;
+    ar->user_obj = user_obj;
+
+    handler = malloc(sizeof(tapi_async_handler));
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
+        free(ar);
+        return -ENOMEM;
+    }
+    handler->result = ar;
+    handler->cb_function = p_handle;
+
     if (!g_dbus_proxy_method_call(proxy, "Answer", answer_hangup_param_append,
-            no_operate_callback, call_id, NULL)) {
+            generic_callback, handler, handler_free)) {
         tapi_log_error("dbus method call failed in %s", __func__);
         report_data_logging_for_call(ctx, OFONO_NORMAL_CALL, OFONO_TERMINATE,
             OFONO_VOICE, OFONO_ANSWER_FAIL, "dbus method call fail");
+        handler_free(handler);
         return -EINVAL;
     }
 
@@ -1674,6 +1714,8 @@ int tapi_call_hangup_by_id(tapi_context context, int slot_id, char* call_id)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
 
     if (ctx == NULL) {
         tapi_log_error("context is null in %s", __func__);
@@ -1696,11 +1738,29 @@ int tapi_call_hangup_by_id(tapi_context context, int slot_id, char* call_id)
         return -EIO;
     }
 
+    ar = calloc(1, sizeof(tapi_async_result));
+    if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
+        return -ENOMEM;
+    }
+    ar->arg1 = slot_id;
+    ar->data = call_id;
+
+    handler = malloc(sizeof(tapi_async_handler));
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
+        free(ar);
+        return -ENOMEM;
+    }
+    handler->result = ar;
+    handler->cb_function = NULL;
+
     if (!g_dbus_proxy_method_call(proxy, "Hangup", answer_hangup_param_append,
-            no_operate_callback, call_id, NULL)) {
+            no_operate_callback, handler, handler_free)) {
         tapi_log_error("dbus method call failed in %s", __func__);
         report_data_logging_for_call(ctx, OFONO_CALL_TYPE_UNKNOW, OFONO_DIRECTION_UNKNOW,
             OFONO_MEDIA_UNKNOW, OFONO_HANGUP_FAIL, "dbus method call fail");
+        handler_free(handler);
         return -EINVAL;
     }
 

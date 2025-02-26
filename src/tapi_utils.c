@@ -54,6 +54,25 @@ void no_operate_callback(DBusMessage* message, void* user_data)
 {
 }
 
+void generic_callback(DBusMessage* message, void* user_data)
+{
+    tapi_async_handler* handler = user_data;
+    DBusError err;
+    int status = OK;
+
+    dbus_error_init(&err);
+    if (dbus_set_error_from_message(&err, message) == true) {
+        tapi_log_error("error from message in %s, %s: %s", __func__, err.name, err.message);
+        status = ERROR;
+        dbus_error_free(&err);
+    }
+
+    if (handler != NULL && handler->result != NULL && handler->cb_function != NULL) {
+        handler->result->status = status;
+        handler->cb_function(handler->result);
+    }
+}
+
 const char* get_env_interface_support_string(const char* interface)
 {
     if (strcmp(interface, OFONO_MODEM_INTERFACE) == 0)
