@@ -341,6 +341,18 @@ int tapi_call_register_call_state_change(tapi_context context, int slot_id,
 int tapi_call_answer_by_id(tapi_context context, int slot_id, char* call_id);
 
 /**
+ * Answer one call with callback, answer result will be callbacked.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] call_id        Call id of current call.
+ * @param[in] user_obj       User data.
+ * @param[in] p_handle       Event callback.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_call_answer_by_id_async(tapi_context context, int slot_id, char* call_id,
+    void* user_obj, tapi_async_function p_handle);
+
+/**
  * Hanup one call.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
