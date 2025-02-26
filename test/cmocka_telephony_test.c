@@ -741,24 +741,34 @@ static void TestTeleAbn_CallAnswerAgain(void** state)
 // }
 
 // data testcases
+static void TestTeleFunc_CI_DataRegisterAndUnregister(void** state)
+{
+    (void)state;
+    int ret;
+    ret = data_listen_data_test(0);
+    assert_int_equal(ret, OK);
+    ret = data_unlisten_data_test();
+    assert_int_equal(ret, OK);
+}
+
 static void TestTeleFunc_CI_DataLoadApnContexts(void** state)
 {
     (void)state;
-    int ret = tapi_data_load_apn_contexts_test(0);
+    int ret = data_load_apn_contexts_test(0);
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_DataSaveApnContextSupl(void** state)
 {
     (void)state;
-    int ret = tapi_data_save_apn_context_test("0", "3", "supl", "supl", "2", "2");
+    int ret = data_save_apn_context_test("0", "3", "supl", "supl", "2", "2");
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_DataSaveApnContextEmergency(void** state)
 {
     (void)state;
-    int ret = tapi_data_save_apn_context_test("0", "7", "emergency",
+    int ret = data_save_apn_context_test("0", "7", "emergency",
         "emergency", "2", "2");
     assert_int_equal(ret, OK);
 }
@@ -766,7 +776,7 @@ static void TestTeleFunc_DataSaveApnContextEmergency(void** state)
 static void TestTeleFunc_DataSaveLongApnContex(void** state)
 {
     (void)state;
-    int ret = tapi_data_save_apn_context_test("0", "1",
+    int ret = data_save_apn_context_test("0", "1",
         "longname-----------------------------------------"
         "-----------------------------------------longname",
         "cmnet4", "2", "2");
@@ -776,21 +786,23 @@ static void TestTeleFunc_DataSaveLongApnContex(void** state)
 static void TestTeleFunc_DataSaveApnContext(void** state)
 {
     (void)state;
-    int ret = tapi_data_save_apn_context_test("0", "1", "cmcc1", "cmnet1", "2", "2");
+    int ret = data_save_apn_context_test("0", "1", "cmcc1", "cmnet1", "2", "2");
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_DataRemoveApnContext(void** state)
 {
     (void)state;
-    int ret = tapi_data_remove_apn_context_test("0", "/ril_0/context3");
+    int ret = data_save_apn_context_test("0", "1", "cmcc1", "cmnet1", "2", "2");
+    assert_int_equal(ret, OK);
+    ret = data_remove_apn_context_test("0", "/ril_0/context3");
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_DataResetApnContexts(void** state)
 {
     (void)state;
-    int ret = tapi_data_reset_apn_contexts_test("0");
+    int ret = data_reset_apn_contexts_test("0");
     assert_int_equal(ret, OK);
 }
 
@@ -799,7 +811,7 @@ static void TestTeleFunc_DataResetApnContextsNTimes(void** state)
     (void)state;
     REPEAT_TEST_MORE_FOR
     {
-        int ret = tapi_data_reset_apn_contexts_test("0");
+        int ret = data_reset_apn_contexts_test("0");
         assert_int_equal(ret, OK);
     }
 }
@@ -808,32 +820,38 @@ static void TestTeleFunc_DataEditApnName(void** state)
 {
     (void)state;
     int ret;
-    ret = tapi_data_save_apn_context_test("0", "1", "cmcc1", "cmnet1", "2", "2");
+    ret = data_save_apn_context_test("0", "1", "cmcc1", "cmnet1", "2", "2");
     assert_int_equal(ret, OK);
-    ret = tapi_data_edit_apn_context_test("0", "/ril_0/context3", "1", "cmname", "cmname", "2", "2");
+    ret = data_edit_apn_context_test("0", "/ril_0/context3", "1", "cmname", "cmname", "2", "2");
     assert_int_equal(ret, OK);
-    ret = tapi_data_load_apn_contexts_test(0);
+    ret = data_load_apn_contexts_test(0);
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_DataEditApnType(void** state)
 {
     (void)state;
-    int ret = tapi_data_edit_apn_context_test("0", "/ril_0/context3", "3", "cmname", "cmname", "2", "2");
+    int ret = data_save_apn_context_test("0", "1", "cmcc1", "cmnet1", "2", "2");
+    assert_int_equal(ret, OK);
+    ret = data_edit_apn_context_test("0", "/ril_0/context3", "3", "cmname", "cmname", "2", "2");
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_DataEditApnProto(void** state)
 {
     (void)state;
-    int ret = tapi_data_edit_apn_context_test("0", "/ril_0/context3", "3", "cmname", "cmname", "0", "2");
+    int ret = data_save_apn_context_test("0", "1", "cmcc1", "cmnet1", "2", "2");
+    assert_int_equal(ret, OK);
+    ret = data_edit_apn_context_test("0", "/ril_0/context3", "3", "cmname", "cmname", "0", "2");
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_DataEditApnAuth(void** state)
 {
     (void)state;
-    int ret = tapi_data_edit_apn_context_test("0", "/ril_0/context3", "3", "cmname", "cmname", "0", "0");
+    int ret = data_save_apn_context_test("0", "1", "cmcc1", "cmnet1", "2", "2");
+    assert_int_equal(ret, OK);
+    ret = data_edit_apn_context_test("0", "/ril_0/context3", "3", "cmname", "cmname", "0", "0");
     assert_int_equal(ret, OK);
 }
 
@@ -841,9 +859,11 @@ static void TestTeleFunc_DataEditApnAll(void** state)
 {
     (void)state;
     int ret;
-    ret = tapi_data_edit_apn_context_test("0", "/ril_0/context3", "2", "cmnameall", "cmnameall", "1", "1");
+    ret = data_save_apn_context_test("0", "1", "cmcc1", "cmnet1", "2", "2");
     assert_int_equal(ret, OK);
-    ret = tapi_data_load_apn_contexts_test(0);
+    ret = data_edit_apn_context_test("0", "/ril_0/context3", "2", "cmnameall", "cmnameall", "1", "1");
+    assert_int_equal(ret, OK);
+    ret = data_load_apn_contexts_test(0);
     assert_int_equal(ret, OK);
 }
 
@@ -851,9 +871,11 @@ static void TestTeleFunc_DataEditApnAndRemove(void** state)
 {
     (void)state;
     int ret;
-    ret = tapi_data_edit_apn_context_test("0", "/ril_0/context3", "2", "cmnameall", "cmnameall", "2", "2");
+    ret = data_save_apn_context_test("0", "1", "cmcc1", "cmnet1", "2", "2");
     assert_int_equal(ret, OK);
-    ret = tapi_data_remove_apn_context_test("0", "/ril_0/context3");
+    ret = data_edit_apn_context_test("0", "/ril_0/context3", "2", "cmnameall", "cmnameall", "2", "2");
+    assert_int_equal(ret, OK);
+    ret = data_remove_apn_context_test("0", "/ril_0/context3");
     assert_int_equal(ret, OK);
 }
 
@@ -861,11 +883,11 @@ static void TestTeleFunc_DataEditApnAndReset(void** state)
 {
     (void)state;
     int ret;
-    ret = tapi_data_save_apn_context_test("0", "1", "cmcc1", "cmnet1", "2", "2");
+    ret = data_save_apn_context_test("0", "1", "cmcc1", "cmnet1", "2", "2");
     assert_int_equal(ret, OK);
-    ret = tapi_data_edit_apn_context_test("0", "/ril_0/context3", "1", "cmname", "cmname", "2", "2");
+    ret = data_edit_apn_context_test("0", "/ril_0/context3", "1", "cmname", "cmname", "2", "2");
     assert_int_equal(ret, OK);
-    ret = tapi_data_reset_apn_contexts_test("0");
+    ret = data_reset_apn_contexts_test("0");
     assert_int_equal(ret, OK);
 }
 
@@ -873,22 +895,22 @@ static void TestTeleFunc_DataEditApnRepeatedlyAndLoad(void** state)
 {
     (void)state;
     int ret;
-    ret = tapi_data_save_apn_context_test("0", "1", "cmcc1", "cmnet1", "2", "2");
+    ret = data_save_apn_context_test("0", "1", "cmcc1", "cmnet1", "2", "2");
     assert_int_equal(ret, OK);
-    ret = tapi_data_edit_apn_context_test("0", "/ril_0/context1", "1", "cmname11", "cmname", "2", "2");
+    ret = data_edit_apn_context_test("0", "/ril_0/context1", "1", "cmname11", "cmname", "2", "2");
     assert_int_equal(ret, OK);
-    ret = tapi_data_edit_apn_context_test("0", "/ril_0/context1", "1", "cmname22", "cmname", "2", "2");
+    ret = data_edit_apn_context_test("0", "/ril_0/context1", "1", "cmname22", "cmname", "2", "2");
     assert_int_equal(ret, OK);
-    ret = tapi_data_edit_apn_context_test("0", "/ril_0/context1", "1", "cmname33", "cmname", "2", "2");
+    ret = data_edit_apn_context_test("0", "/ril_0/context1", "1", "cmname33", "cmname", "2", "2");
     assert_int_equal(ret, OK);
-    ret = tapi_data_load_apn_contexts_test(0);
+    ret = data_load_apn_contexts_test(0);
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_CI_DataEnable(void** state)
 {
     (void)state;
-    int ret = data_enabled_test(0);
+    int ret = data_enabled_test(1);
     assert_int_equal(ret, OK);
 }
 
@@ -909,140 +931,83 @@ static void TestTeleFunc_DataEnableNTimes(void** state)
     }
 }
 
-static void TestTeleFunc_CI_DataIsEnable(void** state)
+static void TestTeleFunc_CI_DataReleaseAndRequestNetworkInternet(void** state)
 {
     (void)state;
-    bool enable = false;
-    int ret = tapi_data_get_enabled_test(&enable);
+    int ret;
+    ret = data_release_internet_network_test(0);
     assert_int_equal(ret, OK);
-    assert_int_equal(enable, 1);
-}
-
-static void TestTeleFunc_CI_DataIsDisable(void** state)
-{
-    (void)state;
-    bool enable = true;
-    int ret = tapi_data_get_enabled_test(&enable);
-    assert_int_equal(ret, OK);
-    assert_int_equal(enable, 0);
-}
-
-static void TestTeleFunc_CI_DataRegister(void** state)
-{
-    (void)state;
-    int ret = tapi_data_listen_data_test(0);
+    ret = data_request_internet_network_test(0);
     assert_int_equal(ret, OK);
 }
 
-static void TestTeleFunc_CI_DataUnregister(void** state)
-{
-    (void)state;
-    int ret = tapi_data_unlisten_data_test();
-    assert_int_equal(ret, OK);
-}
-
-static void TestTeleFunc_CI_DataRequestNetworkInternet(void** state)
-{
-    (void)state;
-    int ret = data_request_network_test(0);
-    assert_int_equal(ret, OK);
-}
-
-static void TestTeleFunc_CI_DataReleaseNetworkInternet(void** state)
-{
-    (void)state;
-    int ret = data_release_network_test(0);
-    assert_int_equal(ret, OK);
-}
-
-static void TestTeleFunc_DataReleaseNetworkInternetNTimes(void** state)
+static void TestTeleFunc_DataReleaseAndRequestNetworkInternetNTimes(void** state)
 {
     (void)state;
     REPEAT_TEST_MORE_FOR
     {
-        TestTeleFunc_CI_DataReleaseNetworkInternet(state);
-        TestTeleFunc_CI_DataRequestNetworkInternet(state);
+        TestTeleFunc_CI_DataReleaseAndRequestNetworkInternet(state);
     }
 }
 
-static void TestTeleFunc_DataRequestNetworkIms(void** state)
+static void TestTeleFunc_DataRequestAndReleaseNetworkIms(void** state)
 {
     (void)state;
-    int ret = data_request_ims(0);
+    int ret;
+    ret = data_request_ims_network_test(0);
+    assert_int_equal(ret, OK);
+    ret = data_release_ims_network_test(0);
     assert_int_equal(ret, OK);
 }
 
-static void TestTeleFunc_DataReleaseNetworkIms(void** state)
-{
-    (void)state;
-    int ret = data_release_ims(0);
-    assert_int_equal(ret, OK);
-}
-
-static void TestTeleFunc_DataReleaseNetworkImsNTimes(void** state)
+static void TestTeleFunc_DataRequestAndReleaseNetworkImsNTimes(void** state)
 {
     (void)state;
     REPEAT_TEST_MORE_FOR
     {
-        TestTeleFunc_DataRequestNetworkIms(state);
-        TestTeleFunc_DataReleaseNetworkIms(state);
+        TestTeleFunc_DataRequestAndReleaseNetworkIms(state);
     }
 }
 
-static void TestTeleFunc_CI_DataSetPreferredApn(void** state)
+static void TestTeleFunc_CI_DataSetAndGetPreferredApn(void** state)
 {
     (void)state;
-    int ret = tapi_data_set_preferred_apn_test(0, "/ril_0/context1");
-    assert_int_equal(ret, OK);
-}
-
-static void TestTeleFunc_CI_DataGetPreferredApn(void** state)
-{
-    (void)state;
-    int ret = tapi_data_get_preferred_apn_test(0);
+    int ret = data_set_and_get_preferred_apn_test(0, "/ril_0/context1");
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_CI_DataSendScreenState(void** state)
 {
     (void)state;
-    int ret = tapi_data_send_screen_stat_test(0);
+    int ret = data_send_screen_stat_test(0);
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_CI_DataIsPsAttached(void** state)
 {
     (void)state;
-    int ret = tapi_data_is_ps_attached_test(0);
+    int ret = data_is_ps_attached_test(0);
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_CI_DataGetNetworkType(void** state)
 {
     (void)state;
-    int ret = tapi_data_get_network_type_test(0);
+    int ret = data_get_network_type_test(0);
     assert_int_equal(ret, OK);
 }
 
-static void TestTeleFunc_DataSetDefaultDataSlot(void** state)
+static void TestTeleFunc_DataSetAndGetDefaultDataSlot(void** state)
 {
     (void)state;
-    int ret = tapi_data_set_default_data_slot_test(0);
-    assert_int_equal(ret, OK);
-}
-
-static void TestTeleFunc_DataGetDefaultDataSlot(void** state)
-{
-    (void)state;
-    sleep(2);
-    int ret = tapi_data_get_default_data_slot_test();
+    int ret = data_set_and_get_default_data_slot_test(0);
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_CI_DataSetDataAllow(void** state)
 {
     (void)state;
-    int ret = tapi_data_set_data_allow_test(0);
+    int ret = data_set_data_allow_test(0);
     assert_true(ret == OK);
 }
 
@@ -1056,14 +1021,14 @@ static void TestTeleFunc_CI_DataGetCallList(void** state)
 static void TestTeleFunc_CI_DataEnableRoaming(void** state)
 {
     (void)state;
-    int ret = data_enable_roaming_test();
+    int ret = data_enable_and_get_roaming_test();
     assert_true(ret == OK);
 }
 
 static void TestTeleFunc_CI_DataDisableRoaming(void** state)
 {
     (void)state;
-    int ret = data_disable_roaming_test();
+    int ret = data_disable_and_get_roaming_test();
     assert_true(ret == OK);
 }
 
@@ -2393,49 +2358,39 @@ int main(int argc, char* argv[])
     };
 
     const struct CMUnitTest DataTestSuites[] = {
-        cmocka_unit_test(TestTeleFunc_CI_DataRegister),
+        cmocka_unit_test(TestTeleFunc_CI_DataRegisterAndUnregister),
         cmocka_unit_test(TestTeleFunc_CI_DataLoadApnContexts),
-        cmocka_unit_test(TestTeleFunc_DataSaveApnContext),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_DataSaveApnContext, setup_data, teardown_data),
         cmocka_unit_test(TestTeleFunc_DataRemoveApnContext),
-        cmocka_unit_test(TestTeleFunc_DataResetApnContexts),
         cmocka_unit_test(TestTeleFunc_DataResetApnContextsNTimes),
-        cmocka_unit_test(TestTeleFunc_DataEditApnName),
-        cmocka_unit_test(TestTeleFunc_DataEditApnType),
-        cmocka_unit_test(TestTeleFunc_DataEditApnProto),
-        cmocka_unit_test(TestTeleFunc_DataEditApnAuth),
-        cmocka_unit_test(TestTeleFunc_DataEditApnAll),
-        cmocka_unit_test(TestTeleFunc_DataEditApnAndRemove),
-        cmocka_unit_test(TestTeleFunc_DataEditApnAndReset),
-        cmocka_unit_test(TestTeleFunc_DataEditApnRepeatedlyAndLoad),
-        cmocka_unit_test(TestTeleFunc_DataResetApnContexts),
-        cmocka_unit_test(TestTeleFunc_DataEnableNTimes),
-        cmocka_unit_test(TestTeleFunc_CI_DataEnable),
-        cmocka_unit_test(TestTeleFunc_CI_DataIsEnable),
-        cmocka_unit_test(TestTeleFunc_CI_DataReleaseNetworkInternet),
-        cmocka_unit_test(TestTeleFunc_CI_DataRequestNetworkInternet),
-        cmocka_unit_test(TestTeleFunc_DataReleaseNetworkInternetNTimes),
-        cmocka_unit_test(TestTeleFunc_CI_DataDisable),
-        cmocka_unit_test(TestTeleFunc_CI_DataIsDisable),
-        cmocka_unit_test(TestTeleFunc_DataRequestNetworkIms),
-        cmocka_unit_test(TestTeleFunc_DataReleaseNetworkIms),
-        cmocka_unit_test(TestTeleFunc_DataReleaseNetworkImsNTimes),
-        cmocka_unit_test(TestTeleFunc_DataSaveApnContextSupl),
-        cmocka_unit_test(TestTeleFunc_DataSaveApnContextEmergency),
-        cmocka_unit_test(TestTeleFunc_DataResetApnContexts),
-        cmocka_unit_test(TestTeleFunc_CI_DataSetPreferredApn),
-        cmocka_unit_test(TestTeleFunc_CI_DataGetPreferredApn),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_DataEditApnName, setup_data, teardown_data),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_DataEditApnType, setup_data, teardown_data),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_DataEditApnProto, setup_data, teardown_data),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_DataEditApnAuth, setup_data, teardown_data),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_DataEditApnAll, setup_data, teardown_data),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_DataEditApnAndRemove, setup_data, teardown_data),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_DataEditApnAndReset, setup_data, teardown_data),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_DataEditApnRepeatedlyAndLoad, setup_data, teardown_data),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_DataEnableNTimes, setup_data, teardown_data),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_DataEnable, setup_data_enable, teardown_data_enable),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_DataDisable, setup_data_enable, teardown_data_enable),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_DataReleaseAndRequestNetworkInternet, setup_data_enable, teardown_data_enable),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_DataReleaseAndRequestNetworkInternetNTimes, setup_data_enable, teardown_data_enable),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_DataRequestAndReleaseNetworkIms, setup_data_enable, teardown_data_enable),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_DataRequestAndReleaseNetworkImsNTimes, setup_data_enable, teardown_data_enable),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_DataSaveApnContextSupl, setup_data, teardown_data),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_DataSaveApnContextEmergency, setup_data, teardown_data),
+        cmocka_unit_test(TestTeleFunc_CI_DataSetAndGetPreferredApn),
         cmocka_unit_test(TestTeleFunc_CI_DataSendScreenState),
         cmocka_unit_test(TestTeleFunc_CI_DataGetNetworkType),
         cmocka_unit_test(TestTeleFunc_CI_DataIsPsAttached),
-        cmocka_unit_test(TestTeleFunc_DataSetDefaultDataSlot),
-        cmocka_unit_test(TestTeleFunc_DataGetDefaultDataSlot),
+        cmocka_unit_test(TestTeleFunc_DataSetAndGetDefaultDataSlot),
         cmocka_unit_test(TestTeleFunc_CI_DataSetDataAllow),
-        cmocka_unit_test(TestTeleFunc_CI_DataGetCallList),
-        cmocka_unit_test(TestTeleFunc_DataSaveLongApnContex),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_DataGetCallList, setup_data_enable, teardown_data_enable),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_DataSaveLongApnContex, setup_data, teardown_data),
         cmocka_unit_test(TestTeleFunc_DataResetApnContexts),
         cmocka_unit_test(TestTeleFunc_CI_DataEnableRoaming),
         cmocka_unit_test(TestTeleFunc_CI_DataDisableRoaming),
-        cmocka_unit_test(TestTeleFunc_CI_DataUnregister),
     };
 
     const struct CMUnitTest SmsTestSuites[] = {

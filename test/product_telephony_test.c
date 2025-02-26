@@ -101,7 +101,7 @@ static void TestNuttxDataIsEnable(void** state)
     (void)state;
     bool enable = false;
     sleep(5);
-    int ret = tapi_data_get_enabled_test(&enable);
+    int ret = data_get_enabled_test(&enable);
     assert_int_equal(ret, OK);
     assert_int_equal(enable, 1);
 }
@@ -111,7 +111,7 @@ static void TestNuttxDataIsDisable(void** state)
     (void)state;
     bool enable = true;
     sleep(5);
-    int ret = tapi_data_get_enabled_test(&enable);
+    int ret = data_get_enabled_test(&enable);
     assert_int_equal(ret, OK);
     assert_int_equal(enable, 0);
 }
@@ -119,14 +119,14 @@ static void TestNuttxDataIsDisable(void** state)
 static void TestNuttxDataRegister(void** state)
 {
     (void)state;
-    int ret = tapi_data_listen_data_test(0);
+    int ret = data_listen_data_test(0);
     assert_int_equal(ret, OK);
 }
 
 static void TestNuttxDataUnregister(void** state)
 {
     (void)state;
-    int ret = tapi_data_unlisten_data_test();
+    int ret = data_unlisten_data_test();
     assert_int_equal(ret, OK);
 }
 
@@ -269,7 +269,7 @@ static void TestNuttxNetGetOperatorName(void** state)
 static void TestNuttxDataIsPsAttached(void** state)
 {
     (void)state;
-    int ret = tapi_data_is_ps_attached_test(0);
+    int ret = data_is_ps_attached_test(0);
     assert_int_equal(ret, OK);
 }
 

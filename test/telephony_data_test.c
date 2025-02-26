@@ -12,7 +12,98 @@ static struct
 static void data_event_response(tapi_async_result* result);
 static void data_signal_change(tapi_async_result* result);
 
-int tapi_data_listen_data_test(int slot_id)
+int setup_data(void** state)
+{
+    (void)state;
+    return data_listen_data_test(0);
+}
+
+int setup_data_enable(void** state)
+{
+    (void)state;
+    int ret = 0;
+    bool enable = false;
+
+    if (data_listen_data_test(0)) {
+        syslog(LOG_ERR, "listen data fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (data_get_enabled_test(&enable)) {
+        syslog(LOG_ERR, "get data enabled fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (!enable) {
+        if (data_enable_data_test(1)) {
+            syslog(LOG_ERR, "enable data fail in %s", __func__);
+            ret = -1;
+            goto on_exit;
+        }
+    }
+    sleep(3);
+
+on_exit:
+    return ret;
+}
+
+int teardown_data(void** state)
+{
+    (void)state;
+    int ret = 0;
+    if (data_reset_apn_contexts_test(0)) {
+        syslog(LOG_ERR, "reset apn contexts fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (data_unlisten_data_test()) {
+        syslog(LOG_ERR, "unlisten data fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return ret;
+}
+
+int teardown_data_enable(void** state)
+{
+    (void)state;
+    int ret = 0;
+    bool enable = true;
+
+    if (data_get_enabled_test(&enable)) {
+        syslog(LOG_ERR, "get data enabled fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (enable) {
+        if (data_enable_data_test(0)) {
+            syslog(LOG_ERR, "enable data fail in %s", __func__);
+            ret = -1;
+            goto on_exit;
+        }
+    }
+
+    if (data_unlisten_data_test()) {
+        syslog(LOG_ERR, "unlisten data fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return ret;
+}
+
+int data_listen_data_test(int slot_id)
 {
     global_data.data_enabled_watch_id = -1;
     global_data.data_enabled_watch_id = tapi_data_register(
@@ -38,7 +129,7 @@ int tapi_data_listen_data_test(int slot_id)
     return 0;
 }
 
-int tapi_data_unlisten_data_test(void)
+int data_unlisten_data_test(void)
 {
     int ret = -1, res = 0;
     syslog(LOG_INFO, "data enabled watch id: %d, data connection state change watch id: %d",
@@ -63,12 +154,40 @@ on_exit:
     return res;
 }
 
-int tapi_data_load_apn_contexts_test(int slot_id)
+int create_apn_context(tapi_data_context** apn_context, char* id, char* type, char* name, char* apn, char* proto, char* auth)
+{
+    *apn_context = malloc(sizeof(tapi_data_context));
+    if (*apn_context == NULL) {
+        return -EINVAL;
+    }
+
+    if (id != NULL) {
+        (*apn_context)->id = id;
+    }
+
+    (*apn_context)->type = atoi(type);
+    (*apn_context)->protocol = atoi(proto);
+    (*apn_context)->auth_method = atoi(auth);
+
+    if (strlen(name) <= MAX_APN_DOMAIN_LENGTH)
+        strcpy((*apn_context)->name, name);
+
+    if (strlen(apn) <= MAX_APN_DOMAIN_LENGTH)
+        strcpy((*apn_context)->accesspointname, apn);
+
+    strcpy((*apn_context)->username, "");
+    strcpy((*apn_context)->password, "");
+
+    return 0;
+}
+
+int data_load_apn_contexts_test(int slot_id)
 {
     int ret = -1;
     int res = 0;
     judge_data_init();
     judge_data.expect = EVENT_APN_LOADED_DONE;
+
     ret = tapi_data_load_apn_contexts(get_tapi_ctx(), slot_id, EVENT_APN_LOADED_DONE, data_event_response);
 
     if (ret) {
@@ -93,31 +212,19 @@ on_exit:
     return res;
 }
 
-int tapi_data_save_apn_context_test(char* slot_id, char* type, char* name, char* apn, char* proto, char* auth)
+int data_save_apn_context_test(char* slot_id, char* type, char* name, char* apn, char* proto, char* auth)
 {
     int ret = -1;
     int res = 0;
     tapi_data_context* apn_context;
     judge_data_init();
     judge_data.expect = EVENT_APN_ADD_DONE;
-    apn_context = malloc(sizeof(tapi_data_context));
-    if (apn_context == NULL) {
-        syslog(LOG_DEBUG, "apn_contex is null in %s", __func__);
-        return -EINVAL;
+
+    if (create_apn_context(&apn_context, NULL, type, name, apn, proto, auth)) {
+        syslog(LOG_ERR, "create_apn_context fail in %s", __func__);
+        res = -1;
+        goto on_exit;
     }
-
-    apn_context->type = atoi(type);
-    apn_context->protocol = atoi(proto);
-    apn_context->auth_method = atoi(auth);
-
-    if (strlen(name) <= MAX_APN_DOMAIN_LENGTH)
-        strcpy(apn_context->name, name);
-
-    if (strlen(apn) <= MAX_APN_DOMAIN_LENGTH)
-        strcpy(apn_context->accesspointname, apn);
-
-    strcpy(apn_context->username, "");
-    strcpy(apn_context->password, "");
 
     ret = tapi_data_add_apn_context(get_tapi_ctx(), atoi(slot_id), EVENT_APN_ADD_DONE, apn_context, data_event_response);
     free(apn_context);
@@ -143,42 +250,44 @@ on_exit:
     return res;
 }
 
-int tapi_data_edit_apn_context_test(char* slot_id, char* id, char* type, char* name, char* apn, char* proto, char* auth)
+int data_edit_apn_context_test(char* slot_id, char* id, char* type, char* name, char* apn, char* proto, char* auth)
 {
-    int ret = -1;
+    int ret = -1, res = 0;
     tapi_data_context* apn_context;
     judge_data_init();
     judge_data.expect = EVENT_APN_EDIT_DONE;
-    apn_context = malloc(sizeof(tapi_data_context));
-    if (apn_context == NULL) {
-        syslog(LOG_ERR, "apn_context is null in %s", __func__);
-        return -EINVAL;
+
+    if (create_apn_context(&apn_context, id, type, name, apn, proto, auth)) {
+        syslog(LOG_ERR, "create_apn_context fail in %s", __func__);
+        res = -1;
+        goto on_exit;
     }
-
-    apn_context->id = id;
-    apn_context->type = atoi(type);
-    apn_context->protocol = atoi(proto);
-    apn_context->auth_method = atoi(auth);
-
-    if (strlen(name) <= MAX_APN_DOMAIN_LENGTH)
-        strcpy(apn_context->name, name);
-
-    if (strlen(apn) <= MAX_APN_DOMAIN_LENGTH)
-        strcpy(apn_context->accesspointname, apn);
-
-    strcpy(apn_context->username, "");
-    strcpy(apn_context->password, "");
 
     ret = tapi_data_edit_apn_context(get_tapi_ctx(), atoi(slot_id), EVENT_APN_EDIT_DONE, apn_context, data_event_response);
     free(apn_context);
-    judge();
+    if (ret) {
+        syslog(LOG_ERR, "tapi_data_add_apn_context execute fail in %s, ret: %d", __func__, ret);
+        res = -1;
+        goto on_exit;
+    }
 
-    return ret
-        || judge_data.result
-        || (judge_data.expect != judge_data.flag);
+    if (judge()) {
+        syslog(LOG_DEBUG, "data_event_response is not executed in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge_data.result) {
+        syslog(LOG_ERR, "async result is invalid in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
 }
 
-int tapi_data_remove_apn_context_test(char* slot_id, char* id)
+int data_remove_apn_context_test(char* slot_id, char* id)
 {
     int ret = -1;
     int res = 0;
@@ -217,7 +326,7 @@ on_exit:
     return res;
 }
 
-int tapi_data_reset_apn_contexts_test(char* slot_id)
+int data_reset_apn_contexts_test(char* slot_id)
 {
     int ret = -1;
     int res = 0;
@@ -247,7 +356,7 @@ on_exit:
     return res;
 }
 
-int tapi_data_request_network_test(int slot_id, char* target_state)
+int data_request_network_test(int slot_id, char* target_state)
 {
     int res = 0;
     judge_data_init();
@@ -285,12 +394,13 @@ on_exit:
     return res;
 }
 
-int tapi_data_release_network_test(int slot_id, char* target_state)
+int data_release_network_test(int slot_id, char* target_state)
 {
     int res = 0;
     judge_data_init();
     judge_data.expect = MSG_DATA_CONNECTION_STATE_CHANGE_IND;
     global_data.connection_state = -100;
+
     int ret = tapi_data_release_network(get_tapi_ctx(), slot_id, target_state);
     if (ret) {
         syslog(LOG_ERR, "tapi_data_release_network execute fail in %s, ret: %d",
@@ -322,12 +432,13 @@ on_exit:
     return res;
 }
 
-int tapi_data_enable_test(int state)
+int data_enable_data_test(int state)
 {
     int res = 0;
     judge_data_init();
     judge_data.expect = MSG_DATA_ENABLED_CHANGE_IND;
     global_data.data_on = -1;
+
     int ret = tapi_data_enable_data(get_tapi_ctx(), state);
     if (ret) {
         syslog(LOG_ERR, "tapi_data_enable_data execute fail in %s, ret: %d",
@@ -359,42 +470,87 @@ on_exit:
 }
 
 // is-data-on
-int tapi_data_get_enabled_test(bool* result)
+int data_get_enabled_test(bool* result)
 {
     int ret = tapi_data_get_enabled(get_tapi_ctx(), result);
     bool flag = *result;
-    syslog(LOG_DEBUG, "ret: %d, result: %d", ret, (int)flag);
+    syslog(LOG_DEBUG, "%s: ret: %d, result: %d", __func__, ret, (int)flag);
 
     return ret;
 }
 
-int tapi_data_is_ps_attached_test(int slot_id)
+int data_enabled_test(bool enable)
+{
+    int ret = 0;
+    if (data_get_enabled_test(&enable)) {
+        syslog(LOG_ERR, "get data enabled fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (!enable) {
+        if (data_enable_data_test(1)) {
+            syslog(LOG_ERR, "enable data fail in %s", __func__);
+            ret = -1;
+            goto on_exit;
+        }
+    }
+
+on_exit:
+    return ret;
+}
+
+int data_disabled_test(bool enable)
+{
+    int ret = 0;
+    if (data_get_enabled_test(&enable)) {
+        syslog(LOG_ERR, "get data enabled fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (enable) {
+        if (data_enable_data_test(0)) {
+            syslog(LOG_ERR, "enable data fail in %s", __func__);
+            ret = -1;
+            goto on_exit;
+        }
+    }
+
+on_exit:
+    return ret;
+}
+
+int data_is_ps_attached_test(int slot_id)
 {
     bool result = false;
     int ret = tapi_data_is_registered(get_tapi_ctx(), slot_id, &result);
     return ret || !result;
 }
 
-int tapi_data_get_network_type_test(int slot_id)
+int data_get_network_type_test(int slot_id)
 {
     tapi_network_type result = NETWORK_TYPE_UNKNOWN;
     int ret = tapi_data_get_network_type(get_tapi_ctx(), slot_id, &result);
+    syslog(LOG_DEBUG, "%s: ret: %d, result: %d", __func__, ret, (int)result);
     return ret || result != NETWORK_TYPE_LTE;
 }
 
-int tapi_data_enable_roaming_test(int state)
+int data_enable_roaming_test(int state)
 {
     int ret = tapi_data_enable_roaming(get_tapi_ctx(), state);
     return ret;
 }
 
-bool tapi_data_get_roaming_enabled_test(bool* result)
+bool data_get_roaming_enabled_test(bool* result)
 {
     int ret = tapi_data_get_roaming_enabled(get_tapi_ctx(), result);
     return ret;
 }
 
-int tapi_data_set_preferred_apn_test(int slot_id, char* apn_id)
+int data_set_preferred_apn_test(int slot_id, char* apn_id)
 {
     tapi_data_context* apn = malloc(sizeof(tapi_data_context));
     if (apn == NULL) {
@@ -408,7 +564,7 @@ int tapi_data_set_preferred_apn_test(int slot_id, char* apn_id)
     return ret;
 }
 
-int tapi_data_get_preferred_apn_test(int slot_id)
+int data_get_preferred_apn_test(int slot_id)
 {
     sleep(2);
     char* apn = NULL;
@@ -418,20 +574,53 @@ int tapi_data_get_preferred_apn_test(int slot_id)
     return ret || strcmp(apn, "/ril_0/context1") != 0;
 }
 
-int tapi_data_set_default_data_slot_test(int slot_id)
+int data_set_and_get_preferred_apn_test(int slot_id, char* apn_id)
 {
-    int ret = tapi_data_set_default_slot(get_tapi_ctx(), slot_id);
+    int ret = 0;
+    if (data_set_preferred_apn_test(slot_id, apn_id)) {
+        syslog(LOG_ERR, "set preferred apn fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (data_get_preferred_apn_test(slot_id)) {
+        syslog(LOG_ERR, "get preferred apn fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+on_exit:
     return ret;
 }
 
-int tapi_data_get_default_data_slot_test(void)
+int data_set_and_get_default_data_slot_test(int slot_id)
 {
-    int result = -1;
-    int ret = tapi_data_get_default_slot(get_tapi_ctx(), &result);
-    return ret || result != 0;
+    int ret = 0, result = -1;
+    if (tapi_data_set_default_slot(get_tapi_ctx(), slot_id)) {
+        syslog(LOG_ERR, "set default data slot fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (tapi_data_get_default_slot(get_tapi_ctx(), &result)) {
+        syslog(LOG_ERR, "get default data slot fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    if (result != slot_id) {
+        syslog(LOG_ERR, "result != slot_id fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return ret;
 }
 
-int tapi_data_set_data_allow_test(int slot_id)
+int data_set_data_allow_test(int slot_id)
 {
     int res = 0;
     judge_data_init();
@@ -459,7 +648,7 @@ on_exit:
     return res;
 }
 
-int tapi_data_send_screen_stat_test(int slot_id)
+int data_send_screen_stat_test(int slot_id)
 {
     int ret = tapi_set_fast_dormancy(get_tapi_ctx(), slot_id,
         EVENT_REQUEST_SCREEN_STATE_DONE, 1, data_event_response);
@@ -468,7 +657,7 @@ int tapi_data_send_screen_stat_test(int slot_id)
     return ret;
 }
 
-int tapi_data_get_data_call_list_test(int slot_id)
+int data_get_data_call_list_test(int slot_id)
 {
     int res = 0;
     judge_data_init();
@@ -647,49 +836,33 @@ static void data_signal_change(tapi_async_result* result)
     }
 }
 
-int data_enabled_test(int slot_id)
+int data_release_internet_network_test(int slot_id)
 {
-    int ret = tapi_data_enable_test(1);
-    syslog(LOG_DEBUG, "%s, ret: %d", __func__, ret);
-
-    return ret;
-}
-
-int data_disabled_test(int slot_id)
-{
-    int ret = tapi_data_enable_test(0);
-    syslog(LOG_DEBUG, "%s, ret: %d", __func__, ret);
-
-    return ret;
-}
-
-int data_release_network_test(int slot_id)
-{
-    int ret = tapi_data_release_network_test(slot_id, "internet");
+    int ret = data_release_network_test(slot_id, "internet");
     syslog(LOG_DEBUG, "%s, slot_id: %d, ret: %d", __func__, slot_id, ret);
 
     return ret;
 }
 
-int data_request_network_test(int slot_id)
+int data_request_internet_network_test(int slot_id)
 {
-    int ret = tapi_data_request_network_test(slot_id, "internet");
+    int ret = data_request_network_test(slot_id, "internet");
     syslog(LOG_DEBUG, "%s, slot_id: %d, ret: %d", __func__, slot_id, ret);
 
     return ret;
 }
 
-int data_request_ims(int slot_id)
+int data_request_ims_network_test(int slot_id)
 {
-    int ret = tapi_data_request_network_test(slot_id, "ims");
+    int ret = data_request_network_test(slot_id, "ims");
     syslog(LOG_DEBUG, "%s, slot_id: %d, ret: %d", __func__, slot_id, ret);
 
     return ret;
 }
 
-int data_release_ims(int slot_id)
+int data_release_ims_network_test(int slot_id)
 {
-    int ret = tapi_data_release_network_test(slot_id, "ims");
+    int ret = data_release_network_test(slot_id, "ims");
     syslog(LOG_DEBUG, "%s, slot_id: %d, ret: %d", __func__, slot_id, ret);
 
     return ret;
@@ -697,40 +870,15 @@ int data_release_ims(int slot_id)
 
 int data_get_call_list(int slot_id)
 {
-    int ret = -1;
-    int res = 0;
-
-    ret = tapi_data_enable_test(1);
-    if (ret) {
-        syslog(LOG_ERR, "enable data failed in %s, ret: %d", __func__, ret);
-        res = -1;
-        goto on_exit;
-    }
-
-    ret = tapi_data_get_data_call_list_test(slot_id);
-    if (ret) {
-        syslog(LOG_ERR, "get data call list failed in %s", __func__);
-        res = -1;
-        goto on_exit;
-    }
-
-    ret = tapi_data_enable_test(0);
-    if (ret) {
-        syslog(LOG_ERR, "disable data failed in %s", __func__);
-        res = -1;
-        goto on_exit;
-    }
-
-on_exit:
-    return res;
+    return data_get_data_call_list_test(slot_id);
 }
 
-int data_enable_roaming_test(void)
+int data_enable_and_get_roaming_test(void)
 {
     bool result = false;
     int ret = -1;
     int res = 0;
-    ret = tapi_data_enable_roaming_test(true);
+    ret = data_enable_roaming_test(true);
     if (ret) {
         syslog(LOG_ERR, "enable data roaming failed");
         res = -1;
@@ -738,7 +886,7 @@ int data_enable_roaming_test(void)
     }
 
     sleep(3);
-    ret = tapi_data_get_roaming_enabled_test(&result);
+    ret = data_get_roaming_enabled_test(&result);
     if (ret) {
         syslog(LOG_ERR, "get data roaming failed in %s", __func__);
         res = -1;
@@ -755,12 +903,12 @@ on_exit:
     return res;
 }
 
-int data_disable_roaming_test(void)
+int data_disable_and_get_roaming_test(void)
 {
     bool result = true;
     int ret = -1;
     int res = 0;
-    ret = tapi_data_enable_roaming_test(false);
+    ret = data_enable_roaming_test(false);
     if (ret) {
         syslog(LOG_ERR, "disable data roaming failed in %s", __func__);
         res = -1;
@@ -768,7 +916,7 @@ int data_disable_roaming_test(void)
     }
 
     sleep(3);
-    ret = tapi_data_get_roaming_enabled_test(&result);
+    ret = data_get_roaming_enabled_test(&result);
     if (ret) {
         syslog(LOG_ERR, "get data roaming failed in %s", __func__);
         res = -1;
