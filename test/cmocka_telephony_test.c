@@ -718,6 +718,13 @@ static void TestTeleFunc_CI_CallUnlisten(void** state)
     assert_int_equal(ret, 0);
 }
 
+static void TestTeleAbn_CallAnswerAgain(void** state)
+{
+    (void)state;
+    int ret = call_abnormal_answer_again_test(0);
+    assert_int_equal(ret, 0);
+}
+
 // static void TestTeleHangupCallAfterRemoteAnswer(void **state) {
 //     int ret = call_hangup_after_caller_answer(0);
 //     assert_int_equal(ret, 0);
@@ -2354,6 +2361,7 @@ int main(int argc, char* argv[])
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallSetVoicecallSlot, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallGetVoicecallSlot, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallClearVoicecallSlot, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleAbn_CallAnswerAgain, setup_call, teardown_call),
     };
 
     const struct CMUnitTest DataTestSuites[] = {
@@ -2537,31 +2545,6 @@ int main(int argc, char* argv[])
             NULL, TearDown_OpenDefaultTapi),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CloseTapi,
             NULL, TearDown_OpenDefaultTapi),
-
-        //         cmocka_unit_test_setup_teardown(TestTeleModemSetRadioPowerOnOffRepeatedly,
-        //             setup_normal_mode, free_mode),
-        //         // Airplane mode
-        //         cmocka_unit_test(TestTeleModemSetRadioPowerOff),
-        //         // cmocka_unit_test_setup_teardown(TestTeleImsServiceStatus,
-        //         //     setup_airplane_mode, free_mode),
-        //         cmocka_unit_test(TestTeleModemSetRadioPowerOn),
-
-        //         // Call dialing
-        //         cmocka_unit_test(TestTeleModemDialCall),
-        //         // TODO: enable disable modem
-        //         cmocka_unit_test(TestTeleModemSetRadioPowerOn),
-        //         // cmocka_unit_test_setup_teardown(TestTeleImsServiceStatus,
-        //         //     setup_call_dialing, free_mode),
-        //         cmocka_unit_test(TestTeleModemHangupCall),
-
-        //         // Modem poweroff
-        //
-        //         // cmocka_unit_test_setup_teardown(TestTeleImsServiceStatus,
-        //         //     setup_modem_poweroff, free_mode),
-        //         cmocka_unit_test_setup_teardown(TestTeleModemSetRadioPowerOnOffRepeatedly,
-        //             setup_modem_poweroff, free_mode),
-        //     // FIXME: Cannot enable because of RADIO_NOT_AVAILABLE
-        //     // cmocka_unit_test(TestTeleModemEnable),
     };
 
     sleep(3);

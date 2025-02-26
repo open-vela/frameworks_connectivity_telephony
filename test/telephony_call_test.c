@@ -1342,6 +1342,49 @@ on_exit:
     return res;
 }
 
+static void generic_callback_test(tapi_async_result* result)
+{
+    syslog(LOG_DEBUG, "%s: generic callback status: %d\n", __func__, result->status);
+
+    if (judge_data.expect == EVENT_GENERIC_CALLBACK_STATUS) {
+        judge_data.result = result->status;
+        judge_data.flag = judge_data.expect;
+    }
+}
+
+int call_answer_call_aysnc_test(int slot_id, char* call_id)
+{
+    int res = 0;
+
+    if (test_case_data.call_id[0] == 0) {
+        syslog(LOG_ERR, "current call id is NULL\n");
+        return -1;
+    }
+
+    judge_data_init();
+    judge_data.expect = EVENT_GENERIC_CALLBACK_STATUS;
+
+    int ret = tapi_call_answer_by_id_async(get_tapi_ctx(), slot_id, call_id,
+        NULL, generic_callback_test);
+    if (ret) {
+        syslog(LOG_ERR, "tapi_call_answer_call_test execute fail in %s, ret:%d",
+            __func__, ret);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge()) {
+        syslog(LOG_DEBUG, "tapi_call_answer_call_test is not executed in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    res = judge_data.result;
+
+on_exit:
+    return res;
+}
+
 int call_check_alerting_status(void)
 {
     int res = 0;
@@ -1710,6 +1753,41 @@ int call_clear_voicecall_slot(void)
             res = -1;
             goto on_exit;
         }
+    }
+
+on_exit:
+    return res;
+}
+
+int call_abnormal_answer_again_test(int slot_id)
+{
+    int res = 0;
+
+    if (remote_operation_call_incoming_test(slot_id, phone_num)) {
+        syslog(LOG_ERR, "Remote call incoming fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (tapi_call_answer_call_test(slot_id, test_case_data.call_id)) {
+        syslog(LOG_ERR, "Call answer fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    syslog(LOG_INFO, "Call answer again for call id:%s", test_case_data.call_id);
+    if (ERROR != call_answer_call_aysnc_test(slot_id, test_case_data.call_id)) {
+        syslog(LOG_ERR, "answer again not reply error in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+    syslog(LOG_INFO, "successfully recieved expect error reply in %s", __func__);
+
+    sleep(3);
+    if (tapi_call_hangup_current_call_test(slot_id)) {
+        syslog(LOG_ERR, "Hangup current call execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
     }
 
 on_exit:
