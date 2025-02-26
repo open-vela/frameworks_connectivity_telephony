@@ -23,6 +23,7 @@
 #define EVENT_REQUEST_STOP_DTMF_DONE 0x31
 #define EVENT_REQUEST_CALL_MERGE_DONE 0x32
 #define EVENT_REQUEST_CALL_SEPARATE_DONE 0x33
+#define EVENT_GENERIC_CALLBACK_STATUS 0x34
 
 int setup_call(void** state);
 int teardown_call(void** state);
@@ -36,6 +37,7 @@ int tapi_start_dtmf_test(int slot_id);
 int tapi_stop_dtmf_test(int slot_id);
 int tapi_call_get_call_test(int slot_id);
 int tapi_call_answer_call_test(int slot_id, char* call_id);
+int call_answer_call_aysnc_test(int slot_id, char* call_id);
 int tapi_ss_listen_test(int slot_id);
 int tapi_ss_unlisten_test(void);
 int call_dial_ecc_number_test(int slot_id);
@@ -112,4 +114,5 @@ int call_connect_and_local_hangup(int slot_id);
 int dial_and_remote_hangup(int slot_id);
 int incoming_call_and_local_hangup(int slot_id);
 int call_incoming_after_remote_hangup(int slot_id);
+int call_abnormal_answer_again_test(int slot_id);
 #endif
