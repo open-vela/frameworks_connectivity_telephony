@@ -113,6 +113,7 @@ int call_clear_voicecall_slot(void);
 int call_connect_and_local_hangup(int slot_id);
 int dial_and_remote_hangup(int slot_id);
 int incoming_call_and_local_hangup(int slot_id);
+int incoming_call_and_remote_hangup(int slot_id);
 int call_incoming_after_remote_hangup(int slot_id);
 int remote_operation_call_incoming_test(int slot_id, char* phone_number);
 int call_dial_and_keep_in_call_active(int slot_id);

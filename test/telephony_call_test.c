@@ -3686,6 +3686,26 @@ on_exit:
     return res;
 }
 
+int incoming_call_and_remote_hangup(int slot_id)
+{
+    int res = 0;
+    if (remote_operation_call_incoming_test(slot_id, phone_num)) {
+        syslog(LOG_ERR, "Incoming call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (remote_operation_call_reject_test(slot_id, phone_num)) {
+        syslog(LOG_ERR, "Remote call reject fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
 // 67
 int call_listen_and_unlisten_ss(int slot_id)
 {
