@@ -2216,7 +2216,7 @@ static void TestTeleFunc_CI_DefaultOpenTapi(void** state)
     assert_true(get_tapi_ctx() != NULL);
 
     tapi_enable_modem(get_tapi_ctx(), 0, 0, 1, NULL); // eanble modem anyway
-    sleep(5);
+    sleep(10);
 
     ret = tapi_sim_has_icc_card_test(0);
     assert_int_equal(ret, OK);
@@ -2248,7 +2248,7 @@ static void TestTeleFunc_CI_BtTeleOpenTapi(void** state)
     assert_true(get_tapi_ctx() != NULL);
 
     tapi_enable_modem(get_tapi_ctx(), 0, 0, 0, NULL); // disable modem anyway
-    sleep(2);
+    sleep(10);
     TestTeleFunc_CI_ModemEnable(state);
 
     /* No sim service, so return no availble proxy failure */
