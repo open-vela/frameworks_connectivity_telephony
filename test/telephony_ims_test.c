@@ -1,4 +1,5 @@
 #include "telephony_ims_test.h"
+#include "telephony_common_test.h"
 
 static void tele_ims_async_fun(tapi_async_result* result);
 extern struct judge_type judge_data;
@@ -84,6 +85,39 @@ int teardown_ims(void** state)
 
     if (tapi_ims_unlisten_ims_test()) {
         syslog(LOG_ERR, "Unlisten ims state execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return ret;
+}
+
+int teardown_imsAndRadio(void** state)
+{
+    bool radio = false;
+    int ret = 0;
+
+    ret = tapi_get_radio_power_test(0, &radio);
+    if (ret) {
+        syslog(LOG_ERR, "tapi_get_radio_power_test execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    if (!radio) {
+        syslog(LOG_INFO, "radio is off, change to on in %s", __func__);
+        ret = tapi_set_radio_power_test(0, true);
+        if (ret) {
+            syslog(LOG_ERR, "tapi_set_radio_power_test execute fail in %s", __func__);
+            ret = -1;
+            goto on_exit;
+        }
+    }
+
+    ret = teardown_ims(state);
+    if (ret) {
+        syslog(LOG_ERR, "teardown_ims execute fail in %s", __func__);
         ret = -1;
         goto on_exit;
     }
