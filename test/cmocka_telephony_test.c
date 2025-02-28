@@ -1390,6 +1390,13 @@ static void TestTeleFunc_SmsSetAndGetCellBroadcastTopics(void** state)
     assert_int_equal(ret, 0);
 }
 
+static void TestTeleFunc_CallIncomingRejectandSendMessage(void** state)
+{
+    (void)state;
+    TestTeleFunc_CallIncomingandLocalHangup(state);
+    TestTeleFunc_SmsSendShortMessageInEnglish(state);
+}
+
 static void TestTeleFunc_NetSelectAuto(void** state)
 {
     (void)state;
@@ -2541,6 +2548,7 @@ int main(int argc, char* argv[])
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialOtherAfterReject, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingandLocalHangup, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingandRemoteHangup, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingRejectandSendMessage, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingAfterRemoteHangup, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingAndHangupNewCall, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingHangupFirstAnswerCall, setup_call, teardown_call),
