@@ -1870,6 +1870,34 @@ static void TestTeleFunc_CI_ImsTurnOnOff(void** state)
     }
 }
 
+static void TestTeleFunc_ImsCheckRegAfterRadioOffOn(void** state)
+{
+    tapi_ims_registration_info info1, info2;
+
+    (void)state;
+
+    TestTeleFunc_CI_ImsTurnOn(state);
+    sleep(1);
+
+    memset(&info1, 0, sizeof(info1));
+    tapi_ims_get_registration(get_tapi_ctx(), 0, &info1);
+    syslog(LOG_ERR, "%s, info1: reg_info=%d,ext_info=%d", __func__, info1.reg_info, info1.ext_info);
+    assert(info1.reg_info);
+
+    tapi_set_radio_power_test(0, 0);
+    sleep(3);
+    tapi_set_radio_power_test(0, 1);
+    sleep(3);
+
+    memset(&info2, 0, sizeof(info2));
+    tapi_ims_get_registration(get_tapi_ctx(), 0, &info2);
+    syslog(LOG_ERR, "%s, info2: reg_info=%d,ext_info=%d", __func__,  info2.reg_info, info2.ext_info);
+    assert(info2.reg_info);
+
+    assert(info1.reg_info == info2.reg_info);
+    assert(info2.ext_info == info2.ext_info);
+}
+
 static void TestTeleFunc_CI_SSRegister(void** state)
 {
     (void)state;
@@ -2486,6 +2514,7 @@ int main(int argc, char* argv[])
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ImsResetImsCap, setup_ims, teardown_ims),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ImsSetSmsVoiceCap, setup_ims, teardown_ims),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ImsSetSmsCap, setup_ims, teardown_ims),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_ImsCheckRegAfterRadioOffOn, setup_ims, teardown_imsAndRadio),
     };
 
     const struct CMUnitTest SSTestSuits[] = {

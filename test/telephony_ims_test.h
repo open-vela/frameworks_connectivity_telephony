@@ -5,6 +5,7 @@
 
 int setup_ims(void** state);
 int teardown_ims(void** state);
+int teardown_imsAndRadio(void** state);
 int tapi_ims_listen_ims_test(int slot_id);
 int tapi_ims_unlisten_ims_test(void);
 int tapi_ims_turn_on_test(int slot_id);
