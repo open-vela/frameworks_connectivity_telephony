@@ -3706,6 +3706,30 @@ on_exit:
     return res;
 }
 
+int incoming_call_and_remote_hangup_for_times(int slot_id)
+{
+    int res = 0;
+    char numbers[3][11] = { "10086", "10010", "10001" };
+    for (int i = 0; i < 3; i++) {
+        if (remote_operation_call_incoming_test(slot_id, numbers[i])) {
+            syslog(LOG_ERR, "Incoming call %s fail in %s", phone_num, __func__);
+            res = -1;
+            goto on_exit;
+        }
+        sleep(3);
+
+        if (remote_operation_call_reject_test(slot_id, numbers[i])) {
+            syslog(LOG_ERR, "Remote call %s reject fail in %s", phone_num, __func__);
+            res = -1;
+            goto on_exit;
+        }
+        sleep(3);
+    }
+
+on_exit:
+    return res;
+}
+
 // 67
 int call_listen_and_unlisten_ss(int slot_id)
 {

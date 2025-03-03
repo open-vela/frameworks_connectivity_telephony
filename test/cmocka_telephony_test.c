@@ -673,6 +673,13 @@ static void TestTeleFunc_CallIncomingandRemoteHangup(void** state)
     assert_int_equal(ret, 0);
 }
 
+static void TestTeleFunc_CallIncomingandRemoteHangupNTimes(void** state)
+{
+    (void)state;
+    int ret = incoming_call_and_remote_hangup_for_times(0);
+    assert_int_equal(ret, 0);
+}
+
 static void TestTeleFunc_CallIncomingAfterRemoteHangup(void** state)
 {
     (void)state;
@@ -2028,7 +2035,7 @@ static void TestTeleFunc_ImsCheckRegAfterRadioOffOn(void** state)
 
     memset(&info2, 0, sizeof(info2));
     tapi_ims_get_registration(get_tapi_ctx(), 0, &info2);
-    syslog(LOG_ERR, "%s, info2: reg_info=%d,ext_info=%d", __func__,  info2.reg_info, info2.ext_info);
+    syslog(LOG_ERR, "%s, info2: reg_info=%d,ext_info=%d", __func__, info2.reg_info, info2.ext_info);
     assert(info2.reg_info);
 
     assert(info1.reg_info == info2.reg_info);
@@ -2548,6 +2555,7 @@ int main(int argc, char* argv[])
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialOtherAfterReject, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingandLocalHangup, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingandRemoteHangup, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingandRemoteHangupNTimes, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingRejectandSendMessage, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingAfterRemoteHangup, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingAndHangupNewCall, setup_call, teardown_call),
