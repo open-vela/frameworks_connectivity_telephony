@@ -7,6 +7,7 @@ static struct
     int data_connection_state_change_watch_id;
     int data_on;
     int connection_state;
+    int data_conn_count;
 } global_data;
 
 static void data_event_response(tapi_async_result* result);
@@ -469,6 +470,44 @@ on_exit:
     return res;
 }
 
+int data_enable_auto_when_airplane_mode_close_test(void)
+{
+    int res = 0;
+    judge_data_init();
+    judge_data.expect = MSG_DATA_CONNECTION_STATE_CHANGE_IND;
+    int ret = tapi_set_radio_power(get_tapi_ctx(), 0, EVENT_RADIO_STATE_SET_DONE, false, NULL);
+    if (ret) {
+        syslog(LOG_ERR, "tapi_set_radio_power(false) execute fail in %s, ret: %d", __func__, ret);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(10);
+    ret = tapi_set_radio_power(get_tapi_ctx(), 0, EVENT_RADIO_STATE_SET_DONE, true, NULL);
+    if (ret) {
+        syslog(LOG_ERR, "tapi_set_radio_power(true) execute fail in %s, ret: %d", __func__, ret);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge()) {
+        syslog(LOG_ERR, "the callback function of data_enable is not executed in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge_data.result) {
+        syslog(LOG_ERR, "async result in %s is invalid", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(7);
+
+on_exit:
+    return res;
+}
+
 // is-data-on
 int data_get_enabled_test(bool* result)
 {
@@ -657,11 +696,12 @@ int data_send_screen_stat_test(int slot_id)
     return ret;
 }
 
-int data_get_data_call_list_test(int slot_id)
+int data_get_data_call_list_test(int slot_id, int expect)
 {
     int res = 0;
     judge_data_init();
     judge_data.expect = EVENT_DATA_CALL_LIST_QUERY_DONE;
+    global_data.data_conn_count = 0;
 
     int ret = tapi_data_get_data_connection_list(get_tapi_ctx(), slot_id,
         EVENT_DATA_CALL_LIST_QUERY_DONE, data_event_response);
@@ -680,6 +720,12 @@ int data_get_data_call_list_test(int slot_id)
 
     if (judge_data.result) {
         syslog(LOG_DEBUG, "async result is invalid in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (global_data.data_conn_count != expect) {
+        syslog(LOG_DEBUG, "data_conn_count(%d) is invalid in %s", global_data.data_conn_count, __func__);
         res = -1;
         goto on_exit;
     }
@@ -748,6 +794,7 @@ static void data_event_response(tapi_async_result* result)
         break;
     case EVENT_DATA_CALL_LIST_QUERY_DONE:
         if (judge_data.expect == EVENT_DATA_CALL_LIST_QUERY_DONE) {
+            global_data.data_conn_count = result->arg2;
             judge_data.result = status;
             judge_data.flag = EVENT_DATA_CALL_LIST_QUERY_DONE;
         }
@@ -868,9 +915,9 @@ int data_release_ims_network_test(int slot_id)
     return ret;
 }
 
-int data_get_call_list(int slot_id)
+int data_get_call_list(int slot_id, int expect)
 {
-    return data_get_data_call_list_test(slot_id);
+    return data_get_data_call_list_test(slot_id, expect);
 }
 
 int data_enable_and_get_roaming_test(void)

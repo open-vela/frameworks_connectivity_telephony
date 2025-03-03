@@ -1039,8 +1039,25 @@ static void TestTeleFunc_CI_DataSetDataAllow(void** state)
 static void TestTeleFunc_CI_DataGetCallList(void** state)
 {
     (void)state;
-    int ret = data_get_call_list(0);
+    int ret = data_get_call_list(0, 1);
     assert_true(ret == OK);
+}
+
+static void TestTeleFunc_DataSetRoamingWhenDataOff(void** state)
+{
+    (void)state;
+    bool enable = false;
+    int ret = data_get_enabled_test(&enable);
+    assert_int_equal(ret, OK);
+    if (enable) {
+        ret = data_enable_data_test(0);
+        assert_int_equal(ret, OK);
+    }
+
+    ret = data_enable_and_get_roaming_test();
+    assert_int_equal(ret, OK);
+    ret = data_disable_and_get_roaming_test();
+    assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_CI_DataEnableRoaming(void** state)
@@ -1055,6 +1072,47 @@ static void TestTeleFunc_CI_DataDisableRoaming(void** state)
     (void)state;
     int ret = data_disable_and_get_roaming_test();
     assert_true(ret == OK);
+}
+
+static void TestTeleFunc_DataToggleRoamingRepeatedly(void** state)
+{
+    (void)state;
+    REPEAT_TEST_MORE_FOR
+    {
+        TestTeleFunc_CI_DataEnableRoaming(state);
+        TestTeleFunc_CI_DataDisableRoaming(state);
+    }
+}
+
+static void TestTeleFunc_DataRequestNetworksAndCheck(void** state)
+{
+    (void)state;
+    int ret = data_request_ims_network_test(0);
+    assert_int_equal(ret, OK);
+    ret = data_get_call_list(0, 2);
+    assert_int_equal(ret, OK);
+    ret = data_release_ims_network_test(0);
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_DataActivateAndCheckRAT(void** state)
+{
+    (void)state;
+    int ret = data_release_internet_network_test(0);
+    assert_int_equal(ret, OK);
+    ret = data_request_internet_network_test(0);
+    assert_int_equal(ret, OK);
+    ret = data_is_ps_attached_test(0);
+    assert_int_equal(ret, OK);
+    ret = data_get_network_type_test(0);
+    assert_int_equal(ret, OK);
+}
+
+void TestTeleFunc_DataAirplaneOffAutoReconnect(void** state)
+{
+    (void)state;
+    int ret = data_enable_auto_when_airplane_mode_close_test();
+    assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_CI_SmsSetAndGetServiceCenterNum(void** state)
@@ -2601,6 +2659,11 @@ int main(int argc, char* argv[])
         cmocka_unit_test(TestTeleFunc_DataResetApnContexts),
         cmocka_unit_test(TestTeleFunc_CI_DataEnableRoaming),
         cmocka_unit_test(TestTeleFunc_CI_DataDisableRoaming),
+        cmocka_unit_test(TestTeleFunc_DataSetRoamingWhenDataOff),
+        cmocka_unit_test(TestTeleFunc_DataToggleRoamingRepeatedly),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_DataRequestNetworksAndCheck, setup_data_enable, teardown_data_enable),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_DataActivateAndCheckRAT, setup_data_enable, teardown_data_enable),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_DataAirplaneOffAutoReconnect, setup_data_enable, teardown_data_enable),
     };
 
     const struct CMUnitTest SmsTestSuites[] = {
