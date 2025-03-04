@@ -1882,8 +1882,8 @@ int tapi_get_msisdn_number(tapi_context context, int slot_id, char** out)
     GDBusProxy* proxy;
     DBusMessageIter iter, var_elem;
 
-    if (ctx == NULL) {
-        tapi_log_error("context in %s is null", __func__);
+    if (ctx == NULL || out == NULL) {
+        tapi_log_error("context or out in %s is null", __func__);
         return -EINVAL;
     }
 
@@ -1917,7 +1917,7 @@ int tapi_get_msisdn_number(tapi_context context, int slot_id, char** out)
             }
         }
 
-        if (**out == 0) {
+        if (*out != NULL && **out == 0) {
             tapi_log_error("%s: msisdn is empty", __func__);
             return -EINVAL;
         }
