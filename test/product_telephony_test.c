@@ -134,7 +134,7 @@ static void TestNuttxDataUnregister(void** state)
 static void TestNuttxModemGetImei(void** state)
 {
     (void)state;
-    int ret = tapi_get_imei_test(0);
+    int ret = get_imei_test(0);
     assert_int_equal(ret, OK);
 }
 
@@ -142,7 +142,7 @@ static void TestNuttxGetModemEnableStatus(void** state)
 {
     (void)state;
     int get_state = 1;
-    int ret = tapi_get_modem_status_test(0, &get_state);
+    int ret = get_modem_status_test(0, &get_state);
     assert_int_equal(ret, OK);
 }
 
@@ -150,14 +150,14 @@ static void TestNuttxGetModemDsiableStatus(void** state)
 {
     (void)state;
     int get_state = 0;
-    int ret = tapi_get_modem_status_test(0, &get_state);
+    int ret = get_modem_status_test(0, &get_state);
     assert_int_equal(ret, OK);
 }
 
 static void TestNuttxModemEnable(void** state)
 {
     (void)state;
-    int ret = tapi_enable_modem_test(0, 1);
+    int ret = enable_modem_test(0, 1);
     assert_int_equal(ret, OK);
     sleep(60);
 }
@@ -165,7 +165,7 @@ static void TestNuttxModemEnable(void** state)
 static void TestNuttxModemDisable(void** state)
 {
     (void)state;
-    int ret = tapi_enable_modem_test(0, 0);
+    int ret = enable_modem_test(0, 0);
     assert_int_equal(ret, OK);
     sleep(10);
 }
@@ -186,21 +186,21 @@ static void TestNuttxModemEnableDisableRepeatedly(void** state)
 static void TestNuttxModemRegister(void** state)
 {
     (void)state;
-    int ret = tapi_modem_register_test(0);
+    int ret = modem_register_test(0);
     assert_int_equal(ret, OK);
 }
 
 static void TestNuttxModemUnregister(void** state)
 {
     (void)state;
-    int ret = tapi_modem_unregister_test();
+    int ret = modem_unregister_test();
     assert_true(ret == OK);
 }
 
 static void TestNuttxGetModemRevision(void** state)
 {
     int ret;
-    ret = tapi_get_modem_revision_test(0);
+    ret = get_modem_revision_test(0);
     assert_int_equal(ret, OK);
 }
 

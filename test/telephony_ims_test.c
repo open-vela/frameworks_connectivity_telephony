@@ -98,18 +98,18 @@ int teardown_imsAndRadio(void** state)
     bool radio = false;
     int ret = 0;
 
-    ret = tapi_get_radio_power_test(0, &radio);
+    ret = get_radio_power_test(0, &radio);
     if (ret) {
-        syslog(LOG_ERR, "tapi_get_radio_power_test execute fail in %s", __func__);
+        syslog(LOG_ERR, "get_radio_power_test execute fail in %s", __func__);
         ret = -1;
         goto on_exit;
     }
 
     if (!radio) {
         syslog(LOG_INFO, "radio is off, change to on in %s", __func__);
-        ret = tapi_set_radio_power_test(0, true);
+        ret = set_radio_power_test(0, true);
         if (ret) {
-            syslog(LOG_ERR, "tapi_set_radio_power_test execute fail in %s", __func__);
+            syslog(LOG_ERR, "set_radio_power_test execute fail in %s", __func__);
             ret = -1;
             goto on_exit;
         }

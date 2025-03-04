@@ -21,6 +21,8 @@ static struct
     int modem_restart_ind_watch_id;
     int oem_hook_raw_watch_id;
     int modem_state;
+    bool init_radio_power_state;
+    int init_modem_state;
 } modem_data;
 
 extern struct judge_type judge_data;
@@ -55,9 +57,9 @@ static void tele_modem_async_fun_continuous(tapi_async_result* result)
     case EVENT_OEM_RIL_REQUEST_STRINGS_DONE:
         for (int i = 0; i < MAX_MESSAGE_COUNT; i++) {
             if (!response_flag[i] && response_ret[i] == result->msg_id) {
+                syslog(LOG_DEBUG, "%s msg id : %d result err, return.\n", __func__, result->msg_id);
                 response_flag[i] = TRUE;
                 if (result->status != OK) {
-                    syslog(LOG_DEBUG, "%s msg id : %d result err, return.\n", __func__, result->msg_id);
                     response_ret[i] = -1;
                 } else {
                     response_ret[i] = 0;
@@ -144,7 +146,81 @@ static void tele_call_async_fun(tapi_async_result* result)
     }
 }
 
-int tapi_get_imei_test(int slot_id)
+int setup_modem(void** state)
+{
+    (void)state;
+    int ret = 0;
+
+    if (modem_register_test(0)) {
+        syslog(LOG_ERR, "Modem register execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    if (get_modem_status_test(0, &modem_data.init_modem_state)) {
+        syslog(LOG_DEBUG, "Get modem status execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    if (get_radio_power_test(0, &modem_data.init_radio_power_state)) {
+        syslog(LOG_DEBUG, "Get radio power execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    if (modem_enable_status_test(0)) {
+        syslog(LOG_ERR, "Modem enable execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    if (set_radio_power_test(0, true)) {
+        syslog(LOG_ERR, "Modem set radio power execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return ret;
+}
+
+int teardown_modem(void** state)
+{
+    (void)state;
+    int ret = 0;
+
+    if (modem_data.init_modem_state == 1) {
+        if (modem_enable_status_test(0)) {
+            syslog(LOG_ERR, "Modem enable execute fail in %s", __func__);
+            ret = -1;
+            goto on_exit;
+        }
+    } else {
+        if (modem_disable_status_test(0)) {
+            syslog(LOG_ERR, "Modem disable execute fail in %s", __func__);
+            ret = -1;
+            goto on_exit;
+        }
+    }
+
+    if (set_radio_power_test(0, modem_data.init_radio_power_state)) {
+        syslog(LOG_ERR, "Modem set radio power execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    if (modem_unregister_test()) {
+        syslog(LOG_ERR, "Modem unregister execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return ret;
+}
+
+int get_imei_test(int slot_id)
 {
     char* imei = NULL;
 
@@ -154,7 +230,7 @@ int tapi_get_imei_test(int slot_id)
     return ret;
 }
 
-int tapi_get_modem_revision_test(int slot_id)
+int get_modem_revision_test(int slot_id)
 {
     char* version = NULL;
 
@@ -164,7 +240,7 @@ int tapi_get_modem_revision_test(int slot_id)
     return ret || (!version);
 }
 
-int tapi_get_pref_net_mode_test(int slot_id, tapi_pref_net_mode* value)
+int get_pref_net_mode_test(int slot_id, tapi_pref_net_mode* value)
 {
     int ret = tapi_get_pref_net_mode(get_tapi_ctx(), slot_id, value);
     syslog(LOG_DEBUG, "%s, slotId : %d value :%d \n", __func__, slot_id, *value);
@@ -179,7 +255,7 @@ int get_phone_state_test(int slot_id, tapi_phone_state target)
     return ret || (state != target);
 }
 
-int tapi_radio_power_on_off_pending_test(int slot_id)
+int radio_power_on_off_pending_test(int slot_id)
 {
     int res = 0;
     bool target_state = true;
@@ -187,9 +263,7 @@ int tapi_radio_power_on_off_pending_test(int slot_id)
 
     // precondition
     remote_radio_on_off_delay(1);
-    tapi_enable_modem(get_tapi_ctx(), slot_id,
-        EVENT_MODEM_ENABLE_DONE, 1, NULL);
-    sleep(5);
+    modem_enable_status_test(0);
 
     init_response_flag(MID_MESSAGE_COUNT);
     for (int i = 0; i < MID_MESSAGE_COUNT; i++) {
@@ -198,8 +272,8 @@ int tapi_radio_power_on_off_pending_test(int slot_id)
         } else {
             target_state = true;
         }
-        response_ret[i] = EVENT_RADIO_STATE_SET_DONE;
 
+        response_ret[i] = EVENT_RADIO_STATE_SET_DONE;
         ret = tapi_set_radio_power(get_tapi_ctx(), slot_id,
             EVENT_RADIO_STATE_SET_DONE, target_state, tele_modem_async_fun_continuous);
         if (ret) {
@@ -208,8 +282,7 @@ int tapi_radio_power_on_off_pending_test(int slot_id)
             res = -1;
             goto on_exit;
         }
-        if (i == 2)
-            sleep(3);
+        sleep(5);
     }
     if (wait_response(MID_MESSAGE_COUNT) != 0) {
         syslog(LOG_ERR, "tele_call_async_fun is not executed in %s", __func__);
@@ -220,20 +293,19 @@ int tapi_radio_power_on_off_pending_test(int slot_id)
 on_exit:
     // restore normal status
     remote_radio_on_off_delay(0);
-    tapi_set_radio_power(get_tapi_ctx(), slot_id,
-        EVENT_RADIO_STATE_SET_DONE, true, tele_modem_async_fun_continuous);
+    set_radio_power_test(slot_id, true);
 
     return res;
 }
 
-int tapi_radio_power_on_modem_disable_pending_test(int slot_id)
+int radio_power_on_modem_disable_pending_test(int slot_id)
 {
     int res = 0;
     int ret = 0;
 
     // precondition
     remote_radio_on_off_delay(1);
-    if (tapi_set_radio_power_test(0, 0)) {
+    if (set_radio_power_test(0, 0)) {
         syslog(LOG_ERR, "precondition set fail");
         res = -1;
         goto on_exit;
@@ -274,7 +346,7 @@ on_exit:
     return res;
 }
 
-int tapi_modem_disable_power_off_pending_test(int slot_id)
+int modem_disable_power_off_pending_test(int slot_id)
 {
     int res = 0;
     int ret = 0;
@@ -283,7 +355,7 @@ int tapi_modem_disable_power_off_pending_test(int slot_id)
     remote_radio_on_off_delay(1);
     srand(time(NULL)); // 初始化随机数种子
     // precondition
-    if (tapi_enable_modem_test(0, 1)) {
+    if (modem_enable_status_test(0)) {
         syslog(LOG_ERR, "precondition set fail");
         res = -1;
         goto on_exit;
@@ -396,7 +468,7 @@ on_exit:
     return res;
 }
 
-int tapi_set_radio_power_test(int slot_id, bool target_state)
+int set_radio_power_test(int slot_id, bool target_state)
 {
     int res = 0;
     judge_data_init();
@@ -406,14 +478,14 @@ int tapi_set_radio_power_test(int slot_id, bool target_state)
         EVENT_RADIO_STATE_SET_DONE, target_state, tele_call_async_fun);
 
     if (ret) {
-        syslog(LOG_ERR, "tapi_set_radio_power_test execute fail in %s, ret: %d",
+        syslog(LOG_ERR, "set_radio_power_test execute fail in %s, ret: %d",
             __func__, ret);
         res = -1;
         goto on_exit;
     }
 
     if (judge()) {
-        syslog(LOG_DEBUG, "tapi_set_radio_power_test is not executed in %s", __func__);
+        syslog(LOG_DEBUG, "set_radio_power_test is not executed in %s", __func__);
         res = -1;
         goto on_exit;
     }
@@ -428,14 +500,14 @@ on_exit:
     return res;
 }
 
-int tapi_get_radio_power_test(int slot_id, bool* value)
+int get_radio_power_test(int slot_id, bool* value)
 {
     int ret = tapi_get_radio_power(get_tapi_ctx(), slot_id, value);
     syslog(LOG_DEBUG, "%s, slotId : %d value : %d \n", __func__, slot_id, *value);
     return ret;
 }
 
-int tapi_modem_register_test(int slot_id)
+int modem_register_test(int slot_id)
 {
     modem_data.radio_state_watch_id = -1;
     modem_data.radio_state_watch_id = tapi_register(get_tapi_ctx(),
@@ -476,7 +548,7 @@ int tapi_modem_register_test(int slot_id)
     return 0;
 }
 
-int tapi_modem_unregister_test(void)
+int modem_unregister_test(void)
 {
     int ret = -1, res = 0;
     ret = tapi_unregister(get_tapi_ctx(), modem_data.radio_state_watch_id);
@@ -556,7 +628,7 @@ static int hex_string_to_byte_array(char* hex_str, unsigned char* byte_arr, int 
     return 0;
 }
 
-int tapi_invoke_oem_ril_request_raw_test(int slot_id, char* oem_req, int length)
+int modem_invoke_oem_ril_request_raw_test(int slot_id, char* oem_req, int length)
 {
     int res = 0;
     unsigned char req_data[MAX_INPUT_ARGS_LEN];
@@ -568,14 +640,14 @@ int tapi_invoke_oem_ril_request_raw_test(int slot_id, char* oem_req, int length)
         EVENT_OEM_RIL_REQUEST_RAW_DONE, req_data, length, tele_call_async_fun);
 
     if (ret) {
-        syslog(LOG_ERR, "tapi_invoke_oem_ril_request_raw_test execute fail in %s, ret: %d",
+        syslog(LOG_ERR, "modem_invoke_oem_ril_request_raw_test execute fail in %s, ret: %d",
             __func__, ret);
         res = -1;
         goto on_exit;
     }
 
     if (judge()) {
-        syslog(LOG_DEBUG, "tapi_invoke_oem_ril_request_raw_test is not executed in %s", __func__);
+        syslog(LOG_DEBUG, "modem_invoke_oem_ril_request_raw_test is not executed in %s", __func__);
         res = -1;
         goto on_exit;
     }
@@ -590,7 +662,7 @@ on_exit:
     return res;
 }
 
-int tapi_invoke_oem_ril_request_strings_test(int slot_id, char* req_data, int length)
+int modem_invoke_oem_ril_request_strings_test(int slot_id, char* req_data, int length)
 {
     char* result;
     char* ptr = NULL;
@@ -614,14 +686,14 @@ int tapi_invoke_oem_ril_request_strings_test(int slot_id, char* req_data, int le
         EVENT_OEM_RIL_REQUEST_STRINGS_DONE, oem_req, length, tele_call_async_fun);
 
     if (ret) {
-        syslog(LOG_ERR, "tapi_invoke_oem_ril_request_strings_test execute fail in %s, ret: %d",
+        syslog(LOG_ERR, "modem_invoke_oem_ril_request_strings_test execute fail in %s, ret: %d",
             __func__, ret);
         res = -1;
         goto on_exit;
     }
 
     if (judge()) {
-        syslog(LOG_DEBUG, "tapi_invoke_oem_ril_request_strings_test is not executed in %s", __func__);
+        syslog(LOG_DEBUG, "modem_invoke_oem_ril_request_strings_test is not executed in %s", __func__);
         res = -1;
         goto on_exit;
     }
@@ -636,7 +708,7 @@ on_exit:
     return res;
 }
 
-int tapi_get_modem_activity_info_test(int slot_id)
+int get_modem_activity_info_test(int slot_id)
 {
     int res = 0;
     judge_data_init();
@@ -646,14 +718,14 @@ int tapi_get_modem_activity_info_test(int slot_id)
         EVENT_MODEM_ACTIVITY_INFO_QUERY_DONE, tele_call_async_fun);
 
     if (ret) {
-        syslog(LOG_ERR, "tapi_get_modem_activity_info_test execute fail in %s, ret: %d",
+        syslog(LOG_ERR, "get_modem_activity_info_test execute fail in %s, ret: %d",
             __func__, ret);
         res = -1;
         goto on_exit;
     }
 
     if (judge()) {
-        syslog(LOG_DEBUG, "tapi_get_modem_activity_info_test is not executed in %s", __func__);
+        syslog(LOG_DEBUG, "get_modem_activity_info_test is not executed in %s", __func__);
         res = -1;
         goto on_exit;
     }
@@ -668,7 +740,7 @@ on_exit:
     return res;
 }
 
-int tapi_enable_modem_test(int slot_id, int target_state)
+int enable_modem_test(int slot_id, int target_state)
 {
     int res = 0;
     judge_data_init();
@@ -678,14 +750,14 @@ int tapi_enable_modem_test(int slot_id, int target_state)
         EVENT_MODEM_ENABLE_DONE, target_state, tele_call_async_fun);
 
     if (ret) {
-        syslog(LOG_ERR, "tapi_enable_modem_test execute fail in %s, ret: %d",
+        syslog(LOG_ERR, "enable_modem_test execute fail in %s, ret: %d",
             __func__, ret);
         res = -1;
         goto on_exit;
     }
 
     if (judge()) {
-        syslog(LOG_DEBUG, "tapi_enable_modem_test is not executed in %s", __func__);
+        syslog(LOG_DEBUG, "enable_modem_test is not executed in %s", __func__);
         res = -1;
         goto on_exit;
     }
@@ -700,7 +772,7 @@ on_exit:
     return res;
 }
 
-int tapi_modem_enable_disable_pending_test(int slot_id)
+int modem_enable_disable_pending_test(int slot_id)
 {
     int res = 0;
     int target_state = 0;
@@ -740,14 +812,14 @@ on_exit:
 int modem_reset_test(int slot_id)
 {
     int res = 0;
-    if (tapi_enable_modem_test(0, 0)) {
+    if (enable_modem_test(0, 0)) {
         syslog(LOG_DEBUG, "Modem disable execute fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
     sleep(10);
 
-    if (tapi_enable_modem_test(0, 1)) {
+    if (enable_modem_test(0, 1)) {
         syslog(LOG_DEBUG, "Modem enbale execute fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -758,7 +830,7 @@ on_exit:
     return res;
 }
 
-int tapi_get_modem_status_test(int slot_id, int* state)
+int get_modem_status_test(int slot_id, int* state)
 {
     int res = 0;
     judge_data_init();
@@ -769,14 +841,14 @@ int tapi_get_modem_status_test(int slot_id, int* state)
         EVENT_MODEM_STATUS_QUERY_DONE, tele_call_async_fun);
 
     if (ret) {
-        syslog(LOG_ERR, "tapi_get_modem_enable_status_test execute fail in %s, ret: %d",
+        syslog(LOG_ERR, "get_modem_status_test execute fail in %s, ret: %d",
             __func__, ret);
         res = -1;
         goto on_exit;
     }
 
     if (judge()) {
-        syslog(LOG_DEBUG, "tapi_get_modem_enable_status_test is not executed in %s", __func__);
+        syslog(LOG_DEBUG, "get_modem_status_test is not executed in %s", __func__);
         res = -1;
         goto on_exit;
     }
@@ -787,17 +859,13 @@ int tapi_get_modem_status_test(int slot_id, int* state)
         goto on_exit;
     }
 
-    if (modem_data.modem_state != *state) {
-        syslog(LOG_ERR, "modem_data.modem_state is invalid in %s", __func__);
-        res = -1;
-        goto on_exit;
-    }
+    *state = modem_data.modem_state;
 
 on_exit:
     return res;
 }
 
-int tapi_set_pref_net_mode_test(int slot_id, tapi_pref_net_mode target_state)
+int set_pref_net_mode_test(int slot_id, tapi_pref_net_mode target_state)
 {
     int res = 0;
     judge_data_init();
@@ -807,14 +875,14 @@ int tapi_set_pref_net_mode_test(int slot_id, tapi_pref_net_mode target_state)
         EVENT_RAT_MODE_SET_DONE, target_state, tele_call_async_fun);
 
     if (ret) {
-        syslog(LOG_ERR, "tapi_set_pref_net_mode_test execute fail in %s, ret: %d",
+        syslog(LOG_ERR, "set_pref_net_mode_test execute fail in %s, ret: %d",
             __func__, ret);
         res = -1;
         goto on_exit;
     }
 
     if (judge()) {
-        syslog(LOG_DEBUG, "tapi_set_pref_net_mode_test is not executed in %s", __func__);
+        syslog(LOG_DEBUG, "set_pref_net_mode_test is not executed in %s", __func__);
         res = -1;
         goto on_exit;
     }
@@ -863,4 +931,66 @@ static void radio_signal_change(tapi_async_result* result)
     default:
         break;
     }
+}
+
+int modem_enable_status_test(int slot_id)
+{
+    int res = 0;
+    int real_state = 0;
+
+    if (get_modem_status_test(slot_id, &real_state)) {
+        syslog(LOG_DEBUG, "Get modem status execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (real_state == 1) {
+        if (enable_modem_test(0, 0)) {
+            syslog(LOG_DEBUG, "Modem disable execute fail in %s", __func__);
+            res = -1;
+            goto on_exit;
+        }
+        sleep(10);
+    }
+
+    if (enable_modem_test(0, 1)) {
+        syslog(LOG_DEBUG, "Modem enable execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+    sleep(10);
+
+on_exit:
+    return res;
+}
+
+int modem_disable_status_test(int slot_id)
+{
+    int res = 0;
+    int real_state = 0;
+
+    if (get_modem_status_test(slot_id, &real_state)) {
+        syslog(LOG_DEBUG, "Get modem status execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (real_state == 0) {
+        if (enable_modem_test(0, 1)) {
+            syslog(LOG_DEBUG, "Modem enable execute fail in %s", __func__);
+            res = -1;
+            goto on_exit;
+        }
+        sleep(10);
+    }
+
+    if (enable_modem_test(0, 0)) {
+        syslog(LOG_DEBUG, "Modem disable execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+    sleep(10);
+
+on_exit:
+    return res;
 }
