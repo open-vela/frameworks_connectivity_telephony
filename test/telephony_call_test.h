@@ -110,13 +110,13 @@ int tapi_call_set_default_voicecall_slot_test(int slot_id);
 int tapi_call_get_default_voicecall_slot_test(void);
 int call_set_voicecall_slot(int slot_id);
 int call_clear_voicecall_slot(void);
-int call_connect_and_local_hangup(int slot_id);
+int call_connect_and_local_hangup(int slot_id, char* phone_num);
 int dial_and_remote_hangup(int slot_id);
 int incoming_call_and_local_hangup(int slot_id);
 int incoming_call_and_remote_hangup(int slot_id);
 int incoming_call_and_remote_hangup_for_times(int slot_id);
 int call_incoming_after_remote_hangup(int slot_id);
 int remote_operation_call_incoming_test(int slot_id, char* phone_number);
-int call_dial_and_keep_in_call_active(int slot_id);
+int call_dial_and_keep_in_call_active(int slot_id, char* phone_number);
 int call_abnormal_answer_again_test(int slot_id);
 #endif
