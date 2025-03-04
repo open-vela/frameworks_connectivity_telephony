@@ -2215,17 +2215,17 @@ on_exit:
     return res;
 }
 
-int call_dial_and_keep_in_call_active(int slot_id)
+int call_dial_and_keep_in_call_active(int slot_id, char* phone_number)
 {
     int res = 0;
-    if (tapi_call_dial_test(slot_id, phone_num, 0)) {
+    if (tapi_call_dial_test(slot_id, phone_number, 0)) {
         syslog(LOG_ERR, "Dail fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
     sleep(3);
-    if (remote_operation_call_active_test(slot_id, phone_num)) {
+    if (remote_operation_call_active_test(slot_id, phone_number)) {
         syslog(LOG_ERR, "Call active fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -3619,17 +3619,17 @@ int call_dial_third_call(int slot_id)
     return ret3 || ret4;
 }
 
-int call_connect_and_local_hangup(int slot_id)
+int call_connect_and_local_hangup(int slot_id, char* phone_number)
 {
     int res = 0;
-    if (tapi_call_dial_test(slot_id, phone_num, 0) < 0) {
+    if (tapi_call_dial_test(slot_id, phone_number, 0) < 0) {
         syslog(LOG_ERR, "Dail fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
     sleep(3);
-    if (remote_operation_call_active_test(slot_id, phone_num)) {
+    if (remote_operation_call_active_test(slot_id, phone_number)) {
         syslog(LOG_ERR, "Remote call active fail in %s", __func__);
         res = -1;
         goto on_exit;

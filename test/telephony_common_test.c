@@ -94,7 +94,7 @@ static void tele_call_async_fun(tapi_async_result* result)
         syslog(LOG_DEBUG, "%s: EVENT_MODEM_ENABLE_DONE status: %d\n",
             __func__, result->status);
         if (judge_data.expect == EVENT_MODEM_ENABLE_DONE) {
-            judge_data.result = 0;
+            judge_data.result = status;
             judge_data.flag = EVENT_MODEM_ENABLE_DONE;
         }
         break;
