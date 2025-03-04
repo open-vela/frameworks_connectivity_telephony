@@ -596,7 +596,7 @@ static void TestTeleFunc_CallActiveAndSendtones(void** state)
 
 static void TestTeleFunc_CallConnectAndLocalHangup(void** state)
 {
-    int ret = call_connect_and_local_hangup(0);
+    int ret = call_connect_and_local_hangup(0, phone_num);
     assert_int_equal(ret, 0);
 }
 
@@ -1838,7 +1838,7 @@ static void TestTeleFunc_CI_SetRadioOffUnderOngoingCall(void** state)
     bool value;
     int ret;
 
-    ret = call_dial_and_keep_in_call_active(0);
+    ret = call_dial_and_keep_in_call_active(0, phone_num);
     assert_int_equal(ret, 0);
     TestTeleFunc_CI_ModemSetRadioPowerOff(state);
     ret = tapi_get_radio_power_test(0, &value);
@@ -1850,7 +1850,7 @@ static void TestTeleFunc_CI_SetRadioOffUnderOngoingCall(void** state)
 static void TestTeleFunc_CI_ModemEnableDisableNTimesUnderOngoingCall(void** state)
 {
     (void)state;
-    int ret = call_dial_and_keep_in_call_active(0);
+    int ret = call_dial_and_keep_in_call_active(0, phone_num);
     assert_int_equal(ret, OK);
     REPEAT_TEST_LESS_FOR
     {
@@ -2488,6 +2488,156 @@ static void TestTeleFunc_CI_BtTeleOpenTapi(void** state)
     TestTeleFunc_CI_NetGetVoiceRegistered(state);
 }
 
+static void TestTeleFunc_CallDialAndHangupEcc(void** state)
+{
+    (void)state;
+    bool get_value;
+    int ret;
+
+    ret = sim_set_operator_test(0, "46000");
+    assert_int_equal(ret, OK);
+    ret = call_connect_and_local_hangup(0, "120");
+    assert_int_equal(ret, OK);
+    TestTeleFunc_CI_ModemSetRadioPowerOff(state);
+    ret = tapi_get_radio_power_test(0, &get_value);
+    assert_int_equal(ret, OK);
+    assert_false(get_value);
+
+    TestTeleFunc_CI_ModemSetRadioPowerOn(state);
+    ret = sim_set_operator_test(0, "000");
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_CallDialEccWithoutIms(void** state)
+{
+    (void)state;
+    bool get_value;
+    int ret;
+
+    ret = sim_set_operator_test(0, "46000");
+    assert_int_equal(ret, OK);
+    ret = tapi_ims_listen_ims_test(0);
+    assert_int_equal(ret, OK);
+    TestTeleFunc_CI_ImsTurnOff(state);
+    ret = call_connect_and_local_hangup(0, "120");
+    assert_int_equal(ret, OK);
+    TestTeleFunc_CI_ModemSetRadioPowerOff(state);
+    ret = tapi_get_radio_power_test(0, &get_value);
+    assert_int_equal(ret, OK);
+    assert_false(get_value);
+
+    TestTeleFunc_CI_ModemSetRadioPowerOn(state);
+    TestTeleFunc_CI_ImsTurnOn(state);
+    ret = tapi_ims_unlisten_ims_test();
+    assert_int_equal(ret, OK);
+    ret = sim_set_operator_test(0, "000");
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_CallSetRadioPowerOffUnderActiveECCCall(void** state)
+{
+    (void)state;
+    bool get_value;
+    int ret;
+
+    ret = sim_set_operator_test(0, "46000");
+    assert_int_equal(ret, OK);
+    ret = call_dial_and_keep_in_call_active(0, "120");
+    assert_int_equal(ret, OK);
+    ret = tapi_set_radio_power_test(0, 0);
+    assert_int_equal(ret, -1);
+    ret = tapi_get_radio_power_test(0, &get_value);
+    assert_int_equal(ret, OK);
+    assert_true(get_value);
+    ret = tapi_call_hangup_current_call_test(0);
+    assert_int_equal(ret, OK);
+    TestTeleFunc_CI_ModemSetRadioPowerOff(state);
+    ret = tapi_get_radio_power_test(0, &get_value);
+    assert_int_equal(ret, OK);
+    assert_false(get_value);
+
+    TestTeleFunc_CI_ModemSetRadioPowerOn(state);
+    ret = sim_set_operator_test(0, "000");
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_CallModemDisableUnderActiveECCCall(void** state)
+{
+    (void)state;
+    bool get_value;
+    int ret;
+
+    ret = sim_set_operator_test(0, "46000");
+    assert_int_equal(ret, OK);
+    ret = call_dial_and_keep_in_call_active(0, "120");
+    assert_int_equal(ret, OK);
+    ret = tapi_enable_modem_test(0, 0);
+    assert_int_equal(ret, -1);
+    TestTeleFunc_CI_ModemEnableStatus(state);
+    ret = tapi_call_hangup_current_call_test(0);
+    assert_int_equal(ret, OK);
+    TestTeleFunc_CI_ModemSetRadioPowerOff(state);
+    ret = tapi_get_radio_power_test(0, &get_value);
+    assert_int_equal(ret, OK);
+    assert_false(get_value);
+
+    TestTeleFunc_CI_ModemSetRadioPowerOn(state);
+    ret = sim_set_operator_test(0, "000");
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_CallSetRadioPowerOffUnderDialECCCall(void** state)
+{
+    (void)state;
+    bool get_value;
+    int ret;
+
+    ret = sim_set_operator_test(0, "46000");
+    assert_int_equal(ret, OK);
+    ret = tapi_call_dial_test(0, "120", 0);
+    assert_int_equal(ret, OK);
+    ret = tapi_set_radio_power_test(0, 0);
+    assert_int_equal(ret, -1);
+    ret = tapi_get_radio_power_test(0, &get_value);
+    assert_int_equal(ret, OK);
+    assert_true(get_value);
+    ret = tapi_call_hangup_current_call_test(0);
+    assert_int_equal(ret, OK);
+    TestTeleFunc_CI_ModemSetRadioPowerOff(state);
+    ret = tapi_get_radio_power_test(0, &get_value);
+    assert_int_equal(ret, OK);
+    assert_false(get_value);
+
+    TestTeleFunc_CI_ModemSetRadioPowerOn(state);
+    ret = sim_set_operator_test(0, "000");
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_CallModemDisableUnderDialECCCall(void** state)
+{
+    (void)state;
+    bool get_value;
+    int ret;
+
+    ret = sim_set_operator_test(0, "46000");
+    assert_int_equal(ret, OK);
+    ret = tapi_call_dial_test(0, "120", 0);
+    assert_int_equal(ret, OK);
+    ret = tapi_enable_modem_test(0, 0);
+    assert_int_equal(ret, -1);
+    TestTeleFunc_CI_ModemEnableStatus(state);
+    ret = tapi_call_hangup_current_call_test(0);
+    assert_int_equal(ret, OK);
+    TestTeleFunc_CI_ModemSetRadioPowerOff(state);
+    ret = tapi_get_radio_power_test(0, &get_value);
+    assert_int_equal(ret, OK);
+    assert_false(get_value);
+
+    TestTeleFunc_CI_ModemSetRadioPowerOn(state);
+    ret = sim_set_operator_test(0, "000");
+    assert_int_equal(ret, OK);
+}
+
 int main(int argc, char* argv[])
 {
 #ifndef CONFIG_TEST_PHONE_NUMBER
@@ -2623,6 +2773,12 @@ int main(int argc, char* argv[])
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallGetVoicecallSlot, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallClearVoicecallSlot, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleAbn_CallAnswerAgain, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialAndHangupEcc, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialEccWithoutIms, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallSetRadioPowerOffUnderActiveECCCall, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallModemDisableUnderActiveECCCall, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallSetRadioPowerOffUnderDialECCCall, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallModemDisableUnderDialECCCall, setup_call, teardown_call),
     };
 
     const struct CMUnitTest DataTestSuites[] = {
