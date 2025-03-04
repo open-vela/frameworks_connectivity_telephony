@@ -750,21 +750,6 @@ static void TestTeleAbn_CallAnswerAgain(void** state)
     assert_int_equal(ret, 0);
 }
 
-// static void TestTeleHangupCallAfterRemoteAnswer(void **state) {
-//     int ret = call_hangup_after_caller_answer(0);
-//     assert_int_equal(ret, 0);
-// }
-
-// static void TestTeleRemoteHangupThenIncomingNewCall(void **state) {
-//     int ret = call_dial_caller_reject_and_incoming(0);
-//     assert_int_equal(ret, 0);
-// }
-
-// static void TestTeleRemoteHangupThenDialAnother(void **state) {
-//     int ret = call_dial_caller_reject_and_dial_another(0);
-//     assert_int_equal(ret, 0);
-// }
-
 // data testcases
 static void TestTeleFunc_CI_DataRegisterAndUnregister(void** state)
 {
@@ -1553,56 +1538,56 @@ static void TestTeleFunc_CI_NetGetVoiceRoaming(void** state)
     assert_int_equal((int)value, 0);
 }
 
-// modem
+// modem testcases
 static void TestTeleFunc_CI_ModemGetImei(void** state)
 {
     (void)state;
-    int ret = tapi_get_imei_test(0);
+    int ret = get_imei_test(0);
     assert_int_equal(ret, OK);
 }
 
-// static void TestTeleModemSetUmtsPrefNetMode(void** state)
-// {
-//     // defalut rat mode is NETWORK_PREF_NET_TYPE_LTE_GSM_WCDMA (9)
-//     tapi_pref_net_mode set_value = NETWORK_PREF_NET_TYPE_UMTS;
-//     int ret = tapi_set_pref_net_mode_test(0, set_value);
-//     assert_int_equal(ret, OK);
-// }
+static void TestTeleFunc_ModemSetUmtsPrefNetMode(void** state)
+{
+    // defalut rat mode is NETWORK_PREF_NET_TYPE_LTE_GSM_WCDMA (9)
+    tapi_pref_net_mode set_value = NETWORK_PREF_NET_TYPE_UMTS;
+    int ret = set_pref_net_mode_test(0, set_value);
+    assert_int_equal(ret, OK);
+}
 
-// static void TestTeleModemSetGsmOnlyPrefNetMode(void** state)
-// {
-//     tapi_pref_net_mode set_value = NETWORK_PREF_NET_TYPE_GSM_ONLY;
-//     int ret = tapi_set_pref_net_mode_test(0, set_value);
-//     assert_int_equal(ret, OK);
-// }
+static void TestTeleFunc_ModemSetGsmOnlyPrefNetMode(void** state)
+{
+    tapi_pref_net_mode set_value = NETWORK_PREF_NET_TYPE_GSM_ONLY;
+    int ret = set_pref_net_mode_test(0, set_value);
+    assert_int_equal(ret, OK);
+}
 
-// static void TestTeleModemSetWcdmaOnlyPrefNetMode(void** state)
-// {
-//     tapi_pref_net_mode set_value = NETWORK_PREF_NET_TYPE_WCDMA_ONLY;
-//     int ret = tapi_set_pref_net_mode_test(0, set_value);
-//     assert_int_equal(ret, OK);
-// }
+static void TestTeleFunc_ModemSetWcdmaOnlyPrefNetMode(void** state)
+{
+    tapi_pref_net_mode set_value = NETWORK_PREF_NET_TYPE_WCDMA_ONLY;
+    int ret = set_pref_net_mode_test(0, set_value);
+    assert_int_equal(ret, OK);
+}
 
-// static void TestTeleModemSetLteOnlyPrefNetMode(void** state)
-// {
-//     tapi_pref_net_mode set_value = NETWORK_PREF_NET_TYPE_LTE_ONLY;
-//     int ret = tapi_set_pref_net_mode_test(0, set_value);
-//     assert_int_equal(ret, OK);
-// }
+static void TestTeleFunc_ModemSetLteOnlyPrefNetMode(void** state)
+{
+    tapi_pref_net_mode set_value = NETWORK_PREF_NET_TYPE_LTE_ONLY;
+    int ret = set_pref_net_mode_test(0, set_value);
+    assert_int_equal(ret, OK);
+}
 
-// static void TestTeleModemSetLteWcdmaPrefNetMode(void** state)
-// {
-//     tapi_pref_net_mode set_value = NETWORK_PREF_NET_TYPE_LTE_WCDMA;
-//     int ret = tapi_set_pref_net_mode_test(0, set_value);
-//     assert_int_equal(ret, OK);
-// }
+static void TestTeleFunc_ModemSetLteWcdmaPrefNetMode(void** state)
+{
+    tapi_pref_net_mode set_value = NETWORK_PREF_NET_TYPE_LTE_WCDMA;
+    int ret = set_pref_net_mode_test(0, set_value);
+    assert_int_equal(ret, OK);
+}
 
-// static void TestTeleModemSetLteGsmWcdmaPrefNetMode(void** state)
-// {
-//     tapi_pref_net_mode set_value = NETWORK_PREF_NET_TYPE_LTE_GSM_WCDMA;
-//     int ret = tapi_set_pref_net_mode_test(0, set_value);
-//     assert_int_equal(ret, OK);
-// }
+static void TestTeleFunc_ModemSetLteGsmWcdmaPrefNetMode(void** state)
+{
+    tapi_pref_net_mode set_value = NETWORK_PREF_NET_TYPE_LTE_GSM_WCDMA;
+    int ret = set_pref_net_mode_test(0, set_value);
+    assert_int_equal(ret, OK);
+}
 
 static void TestTeleFunc_CI_ModemVerifyPrefNetMode(void** state)
 {
@@ -1611,44 +1596,44 @@ static void TestTeleFunc_CI_ModemVerifyPrefNetMode(void** state)
 
     (void)state;
     value = NETWORK_PREF_NET_TYPE_UMTS;
-    ret = tapi_set_pref_net_mode_test(0, value);
+    ret = set_pref_net_mode_test(0, value);
     assert_int_equal(ret, OK);
-    ret = tapi_get_pref_net_mode_test(0, &get_value);
+    ret = get_pref_net_mode_test(0, &get_value);
     assert_int_equal(ret, OK);
     assert_true(value == get_value);
 
     value = NETWORK_PREF_NET_TYPE_GSM_ONLY;
-    ret = tapi_set_pref_net_mode_test(0, value);
+    ret = set_pref_net_mode_test(0, value);
     assert_int_equal(ret, OK);
-    ret = tapi_get_pref_net_mode_test(0, &get_value);
+    ret = get_pref_net_mode_test(0, &get_value);
     assert_int_equal(ret, OK);
     assert_true(value == get_value);
 
     value = NETWORK_PREF_NET_TYPE_WCDMA_ONLY;
-    ret = tapi_set_pref_net_mode_test(0, value);
+    ret = set_pref_net_mode_test(0, value);
     assert_int_equal(ret, OK);
-    ret = tapi_get_pref_net_mode_test(0, &get_value);
+    ret = get_pref_net_mode_test(0, &get_value);
     assert_int_equal(ret, OK);
     assert_true(value == get_value);
 
     value = NETWORK_PREF_NET_TYPE_LTE_GSM_WCDMA;
-    ret = tapi_set_pref_net_mode_test(0, value);
+    ret = set_pref_net_mode_test(0, value);
     assert_int_equal(ret, OK);
-    ret = tapi_get_pref_net_mode_test(0, &get_value);
+    ret = get_pref_net_mode_test(0, &get_value);
     assert_int_equal(ret, OK);
     assert_true(value == get_value);
 
     value = NETWORK_PREF_NET_TYPE_LTE_ONLY;
-    ret = tapi_set_pref_net_mode_test(0, value);
+    ret = set_pref_net_mode_test(0, value);
     assert_int_equal(ret, OK);
-    ret = tapi_get_pref_net_mode_test(0, &get_value);
+    ret = get_pref_net_mode_test(0, &get_value);
     assert_int_equal(ret, OK);
     assert_true(value == get_value);
 
     value = NETWORK_PREF_NET_TYPE_LTE_WCDMA;
-    ret = tapi_set_pref_net_mode_test(0, value);
+    ret = set_pref_net_mode_test(0, value);
     assert_int_equal(ret, OK);
-    ret = tapi_get_pref_net_mode_test(0, &get_value);
+    ret = get_pref_net_mode_test(0, &get_value);
     assert_int_equal(ret, OK);
     assert_true(value == get_value);
 }
@@ -1657,30 +1642,28 @@ static void TestTeleFunc_CI_ModemGetPrefNetMode(void** state)
 {
     sleep(5);
     tapi_pref_net_mode get_value = NETWORK_PREF_NET_TYPE_ANY;
-    int ret = tapi_get_pref_net_mode_test(0, &get_value);
+    int ret = get_pref_net_mode_test(0, &get_value);
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_CI_ModemSetRadioPowerOn(void** state)
 {
     (void)state;
-    int ret = tapi_set_radio_power_test(0, 1);
+    int ret = set_radio_power_test(0, true);
     assert_int_equal(ret, OK);
-    sleep(10);
 }
 
 static void TestTeleFunc_ModemSetRadioPowerOnAndOffContinuous(void** state)
 {
     (void)state;
-    int ret = tapi_radio_power_on_off_pending_test(0);
+    int ret = radio_power_on_off_pending_test(0);
     assert_int_equal(ret, OK);
-    sleep(10);
 }
 
 static void TestTeleFunc_ModemSetRadioPowerOnAndModemDisable(void** state)
 {
     (void)state;
-    int ret = tapi_radio_power_on_modem_disable_pending_test(0);
+    int ret = radio_power_on_modem_disable_pending_test(0);
     assert_int_equal(ret, OK);
     sleep(10);
 }
@@ -1688,7 +1671,7 @@ static void TestTeleFunc_ModemSetRadioPowerOnAndModemDisable(void** state)
 static void TestTeleFunc_ModemSetRadioPowerOffOrModemDisableAfterotherAction(void** state)
 {
     (void)state;
-    int ret = tapi_modem_disable_power_off_pending_test(0);
+    int ret = modem_disable_power_off_pending_test(0);
     assert_int_equal(ret, OK);
     sleep(10);
 }
@@ -1696,7 +1679,7 @@ static void TestTeleFunc_ModemSetRadioPowerOffOrModemDisableAfterotherAction(voi
 static void TestTeleFunc_CI_ModemSetRadioPowerOff(void** state)
 {
     (void)state;
-    int ret = tapi_set_radio_power_test(0, 0);
+    int ret = set_radio_power_test(0, false);
     assert_int_equal(ret, OK);
     sleep(10);
 }
@@ -1714,39 +1697,39 @@ static void TestTeleFunc_CI_ModemSetRadioPowerOnOffNTimes(void** state)
 static void TestTeleFunc_CI_ModemEnableStatus(void** state)
 {
     (void)state;
-    int get_state = 1;
-    int ret = tapi_get_modem_status_test(0, &get_state);
+    int get_state = -1;
+    int ret = get_modem_status_test(0, &get_state);
     assert_int_equal(ret, OK);
+    assert_int_equal(get_state, 1);
 }
 
 static void TestTeleFunc_CI_ModemDsiableStatus(void** state)
 {
     (void)state;
-    int get_state = 0;
-    int ret = tapi_get_modem_status_test(0, &get_state);
+    int get_state = -1;
+    int ret = get_modem_status_test(0, &get_state);
     assert_int_equal(ret, OK);
+    assert_int_equal(get_state, 0);
 }
 
 static void TestTeleFunc_CI_ModemEnable(void** state)
 {
     (void)state;
-    int ret = tapi_enable_modem_test(0, 1);
+    int ret = modem_enable_status_test(0);
     assert_int_equal(ret, OK);
-    sleep(10);
 }
 
 static void TestTeleFunc_CI_ModemDisable(void** state)
 {
     (void)state;
-    int ret = tapi_enable_modem_test(0, 0);
+    int ret = modem_disable_status_test(0);
     assert_int_equal(ret, OK);
-    sleep(10);
 }
 
 static void TestTeleFunc_ModemEnableAndDisableContinuous(void** state)
 {
     (void)state;
-    int ret = tapi_modem_enable_disable_pending_test(0);
+    int ret = modem_enable_disable_pending_test(0);
     assert_int_equal(ret, OK);
     sleep(10);
 }
@@ -1783,7 +1766,7 @@ static void TestTeleFunc_CI_ModemDisableEnableRadioPowerOff(void** state)
     TestTeleFunc_CI_ModemEnable(state);
     TestTeleFunc_CI_ModemEnableStatus(state);
     TestTeleFunc_CI_ModemSetRadioPowerOff(state);
-    ret = tapi_get_radio_power_test(0, &value);
+    ret = get_radio_power_test(0, &value);
     assert_int_equal(ret, OK);
     assert_false(value);
 }
@@ -1794,7 +1777,7 @@ static void TestTeleFunc_CI_ModemDisableRadioPowerOff(void** state)
     TestTeleFunc_CI_ModemSetRadioPowerOn(state);
     TestTeleFunc_CI_ModemDisable(state);
     TestTeleFunc_CI_ModemDsiableStatus(state);
-    int ret = tapi_set_radio_power_test(0, 0);
+    int ret = set_radio_power_test(0, 0);
     assert_int_equal(ret, -1);
     TestTeleFunc_CI_ModemEnable(state);
     TestTeleFunc_CI_ModemEnableStatus(state);
@@ -1818,7 +1801,7 @@ static void TestTeleFunc_CI_ModemEnableDisableNTimesUnderDialingCall(void** stat
     }
 }
 
-static void TestTeleFunc_CI_SetRadioOffUnderDialingCall(void** state)
+static void TestTeleFunc_ModemSetRadioOffUnderDialingCall(void** state)
 {
     (void)state;
     bool value;
@@ -1826,13 +1809,13 @@ static void TestTeleFunc_CI_SetRadioOffUnderDialingCall(void** state)
 
     TestTeleFunc_CI_CallDialNumber(state);
     TestTeleFunc_CI_ModemSetRadioPowerOff(state);
-    ret = tapi_get_radio_power_test(0, &value);
+    ret = get_radio_power_test(0, &value);
     assert_int_equal(ret, OK);
     assert_false(value);
     TestTeleFunc_CI_ModemSetRadioPowerOn(state);
 }
 
-static void TestTeleFunc_CI_SetRadioOffUnderOngoingCall(void** state)
+static void TestTeleFunc_ModemSetRadioOffUnderOngoingCall(void** state)
 {
     (void)state;
     bool value;
@@ -1841,7 +1824,7 @@ static void TestTeleFunc_CI_SetRadioOffUnderOngoingCall(void** state)
     ret = call_dial_and_keep_in_call_active(0, phone_num);
     assert_int_equal(ret, 0);
     TestTeleFunc_CI_ModemSetRadioPowerOff(state);
-    ret = tapi_get_radio_power_test(0, &value);
+    ret = get_radio_power_test(0, &value);
     assert_int_equal(ret, OK);
     assert_false(value);
     TestTeleFunc_CI_ModemSetRadioPowerOn(state);
@@ -1861,24 +1844,20 @@ static void TestTeleFunc_CI_ModemEnableDisableNTimesUnderOngoingCall(void** stat
     }
 }
 
-static void TestTeleFunc_CI_ModemRegister(void** state)
+static void TestTeleFunc_CI_ModemRegisterOrUnregister(void** state)
 {
     (void)state;
-    int ret = tapi_modem_register_test(0);
+    int ret;
+    ret = modem_register_test(0);
     assert_int_equal(ret, OK);
-}
-
-static void TestTeleFunc_CI_ModemUnregister(void** state)
-{
-    (void)state;
-    int ret = tapi_modem_unregister_test();
+    ret = modem_unregister_test();
     assert_true(ret == OK);
 }
 
 static void TestTeleFunc_CI_ModemGetRevision(void** state)
 {
     int ret;
-    ret = tapi_get_modem_revision_test(0);
+    ret = get_modem_revision_test(0);
     assert_int_equal(ret, OK);
 }
 
@@ -1919,32 +1898,32 @@ static void TestTeleFunc_CI_ModemGetRevision(void** state)
 
 static void TestTeleFunc_ModemInvokeOemShotRilRequestRaw(void** state)
 {
-    int ret = tapi_invoke_oem_ril_request_raw_test(0, "01A0B023", 4);
+    int ret = modem_invoke_oem_ril_request_raw_test(0, "01A0B023", 4);
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_ModemInvokeOemLongRilRequestRaw(void** state)
 {
-    int ret = tapi_invoke_oem_ril_request_raw_test(0, "01A0B02301A0B02301A0B02301A0B02301A0B02301", 21);
+    int ret = modem_invoke_oem_ril_request_raw_test(0, "01A0B02301A0B02301A0B02301A0B02301A0B02301", 21);
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_ModemInvokeOemSeperateRilRequestRaw(void** state)
 {
-    int ret = tapi_invoke_oem_ril_request_raw_test(0, "10|22", 2);
+    int ret = modem_invoke_oem_ril_request_raw_test(0, "10|22", 2);
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_ModemInvokeOemNormalRilRequestRaw(void** state)
 {
-    int ret = tapi_invoke_oem_ril_request_raw_test(0, "01A0B023", 2);
+    int ret = modem_invoke_oem_ril_request_raw_test(0, "01A0B023", 2);
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_ModemInvokeOemRilRequestATCmdStrings(void** state)
 {
     char* req_data = "AT+CPIN?";
-    int ret = tapi_invoke_oem_ril_request_strings_test(0, req_data, 1);
+    int ret = modem_invoke_oem_ril_request_strings_test(0, req_data, 1);
     assert_int_equal(ret, OK);
 }
 
@@ -1952,14 +1931,14 @@ static void TestTeleFunc_ModemInvokeOemRilRequestNotATCmdStrings(void** state)
 {
     // not AT cmd
     char* req_data = "10|22";
-    int ret = tapi_invoke_oem_ril_request_strings_test(0, req_data, 2);
+    int ret = modem_invoke_oem_ril_request_strings_test(0, req_data, 2);
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_ModemInvokeOemRilRequestHexStrings(void** state)
 {
     char* req_data = "0x10|0x01";
-    int ret = tapi_invoke_oem_ril_request_strings_test(0, req_data, 2);
+    int ret = modem_invoke_oem_ril_request_strings_test(0, req_data, 2);
     assert_int_equal(ret, OK);
 }
 
@@ -1968,37 +1947,27 @@ static void TestTeleFunc_ModemInvokeOemRilRequestHexStrings(void** state)
 //     char req_data[MAX_INPUT_ARGS_LEN];
 
 //     // test error
-//     // FIXME: tapi_invoke_oem_ril_request_strings_test interface buffer overflow
+//     // FIXME: modem_invoke_oem_ril_request_strings_test interface buffer overflow
 //     // when req_data len is 21, current max len is 20
 //     strcpy(req_data,
 //         "10|22|10|22|10|22|10|22|10|22|10|22|10|22|10|22|10|22|10|22");
-//     int ret = tapi_invoke_oem_ril_request_strings_test(0, req_data, 20);
+//     int ret = modem_invoke_oem_ril_request_strings_test(0, req_data, 20);
 //     assert_int_equal(ret, -1);
 
 //     // strcpy(req_data, "10|22");
 //     // // FIXME: _dbus_check_is_valid_utf8 is called by dbus_message_iter_append_basic
 //     // // cannot handle \0 in char * string;
-//     // ret = tapi_invoke_oem_ril_request_strings_test(0, req_data, 20);
+//     // ret = modem_invoke_oem_ril_request_strings_test(0, req_data, 20);
 //     // assert_int_equal(ret, -1);
 // }
 
-// static void cmocka_set_radio_power_on_off_test(void **state)
-// {
-//     for(int i = 0; i < 3; i++)
-//     {
-//         tapi_set_radio_power_test(0, 0);
-//         sleep(1);
-//         tapi_set_radio_power_test(0, 1);
-//         sleep(1);
-//     }
-//     int ret = tapi_get_radio_power_test(0);
-//     assert_int_equal(ret, 1);
-// }
-
-static void TestTeleFunc_CI_ImsListen(void** state)
+static void TestTeleFunc_CI_ImsListenAndUnlisten(void** state)
 {
     (void)state;
-    int ret = tapi_ims_listen_ims_test(0);
+    int ret;
+    ret = tapi_ims_listen_ims_test(0);
+    assert_int_equal(ret, 0);
+    ret = tapi_ims_unlisten_ims_test();
     assert_int_equal(ret, 0);
 }
 
@@ -2086,9 +2055,9 @@ static void TestTeleFunc_ImsCheckRegAfterRadioOffOn(void** state)
     syslog(LOG_ERR, "%s, info1: reg_info=%d,ext_info=%d", __func__, info1.reg_info, info1.ext_info);
     assert(info1.reg_info);
 
-    tapi_set_radio_power_test(0, 0);
+    set_radio_power_test(0, 0);
     sleep(3);
-    tapi_set_radio_power_test(0, 1);
+    set_radio_power_test(0, 1);
     sleep(3);
 
     memset(&info2, 0, sizeof(info2));
@@ -2200,7 +2169,7 @@ static void TestTeleFunc_CI_SSEnableAndDisableCallWaiting(void** state)
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleFunc_CI_GetPhoneState(void** state)
+static void TestTeleFunc_CI_ModemGetPhoneState(void** state)
 {
     tapi_phone_state target;
     int ret;
@@ -2420,7 +2389,7 @@ static void async_cmd_tapi(uv_async_t* handle)
     free(data);
 }
 
-static void TestTeleFunc_CloseTapi(void** state)
+static void TestTeleFunc_ModemCloseTapi(void** state)
 {
     (void)state;
     int ret = tapi_close_test();
@@ -2430,10 +2399,10 @@ static void TestTeleFunc_CloseTapi(void** state)
     assert_true(get_tapi_ctx() == NULL);
 }
 
-static void TestTeleFunc_CI_DefaultOpenTapi(void** state)
+static void TestTeleFunc_CI_ModemDefaultOpenTapi(void** state)
 {
     if (get_tapi_ctx() != NULL) {
-        TestTeleFunc_CloseTapi(state);
+        TestTeleFunc_ModemCloseTapi(state);
     }
 
     int ret = tapi_open_test(TAPI_TEST_DBUS_NAME, 0);
@@ -2453,18 +2422,18 @@ static int TearDown_OpenDefaultTapi(void** state)
 {
     /* recover tapi to default open */
     sleep(3);
-    TestTeleFunc_CI_DefaultOpenTapi(state);
+    TestTeleFunc_CI_ModemDefaultOpenTapi(state);
     return 0;
 }
 
-static void TestTeleFunc_CI_BtTeleOpenTapi(void** state)
+static void TestTeleFunc_CI_ModemBtTeleOpenTapi(void** state)
 {
     int ret;
     unsigned int tapi_service;
     bool result = false;
 
     if (get_tapi_ctx() != NULL) {
-        TestTeleFunc_CloseTapi(state);
+        TestTeleFunc_ModemCloseTapi(state);
     }
 
     tapi_service = TAPI_SERVICE_MODEM | TAPI_SERVICE_CALL | TAPI_SERVICE_NETREG;
@@ -2499,7 +2468,7 @@ static void TestTeleFunc_CallDialAndHangupEcc(void** state)
     ret = call_connect_and_local_hangup(0, "120");
     assert_int_equal(ret, OK);
     TestTeleFunc_CI_ModemSetRadioPowerOff(state);
-    ret = tapi_get_radio_power_test(0, &get_value);
+    ret = get_radio_power_test(0, &get_value);
     assert_int_equal(ret, OK);
     assert_false(get_value);
 
@@ -2522,7 +2491,7 @@ static void TestTeleFunc_CallDialEccWithoutIms(void** state)
     ret = call_connect_and_local_hangup(0, "120");
     assert_int_equal(ret, OK);
     TestTeleFunc_CI_ModemSetRadioPowerOff(state);
-    ret = tapi_get_radio_power_test(0, &get_value);
+    ret = get_radio_power_test(0, &get_value);
     assert_int_equal(ret, OK);
     assert_false(get_value);
 
@@ -2544,15 +2513,15 @@ static void TestTeleFunc_CallSetRadioPowerOffUnderActiveECCCall(void** state)
     assert_int_equal(ret, OK);
     ret = call_dial_and_keep_in_call_active(0, "120");
     assert_int_equal(ret, OK);
-    ret = tapi_set_radio_power_test(0, 0);
+    ret = set_radio_power_test(0, 0);
     assert_int_equal(ret, -1);
-    ret = tapi_get_radio_power_test(0, &get_value);
+    ret = get_radio_power_test(0, &get_value);
     assert_int_equal(ret, OK);
     assert_true(get_value);
     ret = tapi_call_hangup_current_call_test(0);
     assert_int_equal(ret, OK);
     TestTeleFunc_CI_ModemSetRadioPowerOff(state);
-    ret = tapi_get_radio_power_test(0, &get_value);
+    ret = get_radio_power_test(0, &get_value);
     assert_int_equal(ret, OK);
     assert_false(get_value);
 
@@ -2571,13 +2540,13 @@ static void TestTeleFunc_CallModemDisableUnderActiveECCCall(void** state)
     assert_int_equal(ret, OK);
     ret = call_dial_and_keep_in_call_active(0, "120");
     assert_int_equal(ret, OK);
-    ret = tapi_enable_modem_test(0, 0);
+    ret = enable_modem_test(0, 0);
     assert_int_equal(ret, -1);
     TestTeleFunc_CI_ModemEnableStatus(state);
     ret = tapi_call_hangup_current_call_test(0);
     assert_int_equal(ret, OK);
     TestTeleFunc_CI_ModemSetRadioPowerOff(state);
-    ret = tapi_get_radio_power_test(0, &get_value);
+    ret = get_radio_power_test(0, &get_value);
     assert_int_equal(ret, OK);
     assert_false(get_value);
 
@@ -2596,15 +2565,15 @@ static void TestTeleFunc_CallSetRadioPowerOffUnderDialECCCall(void** state)
     assert_int_equal(ret, OK);
     ret = tapi_call_dial_test(0, "120", 0);
     assert_int_equal(ret, OK);
-    ret = tapi_set_radio_power_test(0, 0);
+    ret = set_radio_power_test(0, 0);
     assert_int_equal(ret, -1);
-    ret = tapi_get_radio_power_test(0, &get_value);
+    ret = get_radio_power_test(0, &get_value);
     assert_int_equal(ret, OK);
     assert_true(get_value);
     ret = tapi_call_hangup_current_call_test(0);
     assert_int_equal(ret, OK);
     TestTeleFunc_CI_ModemSetRadioPowerOff(state);
-    ret = tapi_get_radio_power_test(0, &get_value);
+    ret = get_radio_power_test(0, &get_value);
     assert_int_equal(ret, OK);
     assert_false(get_value);
 
@@ -2623,13 +2592,13 @@ static void TestTeleFunc_CallModemDisableUnderDialECCCall(void** state)
     assert_int_equal(ret, OK);
     ret = tapi_call_dial_test(0, "120", 0);
     assert_int_equal(ret, OK);
-    ret = tapi_enable_modem_test(0, 0);
+    ret = enable_modem_test(0, 0);
     assert_int_equal(ret, -1);
     TestTeleFunc_CI_ModemEnableStatus(state);
     ret = tapi_call_hangup_current_call_test(0);
     assert_int_equal(ret, OK);
     TestTeleFunc_CI_ModemSetRadioPowerOff(state);
-    ret = tapi_get_radio_power_test(0, &get_value);
+    ret = get_radio_power_test(0, &get_value);
     assert_int_equal(ret, OK);
     assert_false(get_value);
 
@@ -2889,6 +2858,7 @@ int main(int argc, char* argv[])
     };
 
     const struct CMUnitTest ImsTestSuits[] = {
+        cmocka_unit_test(TestTeleFunc_CI_ImsListenAndUnlisten),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ImsTurnOn, setup_ims, teardown_ims),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ImsGetRegistration, setup_ims, teardown_ims),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ImsGetEnabled, setup_ims, teardown_ims),
@@ -2922,15 +2892,14 @@ int main(int argc, char* argv[])
 
     const struct CMUnitTest CommonTestSuites[] = {
         cmocka_unit_test(TestTeleFunc_CI_ModemGetImei),
-        // cmocka_unit_test(TestTeleModemSetUmtsPrefNetMode),
-        // cmocka_unit_test(TestTeleModemSetGsmOnlyPrefNetMode),
-        // cmocka_unit_test(TestTeleModemSetWcdmaOnlyPrefNetMode),
-        // cmocka_unit_test(TestTeleModemSetLteOnlyPrefNetMode),
-        // cmocka_unit_test(TestTeleModemSetLteWcdmaPrefNetMode),
-        // cmocka_unit_test(TestTeleModemSetLteGsmWcdmaPrefNetMode),
+        cmocka_unit_test(TestTeleFunc_ModemSetUmtsPrefNetMode),
+        cmocka_unit_test(TestTeleFunc_ModemSetGsmOnlyPrefNetMode),
+        cmocka_unit_test(TestTeleFunc_ModemSetWcdmaOnlyPrefNetMode),
+        cmocka_unit_test(TestTeleFunc_ModemSetLteOnlyPrefNetMode),
+        cmocka_unit_test(TestTeleFunc_ModemSetLteWcdmaPrefNetMode),
+        cmocka_unit_test(TestTeleFunc_ModemSetLteGsmWcdmaPrefNetMode),
         cmocka_unit_test(TestTeleFunc_CI_ModemGetPrefNetMode),
-        cmocka_unit_test(TestTeleFunc_CI_ModemRegister),
-        cmocka_unit_test(TestTeleFunc_CI_ModemUnregister),
+        cmocka_unit_test(TestTeleFunc_CI_ModemRegisterOrUnregister),
         cmocka_unit_test(TestTeleFunc_ModemInvokeOemShotRilRequestRaw),
         cmocka_unit_test(TestTeleFunc_ModemInvokeOemLongRilRequestRaw),
         cmocka_unit_test(TestTeleFunc_ModemInvokeOemNormalRilRequestRaw),
@@ -2938,34 +2907,28 @@ int main(int argc, char* argv[])
         cmocka_unit_test(TestTeleFunc_ModemInvokeOemRilRequestATCmdStrings),
         cmocka_unit_test(TestTeleFunc_ModemInvokeOemRilRequestNotATCmdStrings),
         cmocka_unit_test(TestTeleFunc_ModemInvokeOemRilRequestHexStrings),
-        cmocka_unit_test(TestTeleFunc_CI_ImsListen),
         cmocka_unit_test(TestTeleFunc_CI_ModemGetRevision),
-        cmocka_unit_test(TestTeleFunc_CI_ModemDisable),
-        cmocka_unit_test(TestTeleFunc_CI_ModemDsiableStatus),
-        cmocka_unit_test(TestTeleFunc_CI_ModemEnableDisableNTimes),
-        cmocka_unit_test(TestTeleFunc_CI_ModemEnable),
-        cmocka_unit_test(TestTeleFunc_CI_ModemEnableStatus),
-        cmocka_unit_test(TestTeleFunc_CI_ModemSetRadioPowerOff),
-        cmocka_unit_test(TestTeleFunc_CI_ModemSetRadioPowerOnOffNTimes),
-        cmocka_unit_test(TestTeleFunc_CI_ModemSetRadioPowerOn),
-        cmocka_unit_test(TestTeleFunc_CI_ModemDisable),
-        cmocka_unit_test(TestTeleFunc_ModemEnableAndDisableContinuous),
-        cmocka_unit_test(TestTeleFunc_ModemSetRadioPowerOnAndOffContinuous),
-        cmocka_unit_test(TestTeleFunc_ModemSetRadioPowerOnAndModemDisable),
-        cmocka_unit_test(TestTeleFunc_ModemSetRadioPowerOffOrModemDisableAfterotherAction),
-        cmocka_unit_test(TestTeleFunc_CI_DefaultOpenTapi),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_BtTeleOpenTapi,
-            NULL, TearDown_OpenDefaultTapi),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CloseTapi,
-            NULL, TearDown_OpenDefaultTapi),
-        cmocka_unit_test(TestTeleFunc_CI_ModemEnableDisableNTimesUnderRadioPowerOff),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ModemEnable, setup_modem, teardown_modem),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ModemDisable, setup_modem, teardown_modem),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ModemEnableDisableNTimes, setup_modem, teardown_modem),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ModemSetRadioPowerOff, setup_modem, teardown_modem),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ModemSetRadioPowerOnOffNTimes, setup_modem, teardown_modem),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ModemSetRadioPowerOn, setup_modem, teardown_modem),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_ModemEnableAndDisableContinuous, setup_modem, teardown_modem),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_ModemSetRadioPowerOnAndOffContinuous, setup_modem, teardown_modem),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_ModemSetRadioPowerOnAndModemDisable, setup_modem, teardown_modem),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_ModemSetRadioPowerOffOrModemDisableAfterotherAction, setup_modem, teardown_modem),
+        cmocka_unit_test(TestTeleFunc_CI_ModemDefaultOpenTapi),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ModemBtTeleOpenTapi, NULL, TearDown_OpenDefaultTapi),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_ModemCloseTapi, NULL, TearDown_OpenDefaultTapi),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ModemEnableDisableNTimesUnderRadioPowerOff, setup_modem, teardown_modem),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ModemEnableDisableNTimesUnderDialingCall, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ModemEnableDisableNTimesUnderOngoingCall, setup_call, teardown_call),
         cmocka_unit_test(TestTeleFunc_CI_ModemVerifyPrefNetMode),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_GetPhoneState, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_SetRadioOffUnderDialingCall, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_SetRadioOffUnderOngoingCall, setup_call, teardown_call),
-        cmocka_unit_test(TestTeleFunc_CI_ModemDisableEnableRadioPowerOff),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ModemGetPhoneState, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_ModemSetRadioOffUnderDialingCall, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_ModemSetRadioOffUnderOngoingCall, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ModemDisableEnableRadioPowerOff, setup_modem, teardown_modem),
         cmocka_unit_test(TestTeleFunc_CI_ModemDisableRadioPowerOff),
     };
 
