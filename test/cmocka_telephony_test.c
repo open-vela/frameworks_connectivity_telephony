@@ -504,6 +504,13 @@ static void TestTeleFunc_CallIncomingAndCheckNumber(void** state)
     assert_int_equal(ret, 0);
 }
 
+static void TestTeleFunc_CallIncomingAndCheckNumberInCall(void** state)
+{
+    (void)state;
+    int ret = call_incoming_and_check_number_in_call(0);
+    assert_int_equal(ret, 0);
+}
+
 static void TestTeleFunc_CallIncomingAnswerAndRemoteHangup(void** state)
 {
     (void)state;
@@ -2715,6 +2722,7 @@ int main(int argc, char* argv[])
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_CallDtmfAfterDial, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingAnswerAndHangup, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingAndCheckNumber, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingAndCheckNumberInCall, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingAnswerAndRemoteHangup, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallReleaseAndAnswer, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallHoldAndAnswer, setup_call, teardown_call),
