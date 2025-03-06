@@ -1871,6 +1871,51 @@ on_exit:
     return res;
 }
 
+int call_incoming_and_check_number_in_call(int slot_id)
+{
+    int res = 0;
+    if (ss_set_and_get_call_waiting_test(slot_id, true)) {
+        syslog(LOG_ERR, "Set call waiting fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (remote_operation_call_incoming_test(slot_id, phone_num)) {
+        syslog(LOG_ERR, "Incoming call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (call_answer_call_test(slot_id, test_case_data.call_id)) {
+        syslog(LOG_ERR, "Answer call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (remote_operation_call_waiting_test(slot_id, "10010")) {
+        syslog(LOG_ERR, "Incoming call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (strcmp("10010", test_case_data.number)) {
+        syslog(LOG_ERR, "Number is invalid in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (ss_set_and_get_call_waiting_test(slot_id, false)) {
+        syslog(LOG_ERR, "Set call waiting fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
 int call_incoming_answer_and_hangup(int slot_id)
 {
     int res = 0;
