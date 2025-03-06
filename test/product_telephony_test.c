@@ -277,14 +277,14 @@ static void TestNuttxDataIsPsAttached(void** state)
 static void TestNuttxListenCall(void** state)
 {
     (void)state;
-    int ret = tapi_call_listen_call_test(0);
+    int ret = call_listen_call_test(0);
     assert_int_equal(ret, 0);
 }
 
 static void TestNuttxUnlistenCall(void** state)
 {
     (void)state;
-    int ret = tapi_call_unlisten_call_test();
+    int ret = call_unlisten_call_test();
     assert_int_equal(ret, 0);
 }
 
@@ -293,7 +293,7 @@ static void TestNuttxDialCall(void** state)
     sleep(30);
     (void)state;
     property_set_bool("tapi.ignore_hangup", true);
-    int ret = tapi_call_dial_test(0, "10086", 0);
+    int ret = call_dial_test(0, "10086", 0);
     assert_int_equal(ret, 0);
     sleep(30);
 }
@@ -302,7 +302,7 @@ static void TestNuttxHangupCall(void** state)
 {
     (void)state;
     property_delete("tapi.ignore_hangup");
-    int ret = tapi_call_hangup_current_call_test(0);
+    int ret = call_hangup_current_call_test(0);
     assert_int_equal(ret, 0);
     sleep(30);
 }
