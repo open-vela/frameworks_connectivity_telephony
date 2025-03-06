@@ -493,14 +493,21 @@ static void TestTeleFunc_CI_CallDtmfAfterDial(void** state)
 static void TestTeleFunc_CallIncomingAnswerAndHangup(void** state)
 {
     (void)state;
-    int ret = incoming_call_answer_and_hangup(0);
+    int ret = call_incoming_answer_and_hangup(0);
+    assert_int_equal(ret, 0);
+}
+
+static void TestTeleFunc_CallIncomingAndCheckNumber(void** state)
+{
+    (void)state;
+    int ret = call_incoming_and_check_number(0);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_CallIncomingAnswerAndRemoteHangup(void** state)
 {
     (void)state;
-    int ret = incoming_call_answer_and_remote_hangup(0);
+    int ret = call_incoming_answer_and_remote_hangup(0);
     assert_int_equal(ret, 0);
 }
 
@@ -548,14 +555,14 @@ static void TestTeleFunc_CallSwapInTwoCalling(void** state)
 
 static void TestTeleFunc_CallRemoteAnswerAndHangup(void** state)
 {
-    int ret = outgoing_call_remote_answer_and_hangup(0);
+    int ret = call_outgoing_remote_answer_and_hangup(0);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_CallHoldAndHangup(void** state)
 {
     (void)state;
-    int ret = outgoing_call_hold_and_unhold_by_caller(0);
+    int ret = call_outgoing_hold_and_unhold_by_caller(0);
     assert_int_equal(ret, OK);
 }
 
@@ -590,7 +597,7 @@ static void TestTeleFunc_CallHangupHoldCallInTwoCalls(void** state)
 static void TestTeleFunc_CallActiveAndSendtones(void** state)
 {
     (void)state;
-    int ret = outgoing_call_active_and_send_tones(0);
+    int ret = call_outgoing_active_and_send_tones(0);
     assert_int_equal(ret, OK);
 }
 
@@ -602,7 +609,7 @@ static void TestTeleFunc_CallConnectAndLocalHangup(void** state)
 
 static void TestTeleFunc_CallDialAndRemoteHangup(void** state)
 {
-    int ret = dial_and_remote_hangup(0);
+    int ret = call_dial_and_remote_hangup(0);
     assert_int_equal(ret, 0);
 }
 
@@ -611,7 +618,7 @@ static void TestTeleFunc_CallDialAndRemoteHangupNTimes(void** state)
     (void)state;
     REPEAT_TEST_MORE_FOR
     {
-        int ret = dial_and_remote_hangup(0);
+        int ret = call_dial_and_remote_hangup(0);
         assert_int_equal(ret, 0);
         sleep(3);
     }
@@ -662,21 +669,21 @@ static void TestTeleFunc_CallDialSecondCallAndHangupByCaller(void** state)
 static void TestTeleFunc_CallIncomingandLocalHangup(void** state)
 {
     (void)state;
-    int ret = incoming_call_and_local_hangup(0);
+    int ret = call_incoming_and_local_hangup(0);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_CallIncomingandRemoteHangup(void** state)
 {
     (void)state;
-    int ret = incoming_call_and_remote_hangup(0);
+    int ret = call_incoming_and_remote_hangup(0);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_CallIncomingandRemoteHangupNTimes(void** state)
 {
     (void)state;
-    int ret = incoming_call_and_remote_hangup_for_times(0);
+    int ret = call_incoming_and_remote_hangup_for_times(0);
     assert_int_equal(ret, 0);
 }
 
@@ -718,7 +725,7 @@ static void TestTeleFunc_CallSetVoicecallSlot(void** state)
 static void TestTeleFunc_CallGetVoicecallSlot(void** state)
 {
     (void)state;
-    int ret = tapi_call_get_default_voicecall_slot_test();
+    int ret = call_get_default_voicecall_slot_test();
     assert_int_equal(ret, 0);
 }
 
@@ -732,14 +739,14 @@ static void TestTeleFunc_CallClearVoicecallSlot(void** state)
 static void TestTeleFunc_CI_CallListen(void** state)
 {
     (void)state;
-    int ret = tapi_call_listen_call_test(0);
+    int ret = call_listen_call_test(0);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_CI_CallUnlisten(void** state)
 {
     (void)state;
-    int ret = tapi_call_unlisten_call_test();
+    int ret = call_unlisten_call_test();
     assert_int_equal(ret, 0);
 }
 
@@ -2182,7 +2189,7 @@ static void TestTeleFunc_CI_ModemGetPhoneState(void** state)
     TestTeleFunc_CI_CallDialNumber(state);
     ret = get_phone_state_test(0, target);
     assert_int_equal(ret, OK);
-    ret = tapi_call_hangup_current_call_test(0);
+    ret = call_hangup_current_call_test(0);
     assert_int_equal(ret, OK);
     ret = ss_clear_call_forwarding_option_test(0, 0);
     ret = ss_clear_call_forwarding_option_test(0, 1);
@@ -2193,7 +2200,7 @@ static void TestTeleFunc_CI_ModemGetPhoneState(void** state)
     target = PHONE_RINGING;
     ret = get_phone_state_test(0, target);
     assert_int_equal(ret, OK);
-    ret = tapi_call_hangup_current_call_test(0);
+    ret = call_hangup_current_call_test(0);
 }
 
 static void TestTeleFunc_CallWaitingContinuous(void** state)
@@ -2518,7 +2525,7 @@ static void TestTeleFunc_CallSetRadioPowerOffUnderActiveECCCall(void** state)
     ret = get_radio_power_test(0, &get_value);
     assert_int_equal(ret, OK);
     assert_true(get_value);
-    ret = tapi_call_hangup_current_call_test(0);
+    ret = call_hangup_current_call_test(0);
     assert_int_equal(ret, OK);
     TestTeleFunc_CI_ModemSetRadioPowerOff(state);
     ret = get_radio_power_test(0, &get_value);
@@ -2543,7 +2550,7 @@ static void TestTeleFunc_CallModemDisableUnderActiveECCCall(void** state)
     ret = enable_modem_test(0, 0);
     assert_int_equal(ret, -1);
     TestTeleFunc_CI_ModemEnableStatus(state);
-    ret = tapi_call_hangup_current_call_test(0);
+    ret = call_hangup_current_call_test(0);
     assert_int_equal(ret, OK);
     TestTeleFunc_CI_ModemSetRadioPowerOff(state);
     ret = get_radio_power_test(0, &get_value);
@@ -2563,14 +2570,14 @@ static void TestTeleFunc_CallSetRadioPowerOffUnderDialECCCall(void** state)
 
     ret = sim_set_operator_test(0, "46000");
     assert_int_equal(ret, OK);
-    ret = tapi_call_dial_test(0, "120", 0);
+    ret = call_dial_test(0, "120", 0);
     assert_int_equal(ret, OK);
     ret = set_radio_power_test(0, 0);
     assert_int_equal(ret, -1);
     ret = get_radio_power_test(0, &get_value);
     assert_int_equal(ret, OK);
     assert_true(get_value);
-    ret = tapi_call_hangup_current_call_test(0);
+    ret = call_hangup_current_call_test(0);
     assert_int_equal(ret, OK);
     TestTeleFunc_CI_ModemSetRadioPowerOff(state);
     ret = get_radio_power_test(0, &get_value);
@@ -2590,12 +2597,12 @@ static void TestTeleFunc_CallModemDisableUnderDialECCCall(void** state)
 
     ret = sim_set_operator_test(0, "46000");
     assert_int_equal(ret, OK);
-    ret = tapi_call_dial_test(0, "120", 0);
+    ret = call_dial_test(0, "120", 0);
     assert_int_equal(ret, OK);
     ret = enable_modem_test(0, 0);
     assert_int_equal(ret, -1);
     TestTeleFunc_CI_ModemEnableStatus(state);
-    ret = tapi_call_hangup_current_call_test(0);
+    ret = call_hangup_current_call_test(0);
     assert_int_equal(ret, OK);
     TestTeleFunc_CI_ModemSetRadioPowerOff(state);
     ret = get_radio_power_test(0, &get_value);
@@ -2707,6 +2714,7 @@ int main(int argc, char* argv[])
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialConference, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_CallDtmfAfterDial, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingAnswerAndHangup, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingAndCheckNumber, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingAnswerAndRemoteHangup, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallReleaseAndAnswer, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallHoldAndAnswer, setup_call, teardown_call),

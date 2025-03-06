@@ -174,9 +174,9 @@ int sms_send_message_in_dialing(int slot_id, char* to, char* text)
     int ret = -1;
     int res = 0;
 
-    ret = tapi_call_dial_test(slot_id, to, 0);
+    ret = call_dial_test(slot_id, to, 0);
     if (ret) {
-        syslog(LOG_ERR, "tapi_call_dial_test execute fail in %s, ret: %d",
+        syslog(LOG_ERR, "call_dial_test execute fail in %s, ret: %d",
             __func__, ret);
         res = -1;
         goto on_exit;
@@ -190,9 +190,9 @@ int sms_send_message_in_dialing(int slot_id, char* to, char* text)
         goto on_exit;
     }
 
-    ret = tapi_call_hangup_current_call_test(slot_id);
+    ret = call_hangup_current_call_test(slot_id);
     if (ret) {
-        syslog(LOG_ERR, "tapi_call_hangup_current_call_test execute fail in %s, ret: %d",
+        syslog(LOG_ERR, "call_hangup_current_call_test execute fail in %s, ret: %d",
             __func__, ret);
         res = -1;
         goto on_exit;
@@ -228,9 +228,9 @@ int sms_send_data_message_in_dialing(int slot_id, char* to, char* text, int port
     int ret = -1;
     int res = 0;
 
-    ret = tapi_call_dial_test(slot_id, to, 0);
+    ret = call_dial_test(slot_id, to, 0);
     if (ret) {
-        syslog(LOG_ERR, "tapi_call_dial_test execute fail in %s, ret: %d",
+        syslog(LOG_ERR, "call_dial_test execute fail in %s, ret: %d",
             __func__, ret);
         res = -1;
         goto on_exit;
@@ -244,9 +244,9 @@ int sms_send_data_message_in_dialing(int slot_id, char* to, char* text, int port
         goto on_exit;
     }
 
-    ret = tapi_call_hangup_current_call_test(slot_id);
+    ret = call_hangup_current_call_test(slot_id);
     if (ret) {
-        syslog(LOG_ERR, "tapi_call_hangup_current_call_test execute fail in %s, ret: %d",
+        syslog(LOG_ERR, "call_hangup_current_call_test execute fail in %s, ret: %d",
             __func__, ret);
         res = -1;
         goto on_exit;
