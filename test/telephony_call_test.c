@@ -1990,6 +1990,51 @@ on_exit:
     return res;
 }
 
+int call_reject_second_call_in_call_active(int slot_id)
+{
+    int res = 0;
+    if (ss_set_and_get_call_waiting_test(slot_id, true)) {
+        syslog(LOG_ERR, "Set call waiting fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (remote_operation_call_incoming_test(slot_id, phone_num)) {
+        syslog(LOG_ERR, "Incoming call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (call_answer_call_test(slot_id, test_case_data.call_id)) {
+        syslog(LOG_ERR, "Answer call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (remote_operation_call_waiting_test(slot_id, "10010")) {
+        syslog(LOG_ERR, "Incoming call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (call_hangup_current_call_test(slot_id)) {
+        syslog(LOG_ERR, "Hangup current call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (ss_set_and_get_call_waiting_test(slot_id, false)) {
+        syslog(LOG_ERR, "Set call waiting fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
 int call_incoming_and_check_number_in_call(int slot_id)
 {
     int res = 0;
@@ -2112,7 +2157,7 @@ int call_remote_hold_and_unhold_after_incoming_answer(int slot_id)
         goto on_exit;
     }
 
-    sleep(5);
+    sleep(3);
     if (remote_operation_call_active_test(slot_id, phone_num)) {
         syslog(LOG_ERR, "Remote call reject fail in %s", __func__);
         res = -1;
@@ -2155,6 +2200,54 @@ int call_remote_hold_after_local_unhold_in_actve(int slot_id)
 
     sleep(3);
     if (remote_operation_call_hold_test(slot_id, phone_num)) {
+        syslog(LOG_ERR, "Remote call reject fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
+int call_remote_hold_after_local_hold_in_actve(int slot_id)
+{
+    int res = 0;
+    if (call_dial_test(slot_id, phone_num, 0)) {
+        syslog(LOG_ERR, "Dial call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (remote_operation_call_active_test(slot_id, phone_num)) {
+        syslog(LOG_ERR, "Remote call active fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (call_hold_call_test(slot_id)) {
+        syslog(LOG_ERR, "Hold call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (remote_operation_call_hold_test(slot_id, phone_num)) {
+        syslog(LOG_ERR, "Remote call reject fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (call_unhold_call_test(slot_id)) {
+        syslog(LOG_ERR, "Hold call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (remote_operation_call_active_test(slot_id, phone_num)) {
         syslog(LOG_ERR, "Remote call reject fail in %s", __func__);
         res = -1;
         goto on_exit;
