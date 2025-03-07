@@ -25,6 +25,7 @@
 #define EVENT_REQUEST_CALL_SEPARATE_DONE 0x33
 #define EVENT_GENERIC_CALLBACK_STATUS 0x34
 #define CALL_NETWORK_HANGUP 0x35
+#define CALL_REMOTE_HOLD 0x36
 
 int setup_call(void** state);
 int teardown_call(void** state);
@@ -104,6 +105,7 @@ int call_outgoing_remote_answer_and_hangup(int slot_id);
 int call_outgoing_remote_answer_and_network_hangup(int slot_id);
 int call_release_and_answer(int slot_id);
 int call_release_and_swap_other_call(int slot_id);
+int call_remote_hold_and_unhold_after_incoming_answer(int slot_id);
 int call_separate_by_user(int slot_id);
 int call_set_default_voicecall_slot_test(int slot_id);
 int call_set_voicecall_slot(int slot_id);
