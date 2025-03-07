@@ -134,6 +134,9 @@ static void call_state_change_cb(tapi_async_result* result)
         }
 
         judge_data.flag = judge_data.expect;
+    } else if (judge_data.expect == CALL_REMOTE_HOLD) {
+        judge_data.result = result->status;
+        judge_data.flag = CALL_REMOTE_HOLD;
     }
 }
 
@@ -1326,6 +1329,31 @@ on_exit:
     return res;
 }
 
+int remote_operation_call_hold_test(int slot_id, char* phone_number)
+{
+    int res = 0;
+    judge_data_init();
+    test_case_data_init();
+    judge_data.expect = CALL_REMOTE_HOLD;
+
+    remote_call_operation(slot_id, phone_number, HOLD_CALL);
+
+    if (judge()) {
+        syslog(LOG_ERR, "No call hold callback received in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge_data.result) {
+        syslog(LOG_ERR, "Unsolicited message error in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
 int remote_operation_call_waiting_test(int slot_id, char* phone_number)
 {
     int res = 0;
@@ -2052,6 +2080,40 @@ int call_incoming_answer_and_remote_hangup(int slot_id)
 
     sleep(3);
     if (remote_operation_call_reject_test(slot_id, phone_num)) {
+        syslog(LOG_ERR, "Remote call reject fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
+int call_remote_hold_and_unhold_after_incoming_answer(int slot_id)
+{
+    int res = 0;
+    if (remote_operation_call_incoming_test(slot_id, phone_num)) {
+        syslog(LOG_ERR, "Incoming call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (call_answer_call_test(slot_id, test_case_data.call_id)) {
+        syslog(LOG_ERR, "Answer call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (remote_operation_call_hold_test(slot_id, phone_num)) {
+        syslog(LOG_ERR, "Remote call reject fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(5);
+    if (remote_operation_call_active_test(slot_id, phone_num)) {
         syslog(LOG_ERR, "Remote call reject fail in %s", __func__);
         res = -1;
         goto on_exit;
