@@ -105,6 +105,7 @@ int call_outgoing_remote_answer_and_hangup(int slot_id);
 int call_outgoing_remote_answer_and_network_hangup(int slot_id);
 int call_release_and_answer(int slot_id);
 int call_release_and_swap_other_call(int slot_id);
+int call_remote_hold_after_local_unhold_in_actve(int slot_id);
 int call_remote_hold_and_unhold_after_incoming_answer(int slot_id);
 int call_separate_by_user(int slot_id);
 int call_set_default_voicecall_slot_test(int slot_id);

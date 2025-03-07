@@ -368,7 +368,7 @@ on_exit:
     return res;
 }
 
-int tapi_call_hold_test(int slot_id)
+int call_hold_call_test(int slot_id)
 {
     int res = 0;
     judge_data_init();
@@ -376,14 +376,14 @@ int tapi_call_hold_test(int slot_id)
     int ret = tapi_call_hold_call(get_tapi_ctx(), slot_id);
 
     if (ret) {
-        syslog(LOG_ERR, "tapi_call_hold_test execute fail in %s, ret: %d",
+        syslog(LOG_ERR, "call_hold_call_test execute fail in %s, ret: %d",
             __func__, ret);
         res = -1;
         goto on_exit;
     }
 
     if (judge()) {
-        syslog(LOG_DEBUG, "tapi_call_hold_test is not executed in %s", __func__);
+        syslog(LOG_DEBUG, "call_hold_call_test is not executed in %s", __func__);
         res = -1;
         goto on_exit;
     }
@@ -398,7 +398,7 @@ on_exit:
     return res;
 }
 
-int tapi_call_unhold_test(int slot_id)
+int call_unhold_call_test(int slot_id)
 {
     int res = 0;
     judge_data_init();
@@ -406,14 +406,14 @@ int tapi_call_unhold_test(int slot_id)
     int ret = tapi_call_unhold_call(get_tapi_ctx(), slot_id);
 
     if (ret) {
-        syslog(LOG_ERR, "tapi_call_unhold_test execute fail in %s, ret: %d",
+        syslog(LOG_ERR, "call_unhold_call_test execute fail in %s, ret: %d",
             __func__, ret);
         res = -1;
         goto on_exit;
     }
 
     if (judge()) {
-        syslog(LOG_DEBUG, "tapi_call_unhold_test is not executed in %s", __func__);
+        syslog(LOG_DEBUG, "call_unhold_call_test is not executed in %s", __func__);
         res = -1;
         goto on_exit;
     }
@@ -2123,6 +2123,47 @@ on_exit:
     return res;
 }
 
+int call_remote_hold_after_local_unhold_in_actve(int slot_id)
+{
+    int res = 0;
+    if (call_dial_test(slot_id, phone_num, 0)) {
+        syslog(LOG_ERR, "Dial call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (remote_operation_call_active_test(slot_id, phone_num)) {
+        syslog(LOG_ERR, "Remote call active fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (call_hold_call_test(slot_id)) {
+        syslog(LOG_ERR, "Hold call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (call_unhold_call_test(slot_id)) {
+        syslog(LOG_ERR, "Hold call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (remote_operation_call_hold_test(slot_id, phone_num)) {
+        syslog(LOG_ERR, "Remote call reject fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
 // todo
 int call_display_the_network_of_incoming_call(int slot_id, char* network_name)
 {
@@ -2576,13 +2617,13 @@ int call_outgoing_hold_and_unhold_by_caller(int slot_id)
         goto on_exit;
     }
 
-    if (tapi_call_hold_test(slot_id)) {
+    if (call_hold_call_test(slot_id)) {
         syslog(LOG_ERR, "Hold call fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
-    if (tapi_call_unhold_test(slot_id)) {
+    if (call_unhold_call_test(slot_id)) {
         syslog(LOG_ERR, "Unhold call fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -2627,7 +2668,7 @@ int call_merge_by_user(int slot_id)
     }
 
     sleep(3);
-    if (tapi_call_hold_test(slot_id)) {
+    if (call_hold_call_test(slot_id)) {
         syslog(LOG_ERR, "Hold call fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -2874,14 +2915,14 @@ int call_incoming_hold_and_resume_by_caller(int slot_id)
     sleep(3);
     for (int i = 0; i < 3; i++) {
         sleep(3);
-        if (tapi_call_hold_test(slot_id)) {
+        if (call_hold_call_test(slot_id)) {
             syslog(LOG_ERR, "Hold call fail in %s", __func__);
             res = -1;
             goto on_exit;
         }
 
         sleep(3);
-        if (tapi_call_unhold_test(slot_id)) {
+        if (call_unhold_call_test(slot_id)) {
             syslog(LOG_ERR, "Unhold call fail in %s", __func__);
             res = -1;
             goto on_exit;
@@ -2994,7 +3035,7 @@ int call_unhold_first_incoming_call_after_hangup_second_call(int slot_id)
     }
 
     sleep(3);
-    if (tapi_call_unhold_test(slot_id)) {
+    if (call_unhold_call_test(slot_id)) {
         syslog(LOG_ERR, "Unhold call fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -3097,7 +3138,7 @@ int call_hold_current_call_and_reject_new_incoming(int slot_id)
     }
 
     sleep(3);
-    if (tapi_call_hold_test(slot_id)) {
+    if (call_hold_call_test(slot_id)) {
         syslog(LOG_ERR, "Hold call fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -3117,7 +3158,7 @@ int call_hold_current_call_and_reject_new_incoming(int slot_id)
     }
 
     sleep(3);
-    if (tapi_call_unhold_test(slot_id)) {
+    if (call_unhold_call_test(slot_id)) {
         syslog(LOG_ERR, "Unhold call fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -3519,7 +3560,7 @@ int call_swap_in_two_calling(int slot_id)
         goto on_exit;
     }
 
-    if (tapi_call_hold_test(slot_id)) {
+    if (call_hold_call_test(slot_id)) {
         syslog(LOG_ERR, "Hold call fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -3537,7 +3578,7 @@ int call_swap_in_two_calling(int slot_id)
         goto on_exit;
     }
 
-    if (tapi_call_unhold_test(slot_id)) {
+    if (call_unhold_call_test(slot_id)) {
         syslog(LOG_ERR, "Unhold call fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -3628,7 +3669,7 @@ int call_hangup_current_call_and_resume_call(int slot_id)
     }
 
     sleep(3);
-    if (tapi_call_unhold_test(slot_id)) {
+    if (call_unhold_call_test(slot_id)) {
         syslog(LOG_ERR, "Unhold call fail in %s", __func__);
         res = -1;
         goto on_exit;
