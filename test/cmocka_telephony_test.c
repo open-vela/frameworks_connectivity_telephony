@@ -566,6 +566,12 @@ static void TestTeleFunc_CallRemoteAnswerAndHangup(void** state)
     assert_int_equal(ret, 0);
 }
 
+static void TestTeleFunc_CallRemoteAnswerAndNetworkHangup(void** state)
+{
+    int ret = call_outgoing_remote_answer_and_network_hangup(0);
+    assert_int_equal(ret, 0);
+}
+
 static void TestTeleFunc_CallHoldAndHangup(void** state)
 {
     (void)state;
@@ -2731,6 +2737,7 @@ int main(int argc, char* argv[])
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallReleaseAndSwap, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallSwapInTwoCalling, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallRemoteAnswerAndHangup, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallRemoteAnswerAndNetworkHangup, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallHoldAndHangup, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallHoldCallAndRejectNewCall, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallUnHoldIncomingCallAfterHangupSecondCall, setup_call, teardown_call),
