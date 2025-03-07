@@ -560,6 +560,12 @@ static void TestTeleFunc_CallSwapInTwoCalling(void** state)
     assert_int_equal(ret, 0);
 }
 
+static void TestTeleFunc_CallRejectSecondCallInCallActive(void** state)
+{
+    int ret = call_reject_second_call_in_call_active(0);
+    assert_int_equal(ret, 0);
+}
+
 static void TestTeleFunc_CallRemoteAnswerAndHangup(void** state)
 {
     int ret = call_outgoing_remote_answer_and_hangup(0);
@@ -569,6 +575,12 @@ static void TestTeleFunc_CallRemoteAnswerAndHangup(void** state)
 static void TestTeleFunc_CallRemoteAnswerAndNetworkHangup(void** state)
 {
     int ret = call_outgoing_remote_answer_and_network_hangup(0);
+    assert_int_equal(ret, 0);
+}
+
+static void TestTeleFunc_CallRemoteHoldAfterLocalhold(void** state)
+{
+    int ret = call_remote_hold_after_local_hold_in_actve(0);
     assert_int_equal(ret, 0);
 }
 
@@ -2755,8 +2767,10 @@ int main(int argc, char* argv[])
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallSeparateByUser, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallReleaseAndSwap, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallSwapInTwoCalling, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallRejectSecondCallInCallActive, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallRemoteAnswerAndHangup, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallRemoteAnswerAndNetworkHangup, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallRemoteHoldAfterLocalhold, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallRemoteHoldAfterLocalUnhold, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallRemoteHoldUnholdAfterAnswer, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallHoldAndHangup, setup_call, teardown_call),
