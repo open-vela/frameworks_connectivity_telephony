@@ -32,6 +32,7 @@ int call_abnormal_answer_again_test(int slot_id);
 int call_answer_call_test(int slot_id, char* call_id);
 int call_answer_call_aysnc_test(int slot_id, char* call_id);
 int call_check_dialing_status_with_multi_call(int slot);
+int call_check_status_in_call_active(int slot_id);
 int call_clear_voicecall_slot(void);
 int call_connect_and_local_hangup(int slot_id, char* phone_number);
 int call_dial_active_hangup_due_to_caller_network_exception(int slot_id);

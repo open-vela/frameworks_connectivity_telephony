@@ -754,7 +754,7 @@ on_exit:
     return res;
 }
 
-static int tapi_get_two_call_state(int slot_id)
+static int call_get_two_call_state(int slot_id)
 {
     int res = 0;
     judge_data_init();
@@ -763,14 +763,14 @@ static int tapi_get_two_call_state(int slot_id)
     int ret = tapi_call_get_all_calls(get_tapi_ctx(), slot_id, 0, call_list_query_complete);
 
     if (ret) {
-        syslog(LOG_ERR, "tapi_get_two_call_state execute fail in %s, ret: %d",
+        syslog(LOG_ERR, "call_get_two_call_state execute fail in %s, ret: %d",
             __func__, ret);
         res = -1;
         goto on_exit;
     }
 
     if (judge()) {
-        syslog(LOG_DEBUG, "tapi_get_two_call_state is not executed in %s", __func__);
+        syslog(LOG_DEBUG, "call_get_two_call_state is not executed in %s", __func__);
         res = -1;
         goto on_exit;
     }
@@ -1490,6 +1490,40 @@ on_exit:
     return res;
 }
 
+int call_dial_and_check_status_in_call_active(int slot_id)
+{
+    int res = 0;
+    if (call_dial_test(slot_id, phone_num, 0)) {
+        syslog(LOG_ERR, "Dial call execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (remote_operation_call_active_test(slot_id, phone_num)) {
+        syslog(LOG_ERR, "Remote call reject execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (call_dial_test(slot_id, "10001", 0)) {
+        syslog(LOG_ERR, "Dial call execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (call_get_two_call_state(slot_id) != 4) {
+        syslog(LOG_ERR, "Get call state execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
 int call_outgoing_remote_answer_and_hangup(int slot_id)
 {
     int res = 0;
@@ -2168,7 +2202,7 @@ int call_dial_active_hangup_due_to_caller_network_exception(int slot_id)
     return call_unlisten_call_test();
 }
 
-int call_dial_and_check_status_in_call_active(int slot_id)
+int call_check_status_in_call_active(int slot_id)
 {
     int res = 0;
     if (call_dial_test(slot_id, phone_num, 0)) {
@@ -2258,7 +2292,7 @@ int call_check_dialing_status_with_multi_call(int slot_id)
         goto on_exit;
     }
 
-    if (tapi_get_two_call_state(slot_id) != 4) {
+    if (call_get_two_call_state(slot_id) != 4) {
         syslog(LOG_ERR, "Get call state fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -2390,7 +2424,7 @@ int call_release_and_answer(int slot_id)
         goto on_exit;
     }
 
-    if (tapi_get_two_call_state(slot_id) < 0) {
+    if (call_get_two_call_state(slot_id) < 0) {
         syslog(LOG_ERR, "Get two call state fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -3138,7 +3172,7 @@ int call_hold_first_call_and_answer_second_call(int slot_id)
         goto on_exit;
     }
 
-    if (tapi_get_two_call_state(slot_id) < 0) {
+    if (call_get_two_call_state(slot_id) < 0) {
         syslog(LOG_ERR, "Get two call state fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -3417,7 +3451,7 @@ int call_swap_in_two_calling(int slot_id)
         goto on_exit;
     }
 
-    if (tapi_get_two_call_state(slot_id) != 1) {
+    if (call_get_two_call_state(slot_id) != 1) {
         syslog(LOG_ERR, "Get two call state fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -3435,7 +3469,7 @@ int call_swap_in_two_calling(int slot_id)
         goto on_exit;
     }
 
-    if (tapi_get_two_call_state(slot_id) != 1) {
+    if (call_get_two_call_state(slot_id) != 1) {
         syslog(LOG_ERR, "Get two call state fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -3453,7 +3487,7 @@ int call_swap_in_two_calling(int slot_id)
         goto on_exit;
     }
 
-    if (tapi_get_two_call_state(slot_id) != 1) {
+    if (call_get_two_call_state(slot_id) != 1) {
         syslog(LOG_ERR, "Get two call state fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -3519,7 +3553,7 @@ int call_hangup_current_call_and_resume_call(int slot_id)
         goto on_exit;
     }
 
-    if (tapi_get_two_call_state(slot_id) != 1) {
+    if (call_get_two_call_state(slot_id) != 1) {
         syslog(LOG_ERR, "Get two call state fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -3585,7 +3619,7 @@ int call_dial_third_call(int slot_id)
         return -1;
     sleep(10);
 
-    if (call_get_call_count(slot_id) != 2 || tapi_get_two_call_state(slot_id) != 1) {
+    if (call_get_call_count(slot_id) != 2 || call_get_two_call_state(slot_id) != 1) {
         call_hangup_all_test(slot_id);
         call_unlisten_call_test();
         return -1;
