@@ -79,6 +79,12 @@ static void call_state_change_cb(tapi_async_result* result)
         }
 
         judge_data.flag = CALL_REMOTE_HANGUP;
+    } else if (judge_data.expect == CALL_NETWORK_HANGUP) {
+        if (call_info->disconnect_reason == CALL_DISCONNECT_REASON_NETWORK_HANGUP) {
+            judge_data.flag = CALL_NETWORK_HANGUP;
+        }
+        judge_data.result = result->status;
+
     } else if (judge_data.expect == NEW_CALL_INCOMING
         || judge_data.expect == NEW_CALL_WAITING
         || judge_data.expect == INCOMING_CALL_WITH_NETWORK_NAME) {
@@ -1296,6 +1302,30 @@ on_exit:
     return res;
 }
 
+int remote_operation_call_network_reject_test(int slot_id, char* phone_number)
+{
+    int res = 0;
+    judge_data_init();
+    judge_data.expect = CALL_NETWORK_HANGUP;
+
+    remote_call_hangup_with_disconnect_reason(slot_id, phone_number, DISCONNECT_REASON_NETWORK_HANGUP);
+
+    if (judge()) {
+        syslog(LOG_ERR, "No hangup call message received in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge_data.result) {
+        syslog(LOG_ERR, "Unsolicited message error in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
 int remote_operation_call_waiting_test(int slot_id, char* phone_number)
 {
     int res = 0;
@@ -1478,6 +1508,33 @@ int call_outgoing_remote_answer_and_hangup(int slot_id)
 
     sleep(3);
     if (remote_operation_call_reject_test(slot_id, phone_num)) {
+        syslog(LOG_ERR, "Remote call reject fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
+int call_outgoing_remote_answer_and_network_hangup(int slot_id)
+{
+    int res = 0;
+    if (call_dial_test(slot_id, phone_num, 0) < 0) {
+        syslog(LOG_ERR, "Dail call execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (remote_operation_call_active_test(slot_id, phone_num)) {
+        syslog(LOG_ERR, "Remote call active fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (remote_operation_call_network_reject_test(slot_id, phone_num)) {
         syslog(LOG_ERR, "Remote call reject fail in %s", __func__);
         res = -1;
         goto on_exit;
