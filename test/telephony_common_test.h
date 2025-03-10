@@ -27,4 +27,5 @@ int radio_power_on_modem_disable_pending_test(int slot_id);
 int radio_power_on_off_pending_test(int slot_id);
 int set_pref_net_mode_test(int slot_id, tapi_pref_net_mode target_state);
 int set_radio_power_test(int slot_id, bool target_state);
+int set_radio_power_off_then_on(int slot_id);
 #endif
