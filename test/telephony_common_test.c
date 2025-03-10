@@ -507,6 +507,28 @@ int get_radio_power_test(int slot_id, bool* value)
     return ret;
 }
 
+/* only once set radio power off then on. */
+int set_radio_power_off_then_on(int slot_id)
+{
+    int ret;
+
+    ret = set_radio_power_test(slot_id, 0);
+    if (ret) {
+        syslog(LOG_ERR, "set radio off test execute fail in %s", __func__);
+        return -1;
+    }
+    sleep(5);
+
+    ret = set_radio_power_test(slot_id, 1);
+    if (ret) {
+        syslog(LOG_ERR, "set radio on test execute fail in %s", __func__);
+        return -1;
+    }
+    sleep(3);
+
+    return ret;
+}
+
 int modem_register_test(int slot_id)
 {
     modem_data.radio_state_watch_id = -1;
