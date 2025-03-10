@@ -149,9 +149,9 @@ int judge(void)
 
         if (judge_data.flag == judge_data.expect) {
             if (judge_data.result != 0)
-                syslog(LOG_ERR, "result error\n");
+                syslog(LOG_ERR, "judge expect(%d): result error\n", judge_data.expect);
             else
-                syslog(LOG_INFO, "result correct\n");
+                syslog(LOG_INFO, "judge expect(%d): result correct\n", judge_data.expect);
 
             return 0;
         }
@@ -160,7 +160,7 @@ int judge(void)
         syslog(LOG_INFO, "There is %d second(s) remain.\n", timeout);
     }
 
-    syslog(LOG_ERR, "judge timeout\n");
+    syslog(LOG_ERR, "judge expect(%d) timeout\n", judge_data.expect);
     assert(0);
     return -ETIME;
 }
@@ -2097,34 +2097,33 @@ static void TestTeleFunc_CI_ImsTurnOnOff(void** state)
     }
 }
 
-static void TestTeleFunc_ImsCheckRegAfterRadioOffOn(void** state)
+static void TestTeleFunc_ImsKeepRegOnAfterRadioOffOn(void** state)
 {
-    tapi_ims_registration_info info1, info2;
-
     (void)state;
-
-    TestTeleFunc_CI_ImsTurnOn(state);
-    sleep(1);
-
-    memset(&info1, 0, sizeof(info1));
-    tapi_ims_get_registration(get_tapi_ctx(), 0, &info1);
-    syslog(LOG_ERR, "%s, info1: reg_info=%d,ext_info=%d", __func__, info1.reg_info, info1.ext_info);
-    assert(info1.reg_info);
-
-    set_radio_power_test(0, 0);
-    sleep(3);
-    set_radio_power_test(0, 1);
-    sleep(3);
-
-    memset(&info2, 0, sizeof(info2));
-    tapi_ims_get_registration(get_tapi_ctx(), 0, &info2);
-    syslog(LOG_ERR, "%s, info2: reg_info=%d,ext_info=%d", __func__, info2.reg_info, info2.ext_info);
-    assert(info2.reg_info);
-
-    assert(info1.reg_info == info2.reg_info);
-    assert(info2.ext_info == info2.ext_info);
+    int ret = ims_is_reg_after_radio_off_on_test(0, true);
+    assert_int_equal(ret, 0);
 }
 
+static void TestTeleFunc_ImsKeepRegOffAfterRadioOffOn(void** state)
+{
+    (void)state;
+    int ret = ims_is_reg_after_radio_off_on_test(0, false);
+    assert_int_equal(ret, 0);
+}
+
+static void TestTeleFunc_ImsKeepVolteAvailAfterRadioOffOn(void** state)
+{
+    (void)state;
+    int ret = ims_is_volte_available_after_radio_off_on_test(0, true);
+    assert_int_equal(ret, 0);
+}
+
+static void TestTeleFunc_ImsKeepVolteUnavailAfterRadioOffOn(void** state)
+{
+    (void)state;
+    int ret = ims_is_volte_available_after_radio_off_on_test(0, false);
+    assert_int_equal(ret, 0);
+}
 static void TestTeleFunc_CI_SSRegister(void** state)
 {
     (void)state;
@@ -3043,7 +3042,10 @@ int main(int argc, char* argv[])
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ImsResetImsCap, setup_ims, teardown_ims),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ImsSetSmsVoiceCap, setup_ims, teardown_ims),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ImsSetSmsCap, setup_ims, teardown_ims),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_ImsCheckRegAfterRadioOffOn, setup_ims, teardown_imsAndRadio),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_ImsKeepRegOnAfterRadioOffOn, setup_ims, teardown_imsAndRadio),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_ImsKeepRegOffAfterRadioOffOn, setup_ims, teardown_imsAndRadio),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_ImsKeepVolteAvailAfterRadioOffOn, setup_ims, teardown_imsAndRadio),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_ImsKeepVolteUnavailAfterRadioOffOn, setup_ims, teardown_imsAndRadio),
     };
 
     const struct CMUnitTest SSTestSuits[] = {
@@ -3112,7 +3114,7 @@ int main(int argc, char* argv[])
         cmocka_unit_test(TestTeleFunc_ModemDisableRadioPowerOff),
     };
 
-    sleep(3);
+    sleep(5);
     cmocka_run_group_tests(SimTestSuites, NULL, NULL);
 
     cmocka_run_group_tests(CallTestSuites, NULL, NULL);
