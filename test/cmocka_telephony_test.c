@@ -175,91 +175,96 @@ void judge_data_init(void)
 static void TestTeleFunc_CI_SimHasIccCard(void** state)
 {
     (void)state;
-    int ret = tapi_sim_has_icc_card_test(0);
+    int ret = sim_has_icc_card_test(0);
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_SimHasIccCardNumerousTimes(void** state)
 {
     (void)state;
-    int ret = tapi_sim_multi_has_icc_card_test(0);
+    int ret = sim_multi_has_icc_card_test(0);
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_CI_SimGetOperatorName(void** state)
 {
     (void)state;
-    int ret = tapi_sim_get_sim_operator_test(0, "310260");
+    char operator[MAX_MCC_LENGTH + MAX_MNC_LENGTH + 1];
+    memset(operator, 0, sizeof(operator));
+    int ret = sim_get_sim_operator_test(0, operator);
     assert_int_equal(ret, OK);
+    assert_string_equal(operator, "310260");
 }
 
 static void TestTeleFunc_CI_SimGetOperator(void** state)
 {
     (void)state;
-    int ret = tapi_sim_get_sim_operator_name_test(0, "T-Mobile");
+    int ret = sim_get_sim_operator_name_test(0, "T-Mobile");
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_SimGetOperatorNameNumerousTimes(void** state)
 {
     (void)state;
-    int ret = tapi_sim_get_sim_operator_name_numerous(0, "T-Mobile");
+    int ret = sim_get_sim_operator_name_numerous(0, "T-Mobile");
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_SimGetOperatorNumerousTimes(void** state)
 {
     (void)state;
-    int ret = tapi_sim_multi_get_sim_operator(0, "310260");
-    assert_int_equal(ret, OK);
+    REPEAT_TEST_MORE_FOR
+    {
+        TestTeleFunc_CI_SimGetOperatorName(state);
+    }
 }
 
 static void TestTeleFunc_CI_SimGetSubscriberId(void** state)
 {
     (void)state;
-    int ret = tapi_sim_get_sim_subscriber_id_test(0, "310260000000000");
+    int ret = sim_get_sim_subscriber_id_test(0, "310260000000000");
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_SimGetSubscriberIdNumerousTimes(void** state)
 {
     (void)state;
-    int ret = tapi_sim_multi_get_sim_subscriber_id_test(0, "310260000000000");
+    int ret = sim_multi_get_sim_subscriber_id_test(0, "310260000000000");
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_CI_SimGetIccId(void** state)
 {
     (void)state;
-    int ret = tapi_sim_get_sim_iccid_test(0, "89860318640220133897");
+    int ret = sim_get_sim_iccid_test(0, "89860318640220133897");
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_SimGetIccIdNumerousTimes(void** state)
 {
     (void)state;
-    int ret = tapi_sim_multi_get_sim_iccid_test(0, "89860318640220133897");
+    int ret = sim_multi_get_sim_iccid_test(0, "89860318640220133897");
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_CI_SimGetMSISDN(void** state)
 {
     (void)state;
-    int ret = tapi_sim_get_ef_msisdn_test(0, "+15551234567");
+    int ret = sim_get_ef_msisdn_test(0, "+15551234567");
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_SimGetMSISDNNumerousTimes(void** state)
 {
     (void)state;
-    int ret = tapi_sim_multi_get_ef_msisdn_test(0, "+15551234567");
+    int ret = sim_multi_get_ef_msisdn_test(0, "+15551234567");
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_CI_SimTransmitAPDUInBasicChannel(void** state)
 {
     (void)state;
-    int ret = tapi_transmit_apdu_basic_channel_test(0);
+    int ret = sim_transmit_apdu_basic_channel_test(0);
     assert_int_equal(ret, OK);
 }
 
@@ -273,17 +278,17 @@ static void TestTeleFunc_SimRmoteAbsentInsertOperator(void** state)
 static void TestTeleFunc_CI_SimGetState(void** state)
 {
     (void)state;
-    int ret = tapi_sim_get_state_test(0);
+    int ret = sim_get_state_test(0);
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_CI_SimOpenAndCloseLogicalChannel(void** state)
 {
     (void)state;
-    int ret = tapi_open_logical_channel_test(0);
+    int ret = sim_open_logical_channel_test(0);
     assert_int_equal(ret, OK);
     sleep(3);
-    ret = tapi_close_logical_channel_test(0);
+    ret = sim_close_logical_channel_test(0);
 }
 
 static void TestTeleFunc_SimLogicalChannelOpenCloseNumerous(void** state)
@@ -302,85 +307,84 @@ static void TestTeleFunc_CI_SimTransmitAPDUInLogicalChannel(void** state)
 static void TestTeleFunc_SimSetUiccEnablement(void** state)
 {
     (void)state;
-    int ret = tapi_sim_set_uicc_enablement_test(0);
+    int ret = sim_set_uicc_enablement_test(0);
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_SimGetUiccEnablement(void** state)
 {
     (void)state;
-    int ret = tapi_sim_get_uicc_enablement_test(0);
+    int ret = sim_get_uicc_enablement_test(0);
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_CI_SimTransmitAPDUBasicChannel(void** state)
 {
     (void)state;
-    int ret = tapi_transmit_apdu_basic_channel_test(0);
+    int ret = sim_transmit_apdu_basic_channel_test(0);
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_SimEnterPin(void** state)
 {
     (void)state;
-    int ret = tapi_sim_enter_pin_test(0);
+    int ret = sim_enter_pin_test(0);
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_SimChangePin(void** state)
 {
     (void)state;
-    int ret = sim_change_pin_test(0);
+    int ret = sim_change_and_restore_pin_test(0);
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_SimLockPin(void** state)
 {
     (void)state;
-    int ret = tapi_sim_lock_pin_test(0);
+    int ret = sim_lock_pin_test(0);
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_SimUnlockPin(void** state)
 {
     (void)state;
-    int ret = tapi_sim_unlock_pin_test(0);
-    sleep(4);
+    int ret = sim_unlock_pin_test(0);
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_SimLoadAdnEntries(void** state)
 {
     (void)state;
-    int ret = tapi_phonebook_load_adn_entries_test(0);
+    int ret = phonebook_load_adn_entries_test(0);
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_SimLoadFdnEntries(void** state)
 {
     (void)state;
-    int ret = tapi_phonebook_load_fdn_entries_test(0);
+    int ret = phonebook_load_fdn_entries_test(0);
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_SimInsertFdnEntry(void** state)
 {
     (void)state;
-    int ret = tapi_phonebook_insert_fdn_entry_test(0);
+    int ret = phonebook_insert_fdn_entry_test(0);
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_SimUpdateFdnEntry(void** state)
 {
     (void)state;
-    int ret = tapi_phonebook_update_fdn_entry_test(0);
+    int ret = phonebook_update_fdn_entry_test(0);
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_SimDeleteFdnEntry(void** state)
 {
     (void)state;
-    int ret = tapi_phonebook_delete_fdn_entry_test(0);
+    int ret = phonebook_delete_fdn_entry_test(0);
     assert_int_equal(ret, OK);
 }
 
@@ -2465,7 +2469,7 @@ static void TestTeleFunc_CI_ModemDefaultOpenTapi(void** state)
     tapi_enable_modem(get_tapi_ctx(), 0, 0, 1, NULL); // eanble modem anyway
     sleep(10);
 
-    ret = tapi_sim_has_icc_card_test(0);
+    ret = sim_has_icc_card_test(0);
     assert_int_equal(ret, OK);
 }
 
