@@ -81,7 +81,7 @@ void judge_data_init(void)
     judge_data.result = INVALID_VALUE;
 }
 
-static void TestNuttxDataEnable(void** state)
+static void TestTeleDataEnable(void** state)
 {
     (void)state;
     int ret = data_enabled_test(0);
@@ -89,7 +89,7 @@ static void TestNuttxDataEnable(void** state)
     sleep(20);
 }
 
-static void TestNuttxDataDisable(void** state)
+static void TestTeleDataDisable(void** state)
 {
     (void)state;
     int ret = data_disabled_test(0);
@@ -97,7 +97,7 @@ static void TestNuttxDataDisable(void** state)
     sleep(20);
 }
 
-static void TestNuttxDataIsEnable(void** state)
+static void TestTeleDataIsEnable(void** state)
 {
     (void)state;
     bool enable = false;
@@ -107,7 +107,7 @@ static void TestNuttxDataIsEnable(void** state)
     assert_int_equal(enable, 1);
 }
 
-static void TestNuttxDataIsDisable(void** state)
+static void TestTeleDataIsDisable(void** state)
 {
     (void)state;
     bool enable = true;
@@ -117,14 +117,21 @@ static void TestNuttxDataIsDisable(void** state)
     assert_int_equal(enable, 0);
 }
 
-static void TestNuttxDataRegister(void** state)
+static void TestTeleDataRegister(void** state)
 {
     (void)state;
     int ret = data_listen_data_test(0);
     assert_int_equal(ret, OK);
 }
 
-static void TestNuttxDataUnregister(void** state)
+static void TestTeleDataLoadApnContexts(void** state)
+{
+    (void)state;
+    int ret = data_load_apn_contexts_test(0);
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleDataUnregister(void** state)
 {
     (void)state;
     int ret = data_unlisten_data_test();
@@ -132,14 +139,14 @@ static void TestNuttxDataUnregister(void** state)
 }
 
 // modem
-static void TestNuttxModemGetImei(void** state)
+static void TestTeleModemGetImei(void** state)
 {
     (void)state;
     int ret = get_imei_test(0);
     assert_int_equal(ret, OK);
 }
 
-static void TestNuttxGetModemEnableStatus(void** state)
+static void TestTeleGetModemEnableStatus(void** state)
 {
     (void)state;
     int get_state = 1;
@@ -147,7 +154,7 @@ static void TestNuttxGetModemEnableStatus(void** state)
     assert_int_equal(ret, OK);
 }
 
-static void TestNuttxGetModemDsiableStatus(void** state)
+static void TestTeleGetModemDsiableStatus(void** state)
 {
     (void)state;
     int get_state = 0;
@@ -155,7 +162,7 @@ static void TestNuttxGetModemDsiableStatus(void** state)
     assert_int_equal(ret, OK);
 }
 
-static void TestNuttxModemEnable(void** state)
+static void TestTeleModemEnable(void** state)
 {
     (void)state;
     int ret = enable_modem_test(0, 1);
@@ -163,7 +170,7 @@ static void TestNuttxModemEnable(void** state)
     sleep(60);
 }
 
-static void TestNuttxModemDisable(void** state)
+static void TestTeleModemDisable(void** state)
 {
     (void)state;
     int ret = enable_modem_test(0, 0);
@@ -171,34 +178,34 @@ static void TestNuttxModemDisable(void** state)
     sleep(10);
 }
 
-static void TestNuttxModemEnableDisableRepeatedly(void** state)
+static void TestTeleModemEnableDisableRepeatedly(void** state)
 {
     REPEAT_TEST_LESS_FOR
     {
-        TestNuttxModemEnable(state);
+        TestTeleModemEnable(state);
         sleep(60);
-        TestNuttxGetModemEnableStatus(state);
-        TestNuttxModemDisable(state);
+        TestTeleGetModemEnableStatus(state);
+        TestTeleModemDisable(state);
         sleep(60);
-        TestNuttxGetModemDsiableStatus(state);
+        TestTeleGetModemDsiableStatus(state);
     }
 }
 
-static void TestNuttxModemRegister(void** state)
+static void TestTeleModemRegister(void** state)
 {
     (void)state;
     int ret = modem_register_test(0);
     assert_int_equal(ret, OK);
 }
 
-static void TestNuttxModemUnregister(void** state)
+static void TestTeleModemUnregister(void** state)
 {
     (void)state;
     int ret = modem_unregister_test();
     assert_true(ret == OK);
 }
 
-static void TestNuttxGetModemRevision(void** state)
+static void TestTeleGetModemRevision(void** state)
 {
     int ret;
     ret = get_modem_revision_test(0);
@@ -246,49 +253,65 @@ static void on_tapi_client_ready(const char* client_name, void* user_data)
     }
 }
 
-static void TestNuttxHasIccCard(void** state)
+static void TestTeleHasIccCard(void** state)
 {
     (void)state;
-    int ret = tapi_sim_has_icc_card_test(0);
+    int ret = sim_has_icc_card_test(0);
     assert_int_equal(ret, OK);
 }
 
-static void TestNuttxHasIccCardNumerousTimes(void** state)
+static void TestTeleHasIccCardNumerousTimes(void** state)
 {
     (void)state;
-    int ret = tapi_sim_multi_has_icc_card_test(0);
+    int ret = sim_multi_has_icc_card_test(0);
     assert_int_equal(ret, OK);
 }
 
-static void TestNuttxNetGetOperatorName(void** state)
+static void TestTeleSimGetOperatorName(void** state)
+{
+    (void)state;
+    char operator[MAX_MCC_LENGTH + MAX_MNC_LENGTH + 1];
+    memset(operator, 0, sizeof(operator));
+    int ret = sim_get_sim_operator_test(0, operator);
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleNetGetOperatorName(void** state)
 {
     (void)state;
     int ret = tapi_net_get_operator_name_test(0);
     assert_int_equal(ret, OK);
 }
 
-static void TestNuttxDataIsPsAttached(void** state)
+static void TestTeleNetGetServingCellinfos(void** state)
+{
+    (void)state;
+    int ret = tapi_net_get_serving_cellinfos_test(0);
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleDataIsPsAttached(void** state)
 {
     (void)state;
     int ret = data_is_ps_attached_test(0);
     assert_int_equal(ret, OK);
 }
 
-static void TestNuttxListenCall(void** state)
+static void TestTeleListenCall(void** state)
 {
     (void)state;
     int ret = call_listen_call_test(0);
     assert_int_equal(ret, 0);
 }
 
-static void TestNuttxUnlistenCall(void** state)
+static void TestTeleUnlistenCall(void** state)
 {
     (void)state;
     int ret = call_unlisten_call_test();
     assert_int_equal(ret, 0);
 }
 
-static void TestNuttxDialCall(void** state)
+static void TestTeleDialCall(void** state)
 {
     sleep(30);
     (void)state;
@@ -298,7 +321,7 @@ static void TestNuttxDialCall(void** state)
     sleep(30);
 }
 
-static void TestNuttxHangupCall(void** state)
+static void TestTeleHangupCall(void** state)
 {
     (void)state;
     property_delete("tapi.ignore_hangup");
@@ -354,31 +377,34 @@ int main(int argc, char* argv[])
         sleep(1);
 
     const struct CMUnitTest StabilityTestSuites[] = {
-        cmocka_unit_test(TestNuttxListenCall),
-        cmocka_unit_test(TestNuttxModemRegister),
-        cmocka_unit_test(TestNuttxModemUnregister),
-        cmocka_unit_test(TestNuttxDataRegister),
-        cmocka_unit_test(TestNuttxDataUnregister),
-        cmocka_unit_test(TestNuttxDataRegister),
-        cmocka_unit_test(TestNuttxModemEnable),
-        cmocka_unit_test(TestNuttxGetModemEnableStatus),
-        cmocka_unit_test(TestNuttxHasIccCard),
-        cmocka_unit_test(TestNuttxHasIccCardNumerousTimes),
-        cmocka_unit_test(TestNuttxDataIsPsAttached),
-        cmocka_unit_test(TestNuttxNetGetOperatorName),
-        cmocka_unit_test(TestNuttxModemGetImei),
-        cmocka_unit_test(TestNuttxGetModemRevision),
-        cmocka_unit_test(TestNuttxDialCall),
-        cmocka_unit_test(TestNuttxHangupCall),
-        cmocka_unit_test(TestNuttxDataEnable),
-        cmocka_unit_test(TestNuttxDataIsEnable),
-        cmocka_unit_test(TestNuttxDataDisable),
-        cmocka_unit_test(TestNuttxDataIsDisable),
-        cmocka_unit_test(TestNuttxDataUnregister),
-        cmocka_unit_test(TestNuttxModemDisable),
-        cmocka_unit_test(TestNuttxGetModemDsiableStatus),
-        cmocka_unit_test(TestNuttxModemEnableDisableRepeatedly),
-        cmocka_unit_test(TestNuttxUnlistenCall),
+        cmocka_unit_test(TestTeleListenCall),
+        cmocka_unit_test(TestTeleModemRegister),
+        cmocka_unit_test(TestTeleModemUnregister),
+        cmocka_unit_test(TestTeleDataRegister),
+        cmocka_unit_test(TestTeleDataLoadApnContexts),
+        cmocka_unit_test(TestTeleDataUnregister),
+        cmocka_unit_test(TestTeleDataRegister),
+        cmocka_unit_test(TestTeleModemEnable),
+        cmocka_unit_test(TestTeleGetModemEnableStatus),
+        cmocka_unit_test(TestTeleHasIccCard),
+        cmocka_unit_test(TestTeleHasIccCardNumerousTimes),
+        cmocka_unit_test(TestTeleSimGetOperatorName),
+        cmocka_unit_test(TestTeleDataIsPsAttached),
+        cmocka_unit_test(TestTeleNetGetOperatorName),
+        cmocka_unit_test(TestTeleNetGetServingCellinfos),
+        cmocka_unit_test(TestTeleModemGetImei),
+        cmocka_unit_test(TestTeleGetModemRevision),
+        cmocka_unit_test(TestTeleDialCall),
+        cmocka_unit_test(TestTeleHangupCall),
+        cmocka_unit_test(TestTeleDataEnable),
+        cmocka_unit_test(TestTeleDataIsEnable),
+        cmocka_unit_test(TestTeleDataDisable),
+        cmocka_unit_test(TestTeleDataIsDisable),
+        cmocka_unit_test(TestTeleDataUnregister),
+        cmocka_unit_test(TestTeleModemDisable),
+        cmocka_unit_test(TestTeleGetModemDsiableStatus),
+        cmocka_unit_test(TestTeleModemEnableDisableRepeatedly),
+        cmocka_unit_test(TestTeleUnlistenCall),
     };
 
     sleep(120);

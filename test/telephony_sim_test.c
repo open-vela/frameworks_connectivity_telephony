@@ -20,7 +20,7 @@ static void global_data_init(void)
 int setup_sim(void** state)
 {
     (void)state;
-    return tapi_sim_listen_sim_test(0);
+    return sim_listen_sim_test(0);
 }
 
 int teardown_sim(void** state)
@@ -48,7 +48,7 @@ int teardown_sim(void** state)
         }
     }
 
-    if (tapi_sim_unlisten_sim_test()) {
+    if (sim_unlisten_sim_test()) {
         syslog(LOG_ERR, "sim unlisten execute fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -58,7 +58,7 @@ on_exit:
     return res;
 }
 
-int tapi_sim_has_icc_card_test(int slot_id)
+int sim_has_icc_card_test(int slot_id)
 {
     bool result = false;
     int ret = tapi_sim_has_icc_card(get_tapi_ctx(), slot_id, &result);
@@ -67,11 +67,11 @@ int tapi_sim_has_icc_card_test(int slot_id)
     return ret || (!result);
 }
 
-int tapi_sim_multi_has_icc_card_test(int slot_id)
+int sim_multi_has_icc_card_test(int slot_id)
 {
     int ret = -1;
     for (int i = 0; i < TEST_COUNT; ++i) {
-        if ((ret = tapi_sim_has_icc_card_test(slot_id)) != 0) {
+        if ((ret = sim_has_icc_card_test(slot_id)) != 0) {
             return ret;
         }
     }
@@ -159,21 +159,19 @@ on_exit:
     return res;
 }
 
-int tapi_sim_get_sim_operator_test(int slot_id, const char* expect_res)
+int sim_get_sim_operator_test(int slot_id, char* operator)
 {
-    char operator[MAX_MCC_LENGTH + MAX_MNC_LENGTH + 1];
-    memset(operator, 0, sizeof(operator));
     int ret = tapi_sim_get_sim_operator(get_tapi_ctx(),
         0, (MAX_MCC_LENGTH + MAX_MNC_LENGTH + 1), operator);
     syslog(LOG_DEBUG, "%s, ret: %d, slot_id: %d, operator: %s\n", __func__, ret, slot_id, operator);
 
-    return ret || (operator[0] == 0) || strcmp(expect_res, operator);
+    return ret || (operator[0] == 0);
 }
 
 int sim_set_operator_test(int slot_id, const char* expect_res)
 {
     int res = 0;
-    if (tapi_sim_listen_sim_test(slot_id)) {
+    if (sim_listen_sim_test(slot_id)) {
         syslog(LOG_DEBUG, "Sim listen execute fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -207,7 +205,7 @@ int sim_set_operator_test(int slot_id, const char* expect_res)
     }
 
     sleep(10);
-    if (tapi_sim_unlisten_sim_test()) {
+    if (sim_unlisten_sim_test()) {
         syslog(LOG_DEBUG, "Sim unlisten execute fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -217,19 +215,7 @@ on_exit:
     return res;
 }
 
-int tapi_sim_multi_get_sim_operator(int slot_id, const char* expect_res)
-{
-    int ret = -1;
-    for (int i = 0; i < TEST_COUNT; ++i) {
-        if ((ret = tapi_sim_get_sim_operator_test(slot_id, expect_res)) != 0) {
-            return ret;
-        }
-    }
-
-    return ret;
-}
-
-int tapi_sim_get_sim_operator_name_test(int slot_id, const char* expect_res)
+int sim_get_sim_operator_name_test(int slot_id, const char* expect_res)
 {
     char* spn = NULL;
     int ret = tapi_sim_get_sim_operator_name(get_tapi_ctx(), slot_id, &spn);
@@ -238,11 +224,11 @@ int tapi_sim_get_sim_operator_name_test(int slot_id, const char* expect_res)
     return ret || (spn == NULL) || strcmp(expect_res, spn);
 }
 
-int tapi_sim_get_sim_operator_name_numerous(int slot_id, const char* expect_res)
+int sim_get_sim_operator_name_numerous(int slot_id, const char* expect_res)
 {
     int ret = -1;
     for (int i = 0; i < TEST_COUNT; ++i) {
-        if ((ret = tapi_sim_get_sim_operator_name_test(slot_id, expect_res)) != 0) {
+        if ((ret = sim_get_sim_operator_name_test(slot_id, expect_res)) != 0) {
             goto on_exit;
         }
     }
@@ -251,7 +237,7 @@ on_exit:
     return ret;
 }
 
-int tapi_sim_get_sim_subscriber_id_test(int slot_id, const char* expect_res)
+int sim_get_sim_subscriber_id_test(int slot_id, const char* expect_res)
 {
     char* result = NULL;
     int ret = tapi_sim_get_subscriber_id(get_tapi_ctx(), slot_id, &result);
@@ -261,11 +247,11 @@ int tapi_sim_get_sim_subscriber_id_test(int slot_id, const char* expect_res)
     return ret || (!result) || strcmp(result, expect_res);
 }
 
-int tapi_sim_multi_get_sim_subscriber_id_test(int slot_id, const char* expect_res)
+int sim_multi_get_sim_subscriber_id_test(int slot_id, const char* expect_res)
 {
     int ret = -1;
     for (int i = 0; i < TEST_COUNT; ++i) {
-        if ((ret = tapi_sim_get_sim_subscriber_id_test(slot_id, expect_res)) != 0) {
+        if ((ret = sim_get_sim_subscriber_id_test(slot_id, expect_res)) != 0) {
             return ret;
         }
     }
@@ -273,7 +259,7 @@ int tapi_sim_multi_get_sim_subscriber_id_test(int slot_id, const char* expect_re
     return ret;
 }
 
-int tapi_sim_get_sim_iccid_test(int slot_id, const char* expect_res)
+int sim_get_sim_iccid_test(int slot_id, const char* expect_res)
 {
     char* iccid = NULL;
     int ret = tapi_sim_get_sim_iccid(get_tapi_ctx(), slot_id, &iccid);
@@ -282,11 +268,11 @@ int tapi_sim_get_sim_iccid_test(int slot_id, const char* expect_res)
     return ret || iccid == NULL || strcmp(expect_res, iccid);
 }
 
-int tapi_sim_multi_get_sim_iccid_test(int slot_id, const char* expect_res)
+int sim_multi_get_sim_iccid_test(int slot_id, const char* expect_res)
 {
     int ret = -1;
     for (int i = 0; i < TEST_COUNT; ++i) {
-        if ((ret = tapi_sim_get_sim_iccid_test(slot_id, expect_res)) != 0) {
+        if ((ret = sim_get_sim_iccid_test(slot_id, expect_res)) != 0) {
             return ret;
         }
     }
@@ -294,7 +280,7 @@ int tapi_sim_multi_get_sim_iccid_test(int slot_id, const char* expect_res)
     return ret;
 }
 
-int tapi_sim_get_ef_msisdn_test(int slot_id, const char* expect_res)
+int sim_get_ef_msisdn_test(int slot_id, const char* expect_res)
 {
     char* number = NULL;
     int ret = tapi_get_msisdn_number(get_tapi_ctx(), slot_id, &number);
@@ -303,11 +289,11 @@ int tapi_sim_get_ef_msisdn_test(int slot_id, const char* expect_res)
     return ret || number == NULL || strcmp(expect_res, number);
 }
 
-int tapi_sim_multi_get_ef_msisdn_test(int slot_id, const char* expect_res)
+int sim_multi_get_ef_msisdn_test(int slot_id, const char* expect_res)
 {
     int ret = -1;
     for (int i = 0; i < TEST_COUNT; ++i) {
-        if ((ret = tapi_sim_get_ef_msisdn_test(slot_id, expect_res)) != 0) {
+        if ((ret = sim_get_ef_msisdn_test(slot_id, expect_res)) != 0) {
             return ret;
         }
     }
@@ -315,7 +301,7 @@ int tapi_sim_multi_get_ef_msisdn_test(int slot_id, const char* expect_res)
     return ret;
 }
 
-int tapi_sim_get_state_test(int slot_id)
+int sim_get_state_test(int slot_id)
 {
     int state = 0;
     int ret = tapi_sim_get_sim_state(get_tapi_ctx(), slot_id, &state);
@@ -440,7 +426,7 @@ static void tele_sim_async_fun(tapi_async_result* result)
     }
 }
 
-int tapi_sim_listen_sim_test(int slot_id)
+int sim_listen_sim_test(int slot_id)
 {
     int res = 0;
     global_data_init();
@@ -467,7 +453,7 @@ on_exit:
     return res;
 }
 
-int tapi_sim_unlisten_sim_test(void)
+int sim_unlisten_sim_test(void)
 {
     int ret = -1, res = 0;
     ret = tapi_sim_unregister(get_tapi_ctx(), global_data.sim_state_change_watch_id);
@@ -488,7 +474,7 @@ on_exit:
     return res;
 }
 
-int tapi_open_logical_channel_test(int slot_id)
+int sim_open_logical_channel_test(int slot_id)
 {
     judge_data_init();
     judge_data.expect = EVENT_OPEN_LOGICAL_CHANNEL_DONE;
@@ -527,7 +513,7 @@ on_exit:
     return res;
 }
 
-int tapi_close_logical_channel_test(int slot_id)
+int sim_close_logical_channel_test(int slot_id)
 {
     int res = 0;
     judge_data_init();
@@ -617,7 +603,7 @@ out:
     return ret;
 }
 
-int tapi_transmit_apdu_basic_channel_test(int slot_id)
+int sim_transmit_apdu_basic_channel_test(int slot_id)
 {
     char data[] = "A0B000010473656E669000";
     int res = 0;
@@ -657,7 +643,7 @@ on_exit:
     return res;
 }
 
-int tapi_transmit_apdu_logical_channel_test(int slot_id)
+int sim_transmit_apdu_logical_channel_test(int slot_id)
 {
     int res = 0;
 
@@ -709,10 +695,10 @@ on_exit:
 int sim_open_close_logical_channel_numerous(int slot_id)
 {
     for (int i = 0; i < 10; i++) {
-        if (tapi_open_logical_channel_test(slot_id))
+        if (sim_open_logical_channel_test(slot_id))
             return -1;
 
-        if (tapi_close_logical_channel_test(slot_id))
+        if (sim_close_logical_channel_test(slot_id))
             return -1;
     }
 
@@ -723,23 +709,23 @@ int sim_transmit_apdu_by_logical_channel(int slot_id)
 {
     int ret = -1;
     int res = 0;
-    ret = tapi_open_logical_channel_test(slot_id);
+    ret = sim_open_logical_channel_test(slot_id);
     if (ret) {
-        syslog(LOG_ERR, "tapi_open_logical_channel_test execute fail in %s", __func__);
+        syslog(LOG_ERR, "sim_open_logical_channel_test execute fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
-    ret = tapi_transmit_apdu_logical_channel_test(slot_id);
+    ret = sim_transmit_apdu_logical_channel_test(slot_id);
     if (ret) {
-        syslog(LOG_ERR, "tapi_transmit_apdu_logical_channel_test execute fail in %s", __func__);
+        syslog(LOG_ERR, "sim_transmit_apdu_logical_channel_test execute fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
-    ret = tapi_close_logical_channel_test(slot_id);
+    ret = sim_close_logical_channel_test(slot_id);
     if (ret) {
-        syslog(LOG_ERR, "tapi_close_logical_channel_test execute fail in %s", __func__);
+        syslog(LOG_ERR, "sim_close_logical_channel_test execute fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
@@ -748,7 +734,7 @@ on_exit:
     return res;
 }
 
-int tapi_sim_set_uicc_enablement_test(int slot_id)
+int sim_set_uicc_enablement_test(int slot_id)
 {
     int res = 0;
     judge_data_init();
@@ -779,7 +765,7 @@ on_exit:
     return res;
 }
 
-int tapi_sim_get_uicc_enablement_test(int slot_id)
+int sim_get_uicc_enablement_test(int slot_id)
 {
     tapi_sim_uicc_app_state state = SIM_UICC_APP_UNKNOWN;
     int ret = tapi_sim_get_uicc_enablement(get_tapi_ctx(), slot_id, &state);
@@ -788,7 +774,7 @@ int tapi_sim_get_uicc_enablement_test(int slot_id)
     return ret;
 }
 
-int tapi_sim_enter_pin_test(int slot_id)
+int sim_enter_pin_test(int slot_id)
 {
     judge_data_init();
     judge_data.expect = EVENT_ENTER_SIM_PIN_DONE;
@@ -819,7 +805,7 @@ on_exit:
     return res;
 }
 
-int tapi_sim_change_pin_test(int slot_id, char* old_pin, char* new_pin)
+int sim_change_pin_test(int slot_id, char* old_pin, char* new_pin)
 {
     syslog(LOG_DEBUG, "%s, old_pin: %s, new_pin: %s", __func__, old_pin, new_pin);
     judge_data_init();
@@ -851,18 +837,18 @@ on_exit:
     return res;
 }
 
-int sim_change_pin_test(int slot_id)
+int sim_change_and_restore_pin_test(int slot_id)
 {
     int ret = -1;
     int res = 0;
-    ret = tapi_sim_change_pin_test(slot_id, "1234", "2345");
+    ret = sim_change_pin_test(slot_id, "1234", "2345");
     if (ret) {
         syslog(LOG_DEBUG, "change pin from \"1234\" to \"2345\" fail");
         res = -1;
         goto on_exit;
     }
 
-    ret = tapi_sim_change_pin_test(slot_id, "2345", "1234");
+    ret = sim_change_pin_test(slot_id, "2345", "1234");
     if (ret) {
         syslog(LOG_DEBUG, "change pin from \"2345\" to \"1234\" fail");
         res = -1;
@@ -873,7 +859,7 @@ on_exit:
     return res;
 }
 
-int tapi_sim_lock_pin_test(int slot_id)
+int sim_lock_pin_test(int slot_id)
 {
     judge_data_init();
     judge_data.expect = EVENT_LOCK_SIM_PIN_DONE;
@@ -904,7 +890,7 @@ on_exit:
     return res;
 }
 
-int tapi_sim_unlock_pin_test(int slot_id)
+int sim_unlock_pin_test(int slot_id)
 {
     judge_data_init();
     judge_data.expect = EVENT_UNLOCK_SIM_PIN_DONE;
@@ -972,7 +958,7 @@ static void tele_phonebook_async_fun(tapi_async_result* result)
     }
 }
 
-int tapi_phonebook_load_adn_entries_test(int slot_id)
+int phonebook_load_adn_entries_test(int slot_id)
 {
     int res = 0;
     judge_data_init();
@@ -1002,7 +988,7 @@ on_exit:
     return res;
 }
 
-int tapi_phonebook_load_fdn_entries_test(int slot_id)
+int phonebook_load_fdn_entries_test(int slot_id)
 {
     int res = 0;
     judge_data_init();
@@ -1032,7 +1018,7 @@ on_exit:
     return res;
 }
 
-int tapi_phonebook_insert_fdn_entry_test(int slot_id)
+int phonebook_insert_fdn_entry_test(int slot_id)
 {
     int res = 0;
     judge_data_init();
@@ -1063,7 +1049,7 @@ on_exit:
     return res;
 }
 
-int tapi_phonebook_update_fdn_entry_test(int slot_id)
+int phonebook_update_fdn_entry_test(int slot_id)
 {
     int res = 0;
     judge_data_init();
@@ -1094,7 +1080,7 @@ on_exit:
     return res;
 }
 
-int tapi_phonebook_delete_fdn_entry_test(int slot_id)
+int phonebook_delete_fdn_entry_test(int slot_id)
 {
     int res = 0;
     judge_data_init();

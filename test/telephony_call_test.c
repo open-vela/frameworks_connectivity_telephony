@@ -1088,7 +1088,7 @@ on_exit:
 int call_load_and_compare_ecclist_without_sim_card_test(int slot_id)
 {
     int res = 0;
-    if (tapi_sim_listen_sim_test(slot_id)) {
+    if (sim_listen_sim_test(slot_id)) {
         syslog(LOG_DEBUG, "Sim listen execute fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -1125,7 +1125,7 @@ int call_load_and_compare_ecclist_without_sim_card_test(int slot_id)
         goto on_exit;
     }
 
-    if (tapi_sim_unlisten_sim_test()) {
+    if (sim_unlisten_sim_test()) {
         syslog(LOG_DEBUG, "Sim unlisten execute fail in %s", __func__);
         res = -1;
         goto on_exit;
