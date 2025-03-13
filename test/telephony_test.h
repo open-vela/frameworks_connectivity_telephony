@@ -110,6 +110,7 @@ struct judge_type {
     int flag;
     int expect;
     int result;
+    int phone_state_value;
 };
 
 #endif /* TELEPHONY_TEST_H_ */

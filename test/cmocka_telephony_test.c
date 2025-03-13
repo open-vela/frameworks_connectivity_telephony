@@ -170,6 +170,7 @@ void judge_data_init(void)
     judge_data.flag = INVALID_VALUE;
     judge_data.expect = INVALID_VALUE;
     judge_data.result = INVALID_VALUE;
+    judge_data.phone_state_value = INVALID_VALUE;
 }
 
 static void TestTeleFunc_CI_SimHasIccCard(void** state)
@@ -1801,7 +1802,7 @@ static void TestTeleFunc_CI_ModemEnableDisableNTimes(void** state)
     }
 }
 
-static void TestTeleFunc_CI_ModemEnableDisableNTimesUnderRadioPowerOff(void** state)
+static void TestTeleFunc_ModemEnableDisableNTimesUnderRadioPowerOff(void** state)
 {
     (void)state;
     TestTeleFunc_CI_ModemSetRadioPowerOff(state);
@@ -1810,7 +1811,7 @@ static void TestTeleFunc_CI_ModemEnableDisableNTimesUnderRadioPowerOff(void** st
     TestTeleFunc_CI_ModemEnableDisableNTimes(state);
 }
 
-static void TestTeleFunc_CI_ModemDisableEnableRadioPowerOff(void** state)
+static void TestTeleFunc_ModemDisableEnableRadioPowerOff(void** state)
 {
     (void)state;
     bool value;
@@ -1826,7 +1827,7 @@ static void TestTeleFunc_CI_ModemDisableEnableRadioPowerOff(void** state)
     assert_false(value);
 }
 
-static void TestTeleFunc_CI_ModemDisableRadioPowerOff(void** state)
+static void TestTeleFunc_ModemDisableRadioPowerOff(void** state)
 {
     (void)state;
     TestTeleFunc_CI_ModemSetRadioPowerOn(state);
@@ -1839,7 +1840,7 @@ static void TestTeleFunc_CI_ModemDisableRadioPowerOff(void** state)
     TestTeleFunc_CI_ModemSetRadioPowerOn(state);
 }
 
-static void TestTeleFunc_CI_ModemEnableDisableNTimesUnderDialingCall(void** state)
+static void TestTeleFunc_ModemEnableDisableNTimesUnderDialingCall(void** state)
 {
     (void)state;
 
@@ -1885,7 +1886,7 @@ static void TestTeleFunc_ModemSetRadioOffUnderOngoingCall(void** state)
     TestTeleFunc_CI_ModemSetRadioPowerOn(state);
 }
 
-static void TestTeleFunc_CI_ModemEnableDisableNTimesUnderOngoingCall(void** state)
+static void TestTeleFunc_ModemEnableDisableNTimesUnderOngoingCall(void** state)
 {
     (void)state;
     int ret = call_dial_and_keep_in_call_active(0, phone_num);
@@ -2224,7 +2225,7 @@ static void TestTeleFunc_CI_SSEnableAndDisableCallWaiting(void** state)
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleFunc_CI_ModemGetPhoneState(void** state)
+static void TestTeleFunc_ModemGetDefaultPhoneState(void** state)
 {
     tapi_phone_state target;
     int ret;
@@ -2233,6 +2234,15 @@ static void TestTeleFunc_CI_ModemGetPhoneState(void** state)
     target = PHONE_IDLE;
     ret = get_phone_state_test(0, target);
     assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_ModemGetPhoneState(void** state)
+{
+    tapi_phone_state target;
+    int ret;
+
+    (void)state;
+    TestTeleFunc_ModemGetDefaultPhoneState(state);
     target = PHONE_OFFHOOK;
     TestTeleFunc_CI_CallDialNumber(state);
     ret = get_phone_state_test(0, target);
@@ -2249,6 +2259,108 @@ static void TestTeleFunc_CI_ModemGetPhoneState(void** state)
     ret = get_phone_state_test(0, target);
     assert_int_equal(ret, OK);
     ret = call_hangup_current_call_test(0);
+}
+
+static void TestTeleFunc_ModemGetPhoneStateUnderMOCall(void** state)
+{
+    tapi_phone_state target;
+    int ret;
+
+    (void)state;
+    ret = modem_register_test(0);
+    assert_int_equal(ret, OK);
+    ret = call_listen_call_test(0);
+    assert_int_equal(ret, OK);
+    target = PHONE_OFFHOOK;
+    ret = call_dial_test(0, phone_num, 0);
+    assert_int_equal(ret, OK);
+    assert_true(judge_data.phone_state_value == target);
+    ret = remote_operation_call_active_test(0, phone_num);
+    target = PHONE_IDLE;
+    ret = call_hangup_current_call_test(0);
+    assert_int_equal(ret, OK);
+    assert_true(judge_data.phone_state_value == target);
+    ret = call_unlisten_call_test();
+    assert_int_equal(ret, OK);
+    ret = modem_unregister_test();
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_ModemGetPhoneStateUnderMTCall(void** state)
+{
+    tapi_phone_state target;
+    int ret;
+
+    (void)state;
+    ret = modem_register_test(0);
+    assert_int_equal(ret, OK);
+    ret = call_listen_call_test(0);
+    assert_int_equal(ret, OK);
+    target = PHONE_RINGING;
+    ret = remote_operation_call_incoming_test(0, phone_num);
+    assert_int_equal(ret, OK);
+    assert_true(judge_data.phone_state_value == target);
+    target = PHONE_OFFHOOK;
+    ret = answer_incoming_call_test(0);
+    assert_int_equal(ret, OK);
+    assert_true(judge_data.phone_state_value == target);
+    target = PHONE_IDLE;
+    ret = call_hangup_current_call_test(0);
+    assert_int_equal(ret, OK);
+    assert_true(judge_data.phone_state_value == target);
+    ret = modem_unregister_test();
+    assert_int_equal(ret, OK);
+    ret = call_unlisten_call_test();
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_ModemGetPhoneStateUnderMTRejectCall(void** state)
+{
+    tapi_phone_state target;
+    int ret;
+
+    (void)state;
+    ret = modem_register_test(0);
+    assert_int_equal(ret, OK);
+    ret = call_listen_call_test(0);
+    assert_int_equal(ret, OK);
+    target = PHONE_RINGING;
+    ret = remote_operation_call_incoming_test(0, phone_num);
+    assert_int_equal(ret, OK);
+    assert_true(judge_data.phone_state_value == target);
+    target = PHONE_IDLE;
+    ret = call_hangup_current_call_test(0);
+    assert_int_equal(ret, OK);
+    assert_true(judge_data.phone_state_value == target);
+    ret = modem_unregister_test();
+    assert_int_equal(ret, OK);
+    ret = call_unlisten_call_test();
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_ModemGetPhoneStateUnderDialingCallSms(void** state)
+{
+    tapi_phone_state target;
+    int ret;
+
+    (void)state;
+    ret = modem_register_test(0);
+    assert_int_equal(ret, OK);
+    ret = call_listen_call_test(0);
+    assert_int_equal(ret, OK);
+    target = PHONE_OFFHOOK;
+    ret = call_dial_test(0, phone_num, 0);
+    assert_int_equal(ret, OK);
+    assert_true(judge_data.phone_state_value == target);
+    TestTeleFunc_SmsSendShortMessageInEnglish(state);
+    target = PHONE_IDLE;
+    ret = call_hangup_current_call_test(0);
+    assert_int_equal(ret, OK);
+    assert_true(judge_data.phone_state_value == target);
+    ret = modem_unregister_test();
+    assert_int_equal(ret, OK);
+    ret = call_unlisten_call_test();
+    assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_CallWaitingContinuous(void** state)
@@ -2984,15 +3096,20 @@ int main(int argc, char* argv[])
         cmocka_unit_test(TestTeleFunc_CI_ModemDefaultOpenTapi),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ModemBtTeleOpenTapi, NULL, TearDown_OpenDefaultTapi),
         cmocka_unit_test_setup_teardown(TestTeleFunc_ModemCloseTapi, NULL, TearDown_OpenDefaultTapi),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ModemEnableDisableNTimesUnderRadioPowerOff, setup_modem, teardown_modem),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ModemEnableDisableNTimesUnderDialingCall, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ModemEnableDisableNTimesUnderOngoingCall, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_ModemEnableDisableNTimesUnderRadioPowerOff, setup_modem, teardown_modem),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_ModemEnableDisableNTimesUnderDialingCall, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_ModemEnableDisableNTimesUnderOngoingCall, setup_call, teardown_call),
         cmocka_unit_test(TestTeleFunc_CI_ModemVerifyPrefNetMode),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ModemGetPhoneState, setup_call, teardown_call),
+        cmocka_unit_test(TestTeleFunc_ModemGetDefaultPhoneState),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_ModemGetPhoneState, setup_call, teardown_call),
+        cmocka_unit_test(TestTeleFunc_ModemGetPhoneStateUnderMOCall),
+        cmocka_unit_test(TestTeleFunc_ModemGetPhoneStateUnderMTCall),
+        cmocka_unit_test(TestTeleFunc_ModemGetPhoneStateUnderMTRejectCall),
+        cmocka_unit_test(TestTeleFunc_ModemGetPhoneStateUnderDialingCallSms),
         cmocka_unit_test_setup_teardown(TestTeleFunc_ModemSetRadioOffUnderDialingCall, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_ModemSetRadioOffUnderOngoingCall, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ModemDisableEnableRadioPowerOff, setup_modem, teardown_modem),
-        cmocka_unit_test(TestTeleFunc_CI_ModemDisableRadioPowerOff),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_ModemDisableEnableRadioPowerOff, setup_modem, teardown_modem),
+        cmocka_unit_test(TestTeleFunc_ModemDisableRadioPowerOff),
     };
 
     sleep(3);
