@@ -1181,6 +1181,14 @@ int call_get_default_voicecall_slot_test(void)
     return ret;
 }
 
+int answer_incoming_call_test(int slot_id)
+{
+    int res = 0;
+
+    res = call_answer_call_test(slot_id, test_case_data.call_id);
+    return res;
+}
+
 int call_answer_call_test(int slot_id, char* call_id)
 {
     if (test_case_data.call_id[0] == 0) {

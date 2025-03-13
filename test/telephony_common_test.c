@@ -912,6 +912,7 @@ static void radio_signal_change(tapi_async_result* result)
         break;
     case MSG_PHONE_STATE_CHANGE_IND:
         syslog(LOG_DEBUG, "phone state changed to %d in slot[%d] \n", param, slot_id);
+        judge_data.phone_state_value = param;
         if (judge_data.expect == MSG_PHONE_STATE_CHANGE_IND) {
             judge_data.result = OK;
         }
