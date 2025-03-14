@@ -701,6 +701,13 @@ static void TestTeleFunc_CallCheckDialingStausWithMultiCall(void** state)
     assert_int_equal(ret, 0);
 }
 
+static void TestTeleFunc_CallDialAndKeepInActive(void** state)
+{
+    (void)state;
+    int ret = call_dial_and_keep_in_call_active(0, phone_num);
+    assert_int_equal(ret, 0);
+}
+
 static void TestTeleFunc_CallDialSecondCallAndRejectByCaller(void** state)
 {
     (void)state;
@@ -799,6 +806,12 @@ static void TestTeleFunc_CI_CallUnlisten(void** state)
     assert_int_equal(ret, 0);
 }
 
+static void TestTeleFunc_CI_CallListenAndUnlisten(void** state)
+{
+    TestTeleFunc_CI_CallListen(state);
+    TestTeleFunc_CI_CallUnlisten(state);
+}
+
 static void TestTeleAbn_CallAnswerAgain(void** state)
 {
     (void)state;
@@ -807,14 +820,24 @@ static void TestTeleAbn_CallAnswerAgain(void** state)
 }
 
 // data testcases
-static void TestTeleFunc_CI_DataRegisterAndUnregister(void** state)
+static void TestTeleFunc_CI_DataRegister(void** state)
 {
     (void)state;
-    int ret;
-    ret = data_listen_data_test(0);
+    int ret = data_listen_data_test(0);
     assert_int_equal(ret, OK);
-    ret = data_unlisten_data_test();
+}
+
+static void TestTeleFunc_CI_DataUnregister(void** state)
+{
+    (void)state;
+    int ret = data_unlisten_data_test();
     assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_CI_DataRegisterAndUnregister(void** state)
+{
+    TestTeleFunc_CI_DataRegister(state);
+    TestTeleFunc_CI_DataUnregister(state);
 }
 
 static void TestTeleFunc_CI_DataLoadApnContexts(void** state)
@@ -1156,6 +1179,27 @@ void TestTeleFunc_DataAirplaneOffAutoReconnect(void** state)
     assert_int_equal(ret, OK);
 }
 
+// sms testcases
+static void TestTeleFunc_CI_SmsListen(void** state)
+{
+    (void)state;
+    int ret = sms_listen_sms_test(0);
+    assert_int_equal(ret, 0);
+}
+
+static void TestTeleFunc_CI_SmsUnListen(void** state)
+{
+    (void)state;
+    int ret = sms_unlisten_sms_test(0);
+    assert_int_equal(ret, 0);
+}
+
+static void TestTeleFunc_CI_SmsListenAndUnListen(void** state)
+{
+    TestTeleFunc_CI_SmsListen(state);
+    TestTeleFunc_CI_SmsUnListen(state);
+}
+
 static void TestTeleFunc_CI_SmsSetAndGetServiceCenterNum(void** state)
 {
     (void)state;
@@ -1167,7 +1211,7 @@ static void TestTeleFunc_SmsSendShortMessageInEnglish(void** state)
 {
     (void)state;
     int result = 1;
-    int ret = tapi_sms_send_message_test(0, phone_num, short_english_text, &result);
+    int ret = sms_send_message_test(0, phone_num, short_english_text, &result);
     assert_int_equal(ret, 0);
     assert_int_equal(result, 0);
 }
@@ -1176,7 +1220,7 @@ static void TestTeleFunc_CI_SmsSendShortMessageInChinese(void** state)
 {
     (void)state;
     int result = 1;
-    int ret = tapi_sms_send_message_test(0, phone_num, short_chinese_text, &result);
+    int ret = sms_send_message_test(0, phone_num, short_chinese_text, &result);
     assert_int_equal(ret, 0);
     assert_int_equal(result, 0);
 }
@@ -1184,14 +1228,14 @@ static void TestTeleFunc_CI_SmsSendShortMessageInChinese(void** state)
 static void TestTeleFunc_SmsSendShortDataMessageInEnglish(void** state)
 {
     (void)state;
-    int ret = tapi_sms_send_data_message_test(0, phone_num, 0, short_english_text);
+    int ret = sms_send_data_message_test(0, phone_num, 0, short_english_text);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_SmsSendShortDataMessageInChinese(void** state)
 {
     (void)state;
-    int ret = tapi_sms_send_data_message_test(0, phone_num, 0, short_chinese_text);
+    int ret = sms_send_data_message_test(0, phone_num, 0, short_chinese_text);
     assert_int_equal(ret, 0);
 }
 
@@ -1199,7 +1243,7 @@ static void TestTeleFunc_SmsSendLongMessageInEnglish(void** state)
 {
     (void)state;
     int result = 1;
-    int ret = tapi_sms_send_message_test(0, phone_num, long_english_text, &result);
+    int ret = sms_send_message_test(0, phone_num, long_english_text, &result);
     assert_int_equal(ret, 0);
     assert_int_equal(result, 0);
 }
@@ -1208,7 +1252,7 @@ static void TestTeleFunc_CI_SmsSendLongMessageInChinese(void** state)
 {
     (void)state;
     int result = 1;
-    int ret = tapi_sms_send_message_test(0, phone_num, long_chinese_text, &result);
+    int ret = sms_send_message_test(0, phone_num, long_chinese_text, &result);
     assert_int_equal(ret, 0);
     assert_int_equal(result, 0);
 }
@@ -1216,14 +1260,14 @@ static void TestTeleFunc_CI_SmsSendLongMessageInChinese(void** state)
 static void TestTeleFunc_SmsSendLongDataMessageInEnglish(void** state)
 {
     (void)state;
-    int ret = tapi_sms_send_data_message_test(0, phone_num, 0, long_english_text);
+    int ret = sms_send_data_message_test(0, phone_num, 0, long_english_text);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_SmsSendLongDataMessageInChinese(void** state)
 {
     (void)state;
-    int ret = tapi_sms_send_data_message_test(0, phone_num, 0, long_chinese_text);
+    int ret = sms_send_data_message_test(0, phone_num, 0, long_chinese_text);
     assert_int_equal(ret, 0);
 }
 
@@ -1477,6 +1521,81 @@ static void TestTeleFunc_SmsSendMessageFailInAirplane(void** state)
     (void)state;
     int ret = sms_send_message_fail_in_airplane_test(0, phone_num, short_english_text);
     assert_int_equal(ret, 0);
+}
+
+static void TestTeleFunc_SmsSendMessageAfterDataOnOff(void** state)
+{
+    TestTeleFunc_CI_DataRegister(state);
+    TestTeleFunc_CI_DataEnable(state);
+    TestTeleFunc_CI_DataDisable(state);
+    TestTeleFunc_CI_DataUnregister(state);
+    TestTeleFunc_SmsSendShortMessageInEnglish(state);
+}
+
+static void TestTeleFunc_SmsReceiveMessage(void** state)
+{
+    (void)state;
+    int ret = sms_receive_message_test(0);
+    assert_int_equal(ret, 0);
+}
+
+static void TestTeleFunc_SmsReceiveMessageAfterDataOnOff(void** state)
+{
+    TestTeleFunc_CI_DataRegister(state);
+    TestTeleFunc_CI_DataEnable(state);
+    TestTeleFunc_CI_DataDisable(state);
+    TestTeleFunc_CI_DataUnregister(state);
+    TestTeleFunc_SmsReceiveMessage(state);
+}
+
+static void TestTeleFunc_SmsReceiveMessageInActive(void** state)
+{
+    TestTeleFunc_CallDialAndKeepInActive(state);
+    TestTeleFunc_SmsReceiveMessage(state);
+}
+
+static void TestTeleFunc_SmsReceiveMessageInDialing(void** state)
+{
+    TestTeleFunc_CI_CallDialNumber(state);
+    TestTeleFunc_SmsReceiveMessage(state);
+}
+
+static void TestTeleFunc_SmsReceiveEnglishLongMessage(void** state)
+{
+    (void)state;
+    int ret = sms_receive_english_long_message_test(0);
+    assert_int_equal(ret, 0);
+}
+
+static void TestTeleFunc_SmsReceiveEnglishLongMessageInActive(void** state)
+{
+    TestTeleFunc_CallDialAndKeepInActive(state);
+    TestTeleFunc_SmsReceiveEnglishLongMessage(state);
+}
+
+static void TestTeleFunc_SmsReceiveEnglishLongMessageInDialing(void** state)
+{
+    TestTeleFunc_CI_CallDialNumber(state);
+    TestTeleFunc_SmsReceiveEnglishLongMessage(state);
+}
+
+static void TestTeleFunc_SmsReceiveChineseLongMessage(void** state)
+{
+    (void)state;
+    int ret = sms_receive_chinese_long_message_test(0);
+    assert_int_equal(ret, 0);
+}
+
+static void TestTeleFunc_SmsReceiveChineseLongMessageInActive(void** state)
+{
+    TestTeleFunc_CallDialAndKeepInActive(state);
+    TestTeleFunc_SmsReceiveChineseLongMessage(state);
+}
+
+static void TestTeleFunc_SmsReceiveChineseLongMessageInDialing(void** state)
+{
+    TestTeleFunc_CI_CallDialNumber(state);
+    TestTeleFunc_SmsReceiveChineseLongMessage(state);
 }
 
 static void TestTeleFunc_SmsSetDefaultSlot(void** state)
@@ -1763,6 +1882,34 @@ static void TestTeleFunc_CI_ModemSetRadioPowerOnOffNTimes(void** state)
         TestTeleFunc_CI_ModemSetRadioPowerOn(state);
         TestTeleFunc_CI_ModemSetRadioPowerOff(state);
     }
+}
+
+static void TestTeleFunc_SmsReceiveMessageAfterRadioOnOff(void** state)
+{
+    TestTeleFunc_CI_ModemSetRadioPowerOff(state);
+    TestTeleFunc_CI_ModemSetRadioPowerOn(state);
+    TestTeleFunc_SmsReceiveMessage(state);
+}
+
+static void TestTeleFunc_SmsSendMessageAfterRadioOnOff(void** state)
+{
+    TestTeleFunc_CI_ModemSetRadioPowerOff(state);
+    TestTeleFunc_CI_ModemSetRadioPowerOn(state);
+    TestTeleFunc_SmsSendShortMessageInEnglish(state);
+}
+
+static void TestTeleFunc_SmsReceiveEnglishLongMessageAfterRadioOnOff(void** state)
+{
+    TestTeleFunc_CI_ModemSetRadioPowerOff(state);
+    TestTeleFunc_CI_ModemSetRadioPowerOn(state);
+    TestTeleFunc_SmsReceiveEnglishLongMessage(state);
+}
+
+static void TestTeleFunc_SmsReceiveChineseLongMessageAfterRadioOnOff(void** state)
+{
+    TestTeleFunc_CI_ModemSetRadioPowerOff(state);
+    TestTeleFunc_CI_ModemSetRadioPowerOn(state);
+    TestTeleFunc_SmsReceiveChineseLongMessage(state);
 }
 
 static void TestTeleFunc_CI_ModemEnableStatus(void** state)
@@ -2139,6 +2286,49 @@ static void TestTeleFunc_ImsKeepVolteUnavailAfterRadioOffOn(void** state)
     int ret = ims_is_volte_available_after_radio_off_on_test(0, false);
     assert_int_equal(ret, 0);
 }
+
+static void TestTeleFunc_SmsReceiveMessageInVoiceImsCap(void** state)
+{
+    TestTeleFunc_CI_ImsSetVoiceCap(state);
+    TestTeleFunc_SmsReceiveMessage(state);
+    TestTeleFunc_CI_ImsSetSmsVoiceCap(state);
+}
+
+static void TestTeleFunc_SmsReceiveEnglishLongMessageInVoiceImsCap(void** state)
+{
+    TestTeleFunc_CI_ImsSetVoiceCap(state);
+    TestTeleFunc_SmsReceiveEnglishLongMessage(state);
+    TestTeleFunc_CI_ImsSetSmsVoiceCap(state);
+}
+
+static void TestTeleFunc_SmsReceiveChineseLongMessageInVoiceImsCap(void** state)
+{
+    TestTeleFunc_CI_ImsSetVoiceCap(state);
+    TestTeleFunc_SmsReceiveChineseLongMessage(state);
+    TestTeleFunc_CI_ImsSetSmsVoiceCap(state);
+}
+
+static void TestTeleFunc_SmsReceiveMessageInSmsImsCap(void** state)
+{
+    TestTeleFunc_CI_ImsSetSmsCap(state);
+    TestTeleFunc_SmsReceiveMessage(state);
+    TestTeleFunc_CI_ImsSetSmsVoiceCap(state);
+}
+
+static void TestTeleFunc_SmsReceiveEnglishLongMessageInSmsImsCap(void** state)
+{
+    TestTeleFunc_CI_ImsSetSmsCap(state);
+    TestTeleFunc_SmsReceiveEnglishLongMessage(state);
+    TestTeleFunc_CI_ImsSetSmsVoiceCap(state);
+}
+
+static void TestTeleFunc_SmsReceiveChineseLongMessageInSmsImsCap(void** state)
+{
+    TestTeleFunc_CI_ImsSetSmsCap(state);
+    TestTeleFunc_SmsReceiveChineseLongMessage(state);
+    TestTeleFunc_CI_ImsSetSmsVoiceCap(state);
+}
+
 static void TestTeleFunc_CI_SSRegister(void** state)
 {
     (void)state;
@@ -2870,8 +3060,7 @@ int main(int argc, char* argv[])
     };
 
     const struct CMUnitTest CallTestSuites[] = {
-        cmocka_unit_test(TestTeleFunc_CI_CallListen),
-        cmocka_unit_test(TestTeleFunc_CI_CallUnlisten),
+        cmocka_unit_test(TestTeleFunc_CI_CallListenAndUnlisten),
         cmocka_unit_test(TestTeleFunc_CallLoadAndCompareEccWithChinaSimCard),
         cmocka_unit_test(TestTeleFunc_CallLoadAndCompareEccWithoutSimCard),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_CallDialNumber, setup_call, teardown_call),
@@ -2912,6 +3101,7 @@ int main(int argc, char* argv[])
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallConnectAndLocalHangup, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallCheckStatusInCallActive, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallCheckDialingStausWithMultiCall, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialAndKeepInActive, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialSecondCallAndRejectByCaller, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialSecondCallAndHangupByCaller, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialAndRemoteHangup, setup_call, teardown_call),
@@ -2981,6 +3171,7 @@ int main(int argc, char* argv[])
     };
 
     const struct CMUnitTest SmsTestSuites[] = {
+        cmocka_unit_test(TestTeleFunc_CI_SmsListenAndUnListen),
         cmocka_unit_test(TestTeleFunc_CI_SmsSetAndGetServiceCenterNum),
         cmocka_unit_test(TestTeleFunc_SmsSendShortMessageInEnglish),
         cmocka_unit_test(TestTeleFunc_CI_SmsSendShortMessageInChinese),
@@ -3023,6 +3214,27 @@ int main(int argc, char* argv[])
         cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendLongEnglishDataMessageInSmsVoiceCap, setup_ims, teardown_ims),
         cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendLongChineseDataMessageInSmsVoiceCap, setup_ims, teardown_ims),
         cmocka_unit_test(TestTeleFunc_SmsSendMessageFailInAirplane),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendMessageAfterDataOnOff, setup_sms, teardown_sms),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendMessageAfterRadioOnOff, setup_sms, teardown_sms),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsReceiveMessage, setup_sms, teardown_sms),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsReceiveMessageAfterDataOnOff, setup_sms, teardown_sms),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsReceiveMessageAfterRadioOnOff, setup_sms, teardown_sms),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsReceiveMessageInActive, setup_sms_and_call, teardown_sms_and_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsReceiveMessageInDialing, setup_sms_and_call, teardown_sms_and_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsReceiveEnglishLongMessage, setup_sms, teardown_sms),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsReceiveEnglishLongMessageAfterRadioOnOff, setup_sms, teardown_sms),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsReceiveEnglishLongMessageInActive, setup_sms_and_call, teardown_sms_and_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsReceiveEnglishLongMessageInDialing, setup_sms_and_call, teardown_sms_and_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsReceiveChineseLongMessage, setup_sms, teardown_sms),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsReceiveChineseLongMessageAfterRadioOnOff, setup_sms, teardown_sms),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsReceiveChineseLongMessageInActive, setup_sms_and_call, teardown_sms_and_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsReceiveChineseLongMessageInDialing, setup_sms_and_call, teardown_sms_and_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsReceiveMessageInVoiceImsCap, setup_sms, teardown_sms),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsReceiveEnglishLongMessageInVoiceImsCap, setup_sms, teardown_sms),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsReceiveChineseLongMessageInVoiceImsCap, setup_sms, teardown_sms),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsReceiveMessageInSmsImsCap, setup_sms, teardown_sms),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsReceiveEnglishLongMessageInSmsImsCap, setup_sms, teardown_sms),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsReceiveChineseLongMessageInSmsImsCap, setup_sms, teardown_sms),
         cmocka_unit_test(TestTeleFunc_SmsSetDefaultSlot),
         cmocka_unit_test(TestTeleFunc_SmsGetDefaultSlot),
         cmocka_unit_test(TestTeleFunc_SmsSetAndGetCellBroadcastPower),

@@ -3,8 +3,17 @@
 
 #include "telephony_test.h"
 
-int tapi_sms_send_data_message_test(int slot_id, char* to, int port, char* text);
-int tapi_sms_send_message_test(int slot_id, char* number, char* text, int* result);
+int setup_sms(void** state);
+int setup_sms_and_call(void** state);
+int teardown_sms(void** state);
+int teardown_sms_and_call(void** state);
+int sms_listen_sms_test(int slot_id);
+int sms_unlisten_sms_test(int slot_id);
+int sms_receive_chinese_long_message_test(int slot_id);
+int sms_receive_english_long_message_test(int slot_id);
+int sms_receive_message_test(int slot_id);
+int sms_send_data_message_test(int slot_id, char* to, int port, char* text);
+int sms_send_message_test(int slot_id, char* number, char* text, int* result);
 int sms_send_data_message_in_dialing(int slot_id, char* to, char* text, int port);
 int sms_send_data_message_in_special_ims_cap(int slot_id, char* to, int port, char* text, int ims_cap);
 int sms_send_message_fail_in_airplane_test(int slot_id, char* to, char* text);

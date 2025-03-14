@@ -67,6 +67,36 @@ int remote_ss_operation_delay(int slot_id, int delay_sec)
         EVENT_OEM_RIL_REQUEST_STRINGS_DONE, oem_req, 1, NULL);
 }
 
+int remote_sms_send_message(int slot_id)
+{
+    char req_data[60] = "AT+REMOTESMS=00110005810180F60000A705E8329BFD06";
+    char* oem_req[1];
+    oem_req[0] = req_data;
+
+    return tapi_invoke_oem_ril_request_strings(get_tapi_ctx(), slot_id,
+        EVENT_OEM_RIL_REQUEST_STRINGS_DONE, oem_req, 1, NULL);
+}
+
+int remote_sms_send_english_long_message(int slot_id)
+{
+    char req_data[30] = "AT+REMOTELONGSMS=1";
+    char* oem_req[1];
+    oem_req[0] = req_data;
+
+    return tapi_invoke_oem_ril_request_strings(get_tapi_ctx(), slot_id,
+        EVENT_OEM_RIL_REQUEST_STRINGS_DONE, oem_req, 1, NULL);
+}
+
+int remote_sms_send_chinese_long_message(int slot_id)
+{
+    char req_data[30] = "AT+REMOTELONGSMS=0";
+    char* oem_req[1];
+    oem_req[0] = req_data;
+
+    return tapi_invoke_oem_ril_request_strings(get_tapi_ctx(), slot_id,
+        EVENT_OEM_RIL_REQUEST_STRINGS_DONE, oem_req, 1, NULL);
+}
+
 int remote_sms_delay(int slot_id, int delay_sec)
 {
     char req_data[30] = { 0 };
