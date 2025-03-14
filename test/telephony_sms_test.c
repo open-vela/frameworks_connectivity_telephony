@@ -26,19 +26,17 @@ static void tele_sms_event_response(tapi_async_result* result)
     tele_sms_result_print(result);
 
     if (result->status != OK) {
-        syslog(LOG_DEBUG, "%s msg id: %d result err, return.\n", __func__, result->msg_id);
-        return;
+        syslog(LOG_DEBUG, "%s msg id: %d result err.\n", __func__, result->msg_id);
+    } else {
+        syslog(LOG_DEBUG, "send message successed");
     }
-
-    judge_data.result = 0;
 
     if (result->msg_id == EVENT_SEND_MESSAGE_DONE) {
-        syslog(LOG_DEBUG, "send message successed, uuid : %s\n", (char*)result->data);
         judge_data.flag = EVENT_SEND_MESSAGE_DONE;
     } else if (result->msg_id == EVENT_SEND_DATA_MESSAGE_DONE) {
-        syslog(LOG_DEBUG, "send data message successed");
         judge_data.flag = EVENT_SEND_DATA_MESSAGE_DONE;
     }
+    judge_data.result = result->status;
 }
 
 static void tele_sms_event_response_continuous(tapi_async_result* result)
@@ -47,7 +45,6 @@ static void tele_sms_event_response_continuous(tapi_async_result* result)
     tele_sms_result_print(result);
 
     if (result->msg_id == EVENT_SEND_MESSAGE_DONE || result->msg_id == EVENT_SEND_DATA_MESSAGE_DONE) {
-        syslog(LOG_DEBUG, "tele_sms_event_response_continuous, uuid : %s\n", (char*)result->data);
         for (int i = 0; i < MAX_MESSAGE_COUNT; i++) {
             if (!response_flag[i] && response_ret[i] == result->msg_id) {
                 response_flag[i] = TRUE;
@@ -63,7 +60,7 @@ static void tele_sms_event_response_continuous(tapi_async_result* result)
     }
 }
 
-int tapi_sms_send_message_test(int slot_id, char* number, char* text)
+int tapi_sms_send_message_test(int slot_id, char* number, char* text, int* result)
 {
     if (number == NULL || text == NULL) {
         syslog(LOG_ERR, "%s, number: %s, text: %s", __func__, number, text);
@@ -89,11 +86,7 @@ int tapi_sms_send_message_test(int slot_id, char* number, char* text)
         goto on_exit;
     }
 
-    if (judge_data.result) {
-        syslog(LOG_ERR, "async result is invalid in %s", __func__);
-        res = -1;
-        goto on_exit;
-    }
+    *result = judge_data.result;
 
 on_exit:
     return res;
@@ -173,6 +166,7 @@ int sms_send_message_in_dialing(int slot_id, char* to, char* text)
 {
     int ret = -1;
     int res = 0;
+    int result = 1;
 
     ret = call_dial_test(slot_id, to, 0);
     if (ret) {
@@ -182,7 +176,7 @@ int sms_send_message_in_dialing(int slot_id, char* to, char* text)
         goto on_exit;
     }
 
-    ret = tapi_sms_send_message_test(slot_id, to, text);
+    ret = tapi_sms_send_message_test(slot_id, to, text, &result);
     if (ret) {
         syslog(LOG_ERR, "tapi_sms_send_message_test execute fail in %s, ret: %d",
             __func__, ret);
@@ -204,7 +198,7 @@ on_exit:
 
 int sms_send_message_in_special_ims_cap(int slot_id, char* to, char* text, int ims_cap)
 {
-    int ret = 0;
+    int ret = 0, result = 1;
 
     if (tapi_ims_set_service_status_test(slot_id, ims_cap)) {
         syslog(LOG_ERR, "ims set service status execute fail in %s", __func__);
@@ -213,7 +207,7 @@ int sms_send_message_in_special_ims_cap(int slot_id, char* to, char* text, int i
     }
 
     sleep(3);
-    if (tapi_sms_send_message_test(slot_id, to, text)) {
+    if (tapi_sms_send_message_test(slot_id, to, text, &result)) {
         syslog(LOG_ERR, "send message execute fail in %s", __func__);
         ret = -1;
         goto on_exit;
@@ -272,6 +266,41 @@ int sms_send_data_message_in_special_ims_cap(int slot_id, char* to, int port, ch
         ret = -1;
         goto on_exit;
     }
+
+on_exit:
+    return ret;
+}
+
+int sms_send_message_fail_in_airplane_test(int slot_id, char* to, char* text)
+{
+    int ret = 0, result = 1;
+
+    if (set_radio_power_test(0, false)) {
+        syslog(LOG_ERR, "set radio power execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    sleep(10);
+    if (tapi_sms_send_message_test(slot_id, to, text, &result)) {
+        syslog(LOG_ERR, "send message execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    if (result != -1) {
+        syslog(LOG_ERR, "result error execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    if (set_radio_power_test(0, true)) {
+        syslog(LOG_ERR, "set radio power execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    sleep(5);
 
 on_exit:
     return ret;

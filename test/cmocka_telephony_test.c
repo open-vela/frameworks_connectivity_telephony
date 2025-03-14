@@ -1166,15 +1166,19 @@ static void TestTeleFunc_CI_SmsSetAndGetServiceCenterNum(void** state)
 static void TestTeleFunc_SmsSendShortMessageInEnglish(void** state)
 {
     (void)state;
-    int ret = tapi_sms_send_message_test(0, phone_num, short_english_text);
+    int result = 1;
+    int ret = tapi_sms_send_message_test(0, phone_num, short_english_text, &result);
     assert_int_equal(ret, 0);
+    assert_int_equal(result, 0);
 }
 
 static void TestTeleFunc_CI_SmsSendShortMessageInChinese(void** state)
 {
     (void)state;
-    int ret = tapi_sms_send_message_test(0, phone_num, short_chinese_text);
+    int result = 1;
+    int ret = tapi_sms_send_message_test(0, phone_num, short_chinese_text, &result);
     assert_int_equal(ret, 0);
+    assert_int_equal(result, 0);
 }
 
 static void TestTeleFunc_SmsSendShortDataMessageInEnglish(void** state)
@@ -1194,15 +1198,19 @@ static void TestTeleFunc_SmsSendShortDataMessageInChinese(void** state)
 static void TestTeleFunc_SmsSendLongMessageInEnglish(void** state)
 {
     (void)state;
-    int ret = tapi_sms_send_message_test(0, phone_num, long_english_text);
+    int result = 1;
+    int ret = tapi_sms_send_message_test(0, phone_num, long_english_text, &result);
     assert_int_equal(ret, 0);
+    assert_int_equal(result, 0);
 }
 
 static void TestTeleFunc_CI_SmsSendLongMessageInChinese(void** state)
 {
     (void)state;
-    int ret = tapi_sms_send_message_test(0, phone_num, long_chinese_text);
+    int result = 1;
+    int ret = tapi_sms_send_message_test(0, phone_num, long_chinese_text, &result);
     assert_int_equal(ret, 0);
+    assert_int_equal(result, 0);
 }
 
 static void TestTeleFunc_SmsSendLongDataMessageInEnglish(void** state)
@@ -1461,6 +1469,13 @@ static void TestTeleFunc_SmsSendLongChineseDataMessageInSmsVoiceCap(void** state
 {
     (void)state;
     int ret = sms_send_data_message_in_special_ims_cap(0, phone_num, 0, long_chinese_text, 5);
+    assert_int_equal(ret, 0);
+}
+
+static void TestTeleFunc_SmsSendMessageFailInAirplane(void** state)
+{
+    (void)state;
+    int ret = sms_send_message_fail_in_airplane_test(0, phone_num, short_english_text);
     assert_int_equal(ret, 0);
 }
 
@@ -3007,6 +3022,7 @@ int main(int argc, char* argv[])
         cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendChineseDataMessageInSmsVoiceCap, setup_ims, teardown_ims),
         cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendLongEnglishDataMessageInSmsVoiceCap, setup_ims, teardown_ims),
         cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendLongChineseDataMessageInSmsVoiceCap, setup_ims, teardown_ims),
+        cmocka_unit_test(TestTeleFunc_SmsSendMessageFailInAirplane),
         cmocka_unit_test(TestTeleFunc_SmsSetDefaultSlot),
         cmocka_unit_test(TestTeleFunc_SmsGetDefaultSlot),
         cmocka_unit_test(TestTeleFunc_SmsSetAndGetCellBroadcastPower),

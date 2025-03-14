@@ -4,9 +4,10 @@
 #include "telephony_test.h"
 
 int tapi_sms_send_data_message_test(int slot_id, char* to, int port, char* text);
-int tapi_sms_send_message_test(int slot_id, char* number, char* text);
+int tapi_sms_send_message_test(int slot_id, char* number, char* text, int* result);
 int sms_send_data_message_in_dialing(int slot_id, char* to, char* text, int port);
 int sms_send_data_message_in_special_ims_cap(int slot_id, char* to, int port, char* text, int ims_cap);
+int sms_send_message_fail_in_airplane_test(int slot_id, char* to, char* text);
 int sms_send_message_in_dialing(int slot_id, char* to, char* text);
 int sms_send_message_in_special_ims_cap(int slot_id, char* to, char* text, int ims_cap);
 int sms_send_short_data_sms_continuous(int slot_id, char* to);
