@@ -12,6 +12,12 @@ extern struct judge_type judge_data;
 extern bool response_flag[MAX_MESSAGE_COUNT];
 extern int response_ret[MAX_MESSAGE_COUNT];
 
+static struct
+{
+    int sms_incoming_watch_id;
+    int sms_immediate_watch_id;
+} global_data;
+
 static void tele_sms_result_print(tapi_async_result* result)
 {
     syslog(LOG_DEBUG, "result->msg_id : %d\n", result->msg_id);
@@ -35,7 +41,10 @@ static void tele_sms_event_response(tapi_async_result* result)
         judge_data.flag = EVENT_SEND_MESSAGE_DONE;
     } else if (result->msg_id == EVENT_SEND_DATA_MESSAGE_DONE) {
         judge_data.flag = EVENT_SEND_DATA_MESSAGE_DONE;
+    } else if (result->msg_id == MSG_INCOMING_MESSAGE_IND) {
+        judge_data.flag = MSG_INCOMING_MESSAGE_IND;
     }
+
     judge_data.result = result->status;
 }
 
@@ -60,7 +69,89 @@ static void tele_sms_event_response_continuous(tapi_async_result* result)
     }
 }
 
-int tapi_sms_send_message_test(int slot_id, char* number, char* text, int* result)
+int setup_sms(void** state)
+{
+    (void)state;
+    return sms_listen_sms_test(0);
+}
+
+int teardown_sms(void** state)
+{
+    (void)state;
+    return sms_unlisten_sms_test(0);
+}
+
+int setup_sms_and_call(void** state)
+{
+    if (setup_sms(state) < 0) {
+        return -1;
+    }
+
+    if (setup_call(state) < 0) {
+        return -1;
+    }
+
+    return 0;
+}
+
+int teardown_sms_and_call(void** state)
+{
+    if (teardown_call(state) < 0) {
+        return -1;
+    }
+
+    if (teardown_sms(state) < 0) {
+        return -1;
+    }
+
+    return 0;
+}
+
+int sms_listen_sms_test(int slot_id)
+{
+    global_data.sms_incoming_watch_id = -1;
+    global_data.sms_incoming_watch_id = tapi_sms_register(get_tapi_ctx(),
+        slot_id, MSG_INCOMING_MESSAGE_IND, NULL, tele_sms_event_response);
+
+    if (global_data.sms_incoming_watch_id < 0) {
+        syslog(LOG_ERR, "%s, slot_id: %d, sms_incoming_watch_id < 0\n",
+            __func__, slot_id);
+        return -1;
+    }
+
+    global_data.sms_immediate_watch_id = -1;
+    global_data.sms_immediate_watch_id = tapi_sms_register(get_tapi_ctx(),
+        slot_id, MSG_IMMEDIATE_MESSAGE_IND, NULL, tele_sms_event_response);
+
+    if (global_data.sms_immediate_watch_id < 0) {
+        syslog(LOG_ERR, "%s, slot_id: %d, sms_immediate_watch_id < 0\n",
+            __func__, slot_id);
+        return -1;
+    }
+
+    return 0;
+}
+
+int sms_unlisten_sms_test(int slot_id)
+{
+    int ret = tapi_sms_unregister(get_tapi_ctx(), global_data.sms_incoming_watch_id);
+    if (ret) {
+        syslog(LOG_ERR, "%s, slot_id: %d, sms_incoming_watch_id < 0\n",
+            __func__, slot_id);
+        return -1;
+    }
+
+    ret = tapi_sms_unregister(get_tapi_ctx(), global_data.sms_immediate_watch_id);
+    if (ret) {
+        syslog(LOG_ERR, "%s, slot_id: %d, sms_immediate_watch_id < 0\n",
+            __func__, slot_id);
+        return -1;
+    }
+
+    return 0;
+}
+
+int sms_send_message_test(int slot_id, char* number, char* text, int* result)
 {
     if (number == NULL || text == NULL) {
         syslog(LOG_ERR, "%s, number: %s, text: %s", __func__, number, text);
@@ -92,7 +183,97 @@ on_exit:
     return res;
 }
 
-int tapi_sms_send_data_message_test(int slot_id, char* to, int port, char* text)
+int sms_receive_message_test(int slot_id)
+{
+    int res = 0;
+    judge_data_init();
+    judge_data.expect = MSG_INCOMING_MESSAGE_IND;
+
+    int ret = remote_sms_send_message(slot_id);
+    if (ret) {
+        syslog(LOG_ERR, "sms_receive_message_test execute fail in %s, ret: %d",
+            __func__, ret);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge()) {
+        syslog(LOG_ERR, "sms_receive_message_test is not executed in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge_data.result) {
+        syslog(LOG_ERR, "async result is invalid in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
+int sms_receive_english_long_message_test(int slot_id)
+{
+    int res = 0;
+    judge_data_init();
+    judge_data.expect = MSG_INCOMING_MESSAGE_IND;
+
+    int ret = remote_sms_send_english_long_message(slot_id);
+    if (ret) {
+        syslog(LOG_ERR, "sms_receive_english_long_message_test execute fail in %s, ret: %d",
+            __func__, ret);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge()) {
+        syslog(LOG_ERR, "sms_receive_english_long_message_test is not executed in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge_data.result) {
+        syslog(LOG_ERR, "async result is invalid in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
+int sms_receive_chinese_long_message_test(int slot_id)
+{
+    int res = 0;
+    judge_data_init();
+    judge_data.expect = MSG_INCOMING_MESSAGE_IND;
+
+    int ret = remote_sms_send_chinese_long_message(slot_id);
+    if (ret) {
+        syslog(LOG_ERR, "sms_receive_chinese_long_message_test execute fail in %s, ret: %d",
+            __func__, ret);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge()) {
+        syslog(LOG_ERR, "sms_receive_chinese_long_message_test is not executed in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge_data.result) {
+        syslog(LOG_ERR, "async result is invalid in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
+int sms_send_data_message_test(int slot_id, char* to, int port, char* text)
 {
     if (to == NULL || text == NULL) {
         syslog(LOG_ERR, "%s, number: %s, text: %s", __func__, to, text);
@@ -176,9 +357,9 @@ int sms_send_message_in_dialing(int slot_id, char* to, char* text)
         goto on_exit;
     }
 
-    ret = tapi_sms_send_message_test(slot_id, to, text, &result);
+    ret = sms_send_message_test(slot_id, to, text, &result);
     if (ret) {
-        syslog(LOG_ERR, "tapi_sms_send_message_test execute fail in %s, ret: %d",
+        syslog(LOG_ERR, "sms_send_message_test execute fail in %s, ret: %d",
             __func__, ret);
         res = -1;
         goto on_exit;
@@ -207,7 +388,7 @@ int sms_send_message_in_special_ims_cap(int slot_id, char* to, char* text, int i
     }
 
     sleep(3);
-    if (tapi_sms_send_message_test(slot_id, to, text, &result)) {
+    if (sms_send_message_test(slot_id, to, text, &result)) {
         syslog(LOG_ERR, "send message execute fail in %s", __func__);
         ret = -1;
         goto on_exit;
@@ -230,9 +411,9 @@ int sms_send_data_message_in_dialing(int slot_id, char* to, char* text, int port
         goto on_exit;
     }
 
-    ret = tapi_sms_send_data_message_test(slot_id, to, port, text);
+    ret = sms_send_data_message_test(slot_id, to, port, text);
     if (ret) {
-        syslog(LOG_ERR, "tapi_sms_send_data_message_test execute fail in %s, ret: %d",
+        syslog(LOG_ERR, "sms_send_data_message_test execute fail in %s, ret: %d",
             __func__, ret);
         res = -1;
         goto on_exit;
@@ -261,7 +442,7 @@ int sms_send_data_message_in_special_ims_cap(int slot_id, char* to, int port, ch
     }
 
     sleep(3);
-    if (tapi_sms_send_data_message_test(slot_id, to, port, text)) {
+    if (sms_send_data_message_test(slot_id, to, port, text)) {
         syslog(LOG_ERR, "send message execute fail in %s", __func__);
         ret = -1;
         goto on_exit;
@@ -282,7 +463,7 @@ int sms_send_message_fail_in_airplane_test(int slot_id, char* to, char* text)
     }
 
     sleep(10);
-    if (tapi_sms_send_message_test(slot_id, to, text, &result)) {
+    if (sms_send_message_test(slot_id, to, text, &result)) {
         syslog(LOG_ERR, "send message execute fail in %s", __func__);
         ret = -1;
         goto on_exit;

@@ -15,4 +15,7 @@ int remote_sim_insert_operation(int slot_id);
 int remote_sim_set_sim_operator(int slot_id, const char* expect_mccmnc);
 int remote_ss_operation_delay(int slot_id, int delay_sec);
 int remote_sms_delay(int slot_id, int delay_sec);
+int remote_sms_send_chinese_long_message(int slot_id);
+int remote_sms_send_english_long_message(int slot_id);
+int remote_sms_send_message(int slot_id);
 int remote_radio_on_off_delay(int delay_sec);
