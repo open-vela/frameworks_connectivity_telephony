@@ -2971,6 +2971,133 @@ static void TestTeleFunc_CallModemDisableUnderDialECCCall(void** state)
     assert_int_equal(ret, OK);
 }
 
+static void TestTeleFunc_CallSMSSendUnderDialECCCall(void** state)
+{
+    (void)state;
+    int ret;
+    bool get_value;
+
+    ret = sim_set_operator_test(0, "46000");
+    assert_int_equal(ret, OK);
+    ret = call_dial_test(0, "120", 0);
+    assert_int_equal(ret, OK);
+    ret = sms_listen_sms_test(0);
+    assert_int_equal(ret, OK);
+    TestTeleFunc_SmsSendShortMessageInEnglish(state);
+    ret = call_hangup_current_call_test(0);
+    assert_int_equal(ret, OK);
+    ret = sms_unlisten_sms_test(0);
+    assert_int_equal(ret, OK);
+    ret = sim_set_operator_test(0, "000");
+    assert_int_equal(ret, OK);
+    TestTeleFunc_CI_ModemSetRadioPowerOff(state);
+    ret = get_radio_power_test(0, &get_value);
+    assert_int_equal(ret, OK);
+    assert_false(get_value);
+
+    TestTeleFunc_CI_ModemSetRadioPowerOn(state);
+}
+
+static void TestTeleFunc_CallSMSReceiveUnderDialECCCall(void** state)
+{
+    (void)state;
+    int ret;
+    bool get_value;
+
+    ret = sim_set_operator_test(0, "46000");
+    assert_int_equal(ret, OK);
+    ret = call_dial_test(0, "120", 0);
+    assert_int_equal(ret, OK);
+    ret = sms_listen_sms_test(0);
+    assert_int_equal(ret, OK);
+    TestTeleFunc_SmsReceiveMessage(state);
+    ret = call_hangup_current_call_test(0);
+    assert_int_equal(ret, OK);
+    ret = sms_unlisten_sms_test(0);
+    assert_int_equal(ret, OK);
+    ret = sim_set_operator_test(0, "000");
+    assert_int_equal(ret, OK);
+    TestTeleFunc_CI_ModemSetRadioPowerOff(state);
+    ret = get_radio_power_test(0, &get_value);
+    assert_int_equal(ret, OK);
+    assert_false(get_value);
+
+    TestTeleFunc_CI_ModemSetRadioPowerOn(state);
+}
+
+static void TestTeleFunc_CallActiveECCCallNTimes(void** state)
+{
+    (void)state;
+    int ret;
+
+    ret = sim_set_operator_test(0, "46000");
+    assert_int_equal(ret, OK);
+    for (int _i = 0; _i < 20; _i++) {
+        ret = call_connect_and_local_hangup(0, "120");
+        assert_int_equal(ret, OK);
+    }
+    ret = sim_set_operator_test(0, "000");
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_CallSetRadioPowerOffAfterECCCallNTimes(void** state)
+{
+    (void)state;
+    int ret;
+    bool get_value;
+
+    TestTeleFunc_CallActiveECCCallNTimes(state);
+    TestTeleFunc_CI_ModemSetRadioPowerOff(state);
+    ret = get_radio_power_test(0, &get_value);
+    assert_int_equal(ret, OK);
+    assert_false(get_value);
+
+    TestTeleFunc_CI_ModemSetRadioPowerOn(state);
+}
+
+static void TestTeleFunc_CallDialEccAfterResetModemNTimes(void** state)
+{
+    (void)state;
+    int ret;
+    bool get_value;
+
+    for (int _i = 0; _i < 20; _i++) {
+        TestTeleFunc_CI_ModemDisable(state);
+        TestTeleFunc_CI_ModemDsiableStatus(state);
+        TestTeleFunc_CI_ModemEnable(state);
+        TestTeleFunc_CI_ModemEnableStatus(state);
+    }
+    ret = call_connect_and_local_hangup(0, "120");
+    assert_int_equal(ret, OK);
+    TestTeleFunc_CI_ModemSetRadioPowerOff(state);
+    ret = get_radio_power_test(0, &get_value);
+    assert_int_equal(ret, OK);
+    assert_false(get_value);
+
+    TestTeleFunc_CI_ModemSetRadioPowerOn(state);
+}
+
+static void TestTeleFunc_CallDialEccAfterResetRadioPowerNTimes(void** state)
+{
+    (void)state;
+
+    int ret;
+    bool get_value;
+
+    for (int _i = 0; _i < 20; _i++) {
+        TestTeleFunc_CI_ModemSetRadioPowerOff(state);
+        TestTeleFunc_CI_ModemSetRadioPowerOn(state);
+    }
+    ret = call_connect_and_local_hangup(0, "120");
+    assert_int_equal(ret, OK);
+    TestTeleFunc_CI_ModemSetRadioPowerOff(state);
+    ret = get_radio_power_test(0, &get_value);
+    assert_int_equal(ret, OK);
+    assert_false(get_value);
+
+    TestTeleFunc_CI_ModemSetRadioPowerOn(state);
+}
+
 int main(int argc, char* argv[])
 {
 #ifndef CONFIG_TEST_PHONE_NUMBER
@@ -3120,6 +3247,12 @@ int main(int argc, char* argv[])
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallModemDisableUnderActiveECCCall, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallSetRadioPowerOffUnderDialECCCall, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallModemDisableUnderDialECCCall, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallSMSSendUnderDialECCCall, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallSMSReceiveUnderDialECCCall, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallActiveECCCallNTimes, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallSetRadioPowerOffAfterECCCallNTimes, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialEccAfterResetModemNTimes, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialEccAfterResetRadioPowerNTimes, setup_call, teardown_call),
     };
 
     const struct CMUnitTest DataTestSuites[] = {
