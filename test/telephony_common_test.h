@@ -6,7 +6,7 @@
 
 int setup_modem(void** state);
 int teardown_modem(void** state);
-int enable_modem_test(int slot_id, int target_state);
+int enable_modem_test(int slot_id, bool target_state);
 int get_imei_test(int slot_id);
 int get_modem_activity_info_test(int slot_id);
 int get_modem_revision_test(int slot_id);
@@ -18,6 +18,7 @@ int modem_disable_power_off_pending_test(int slot_id);
 int modem_enable_disable_pending_test(int slot_id);
 int modem_enable_status_test(int slot_id);
 int modem_disable_status_test(int slot_id);
+int modem_keep_status_as_expected_test(int slot_id, bool expect_state);
 int modem_invoke_oem_ril_request_raw_test(int slot_id, char* oem_req, int length);
 int modem_invoke_oem_ril_request_strings_test(int slot_id, char* req_data, int length);
 int modem_register_test(int slot_id);

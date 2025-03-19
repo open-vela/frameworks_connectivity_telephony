@@ -169,7 +169,7 @@ int setup_modem(void** state)
         goto on_exit;
     }
 
-    if (modem_enable_status_test(0)) {
+    if (modem_keep_status_as_expected_test(0, true)) {
         syslog(LOG_ERR, "Modem enable execute fail in %s", __func__);
         ret = -1;
         goto on_exit;
@@ -190,14 +190,14 @@ int teardown_modem(void** state)
     (void)state;
     int ret = 0;
 
-    if (modem_data.init_modem_state == 1) {
-        if (modem_enable_status_test(0)) {
-            syslog(LOG_ERR, "Modem enable execute fail in %s", __func__);
+    if (modem_data.init_modem_state == 0) {
+        if (modem_keep_status_as_expected_test(0, false)) {
+            syslog(LOG_ERR, "Modem disable execute fail in %s", __func__);
             ret = -1;
             goto on_exit;
         }
     } else {
-        if (modem_disable_status_test(0)) {
+        if (modem_keep_status_as_expected_test(0, true)) {
             syslog(LOG_ERR, "Modem disable execute fail in %s", __func__);
             ret = -1;
             goto on_exit;
@@ -762,7 +762,7 @@ on_exit:
     return res;
 }
 
-int enable_modem_test(int slot_id, int target_state)
+int enable_modem_test(int slot_id, bool target_state)
 {
     int res = 0;
     judge_data_init();
@@ -1013,6 +1013,30 @@ int modem_disable_status_test(int slot_id)
         goto on_exit;
     }
     sleep(10);
+
+on_exit:
+    return res;
+}
+
+int modem_keep_status_as_expected_test(int slot_id, bool expected_state)
+{
+    int res = 0;
+    int real_state = 0;
+
+    if (get_modem_status_test(slot_id, &real_state)) {
+        syslog(LOG_DEBUG, "Get modem status execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (real_state != expected_state) {
+        if (enable_modem_test(0, expected_state)) {
+            syslog(LOG_DEBUG, "Modem %s execute fail in %s", expected_state == 1 ? "enable" : "disable", __func__);
+            res = -1;
+            goto on_exit;
+        }
+        sleep(10);
+    }
 
 on_exit:
     return res;

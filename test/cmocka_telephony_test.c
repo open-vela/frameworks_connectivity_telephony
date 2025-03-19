@@ -2280,6 +2280,64 @@ static void TestTeleFunc_ImsKeepVolteUnavailAfterRadioOffOn(void** state)
     assert_int_equal(ret, 0);
 }
 
+static void TestTeleAbn_ImsTurnOnAfterModemOff(void** state)
+{
+    TestTeleFunc_CI_ModemDisable(state);
+    int ret = ims_turn_on_test(0);
+    assert_int_equal(ret, -EIO);
+    ret = ims_is_reg_as_expect_test(0, false);
+    assert_int_equal(ret, -EIO);
+    TestTeleFunc_CI_ModemEnable(state);
+}
+
+static void TestTeleAbn_ImsTurnOffAfterModemOff(void** state)
+{
+    TestTeleFunc_CI_ModemDisable(state);
+    int ret = ims_turn_off_test(0);
+    assert_int_equal(ret, -EIO);
+    ret = ims_is_reg_as_expect_test(0, false);
+    assert_int_equal(ret, -EIO);
+    TestTeleFunc_CI_ModemEnable(state);
+}
+
+static void TestTeleAbn_ImsVolteAvailAfterModemOff(void** state)
+{
+    TestTeleFunc_CI_ModemDisable(state);
+    int ret = ims_set_service_status_test(0, 5);
+    assert_int_equal(ret, -EIO);
+    ret = ims_is_volte_available_as_expect_test(0, false);
+    assert_int_equal(ret, -EIO);
+    TestTeleFunc_CI_ModemEnable(state);
+}
+
+static void TestTeleAbn_ImsTurnOnAfterRadioOff(void** state)
+{
+    TestTeleFunc_CI_ModemSetRadioPowerOff(state);
+    TestTeleFunc_CI_ImsTurnOn(state);
+    int ret = ims_is_reg_as_expect_test(0, false);
+    assert_int_equal(ret, 0);
+    TestTeleFunc_CI_ModemSetRadioPowerOn(state);
+}
+
+static void TestTeleAbn_ImsTurnOffAfterRadioOff(void** state)
+{
+    TestTeleFunc_CI_ModemSetRadioPowerOff(state);
+    TestTeleFunc_CI_ImsTurnOff(state);
+    int ret = ims_is_reg_as_expect_test(0, false);
+    assert_int_equal(ret, 0);
+    TestTeleFunc_CI_ModemSetRadioPowerOn(state);
+}
+
+static void TestTeleAbn_ImsVolteAvailAfterRadioOff(void** state)
+{
+    TestTeleFunc_CI_ModemSetRadioPowerOff(state);
+    int ret = ims_set_service_status_test(0, 5);
+    assert_int_equal(ret, 0);
+    ret = ims_is_volte_available_as_expect_test(0, false);
+    assert_int_equal(ret, 0);
+    TestTeleFunc_CI_ModemSetRadioPowerOn(state);
+}
+
 static void TestTeleFunc_SmsReceiveMessageInVoiceImsCap(void** state)
 {
     TestTeleFunc_CI_ImsSetVoiceCap(state);
@@ -3399,6 +3457,12 @@ int main(int argc, char* argv[])
         cmocka_unit_test_setup_teardown(TestTeleFunc_ImsKeepRegOffAfterRadioOffOn, setup_ims, teardown_imsAndRadio),
         cmocka_unit_test_setup_teardown(TestTeleFunc_ImsKeepVolteAvailAfterRadioOffOn, setup_ims, teardown_imsAndRadio),
         cmocka_unit_test_setup_teardown(TestTeleFunc_ImsKeepVolteUnavailAfterRadioOffOn, setup_ims, teardown_imsAndRadio),
+        cmocka_unit_test_setup_teardown(TestTeleAbn_ImsTurnOnAfterModemOff, setup_ims, teardown_imsAndModem),
+        cmocka_unit_test_setup_teardown(TestTeleAbn_ImsTurnOffAfterModemOff, setup_ims, teardown_imsAndModem),
+        cmocka_unit_test_setup_teardown(TestTeleAbn_ImsVolteAvailAfterModemOff, setup_ims, teardown_imsAndModem),
+        cmocka_unit_test_setup_teardown(TestTeleAbn_ImsTurnOnAfterRadioOff, setup_ims, teardown_imsAndRadio),
+        cmocka_unit_test_setup_teardown(TestTeleAbn_ImsTurnOffAfterRadioOff, setup_ims, teardown_imsAndRadio),
+        cmocka_unit_test_setup_teardown(TestTeleAbn_ImsVolteAvailAfterRadioOff, setup_ims, teardown_imsAndRadio),
     };
 
     const struct CMUnitTest SSTestSuits[] = {
@@ -3468,6 +3532,7 @@ int main(int argc, char* argv[])
     };
 
     sleep(5);
+
     cmocka_run_group_tests(SimTestSuites, NULL, NULL);
 
     cmocka_run_group_tests(CallTestSuites, NULL, NULL);
