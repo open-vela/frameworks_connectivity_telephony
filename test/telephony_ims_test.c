@@ -127,6 +127,40 @@ on_exit:
     return ret;
 }
 
+int teardown_imsAndModem(void** state)
+{
+    bool radio = false;
+    int ret = 0;
+
+    ret = modem_keep_status_as_expected_test(0, true);
+    if (ret) {
+        syslog(LOG_ERR, "keep modem status on execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    if (!radio) {
+        syslog(LOG_INFO, "radio is off, change to on in %s", __func__);
+        ret = set_radio_power_test(0, true);
+        if (ret) {
+            syslog(LOG_ERR, "set_radio_power_test execute fail in %s", __func__);
+            ret = -1;
+            goto on_exit;
+        }
+        sleep(5);
+    }
+
+    ret = teardown_ims(state);
+    if (ret) {
+        syslog(LOG_ERR, "teardown_ims execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return ret;
+}
+
 int ims_turn_on_test(int slot_id)
 {
     int res = 0;
@@ -137,7 +171,7 @@ int ims_turn_on_test(int slot_id)
     if (ret) {
         syslog(LOG_ERR, "tapi_ims_turn_on execute fail in %s, ret: %d",
             __func__, ret);
-        res = -1;
+        res = ret;
         goto on_exit;
     }
 
@@ -172,7 +206,7 @@ int ims_turn_off_test(int slot_id)
     int ret = tapi_ims_turn_off(get_tapi_ctx(), slot_id);
     if (ret) {
         syslog(LOG_ERR, "tapi_ims_turn_off execute fail in %s", __func__);
-        res = -1;
+        res = ret;
         goto on_exit;
     }
 
@@ -210,17 +244,15 @@ int ims_get_registration_test(int slot_id)
 
 int ims_set_service_status_test(int slot_id, int status)
 {
-    int res = 0;
     int ret = tapi_ims_set_service_status(get_tapi_ctx(), slot_id, status);
     if (ret) {
         syslog(LOG_ERR, "tapi_ims_set_service_status execute fail in %s, ret: %d",
             __func__, ret);
-        res = -1;
         goto on_exit;
     }
 
 on_exit:
-    return res;
+    return ret;
 }
 
 static void tele_ims_async_fun(tapi_async_result* result)
@@ -259,9 +291,9 @@ int ims_keep_turn_on_test(int slot_id)
     int ret = 0;
     bool enable = false;
 
-    if (tapi_ims_get_enabled(get_tapi_ctx(), 0, &enable)) {
+    ret = tapi_ims_get_enabled(get_tapi_ctx(), 0, &enable);
+    if (ret) {
         syslog(LOG_ERR, "Get ims enable execute fail in %s", __func__);
-        ret = -1;
         goto on_exit;
     }
 
@@ -300,10 +332,52 @@ on_exit:
     return ret;
 }
 
-int ims_is_reg_after_radio_off_on_test(int slot_id, bool expect_reg_status)
+int ims_is_reg_as_expect_test(int slot_id, bool expect_reg_status)
 {
     int ret = 0;
     bool reg_status = false;
+
+    ret = tapi_ims_is_registered(get_tapi_ctx(), 0, &reg_status);
+    if (ret) {
+        syslog(LOG_ERR, "ims is registred execute fail in %s", __func__);
+        goto on_exit;
+    }
+
+    if (reg_status != expect_reg_status) {
+        syslog(LOG_ERR, "ims reg status(%d) not expect status(%d) in %s", reg_status,
+            expect_reg_status, __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return ret;
+}
+
+int ims_is_volte_available_as_expect_test(int slot_id, bool expect_volte_avail)
+{
+    int ret = 0;
+    bool volte_avail = false;
+
+    ret = tapi_ims_is_volte_available(get_tapi_ctx(), 0, &volte_avail);
+    if (ret) {
+        syslog(LOG_ERR, "ims is volte available execute fail in %s", __func__);
+        goto on_exit;
+    }
+    if (volte_avail != expect_volte_avail) {
+        syslog(LOG_ERR, "ims volte available(%d) not expect(%d) in %s", volte_avail,
+            expect_volte_avail, __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return ret;
+}
+
+int ims_is_reg_after_radio_off_on_test(int slot_id, bool expect_reg_status)
+{
+    int ret = 0;
 
     if (expect_reg_status)
         ret = ims_keep_turn_on_test(0);
@@ -315,14 +389,9 @@ int ims_is_reg_after_radio_off_on_test(int slot_id, bool expect_reg_status)
         goto on_exit;
     }
 
-    ret = tapi_ims_is_registered(get_tapi_ctx(), 0, &reg_status);
+    ret = ims_is_reg_as_expect_test(0, expect_reg_status);
     if (ret) {
-        syslog(LOG_ERR, "ims is registred execute fail in %s", __func__);
-        goto on_exit;
-    }
-    if (reg_status != expect_reg_status) {
-        syslog(LOG_ERR, "ims reg status(%d) not expect status(%d)", reg_status, expect_reg_status);
-        ret = -1;
+        syslog(LOG_ERR, "ims is registred not as expect(%d) fail in %s", expect_reg_status, __func__);
         goto on_exit;
     }
 
@@ -332,14 +401,9 @@ int ims_is_reg_after_radio_off_on_test(int slot_id, bool expect_reg_status)
         goto on_exit;
     }
 
-    ret = tapi_ims_is_registered(get_tapi_ctx(), 0, &reg_status);
+    ret = ims_is_reg_as_expect_test(0, expect_reg_status);
     if (ret) {
-        syslog(LOG_ERR, "after radio off->on: ims is registred execute fail in %s", __func__);
-        goto on_exit;
-    }
-    if (reg_status != expect_reg_status) {
-        syslog(LOG_ERR, "after radio off->on: ims reg status(%d) not expect(%d)", reg_status, expect_reg_status);
-        ret = -1;
+        syslog(LOG_ERR, "ims is registred not as expect(%d) fail in %s", expect_reg_status, __func__);
         goto on_exit;
     }
 
@@ -350,7 +414,6 @@ on_exit:
 int ims_is_volte_available_after_radio_off_on_test(int slot_id, bool expect_volte_avail)
 {
     int ret = 0;
-    bool volte_avail = false;
 
     if (expect_volte_avail) {
         ret = ims_keep_turn_on_test(0);
@@ -372,27 +435,17 @@ int ims_is_volte_available_after_radio_off_on_test(int slot_id, bool expect_volt
         }
     }
 
-    ret = tapi_ims_is_volte_available(get_tapi_ctx(), 0, &volte_avail);
+    ret = ims_is_volte_available_as_expect_test(0, expect_volte_avail);
     if (ret) {
-        syslog(LOG_ERR, "ims is volte available execute fail in %s", __func__);
-        goto on_exit;
-    }
-    if (volte_avail != expect_volte_avail) {
-        syslog(LOG_ERR, "ims volte available(%d) not expect(%d)", volte_avail, expect_volte_avail);
-        ret = -1;
+        syslog(LOG_ERR, "ims is volte available as expect(%d) fail in %s", expect_volte_avail, __func__);
         goto on_exit;
     }
 
     ret = set_radio_power_off_then_on(0);
 
-    ret = tapi_ims_is_volte_available(get_tapi_ctx(), 0, &volte_avail);
+    ret = ims_is_volte_available_as_expect_test(0, expect_volte_avail);
     if (ret) {
-        syslog(LOG_ERR, "after radio off->on: ims is volte available execute fail in %s", __func__);
-        goto on_exit;
-    }
-    if (volte_avail != expect_volte_avail) {
-        syslog(LOG_ERR, "after radio off->on: ims volte available(%d) not expect(%d)", volte_avail, expect_volte_avail);
-        ret = -1;
+        syslog(LOG_ERR, "ims is volte available as expect(%d) fail in %s", expect_volte_avail, __func__);
         goto on_exit;
     }
 
