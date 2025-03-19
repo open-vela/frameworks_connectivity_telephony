@@ -1598,21 +1598,14 @@ static void TestTeleFunc_SmsReceiveChineseLongMessageInDialing(void** state)
     TestTeleFunc_SmsReceiveChineseLongMessage(state);
 }
 
-static void TestTeleFunc_SmsSetDefaultSlot(void** state)
-{
-    (void)state;
-    int ret = tapi_sms_set_default_slot(get_tapi_ctx(), 0);
-    sleep(5);
-    assert_int_equal(ret, 0);
-}
-
-static void TestTeleFunc_SmsGetDefaultSlot(void** state)
+static void TestTeleFunc_SmsSetAndGetDefaultSlot(void** state)
 {
     (void)state;
     int result = -1;
-    int ret = tapi_sms_get_default_slot(get_tapi_ctx(), &result);
-    syslog(LOG_INFO, "%s, ret: %d, result: %d", __func__, ret, result);
+    int ret = tapi_sms_set_default_slot(get_tapi_ctx(), 0);
+    sleep(5);
     assert_int_equal(ret, 0);
+    tapi_sms_get_default_slot(get_tapi_ctx(), &result);
     assert_int_equal(result, 0);
 }
 
@@ -2392,7 +2385,7 @@ static void TestTeleFunc_CI_SSSetAndGetCallForwardingUnConditional(void** state)
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleFunc_CallForwardingContinuous(void** state)
+static void TestTeleFunc_SSCallForwardingContinuous(void** state)
 {
     (void)state;
     int ret = ss_call_forwarding_continuous_test(0, phone_num);
@@ -2567,7 +2560,7 @@ static void TestTeleFunc_ModemGetPhoneStateUnderDialingCallSms(void** state)
     assert_int_equal(ret, OK);
 }
 
-static void TestTeleFunc_CallWaitingContinuous(void** state)
+static void TestTeleFunc_SSCallWaitingContinuous(void** state)
 {
     (void)state;
     int ret = ss_call_waiting_continuous_test(0);
@@ -3235,8 +3228,7 @@ int main(int argc, char* argv[])
         cmocka_unit_test_setup_teardown(TestTeleFunc_SmsReceiveMessageInSmsImsCap, setup_sms, teardown_sms),
         cmocka_unit_test_setup_teardown(TestTeleFunc_SmsReceiveEnglishLongMessageInSmsImsCap, setup_sms, teardown_sms),
         cmocka_unit_test_setup_teardown(TestTeleFunc_SmsReceiveChineseLongMessageInSmsImsCap, setup_sms, teardown_sms),
-        cmocka_unit_test(TestTeleFunc_SmsSetDefaultSlot),
-        cmocka_unit_test(TestTeleFunc_SmsGetDefaultSlot),
+        cmocka_unit_test(TestTeleFunc_SmsSetAndGetDefaultSlot),
         cmocka_unit_test(TestTeleFunc_SmsSetAndGetCellBroadcastPower),
         cmocka_unit_test(TestTeleFunc_SmsSetAndGetCellBroadcastTopics),
         cmocka_unit_test(TestTeleFunc_SmsSendMessageContinuous),
@@ -3291,8 +3283,8 @@ int main(int argc, char* argv[])
         cmocka_unit_test(TestTeleFunc_CI_SSSetAndGetCallForwardingNotReachable),
         cmocka_unit_test(TestTeleFunc_CI_SSEnableAndDisableCallWaiting),
         cmocka_unit_test(TestTeleFunc_SSEnableAndDisableFdn),
-        cmocka_unit_test(TestTeleFunc_CallForwardingContinuous),
-        cmocka_unit_test(TestTeleFunc_CallWaitingContinuous),
+        cmocka_unit_test(TestTeleFunc_SSCallForwardingContinuous),
+        cmocka_unit_test(TestTeleFunc_SSCallWaitingContinuous),
     };
 
     const struct CMUnitTest CommonTestSuites[] = {
