@@ -381,7 +381,7 @@ int sms_send_message_in_special_ims_cap(int slot_id, char* to, char* text, int i
 {
     int ret = 0, result = 1;
 
-    if (tapi_ims_set_service_status_test(slot_id, ims_cap)) {
+    if (ims_set_service_status_test(slot_id, ims_cap)) {
         syslog(LOG_ERR, "ims set service status execute fail in %s", __func__);
         ret = -1;
         goto on_exit;
@@ -435,7 +435,7 @@ int sms_send_data_message_in_special_ims_cap(int slot_id, char* to, int port, ch
 {
     int ret = 0;
 
-    if (tapi_ims_set_service_status_test(slot_id, ims_cap)) {
+    if (ims_set_service_status_test(slot_id, ims_cap)) {
         syslog(LOG_ERR, "ims set service status execute fail in %s", __func__);
         ret = -1;
         goto on_exit;

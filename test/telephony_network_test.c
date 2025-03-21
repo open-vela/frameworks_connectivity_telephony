@@ -119,7 +119,7 @@ static void network_event_callback(tapi_async_result* result)
     }
 }
 
-int tapi_net_select_auto_test(int slot_id)
+int net_select_auto_test(int slot_id)
 {
     int res = 0;
     judge_data_init();
@@ -149,7 +149,7 @@ on_exit:
     return res;
 }
 
-int tapi_net_select_manual_test(int slot_id, char* mcc, char* mnc, char* tech)
+int net_select_manual_test(int slot_id, char* mcc, char* mnc, char* tech)
 {
     int res = 0;
     judge_data_init();
@@ -190,7 +190,7 @@ on_exit:
     return res;
 }
 
-int tapi_net_scan_test(int slot_id)
+int net_scan_test(int slot_id)
 {
     int res = 0;
     judge_data_init();
@@ -228,7 +228,7 @@ on_exit:
     return res;
 }
 
-int tapi_net_registration_info_test(int slot_id)
+int net_registration_info_test(int slot_id)
 {
     int res = 0;
     judge_data_init();
@@ -265,7 +265,7 @@ on_exit:
     return res;
 }
 
-int tapi_net_get_serving_cellinfos_test(int slot_id)
+int net_get_serving_cellinfos_test(int slot_id)
 {
     int res = 0;
     judge_data_init();
@@ -302,7 +302,7 @@ on_exit:
     return res;
 }
 
-int tapi_net_get_neighbouring_cellInfos_test(int slot_id)
+int net_get_neighbouring_cellInfos_test(int slot_id)
 {
     int res = 0;
     judge_data_init();
@@ -332,7 +332,7 @@ on_exit:
     return res;
 }
 
-int tapi_net_get_operator_name_test(int slot_id)
+int net_get_operator_name_test(int slot_id)
 {
     char* operator_name = NULL;
     int ret = tapi_network_get_display_name(get_tapi_ctx(), slot_id, &operator_name);
@@ -341,7 +341,7 @@ int tapi_net_get_operator_name_test(int slot_id)
     return ret || operator_name == NULL;
 }
 
-int tapi_net_query_signalstrength_test(int slot_id)
+int net_query_signalstrength_test(int slot_id)
 {
     tapi_signal_strength ss;
     memset(&ss, 0, sizeof(ss));
@@ -351,7 +351,7 @@ int tapi_net_query_signalstrength_test(int slot_id)
     return ret || !ss.rsrp;
 }
 
-int tapi_net_get_voice_registered_test(int slot_id)
+int net_get_voice_registered_test(int slot_id)
 {
     bool result = false;
     int ret = tapi_network_is_voice_registered(get_tapi_ctx(), slot_id, &result);
