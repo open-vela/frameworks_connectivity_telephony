@@ -1633,7 +1633,7 @@ static void TestTeleFunc_CallIncomingRejectandSendMessage(void** state)
 static void TestTeleFunc_NetSelectAuto(void** state)
 {
     (void)state;
-    int ret = tapi_net_select_auto_test(0);
+    int ret = net_select_auto_test(0);
     assert_int_equal(ret, OK);
 }
 
@@ -1641,7 +1641,7 @@ static void TestTeleFunc_NetSelectManual(void** state)
 {
     (void)state;
     sleep(4);
-    int ret = tapi_net_select_manual_test(0, "310", "260", "lte");
+    int ret = net_select_manual_test(0, "310", "260", "lte");
     sleep(4);
     assert_int_equal(ret, OK);
 }
@@ -1649,55 +1649,55 @@ static void TestTeleFunc_NetSelectManual(void** state)
 static void TestTeleFunc_NetScan(void** state)
 {
     (void)state;
-    int ret = tapi_net_scan_test(0);
+    int ret = net_scan_test(0);
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_CI_NetGetServingCellinfos(void** state)
 {
     (void)state;
-    int ret = tapi_net_get_serving_cellinfos_test(0);
+    int ret = net_get_serving_cellinfos_test(0);
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_NetGetNeighbouringCellInfos(void** state)
 {
     (void)state;
-    int ret = tapi_net_get_neighbouring_cellInfos_test(0);
+    int ret = net_get_neighbouring_cellInfos_test(0);
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_CI_NetRegistrationInfo(void** state)
 {
     (void)state;
-    int ret = tapi_net_registration_info_test(0);
+    int ret = net_registration_info_test(0);
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_CI_NetGetOperatorName(void** state)
 {
     (void)state;
-    int ret = tapi_net_get_operator_name_test(0);
+    int ret = net_get_operator_name_test(0);
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_CI_NetQuerySignalstrength(void** state)
 {
     (void)state;
-    int ret = tapi_net_query_signalstrength_test(0);
+    int ret = net_query_signalstrength_test(0);
     assert_int_equal(ret, OK);
 }
 
 // static void TestTeleNetSetCellInfoListRate(void **state)
 // {
-//     int ret = tapi_net_set_cell_info_list_rate_test(0, 10);
+//     int ret = net_set_cell_info_list_rate_test(0, 10);
 //     assert_int_equal(ret, OK);
 // }
 
 static void TestTeleFunc_CI_NetGetVoiceRegistered(void** state)
 {
     (void)state;
-    int ret = tapi_net_get_voice_registered_test(0);
+    int ret = net_get_voice_registered_test(0);
     assert_int_equal(ret, OK);
 }
 
@@ -2079,11 +2079,11 @@ static void TestTeleFunc_CI_ModemGetRevision(void** state)
 //     REPEAT_TEST_LESS_FOR
 //     {
 //         tapi_ims_registration_info info;
-//         int ret = tapi_ims_set_service_status_test(0, 1);
+//         int ret = ims_set_service_status_test(0, 1);
 //         if (*mode == CASE_NORMAL_MODE || *mode == CASE_AIRPLANE_MODE
 //             || *mode == CASE_CALL_DIALING) {
 //             assert_int_equal(ret, OK);
-//             ret = tapi_ims_get_registration_test(0, &info);
+//             ret = ims_get_registration_test(0, &info);
 //             assert_int_equal(ret, OK);
 //             assert_int_equal(info.reg_info, 1);
 //             assert_int_equal(info.ext_info, 1);
@@ -2092,11 +2092,11 @@ static void TestTeleFunc_CI_ModemGetRevision(void** state)
 //         }
 //         sleep(1);
 
-//         ret = tapi_ims_set_service_status_test(0, 5);
+//         ret = ims_set_service_status_test(0, 5);
 //         if (*mode == CASE_NORMAL_MODE || *mode == CASE_AIRPLANE_MODE
 //             || *mode == CASE_CALL_DIALING) {
 //             assert_int_equal(ret, OK);
-//             ret = tapi_ims_get_registration_test(0, &info);
+//             ret = ims_get_registration_test(0, &info);
 //             assert_int_equal(ret, OK);
 //             assert_int_equal(info.reg_info, 1);
 //             assert_int_equal(info.ext_info, 5);
@@ -2176,37 +2176,37 @@ static void TestTeleFunc_CI_ImsListenAndUnlisten(void** state)
 {
     (void)state;
     int ret;
-    ret = tapi_ims_listen_ims_test(0);
+    ret = ims_listen_ims_test(0);
     assert_int_equal(ret, 0);
-    ret = tapi_ims_unlisten_ims_test();
+    ret = ims_unlisten_ims_test();
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_CI_ImsTurnOn(void** state)
 {
     (void)state;
-    int ret = ims_turn_on_test(0);
+    int ret = ims_keep_turn_on_test(0);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_CI_ImsGetRegistration(void** state)
 {
     (void)state;
-    int ret = tapi_ims_get_registration_test(0);
+    int ret = ims_get_registration_test(0);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_CI_ImsGetEnabled(void** state)
 {
     (void)state;
-    int ret = tapi_ims_get_enabled_test(0);
+    int ret = ims_get_enabled_test(0);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_CI_ImsSetVoiceCap(void** state)
 {
     (void)state;
-    int ret = tapi_ims_set_service_status_test(0, 1);
+    int ret = ims_set_service_status_test(0, 1);
     assert_int_equal(ret, 0);
     sleep(5);
 }
@@ -2214,21 +2214,21 @@ static void TestTeleFunc_CI_ImsSetVoiceCap(void** state)
 static void TestTeleFunc_CI_ImsSetSmsCap(void** state)
 {
     (void)state;
-    int ret = tapi_ims_set_service_status_test(0, 4);
+    int ret = ims_set_service_status_test(0, 4);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_CI_ImsSetSmsVoiceCap(void** state)
 {
     (void)state;
-    int ret = tapi_ims_set_service_status_test(0, 5);
+    int ret = ims_set_service_status_test(0, 5);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_CI_ImsResetImsCap(void** state)
 {
     (void)state;
-    int ret = tapi_ims_set_service_status_test(0, 5);
+    int ret = ims_set_service_status_test(0, 5);
     assert_int_equal(ret, 0);
     sleep(10);
 }
@@ -2236,7 +2236,7 @@ static void TestTeleFunc_CI_ImsResetImsCap(void** state)
 static void TestTeleFunc_CI_ImsTurnOff(void** state)
 {
     (void)state;
-    int ret = ims_turn_off_test(0);
+    int ret = ims_keep_turn_off_test(0);
     assert_int_equal(ret, 0);
 }
 
@@ -2849,7 +2849,7 @@ static void TestTeleFunc_CallDialEccWithoutIms(void** state)
 
     ret = sim_set_operator_test(0, "46000");
     assert_int_equal(ret, OK);
-    ret = tapi_ims_listen_ims_test(0);
+    ret = ims_listen_ims_test(0);
     assert_int_equal(ret, OK);
     TestTeleFunc_CI_ImsTurnOff(state);
     ret = call_connect_and_local_hangup(0, "120");
@@ -2861,7 +2861,7 @@ static void TestTeleFunc_CallDialEccWithoutIms(void** state)
 
     TestTeleFunc_CI_ModemSetRadioPowerOn(state);
     TestTeleFunc_CI_ImsTurnOn(state);
-    ret = tapi_ims_unlisten_ims_test();
+    ret = ims_unlisten_ims_test();
     assert_int_equal(ret, OK);
     ret = sim_set_operator_test(0, "000");
     assert_int_equal(ret, OK);
