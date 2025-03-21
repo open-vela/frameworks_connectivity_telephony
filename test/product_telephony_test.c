@@ -276,6 +276,28 @@ static void TestTeleSimGetOperatorName(void** state)
     assert_int_equal(ret, OK);
 }
 
+static void TestTeleModemSetRadioPowerOff(void** state)
+{
+    (void)state;
+    bool get_value;
+    int ret = set_radio_power_test(0, false);
+    assert_int_equal(ret, OK);
+    sleep(10);
+    get_radio_power_test(0, &get_value);
+    assert_false(get_value);
+}
+
+static void TestTeleModemSetRadioPowerOn(void** state)
+{
+    (void)state;
+    bool get_value;
+    int ret = set_radio_power_test(0, true);
+    assert_int_equal(ret, OK);
+    sleep(10);
+    get_radio_power_test(0, &get_value);
+    assert_true(get_value);
+}
+
 static void TestTeleNetGetOperatorName(void** state)
 {
     (void)state;
@@ -389,6 +411,8 @@ int main(int argc, char* argv[])
         cmocka_unit_test(TestTeleHasIccCard),
         cmocka_unit_test(TestTeleHasIccCardNumerousTimes),
         cmocka_unit_test(TestTeleSimGetOperatorName),
+        cmocka_unit_test(TestTeleModemSetRadioPowerOff),
+        cmocka_unit_test(TestTeleModemSetRadioPowerOn),
         cmocka_unit_test(TestTeleDataIsPsAttached),
         cmocka_unit_test(TestTeleNetGetOperatorName),
         cmocka_unit_test(TestTeleNetGetServingCellinfos),
