@@ -279,14 +279,14 @@ static void TestTeleSimGetOperatorName(void** state)
 static void TestTeleNetGetOperatorName(void** state)
 {
     (void)state;
-    int ret = tapi_net_get_operator_name_test(0);
+    int ret = net_get_operator_name_test(0);
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleNetGetServingCellinfos(void** state)
 {
     (void)state;
-    int ret = tapi_net_get_serving_cellinfos_test(0);
+    int ret = net_get_serving_cellinfos_test(0);
     assert_int_equal(ret, OK);
 }
 
