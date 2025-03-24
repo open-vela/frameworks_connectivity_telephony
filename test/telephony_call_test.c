@@ -3,6 +3,7 @@
 #include "remote_operation.h"
 #include "telephony_call_test.h"
 #include "telephony_common_test.h"
+#include "telephony_data_test.h"
 #include "telephony_sim_test.h"
 #include "telephony_ss_test.h"
 
@@ -208,6 +209,24 @@ int setup_call(void** state)
     return call_listen_call_test(0);
 }
 
+int setup_callAndData(void** state)
+{
+    if (setup_data_enable(state) || setup_call(state)) {
+        return -1;
+    }
+
+    return 0;
+}
+
+int setup_callAndRadio(void** state)
+{
+    if (setup_radio(state) || setup_call(state)) {
+        return -1;
+    }
+
+    return 0;
+}
+
 int teardown_call(void** state)
 {
     (void)state;
@@ -225,6 +244,24 @@ int teardown_call(void** state)
         res = -1;
     }
     return res;
+}
+
+int teardown_callAndData(void** state)
+{
+    if (teardown_data_enable(state) || teardown_call(state)) {
+        return -1;
+    }
+
+    return 0;
+}
+
+int teardown_callAndRadio(void** state)
+{
+    if (teardown_call(state) || teardown_radio(state)) {
+        return -1;
+    }
+
+    return 0;
 }
 
 int call_listen_call_test(int slot_id)
@@ -279,11 +316,6 @@ static void tele_call_async_fun(tapi_async_result* result)
     syslog(LOG_DEBUG, "result->arg1 : %d\n", result->arg1);
     syslog(LOG_DEBUG, "result->arg2 : %d\n", result->arg2);
 
-    if (result->status != OK) {
-        syslog(LOG_DEBUG, "%s msg id : %d result err, return.\n", __func__, result->msg_id);
-        return;
-    }
-
     int event = result->msg_id;
     int status = result->status;
 
@@ -293,9 +325,11 @@ static void tele_call_async_fun(tapi_async_result* result)
             __func__, result->status);
         if (judge_data.expect == EVENT_REQUEST_DIAL_DONE) {
             judge_data.result = status;
-            char* call_id = (char*)result->data;
-            strncpy(test_case_data.call_id, call_id, strlen(call_id));
-            test_case_data.call_id[strlen(call_id)] = '\0';
+            if (status == OK) {
+                char* call_id = (char*)result->data;
+                strncpy(test_case_data.call_id, call_id, strlen(call_id));
+                test_case_data.call_id[strlen(call_id)] = '\0';
+            }
             judge_data.flag = EVENT_REQUEST_DIAL_DONE;
         }
         break;
@@ -428,7 +462,7 @@ on_exit:
     return res;
 }
 
-int tapi_call_merge_call_test(int slot_id)
+int call_merge_call_test(int slot_id)
 {
     int res = 0;
     judge_data_init();
@@ -437,14 +471,14 @@ int tapi_call_merge_call_test(int slot_id)
         tele_call_async_fun);
 
     if (ret) {
-        syslog(LOG_ERR, "tapi_call_merge_call_test execute fail in %s, ret: %d",
+        syslog(LOG_ERR, "call_merge_call_test execute fail in %s, ret: %d",
             __func__, ret);
         res = -1;
         goto on_exit;
     }
 
     if (judge()) {
-        syslog(LOG_DEBUG, "tapi_call_merge_call_test is not executed in %s", __func__);
+        syslog(LOG_DEBUG, "call_merge_call_test is not executed in %s", __func__);
         res = -1;
         goto on_exit;
     }
@@ -459,7 +493,7 @@ on_exit:
     return res;
 }
 
-int tapi_call_separate_call_test(int slot_id)
+int call_separate_call_test(int slot_id)
 {
     syslog(LOG_DEBUG, "%s called, current call id: %s\n",
         __func__, test_case_data.call_id);
@@ -476,14 +510,14 @@ int tapi_call_separate_call_test(int slot_id)
         test_case_data.call_id, tele_call_async_fun);
 
     if (ret) {
-        syslog(LOG_ERR, "tapi_call_separate_call_test execute fail in %s, ret: %d",
+        syslog(LOG_ERR, "call_separate_call_test execute fail in %s, ret: %d",
             __func__, ret);
         res = -1;
         goto on_exit;
     }
 
     if (judge()) {
-        syslog(LOG_DEBUG, "tapi_call_separate_call_test is not executed in %s", __func__);
+        syslog(LOG_DEBUG, "call_separate_call_test is not executed in %s", __func__);
         res = -1;
         goto on_exit;
     }
@@ -498,7 +532,7 @@ on_exit:
     return res;
 }
 
-int tapi_call_release_and_swap_test(int slot_id)
+int call_release_and_swap_test(int slot_id)
 {
     int res = 0;
     judge_data_init();
@@ -506,14 +540,14 @@ int tapi_call_release_and_swap_test(int slot_id)
     int ret = tapi_call_release_and_swap(get_tapi_ctx(), slot_id);
 
     if (ret) {
-        syslog(LOG_ERR, "tapi_call_release_and_swap_test execute fail in %s, ret: %d",
+        syslog(LOG_ERR, "call_release_and_swap_test execute fail in %s, ret: %d",
             __func__, ret);
         res = -1;
         goto on_exit;
     }
 
     if (judge()) {
-        syslog(LOG_DEBUG, "tapi_call_release_and_swap_test is not executed in %s", __func__);
+        syslog(LOG_DEBUG, "call_release_and_swap_test is not executed in %s", __func__);
         res = -1;
         goto on_exit;
     }
@@ -528,7 +562,7 @@ on_exit:
     return res;
 }
 
-int tapi_call_hold_and_answer_test(int slot_id)
+int call_hold_and_answer_test(int slot_id)
 {
     int res = 0;
     judge_data_init();
@@ -536,14 +570,14 @@ int tapi_call_hold_and_answer_test(int slot_id)
     int ret = tapi_call_hold_and_answer(get_tapi_ctx(), slot_id);
 
     if (ret) {
-        syslog(LOG_ERR, "tapi_call_hold_and_answer_test execute fail in %s, ret: %d",
+        syslog(LOG_ERR, "call_hold_and_answer_test execute fail in %s, ret: %d",
             __func__, ret);
         res = -1;
         goto on_exit;
     }
 
     if (judge()) {
-        syslog(LOG_DEBUG, "tapi_call_hold_and_answer_test is not executed in %s", __func__);
+        syslog(LOG_DEBUG, "call_hold_and_answer_test is not executed in %s", __func__);
         res = -1;
         goto on_exit;
     }
@@ -558,7 +592,7 @@ on_exit:
     return res;
 }
 
-int tapi_call_release_and_answer_test(int slot_id)
+int call_release_and_answer_test(int slot_id)
 {
     int res = 0;
     judge_data_init();
@@ -566,14 +600,14 @@ int tapi_call_release_and_answer_test(int slot_id)
     int ret = tapi_call_release_and_answer(get_tapi_ctx(), slot_id);
 
     if (ret) {
-        syslog(LOG_ERR, "tapi_call_release_and_answer_test execute fail in %s, ret: %d",
+        syslog(LOG_ERR, "call_release_and_answer_test execute fail in %s, ret: %d",
             __func__, ret);
         res = -1;
         goto on_exit;
     }
 
     if (judge()) {
-        syslog(LOG_DEBUG, "tapi_call_release_and_answer_test is not executed in %s", __func__);
+        syslog(LOG_DEBUG, "call_release_and_answer_test is not executed in %s", __func__);
         res = -1;
         goto on_exit;
     }
@@ -588,7 +622,7 @@ on_exit:
     return res;
 }
 
-int tapi_call_send_tones_test(int slot_id)
+int call_send_tones_test(int slot_id)
 {
     int ret = tapi_call_send_tones(get_tapi_ctx(), slot_id, "11");
     syslog(LOG_DEBUG, "%s, ret: %d", __func__, ret);
@@ -1800,32 +1834,45 @@ int call_dial_to_phone_out_of_service(int slot_id)
     return ret1 || ret2 || ret3 || ret4;
 }
 
-// todo
 int call_dial_without_sim_card(int slot_id)
 {
-    // todo: pull out the sim card
+    int ret = 0;
+    if (sim_listen_sim_test(slot_id)) {
+        syslog(LOG_ERR, "Sim listen sim fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
 
-    int ret1 = call_listen_call_test(slot_id);
-    int ret2 = call_dial_test(slot_id, phone_num, 0);
+    sleep(3);
+    if (remote_sim_absent_operation_test(slot_id)) {
+        syslog(LOG_ERR, "Remote sim absent operation fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
     sleep(5);
-    int ret3 = call_hangup_current_call_test(slot_id);
-    int ret4 = call_unlisten_call_test();
+    if (call_dial_test(slot_id, phone_num, 0) != -1) {
+        syslog(LOG_ERR, "Dial call execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
 
-    return ret1 || ret2 || ret3 || ret4;
-}
-
-// todo
-int call_dial_ecc_number_without_sim_card(int slot_id)
-{
-    // todo: pull out the sim card
-
-    int ret1 = call_listen_call_test(slot_id);
-    int ret2 = call_dial_test(slot_id, "911", 0);
     sleep(5);
-    int ret3 = call_hangup_current_call_test(slot_id);
-    int ret4 = call_unlisten_call_test();
+    if (remote_sim_insert_operation_test(slot_id)) {
+        syslog(LOG_ERR, "Remote sim insert operation fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
 
-    return ret1 || ret2 || ret3 || ret4;
+    sleep(10);
+    if (sim_unlisten_sim_test()) {
+        syslog(LOG_ERR, "Sim unlisten sim fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return ret;
 }
 
 int call_dial_number_test(int slot_id)
@@ -1852,6 +1899,47 @@ int call_dial_ecc_number_test(int slot_id)
 
 on_exit:
     return res;
+}
+
+int call_dial_ecc_number_without_sim_card(int slot_id)
+{
+    int ret = 0;
+    if (sim_listen_sim_test(slot_id)) {
+        syslog(LOG_ERR, "Sim listen sim fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (remote_sim_absent_operation_test(slot_id)) {
+        syslog(LOG_ERR, "Remote sim absent operation fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    sleep(5);
+    if (call_dial_ecc_number_test(0)) {
+        syslog(LOG_ERR, "Dial call execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    sleep(5);
+    if (remote_sim_insert_operation_test(slot_id)) {
+        syslog(LOG_ERR, "Remote sim insert operation fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    sleep(10);
+    if (sim_unlisten_sim_test()) {
+        syslog(LOG_ERR, "Sim unlisten sim fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return ret;
 }
 
 int call_dial_long_phone_number_test(int slot_id)
@@ -2031,6 +2119,68 @@ int call_reject_second_call_in_call_active(int slot_id)
         syslog(LOG_ERR, "Hangup current call fail in %s", __func__);
         res = -1;
         goto on_exit;
+    }
+
+    if (ss_set_and_get_call_waiting_test(slot_id, false)) {
+        syslog(LOG_ERR, "Set call waiting fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
+int call_swap_two_call_times_in_second_active(int slot_id)
+{
+    int res = 0;
+    if (ss_set_and_get_call_waiting_test(slot_id, true)) {
+        syslog(LOG_ERR, "Set call waiting fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (call_dial_test(slot_id, phone_num, 0) < 0) {
+        syslog(LOG_ERR, "Dail call execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (remote_operation_call_active_test(slot_id, phone_num)) {
+        syslog(LOG_ERR, "Remote call active fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (remote_operation_call_waiting_test(slot_id, "10010")) {
+        syslog(LOG_ERR, "Incoming call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (call_hold_and_answer_test(slot_id)) {
+        syslog(LOG_ERR, "Hold and answer call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    for (int i = 0; i < 3; i++) {
+        sleep(3);
+        if (call_hold_call_test(slot_id)) {
+            syslog(LOG_ERR, "Hold call fail in %s", __func__);
+            res = -1;
+            goto on_exit;
+        }
+
+        sleep(3);
+        if (call_unhold_call_test(slot_id)) {
+            syslog(LOG_ERR, "Hold call fail in %s", __func__);
+            res = -1;
+            goto on_exit;
+        }
     }
 
     if (ss_set_and_get_call_waiting_test(slot_id, false)) {
@@ -2608,7 +2758,7 @@ int call_release_and_answer(int slot_id)
     }
 
     sleep(3);
-    if (tapi_call_hold_and_answer_test(slot_id)) {
+    if (call_hold_and_answer_test(slot_id)) {
         syslog(LOG_ERR, "Hold and answer call fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -2622,7 +2772,7 @@ int call_release_and_answer(int slot_id)
     }
 
     sleep(3);
-    if (tapi_call_release_and_answer_test(slot_id)) {
+    if (call_release_and_answer_test(slot_id)) {
         syslog(LOG_ERR, "Release and answer call fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -2783,14 +2933,14 @@ int call_merge_by_user(int slot_id)
     }
 
     sleep(3);
-    if (tapi_call_hold_and_answer_test(slot_id)) {
+    if (call_hold_and_answer_test(slot_id)) {
         syslog(LOG_ERR, "Hold and answer call fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
     sleep(3);
-    if (tapi_call_merge_call_test(slot_id)) {
+    if (call_merge_call_test(slot_id)) {
         syslog(LOG_ERR, "Merge call fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -2849,14 +2999,14 @@ int call_separate_by_user(int slot_id)
     }
 
     sleep(3);
-    if (tapi_call_hold_and_answer_test(slot_id)) {
+    if (call_hold_and_answer_test(slot_id)) {
         syslog(LOG_ERR, "Hold and answer call fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
     sleep(3);
-    if (tapi_call_merge_call_test(slot_id)) {
+    if (call_merge_call_test(slot_id)) {
         syslog(LOG_ERR, "Merge call fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -2870,7 +3020,7 @@ int call_separate_by_user(int slot_id)
     }
 
     sleep(3);
-    if (tapi_call_separate_call_test(slot_id)) {
+    if (call_separate_call_test(slot_id)) {
         syslog(LOG_ERR, "Separate call fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -2929,14 +3079,14 @@ int call_release_and_swap_other_call(int slot_id)
     }
 
     sleep(3);
-    if (tapi_call_hold_and_answer_test(slot_id)) {
+    if (call_hold_and_answer_test(slot_id)) {
         syslog(LOG_ERR, "Hold and answer call fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
 
     sleep(3);
-    if (tapi_call_release_and_swap_test(slot_id)) {
+    if (call_release_and_swap_test(slot_id)) {
         syslog(LOG_ERR, "Release and swap call fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -2981,7 +3131,7 @@ int call_outgoing_active_and_send_tones(int slot_id)
         goto on_exit;
     }
 
-    if (tapi_call_send_tones_test(slot_id)) {
+    if (call_send_tones_test(slot_id)) {
         syslog(LOG_ERR, "Send tones execute fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -3370,7 +3520,7 @@ int call_hold_first_call_and_answer_second_call(int slot_id)
     }
 
     sleep(3);
-    if (tapi_call_hold_and_answer_test(slot_id)) {
+    if (call_hold_and_answer_test(slot_id)) {
         syslog(LOG_ERR, "Hold and answer call fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -3643,7 +3793,7 @@ int call_swap_in_two_calling(int slot_id)
     }
 
     sleep(3);
-    if (tapi_call_hold_and_answer_test(slot_id)) {
+    if (call_hold_and_answer_test(slot_id)) {
         syslog(LOG_ERR, "Hold and answer call fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -3743,7 +3893,7 @@ int call_hangup_current_call_and_resume_call(int slot_id)
     }
 
     sleep(3);
-    if (tapi_call_hold_and_answer_test(slot_id)) {
+    if (call_hold_and_answer_test(slot_id)) {
         syslog(LOG_ERR, "Hold and answer call fail in %s", __func__);
         res = -1;
         goto on_exit;
@@ -3843,7 +3993,7 @@ int call_dial_third_call(int slot_id)
     return ret3 || ret4;
 }
 
-int call_connect_and_local_hangup(int slot_id, char* phone_number)
+int call_dial_and_remote_active(int slot_id, char* phone_number)
 {
     int res = 0;
     if (call_dial_test(slot_id, phone_number, 0) < 0) {
