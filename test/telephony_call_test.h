@@ -28,18 +28,22 @@
 #define CALL_REMOTE_HOLD 0x36
 
 int setup_call(void** state);
+int setup_callAndData(void** state);
+int setup_callAndRadio(void** state);
 int teardown_call(void** state);
+int teardown_callAndData(void** state);
+int teardown_callAndRadio(void** state);
 int call_abnormal_answer_again_test(int slot_id);
 int call_answer_call_test(int slot_id, char* call_id);
 int call_answer_call_aysnc_test(int slot_id, char* call_id);
 int call_check_dialing_status_with_multi_call(int slot);
 int call_check_status_in_call_active(int slot_id);
 int call_clear_voicecall_slot(void);
-int call_connect_and_local_hangup(int slot_id, char* phone_number);
 int call_dial_active_hangup_due_to_caller_network_exception(int slot_id);
 int call_dial_active_hangup_due_to_dialer_network_exception(int slot_id);
 int call_dial_after_caller_reject(int slot_id);
 int call_dtmf_after_dial_test(int slot_id);
+int call_dial_and_remote_active(int slot_id, char* phone_number);
 int call_dial_and_remote_hangup(int slot_id);
 int call_dial_and_check_status_in_call_active(int slot_id);
 int call_dial_and_keep_in_call_active(int slot_id, char* phone_number);
@@ -116,6 +120,7 @@ int call_start_dtmf_test(int slot_id);
 int call_stop_dtmf_test(int slot_id);
 int call_swap_dial_reject_swap(int slot_id);
 int call_swap_in_two_calling(int slot_id);
+int call_swap_two_call_times_in_second_active(int slot_id);
 int call_unhold_first_incoming_call_after_hangup_second_call(int slot_id);
 int call_unlisten_call_test(void);
 int remote_operation_call_incoming_test(int slot_id, char* phone_number);

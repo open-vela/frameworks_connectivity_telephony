@@ -232,14 +232,14 @@ on_exit:
     return res;
 }
 
-int ims_get_registration_test(int slot_id)
+int ims_get_registration_test(int slot_id, int expect)
 {
     tapi_ims_registration_info info;
     memset(&info, 0, sizeof(info));
     int ret = tapi_ims_get_registration(get_tapi_ctx(), slot_id, &info);
     syslog(LOG_ERR, "%s, slot_id: %d, reg_info: %d", __func__, slot_id, info.reg_info);
 
-    return ret || !info.reg_info;
+    return ret || (expect != info.reg_info);
 }
 
 int ims_set_service_status_test(int slot_id, int status)
@@ -277,13 +277,13 @@ static void tele_ims_async_fun(tapi_async_result* result)
     }
 }
 
-int ims_get_enabled_test(int slot_id)
+int ims_get_enabled_test(int slot_id, bool expect)
 {
     bool result = false;
     int ret = tapi_ims_get_enabled(get_tapi_ctx(), slot_id, &result);
     syslog(LOG_DEBUG, "%s, slot_id: %d, ims_enable: %d", __func__, slot_id, result);
 
-    return ret || !result;
+    return ret || (result != expect);
 }
 
 int ims_keep_turn_on_test(int slot_id)

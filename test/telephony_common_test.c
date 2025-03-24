@@ -185,6 +185,33 @@ on_exit:
     return ret;
 }
 
+int setup_radio(void** state)
+{
+    (void)state;
+    int ret = 0;
+
+    if (modem_register_test(0)) {
+        syslog(LOG_ERR, "Modem register execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    if (get_radio_power_test(0, &modem_data.init_radio_power_state)) {
+        syslog(LOG_DEBUG, "Get radio power execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    if (set_radio_power_test(0, true)) {
+        syslog(LOG_ERR, "Modem set radio power execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return ret;
+}
+
 int teardown_modem(void** state)
 {
     (void)state;
@@ -203,6 +230,27 @@ int teardown_modem(void** state)
             goto on_exit;
         }
     }
+
+    if (set_radio_power_test(0, modem_data.init_radio_power_state)) {
+        syslog(LOG_ERR, "Modem set radio power execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    if (modem_unregister_test()) {
+        syslog(LOG_ERR, "Modem unregister execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return ret;
+}
+
+int teardown_radio(void** state)
+{
+    (void)state;
+    int ret = 0;
 
     if (set_radio_power_test(0, modem_data.init_radio_power_state)) {
         syslog(LOG_ERR, "Modem set radio power execute fail in %s", __func__);
