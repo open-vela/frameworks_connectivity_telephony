@@ -173,6 +173,26 @@ void judge_data_init(void)
     judge_data.phone_state_value = INVALID_VALUE;
 }
 
+static void TestTeleFunc_CI_SimListen(void** state)
+{
+    (void)state;
+    int ret = sim_listen_sim_test(0);
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_CI_SimUnListen(void** state)
+{
+    (void)state;
+    int ret = sim_unlisten_sim_test();
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_CI_SimListenAndUnListen(void** state)
+{
+    TestTeleFunc_CI_SimListen(state);
+    TestTeleFunc_CI_SimUnListen(state);
+}
+
 static void TestTeleFunc_CI_SimHasIccCard(void** state)
 {
     (void)state;
@@ -411,10 +431,24 @@ static void TestTeleFunc_CI_CallDialNumber(void** state)
     assert_int_equal(ret, OK);
 }
 
+static void TestTeleFunc_CI_CallDialNumberWithoutSimCard(void** state)
+{
+    (void)state;
+    int ret = call_dial_without_sim_card(0);
+    assert_int_equal(ret, OK);
+}
+
 static void TestTeleFunc_CI_CallDialEccNumber(void** state)
 {
     (void)state;
     int ret = call_dial_ecc_number_test(0);
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_CI_CallDialEccNumberWithoutSimCard(void** state)
+{
+    (void)state;
+    int ret = call_dial_ecc_number_without_sim_card(0);
     assert_int_equal(ret, OK);
 }
 
@@ -565,6 +599,13 @@ static void TestTeleFunc_CallSwapInTwoCalling(void** state)
     assert_int_equal(ret, 0);
 }
 
+static void TestTeleFunc_CallSwapTimesInTwoCalling(void** state)
+{
+    (void)state;
+    int ret = call_swap_two_call_times_in_second_active(0);
+    assert_int_equal(ret, 0);
+}
+
 static void TestTeleFunc_CallRejectSecondCallInCallActive(void** state)
 {
     int ret = call_reject_second_call_in_call_active(0);
@@ -643,9 +684,9 @@ static void TestTeleFunc_CallActiveAndSendtones(void** state)
     assert_int_equal(ret, OK);
 }
 
-static void TestTeleFunc_CallConnectAndLocalHangup(void** state)
+static void TestTeleFunc_CallDialAndRemoteActive(void** state)
 {
-    int ret = call_connect_and_local_hangup(0, phone_num);
+    int ret = call_dial_and_remote_active(0, phone_num);
     assert_int_equal(ret, 0);
 }
 
@@ -1834,6 +1875,7 @@ static void TestTeleFunc_CI_ModemSetRadioPowerOn(void** state)
     (void)state;
     int ret = set_radio_power_test(0, true);
     assert_int_equal(ret, OK);
+    sleep(5);
 }
 
 static void TestTeleFunc_ModemSetRadioPowerOnAndOffContinuous(void** state)
@@ -1864,7 +1906,7 @@ static void TestTeleFunc_CI_ModemSetRadioPowerOff(void** state)
     (void)state;
     int ret = set_radio_power_test(0, false);
     assert_int_equal(ret, OK);
-    sleep(10);
+    sleep(5);
 }
 
 static void TestTeleFunc_CI_ModemSetRadioPowerOnOffNTimes(void** state)
@@ -2172,14 +2214,24 @@ static void TestTeleFunc_ModemInvokeOemRilRequestHexStrings(void** state)
 //     // assert_int_equal(ret, -1);
 // }
 
-static void TestTeleFunc_CI_ImsListenAndUnlisten(void** state)
+static void TestTeleFunc_CI_ImsListen(void** state)
 {
     (void)state;
-    int ret;
-    ret = ims_listen_ims_test(0);
+    int ret = ims_listen_ims_test(0);
     assert_int_equal(ret, 0);
-    ret = ims_unlisten_ims_test();
+}
+
+static void TestTeleFunc_CI_ImsUnlisten(void** state)
+{
+    (void)state;
+    int ret = ims_unlisten_ims_test();
     assert_int_equal(ret, 0);
+}
+
+static void TestTeleFunc_CI_ImsListenAndUnlisten(void** state)
+{
+    TestTeleFunc_CI_ImsListen(state);
+    TestTeleFunc_CI_ImsUnlisten(state);
 }
 
 static void TestTeleFunc_CI_ImsTurnOn(void** state)
@@ -2192,14 +2244,14 @@ static void TestTeleFunc_CI_ImsTurnOn(void** state)
 static void TestTeleFunc_CI_ImsGetRegistration(void** state)
 {
     (void)state;
-    int ret = ims_get_registration_test(0);
+    int ret = ims_get_registration_test(0, 1);
     assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_CI_ImsGetEnabled(void** state)
 {
     (void)state;
-    int ret = ims_get_enabled_test(0);
+    int ret = ims_get_enabled_test(0, true);
     assert_int_equal(ret, 0);
 }
 
@@ -2336,6 +2388,105 @@ static void TestTeleAbn_ImsVolteAvailAfterRadioOff(void** state)
     ret = ims_is_volte_available_as_expect_test(0, false);
     assert_int_equal(ret, 0);
     TestTeleFunc_CI_ModemSetRadioPowerOn(state);
+}
+
+static void TestTeleFunc_CallDialInVolteReg(void** state)
+{
+    TestTeleFunc_CI_ImsSetVoiceCap(state);
+    TestTeleFunc_CI_CallDialNumber(state);
+    TestTeleFunc_CI_ImsSetSmsVoiceCap(state);
+}
+
+static void TestTeleFunc_CallDialAndRemoteActiveAfterRadioPowerOnOff(void** state)
+{
+    TestTeleFunc_CI_ModemSetRadioPowerOff(state);
+    TestTeleFunc_CI_ModemSetRadioPowerOn(state);
+    TestTeleFunc_CallDialAndRemoteActive(state);
+}
+
+static void TestTeleFunc_CallIncomingAnswerAfterRadioPowerOnOff(void** state)
+{
+    TestTeleFunc_CI_ModemSetRadioPowerOff(state);
+    TestTeleFunc_CI_ModemSetRadioPowerOn(state);
+    TestTeleFunc_CallIncomingAnswerAndHangup(state);
+}
+
+static void TestTeleFunc_CallIncomingAnswerInCallAfterRadioPowerOnOff(void** state)
+{
+    TestTeleFunc_CI_ModemSetRadioPowerOff(state);
+    TestTeleFunc_CI_ModemSetRadioPowerOn(state);
+    TestTeleFunc_CallHoldAndAnswer(state);
+}
+
+static void TestTeleFunc_CallDialSecondCallAndActiveAfterRadioPowerOnOff(void** state)
+{
+    TestTeleFunc_CI_ModemSetRadioPowerOff(state);
+    TestTeleFunc_CI_ModemSetRadioPowerOn(state);
+    TestTeleFunc_CallDialSecondCallAndHangupByCaller(state);
+}
+
+static void TestTeleFunc_CallDialAndRemoteActiveAfterDataOnOff(void** state)
+{
+    TestTeleFunc_CI_DataEnable(state);
+    TestTeleFunc_CI_DataDisable(state);
+    TestTeleFunc_CallDialAndRemoteActive(state);
+}
+
+static void TestTeleFunc_CallIncomingAnswerAfterDataOnOff(void** state)
+{
+    TestTeleFunc_CI_DataEnable(state);
+    TestTeleFunc_CI_DataDisable(state);
+    TestTeleFunc_CallIncomingAnswerAndHangup(state);
+}
+
+static void TestTeleFunc_CallIncomingAnswerInCallAfterDataOnOff(void** state)
+{
+    TestTeleFunc_CI_DataEnable(state);
+    TestTeleFunc_CI_DataDisable(state);
+    TestTeleFunc_CallHoldAndAnswer(state);
+}
+
+static void TestTeleFunc_CallDialSecondCallAndActiveAfterDataOnOff(void** state)
+{
+    TestTeleFunc_CI_DataEnable(state);
+    TestTeleFunc_CI_DataDisable(state);
+    TestTeleFunc_CallDialSecondCallAndHangupByCaller(state);
+}
+
+static void TestTeleFunc_CallDialAndRemoteActiveInRoming(void** state)
+{
+    TestTeleFunc_CI_DataRegister(state);
+    TestTeleFunc_CI_DataEnableRoaming(state);
+    TestTeleFunc_CallDialAndRemoteActive(state);
+    TestTeleFunc_CI_DataDisableRoaming(state);
+    TestTeleFunc_CI_DataUnregister(state);
+}
+
+static void TestTeleFunc_CallIncomingAnswerInRoming(void** state)
+{
+    TestTeleFunc_CI_DataRegister(state);
+    TestTeleFunc_CI_DataEnableRoaming(state);
+    TestTeleFunc_CallIncomingAnswerAndHangup(state);
+    TestTeleFunc_CI_DataDisableRoaming(state);
+    TestTeleFunc_CI_DataUnregister(state);
+}
+
+static void TestTeleFunc_CallIncomingAnswerInCallInRoming(void** state)
+{
+    TestTeleFunc_CI_DataRegister(state);
+    TestTeleFunc_CI_DataEnableRoaming(state);
+    TestTeleFunc_CallHoldAndAnswer(state);
+    TestTeleFunc_CI_DataDisableRoaming(state);
+    TestTeleFunc_CI_DataUnregister(state);
+}
+
+static void TestTeleFunc_CallDialSecondCallAndActiveInRoming(void** state)
+{
+    TestTeleFunc_CI_DataRegister(state);
+    TestTeleFunc_CI_DataEnableRoaming(state);
+    TestTeleFunc_CallDialSecondCallAndHangupByCaller(state);
+    TestTeleFunc_CI_DataDisableRoaming(state);
+    TestTeleFunc_CI_DataUnregister(state);
 }
 
 static void TestTeleFunc_SmsReceiveMessageInVoiceImsCap(void** state)
@@ -2887,7 +3038,7 @@ static void TestTeleFunc_CallDialAndHangupEcc(void** state)
 
     ret = sim_set_operator_test(0, "46000");
     assert_int_equal(ret, OK);
-    ret = call_connect_and_local_hangup(0, "120");
+    ret = call_dial_and_remote_active(0, "120");
     assert_int_equal(ret, OK);
     TestTeleFunc_CI_ModemSetRadioPowerOff(state);
     ret = get_radio_power_test(0, &get_value);
@@ -2910,7 +3061,7 @@ static void TestTeleFunc_CallDialEccWithoutIms(void** state)
     ret = ims_listen_ims_test(0);
     assert_int_equal(ret, OK);
     TestTeleFunc_CI_ImsTurnOff(state);
-    ret = call_connect_and_local_hangup(0, "120");
+    ret = call_dial_and_remote_active(0, "120");
     assert_int_equal(ret, OK);
     TestTeleFunc_CI_ModemSetRadioPowerOff(state);
     ret = get_radio_power_test(0, &get_value);
@@ -3091,7 +3242,7 @@ static void TestTeleFunc_CallActiveECCCallNTimes(void** state)
     ret = sim_set_operator_test(0, "46000");
     assert_int_equal(ret, OK);
     for (int _i = 0; _i < 20; _i++) {
-        ret = call_connect_and_local_hangup(0, "120");
+        ret = call_dial_and_remote_active(0, "120");
         assert_int_equal(ret, OK);
     }
     ret = sim_set_operator_test(0, "000");
@@ -3125,7 +3276,7 @@ static void TestTeleFunc_CallDialEccAfterResetModemNTimes(void** state)
         TestTeleFunc_CI_ModemEnable(state);
         TestTeleFunc_CI_ModemEnableStatus(state);
     }
-    ret = call_connect_and_local_hangup(0, "120");
+    ret = call_dial_and_remote_active(0, "120");
     assert_int_equal(ret, OK);
     TestTeleFunc_CI_ModemSetRadioPowerOff(state);
     ret = get_radio_power_test(0, &get_value);
@@ -3146,7 +3297,7 @@ static void TestTeleFunc_CallDialEccAfterResetRadioPowerNTimes(void** state)
         TestTeleFunc_CI_ModemSetRadioPowerOff(state);
         TestTeleFunc_CI_ModemSetRadioPowerOn(state);
     }
-    ret = call_connect_and_local_hangup(0, "120");
+    ret = call_dial_and_remote_active(0, "120");
     assert_int_equal(ret, OK);
     TestTeleFunc_CI_ModemSetRadioPowerOff(state);
     ret = get_radio_power_test(0, &get_value);
@@ -3205,6 +3356,7 @@ int main(int argc, char* argv[])
         goto do_exit;
 
     const struct CMUnitTest SimTestSuites[] = {
+        cmocka_unit_test(TestTeleFunc_CI_SimListenAndUnListen),
         cmocka_unit_test(TestTeleFunc_CI_SimHasIccCard),
         cmocka_unit_test(TestTeleFunc_SimHasIccCardNumerousTimes),
         cmocka_unit_test(TestTeleFunc_CI_SimGetOperatorName),
@@ -3242,7 +3394,9 @@ int main(int argc, char* argv[])
         cmocka_unit_test(TestTeleFunc_CallLoadAndCompareEccWithChinaSimCard),
         cmocka_unit_test(TestTeleFunc_CallLoadAndCompareEccWithoutSimCard),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_CallDialNumber, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_CallDialNumberWithoutSimCard, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_CallDialEccNumber, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_CallDialEccNumberWithoutSimCard, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialLongPhoneNumber, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialShotPhoneNumber, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialWithEnableHideCallId, setup_call, teardown_call),
@@ -3264,6 +3418,7 @@ int main(int argc, char* argv[])
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallSeparateByUser, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallReleaseAndSwap, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallSwapInTwoCalling, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallSwapTimesInTwoCalling, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallRejectSecondCallInCallActive, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallRemoteAnswerAndHangup, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallRemoteAnswerAndNetworkHangup, setup_call, teardown_call),
@@ -3276,7 +3431,7 @@ int main(int argc, char* argv[])
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallHangupAndResumeCall, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallHangupHoldCallInTwoCalls, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallActiveAndSendtones, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CallConnectAndLocalHangup, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialAndRemoteActive, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallCheckStatusInCallActive, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallCheckDialingStausWithMultiCall, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialAndKeepInActive, setup_call, teardown_call),
@@ -3311,6 +3466,19 @@ int main(int argc, char* argv[])
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallSetRadioPowerOffAfterECCCallNTimes, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialEccAfterResetModemNTimes, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialEccAfterResetRadioPowerNTimes, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialInVolteReg, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialAndRemoteActiveAfterRadioPowerOnOff, setup_callAndRadio, teardown_callAndRadio),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingAnswerAfterRadioPowerOnOff, setup_callAndRadio, teardown_callAndRadio),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingAnswerInCallAfterRadioPowerOnOff, setup_callAndRadio, teardown_callAndRadio),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialSecondCallAndActiveAfterRadioPowerOnOff, setup_callAndRadio, teardown_callAndRadio),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialAndRemoteActiveAfterDataOnOff, setup_callAndData, teardown_callAndData),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingAnswerAfterDataOnOff, setup_callAndData, teardown_callAndData),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingAnswerInCallAfterDataOnOff, setup_callAndData, teardown_callAndData),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialSecondCallAndActiveAfterDataOnOff, setup_callAndData, teardown_callAndData),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialAndRemoteActiveInRoming, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingAnswerInRoming, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingAnswerInCallInRoming, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialSecondCallAndActiveInRoming, setup_call, teardown_call),
     };
 
     const struct CMUnitTest DataTestSuites[] = {

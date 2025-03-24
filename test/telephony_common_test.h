@@ -5,7 +5,9 @@
 #include "telephony_test.h"
 
 int setup_modem(void** state);
+int setup_radio(void** state);
 int teardown_modem(void** state);
+int teardown_radio(void** state);
 int enable_modem_test(int slot_id, bool target_state);
 int get_imei_test(int slot_id);
 int get_modem_activity_info_test(int slot_id);
