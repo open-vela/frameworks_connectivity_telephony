@@ -2368,16 +2368,15 @@ static void TestTeleAbn_ImsTurnOnAfterRadioOff(void** state)
     TestTeleFunc_CI_ImsTurnOn(state);
     int ret = ims_is_reg_as_expect_test(0, false);
     assert_int_equal(ret, 0);
-    TestTeleFunc_CI_ModemSetRadioPowerOn(state);
 }
 
 static void TestTeleAbn_ImsTurnOffAfterRadioOff(void** state)
 {
     TestTeleFunc_CI_ModemSetRadioPowerOff(state);
-    TestTeleFunc_CI_ImsTurnOff(state);
-    int ret = ims_is_reg_as_expect_test(0, false);
+    int ret = tapi_ims_turn_off(get_tapi_ctx(), 0);
     assert_int_equal(ret, 0);
-    TestTeleFunc_CI_ModemSetRadioPowerOn(state);
+    ret = ims_is_reg_as_expect_test(0, false);
+    assert_int_equal(ret, 0);
 }
 
 static void TestTeleAbn_ImsVolteAvailAfterRadioOff(void** state)
@@ -2387,7 +2386,36 @@ static void TestTeleAbn_ImsVolteAvailAfterRadioOff(void** state)
     assert_int_equal(ret, 0);
     ret = ims_is_volte_available_as_expect_test(0, false);
     assert_int_equal(ret, 0);
-    TestTeleFunc_CI_ModemSetRadioPowerOn(state);
+}
+
+static void TestTeleAbn_ImsTurnOnWithSimAbsent(void** state)
+{
+    int ret = remote_sim_absent_operation_test(0);
+    assert_int_equal(ret, 0);
+    ret = tapi_ims_turn_on(get_tapi_ctx(), 0);
+    assert_int_equal(ret, 0);
+    ret = ims_is_reg_as_expect_test(0, false);
+    assert_int_equal(ret, 0);
+}
+
+static void TestTeleAbn_ImsTurnOffWithSimAbsent(void** state)
+{
+    int ret = remote_sim_absent_operation_test(0);
+    assert_int_equal(ret, 0);
+    ret = tapi_ims_turn_off(get_tapi_ctx(), 0);
+    assert_int_equal(ret, 0);
+    ret = ims_is_reg_as_expect_test(0, false);
+    assert_int_equal(ret, 0);
+}
+
+static void TestTeleAbn_ImsVolteAvailWithSimAbsent(void** state)
+{
+    int ret = remote_sim_absent_operation_test(0);
+    assert_int_equal(ret, 0);
+    ret = ims_set_service_status_test(0, 5);
+    assert_int_equal(ret, 0);
+    ret = ims_is_volte_available_as_expect_test(0, false);
+    assert_int_equal(ret, 0);
 }
 
 static void TestTeleFunc_CallDialInVolteReg(void** state)
@@ -3631,6 +3659,9 @@ int main(int argc, char* argv[])
         cmocka_unit_test_setup_teardown(TestTeleAbn_ImsTurnOnAfterRadioOff, setup_ims, teardown_imsAndRadio),
         cmocka_unit_test_setup_teardown(TestTeleAbn_ImsTurnOffAfterRadioOff, setup_ims, teardown_imsAndRadio),
         cmocka_unit_test_setup_teardown(TestTeleAbn_ImsVolteAvailAfterRadioOff, setup_ims, teardown_imsAndRadio),
+        cmocka_unit_test_setup_teardown(TestTeleAbn_ImsTurnOnWithSimAbsent, setup_imsAndSim, teardown_imsAndSim),
+        cmocka_unit_test_setup_teardown(TestTeleAbn_ImsTurnOffWithSimAbsent, setup_imsAndSim, teardown_imsAndSim),
+        cmocka_unit_test_setup_teardown(TestTeleAbn_ImsVolteAvailWithSimAbsent, setup_imsAndSim, teardown_imsAndSim),
     };
 
     const struct CMUnitTest SSTestSuits[] = {
