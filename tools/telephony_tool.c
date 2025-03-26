@@ -846,8 +846,9 @@ static void network_event_callback(tapi_async_result* result)
 
         while (--index >= 0) {
             cell = *cell_list++;
-            syslog(LOG_DEBUG, "ci : %d, mcc : %s, mnc : %s, registered : %d, type : %d, \n",
-                cell->ci, cell->mcc_str, cell->mnc_str, cell->registered, cell->type);
+            syslog(LOG_DEBUG, "ci : %d, mcc : %s, mnc : %s, registered : %d, type : %s \n",
+                cell->ci, cell->mcc_str, cell->mnc_str, cell->registered,
+                tapi_utils_cell_type_to_string(cell->type));
         }
         break;
     default:
