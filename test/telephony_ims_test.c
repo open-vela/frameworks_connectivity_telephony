@@ -1,5 +1,6 @@
 #include "telephony_ims_test.h"
 #include "telephony_common_test.h"
+#include "telephony_sim_test.h"
 
 static void tele_ims_async_fun(tapi_async_result* result);
 extern struct judge_type judge_data;
@@ -98,6 +99,16 @@ int teardown_imsAndRadio(void** state)
     bool radio = false;
     int ret = 0;
 
+    /** If not teardown ims before teardown radio,radio power on will trigger ims reg notifyed,
+     * that make teardown enable ims can not receive ims reg notify, because ims already notifyed
+     */
+    ret = teardown_ims(state);
+    if (ret) {
+        syslog(LOG_ERR, "teardown_ims execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
     ret = get_radio_power_test(0, &radio);
     if (ret) {
         syslog(LOG_ERR, "get_radio_power_test execute fail in %s", __func__);
@@ -116,13 +127,6 @@ int teardown_imsAndRadio(void** state)
         sleep(3); // wait for radio on 3s
     }
 
-    ret = teardown_ims(state);
-    if (ret) {
-        syslog(LOG_ERR, "teardown_ims execute fail in %s", __func__);
-        ret = -1;
-        goto on_exit;
-    }
-
 on_exit:
     return ret;
 }
@@ -139,6 +143,23 @@ int teardown_imsAndModem(void** state)
         goto on_exit;
     }
 
+    /** If not teardown ims before teardown radio, radio power on will trigger ims reg notifyed,
+     * that make teardown enable ims can not receive ims reg notify, because ims already notifyed
+     */
+    ret = teardown_ims(state);
+    if (ret) {
+        syslog(LOG_ERR, "teardown_ims execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    ret = get_radio_power_test(0, &radio);
+    if (ret) {
+        syslog(LOG_ERR, "get_radio_power_test execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
     if (!radio) {
         syslog(LOG_INFO, "radio is off, change to on in %s", __func__);
         ret = set_radio_power_test(0, true);
@@ -150,10 +171,43 @@ int teardown_imsAndModem(void** state)
         sleep(5);
     }
 
+on_exit:
+    return ret;
+}
+
+int setup_imsAndSim(void** state)
+{
+    int ret = 0;
+
+    ret = setup_sim(state);
+    if (ret) {
+        syslog(LOG_ERR, "setup_sim execute fail in %s", __func__);
+        goto on_exit;
+    }
+
+    ret = setup_ims(state);
+    if (ret) {
+        syslog(LOG_ERR, "setup_ims execute fail in %s", __func__);
+        goto on_exit;
+    }
+
+on_exit:
+    return ret;
+}
+
+int teardown_imsAndSim(void** state)
+{
+    int ret = 0;
+
     ret = teardown_ims(state);
     if (ret) {
         syslog(LOG_ERR, "teardown_ims execute fail in %s", __func__);
-        ret = -1;
+        goto on_exit;
+    }
+
+    ret = teardown_sim(state);
+    if (ret) {
+        syslog(LOG_ERR, "teardown_sim execute fail in %s", __func__);
         goto on_exit;
     }
 
