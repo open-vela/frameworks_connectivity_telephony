@@ -161,7 +161,7 @@ int judge(void)
     }
 
     syslog(LOG_ERR, "judge expect(%d) timeout\n", judge_data.expect);
-    assert(0);
+    assert_true(false);
     return -ETIME;
 }
 
