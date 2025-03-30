@@ -2193,6 +2193,67 @@ on_exit:
     return res;
 }
 
+int call_transfer_in_active_and_hold_call(int slot_id)
+{
+    int res = 0;
+
+    if (ss_set_and_get_call_waiting_test(slot_id, true)) {
+        syslog(LOG_ERR, "Set call waiting fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (call_dial_test(slot_id, phone_num, 0) < 0) {
+        syslog(LOG_ERR, "Dail call execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (remote_operation_call_active_test(slot_id, phone_num)) {
+        syslog(LOG_ERR, "Remote call active fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (remote_operation_call_waiting_test(slot_id, "10010")) {
+        syslog(LOG_ERR, "Incoming call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (call_hold_and_answer_test(slot_id)) {
+        syslog(LOG_ERR, "Hold and answer call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (tapi_call_transfer(get_tapi_ctx(), slot_id)) {
+        syslog(LOG_ERR, "Transfer call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (call_get_call_count(slot_id) != 0) {
+        syslog(LOG_ERR, "Get call count fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (ss_set_and_get_call_waiting_test(0, false) < 0) {
+        syslog(LOG_ERR, "Set call waiting false fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
 int call_incoming_and_check_number_in_call(int slot_id)
 {
     int res = 0;
@@ -3849,6 +3910,66 @@ int call_swap_in_two_calling(int slot_id)
 
     if (call_hangup_all_test(slot_id)) {
         syslog(LOG_ERR, "Hangup all call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (ss_set_and_get_call_waiting_test(0, false) < 0) {
+        syslog(LOG_ERR, "Set call waiting false fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
+int call_dial_in_two_calling(int slot_id)
+{
+    int res = 0;
+
+    if (ss_set_and_get_call_waiting_test(0, true) < 0) {
+        syslog(LOG_ERR, "Set call waiting true fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (remote_operation_call_incoming_test(slot_id, phone_num)) {
+        syslog(LOG_ERR, "Incoming call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (call_answer_call_test(slot_id, test_case_data.call_id)) {
+        syslog(LOG_ERR, "Answer call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (remote_operation_call_waiting_test(slot_id, "10010")) {
+        syslog(LOG_ERR, "Waiting call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (call_hold_and_answer_test(slot_id)) {
+        syslog(LOG_ERR, "Hold and answer call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (call_get_call_count(slot_id) != 2) {
+        syslog(LOG_ERR, "Get call count fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (call_dial_test(slot_id, "10000", 0) != -1) {
+        syslog(LOG_ERR, "Dial third call error in %s", __func__);
         res = -1;
         goto on_exit;
     }

@@ -1743,6 +1743,12 @@ static void TestTeleFunc_NetSelectManual(void** state)
     assert_int_equal(ret, OK);
 }
 
+static void TestTeleFunc_NetSelectManualAndRestoreAuto(void** state)
+{
+    TestTeleFunc_NetSelectManual(state);
+    TestTeleFunc_NetSelectAuto(state);
+}
+
 static void TestTeleFunc_NetScan(void** state)
 {
     (void)state;
@@ -2683,6 +2689,20 @@ static void TestTeleFunc_CallDialSecondCallAndActiveInRoming(void** state)
     TestTeleFunc_CI_DataUnregister(state);
 }
 
+static void TestTeleFunc_CallTransfer(void** state)
+{
+    (void)state;
+    int ret = call_transfer_in_active_and_hold_call(0);
+    assert_int_equal(ret, 0);
+}
+
+static void TestTeleFunc_CallDialingThirdCall(void** state)
+{
+    (void)state;
+    int ret = call_dial_in_two_calling(0);
+    assert_int_equal(ret, 0);
+}
+
 static void TestTeleFunc_SmsReceiveMessageInVoiceImsCap(void** state)
 {
     TestTeleFunc_CI_ImsSetVoiceCap(state);
@@ -2725,6 +2745,27 @@ static void TestTeleFunc_SmsReceiveChineseLongMessageInSmsImsCap(void** state)
     TestTeleFunc_CI_ImsSetSmsVoiceCap(state);
 }
 
+static void TestTeleFunc_SmsReceiveReportAfterSendShortMessage(void** state)
+{
+    (void)state;
+    int ret = sms_receive_report_test(0, phone_num, 0, short_english_text);
+    assert_int_equal(ret, 0);
+}
+
+static void TestTeleFunc_SmsReceiveReportAfterSendChineseLongMessage(void** state)
+{
+    (void)state;
+    int ret = sms_receive_report_test(0, phone_num, 0, long_chinese_text);
+    assert_int_equal(ret, 0);
+}
+
+static void TestTeleFunc_SmsReceiveReportAfterSendEnglishLongMessage(void** state)
+{
+    (void)state;
+    int ret = sms_receive_report_test(0, phone_num, 0, long_english_text);
+    assert_int_equal(ret, 0);
+}
+
 static void TestTeleFunc_CI_SSRegister(void** state)
 {
     (void)state;
@@ -2737,6 +2778,12 @@ static void TestTeleFunc_CI_SSUnRegister(void** state)
     (void)state;
     int ret = ss_unlisten_ss_test();
     assert_int_equal(ret, 0);
+}
+
+static void TestTeleFunc_CI_SSResigterAndUnRegister(void** state)
+{
+    TestTeleFunc_CI_SSRegister(state);
+    TestTeleFunc_CI_SSUnRegister(state);
 }
 
 static void TestTeleFunc_SSRequestCallBarring(void** state)
@@ -2816,12 +2863,17 @@ static void TestTeleFunc_CI_SSSetAndGetCallForwardingNotReachable(void** state)
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleFunc_CI_SSEnableAndDisableCallWaiting(void** state)
+static void TestTeleFunc_CI_SSEnableCallWaiting(void** state)
 {
     (void)state;
     int ret = ss_set_and_get_call_waiting_test(0, true);
     assert_int_equal(ret, 0);
-    ret = ss_set_and_get_call_waiting_test(0, false);
+}
+
+static void TestTeleFunc_CI_SSDisableCallWaiting(void** state)
+{
+    (void)state;
+    int ret = ss_set_and_get_call_waiting_test(0, false);
     assert_int_equal(ret, 0);
 }
 
@@ -2832,6 +2884,34 @@ static void TestTeleAbn_SSListenAbnormalIdFail(void** state)
     assert_int_equal(ret, -EINVAL);
     ret = tapi_ss_register(get_tapi_ctx(), 0, 50, NULL, NULL);
     assert_int_equal(ret, -EINVAL);
+}
+
+static void TestTeleFunc_CI_SSEnableAndDisableCallWaiting(void** state)
+{
+    TestTeleFunc_CI_SSEnableCallWaiting(state);
+    TestTeleFunc_CI_SSDisableCallWaiting(state);
+}
+
+static void TestTeleFunc_SSCallForwardingAfterRadioOffOn(void** state)
+{
+    int ret = ss_set_call_forwarding_option_test(0, 0, "10086");
+    assert_int_equal(ret, OK);
+    TestTeleFunc_CI_ModemSetRadioPowerOff(state);
+    TestTeleFunc_CI_ModemSetRadioPowerOn(state);
+    ret = ss_get_call_forwarding_option_test(0, 0);
+    assert_int_equal(ret, OK);
+    ret = ss_clear_call_forwarding_option_test(0, 0);
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_SSCallWaitingAfterRadioOffOn(void** state)
+{
+    TestTeleFunc_CI_SSEnableCallWaiting(state);
+    TestTeleFunc_CI_ModemSetRadioPowerOff(state);
+    TestTeleFunc_CI_ModemSetRadioPowerOn(state);
+    int ret = ss_get_call_waiting_test(0, true);
+    assert_int_equal(ret, OK);
+    TestTeleFunc_CI_SSDisableCallWaiting(state);
 }
 
 static void TestTeleFunc_ModemGetDefaultPhoneState(void** state)
@@ -3682,6 +3762,8 @@ int main(int argc, char* argv[])
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingAnswerInRoming, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingAnswerInCallInRoming, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialSecondCallAndActiveInRoming, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallTransfer, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialingThirdCall, setup_call, teardown_call),
     };
 
     const struct CMUnitTest DataTestSuites[] = {
@@ -3797,6 +3879,9 @@ int main(int argc, char* argv[])
         cmocka_unit_test_setup_teardown(TestTeleFunc_SmsReceiveMessageInSmsImsCap, setup_sms, teardown_sms),
         cmocka_unit_test_setup_teardown(TestTeleFunc_SmsReceiveEnglishLongMessageInSmsImsCap, setup_sms, teardown_sms),
         cmocka_unit_test_setup_teardown(TestTeleFunc_SmsReceiveChineseLongMessageInSmsImsCap, setup_sms, teardown_sms),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsReceiveReportAfterSendShortMessage, setup_sms, teardown_sms),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsReceiveReportAfterSendChineseLongMessage, setup_sms, teardown_sms),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SmsReceiveReportAfterSendEnglishLongMessage, setup_sms, teardown_sms),
         cmocka_unit_test(TestTeleFunc_SmsSetAndGetDefaultSlot),
         cmocka_unit_test(TestTeleFunc_SmsSetAndGetCellBroadcastPower),
         cmocka_unit_test(TestTeleFunc_SmsSetAndGetCellBroadcastTopics),
@@ -3806,8 +3891,7 @@ int main(int argc, char* argv[])
     };
 
     const struct CMUnitTest NetTestSuites[] = {
-        cmocka_unit_test(TestTeleFunc_NetSelectManual),
-        cmocka_unit_test(TestTeleFunc_NetSelectAuto),
+        cmocka_unit_test(TestTeleFunc_NetSelectManualAndRestoreAuto),
         cmocka_unit_test(TestTeleFunc_NetScan),
         cmocka_unit_test(TestTeleFunc_CI_NetGetServingCellinfos),
         cmocka_unit_test(TestTeleFunc_NetGetNeighbouringCellInfos),
@@ -3855,8 +3939,7 @@ int main(int argc, char* argv[])
     };
 
     const struct CMUnitTest SSTestSuits[] = {
-        cmocka_unit_test(TestTeleFunc_CI_SSRegister),
-        cmocka_unit_test(TestTeleFunc_CI_SSUnRegister),
+        cmocka_unit_test(TestTeleFunc_CI_SSResigterAndUnRegister),
         cmocka_unit_test(TestTeleFunc_SSRequestCallBarring),
         cmocka_unit_test(TestTeleFunc_SSSetAndGetCallBarring),
         cmocka_unit_test(TestTeleFunc_SSChangeAndResetCallBarringPassword),
@@ -3872,6 +3955,8 @@ int main(int argc, char* argv[])
         cmocka_unit_test(TestTeleFunc_SSCallForwardingContinuous),
         cmocka_unit_test(TestTeleFunc_SSCallWaitingContinuous),
         cmocka_unit_test(TestTeleAbn_SSListenAbnormalIdFail),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SSCallForwardingAfterRadioOffOn, setup_ssAndRadio, teardown_ssAndRadio),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SSCallWaitingAfterRadioOffOn, setup_ssAndRadio, teardown_ssAndRadio),
     };
 
     const struct CMUnitTest CommonTestSuites[] = {
