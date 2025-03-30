@@ -1,5 +1,6 @@
 #include "telephony_ss_test.h"
 #include "remote_operation.h"
+#include "telephony_common_test.h"
 #include <stdlib.h>
 #include <time.h>
 
@@ -45,6 +46,45 @@ static void ss_signal_change(tapi_async_result* result)
     default:
         break;
     }
+}
+
+int setup_ss(void** state)
+{
+    return ss_listen_ss_test(0);
+}
+
+int setup_ssAndRadio(void** state)
+{
+    (void)state;
+    if (setup_radio(state)) {
+        return -1;
+    }
+
+    if (setup_ss(state)) {
+        return -1;
+    }
+
+    return 0;
+}
+
+int teardown_ss(void** state)
+{
+    (void)state;
+    return ss_unlisten_ss_test();
+}
+
+int teardown_ssAndRadio(void** state)
+{
+    (void)state;
+    if (teardown_radio(state)) {
+        return -1;
+    }
+
+    if (teardown_ss(state)) {
+        return -1;
+    }
+
+    return 0;
 }
 
 int ss_listen_ss_test(int slot_id)

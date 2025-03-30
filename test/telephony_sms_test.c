@@ -16,6 +16,8 @@ static struct
 {
     int sms_incoming_watch_id;
     int sms_immediate_watch_id;
+    int sms_report_watch_id;
+    int sms_report_switch_watch_id;
 } global_data;
 
 static void tele_sms_result_print(tapi_async_result* result)
@@ -43,6 +45,10 @@ static void tele_sms_event_response(tapi_async_result* result)
         judge_data.flag = EVENT_SEND_DATA_MESSAGE_DONE;
     } else if (result->msg_id == MSG_INCOMING_MESSAGE_IND) {
         judge_data.flag = MSG_INCOMING_MESSAGE_IND;
+    } else if (result->msg_id == MSG_STATUS_REPORT_MESSAGE_IND) {
+        judge_data.flag = MSG_STATUS_REPORT_MESSAGE_IND;
+    } else if (result->msg_id == MSG_SMS_REPORT_SWITCH_CHANGED_IND) {
+        judge_data.flag = MSG_SMS_REPORT_SWITCH_CHANGED_IND;
     }
 
     judge_data.result = result->status;
@@ -129,6 +135,26 @@ int sms_listen_sms_test(int slot_id)
         return -1;
     }
 
+    global_data.sms_report_watch_id = -1;
+    global_data.sms_report_watch_id = tapi_sms_register(get_tapi_ctx(),
+        slot_id, MSG_STATUS_REPORT_MESSAGE_IND, NULL, tele_sms_event_response);
+
+    if (global_data.sms_report_watch_id < 0) {
+        syslog(LOG_ERR, "%s, slot_id: %d, sms_report_watch_id < 0\n",
+            __func__, slot_id);
+        return -1;
+    }
+
+    global_data.sms_report_switch_watch_id = -1;
+    global_data.sms_report_switch_watch_id = tapi_sms_register(get_tapi_ctx(),
+        slot_id, MSG_SMS_REPORT_SWITCH_CHANGED_IND, NULL, tele_sms_event_response);
+
+    if (global_data.sms_report_switch_watch_id < 0) {
+        syslog(LOG_ERR, "%s, slot_id: %d, sms_report_switch_watch_id < 0\n",
+            __func__, slot_id);
+        return -1;
+    }
+
     return 0;
 }
 
@@ -144,6 +170,20 @@ int sms_unlisten_sms_test(int slot_id)
     ret = tapi_sms_unregister(get_tapi_ctx(), global_data.sms_immediate_watch_id);
     if (ret) {
         syslog(LOG_ERR, "%s, slot_id: %d, sms_immediate_watch_id < 0\n",
+            __func__, slot_id);
+        return -1;
+    }
+
+    ret = tapi_sms_unregister(get_tapi_ctx(), global_data.sms_report_watch_id);
+    if (ret) {
+        syslog(LOG_ERR, "%s, slot_id: %d, sms_report_watch_id < 0\n",
+            __func__, slot_id);
+        return -1;
+    }
+
+    ret = tapi_sms_unregister(get_tapi_ctx(), global_data.sms_report_switch_watch_id);
+    if (ret) {
+        syslog(LOG_ERR, "%s, slot_id: %d, sms_report_switch_watch_id < 0\n",
             __func__, slot_id);
         return -1;
     }
@@ -307,6 +347,48 @@ int sms_send_data_message_test(int slot_id, char* to, int port, char* text)
 
 on_exit:
     return res;
+}
+
+int sms_receive_report_test(int slot_id, char* to, int port, char* text)
+{
+    int ret = 0;
+    judge_data_init();
+    judge_data.expect = MSG_STATUS_REPORT_MESSAGE_IND;
+
+    if (tapi_sms_enable_delivery_report(get_tapi_ctx(), slot_id, 1)) {
+        syslog(LOG_ERR, "tapi_sms_enable_delivery_report execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    ret = tapi_sms_send_data_message(get_tapi_ctx(), slot_id, 0, to, port, text,
+        EVENT_SEND_DATA_MESSAGE_DONE, tele_sms_event_response);
+    if (ret) {
+        syslog(LOG_ERR, "tapi_sms_send_data_message execute fail in %s, ret: %d",
+            __func__, ret);
+        ret = -1;
+        goto on_exit;
+    }
+
+    if (judge()) {
+        syslog(LOG_ERR, "tele_sms_event_response is not executed in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    if (judge_data.result) {
+        syslog(LOG_ERR, "async result is invalid in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    if (tapi_sms_enable_delivery_report(get_tapi_ctx(), slot_id, 0)) {
+        syslog(LOG_ERR, "tapi_sms_enable_delivery_report execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+on_exit:
+    return ret;
 }
 
 int sms_set_and_get_service_center_number_test(int slot_id)

@@ -12,6 +12,7 @@ int sms_unlisten_sms_test(int slot_id);
 int sms_receive_chinese_long_message_test(int slot_id);
 int sms_receive_english_long_message_test(int slot_id);
 int sms_receive_message_test(int slot_id);
+int sms_receive_report_test(int slot_id, char* to, int port, char* text);
 int sms_send_data_message_test(int slot_id, char* to, int port, char* text);
 int sms_send_message_test(int slot_id, char* number, char* text, int* result);
 int sms_send_data_message_in_dialing(int slot_id, char* to, char* text, int port);
