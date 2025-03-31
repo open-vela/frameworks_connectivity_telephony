@@ -11,6 +11,8 @@
 
 #include <cmocka.h>
 
+#include "telephony_test.h"
+
 #include "telephony_call_test.h"
 #include "telephony_common_test.h"
 #include "telephony_data_test.h"
@@ -19,7 +21,6 @@
 #include "telephony_sim_test.h"
 #include "telephony_sms_test.h"
 #include "telephony_ss_test.h"
-#include "telephony_test.h"
 
 #define REPEAT_TEST_MORE_FOR for (int _i = 0; _i < 10; _i++)
 #define REPEAT_TEST_LESS_FOR for (int _i = 0; _i < 3; _i++)
@@ -2418,6 +2419,116 @@ static void TestTeleAbn_ImsVolteAvailWithSimAbsent(void** state)
     assert_int_equal(ret, 0);
 }
 
+static void TestTeleAbn_ImsTurnOnWhenCallDialing(void** state)
+{
+    int ret = 0;
+
+    TestTeleFunc_CI_CallDialNumber(state);
+    /* in calling already ims on, set again by tapi */
+    ret = tapi_ims_turn_on(get_tapi_ctx(), 0);
+    assert_int_equal(ret, 0);
+    ret = get_current_call_state_test(0);
+    assert_int_equal(ret, CALL_STATUS_DIALING);
+    ret = ims_is_reg_as_expect_test(0, true);
+    assert_int_equal(ret, 0);
+    ret = call_hangup_all_test(0);
+    assert_int_equal(ret, 0);
+}
+
+static void TestTeleAbn_ImsTurnOffWhenCallDialing(void** state)
+{
+    int ret = 0;
+
+    TestTeleFunc_CI_CallDialNumber(state);
+    TestTeleFunc_CI_ImsTurnOff(state);
+    ret = get_current_call_state_test(0);
+    assert_int_equal(ret, CALL_STATUS_DIALING);
+    ret = ims_is_reg_as_expect_test(0, false);
+    assert_int_equal(ret, 0);
+    ret = call_hangup_all_test(0);
+    assert_int_equal(ret, 0);
+}
+
+static void TestTeleAbn_ImsVolteAvailWhenCallDialing(void** state)
+{
+    int ret = 0;
+
+    TestTeleFunc_CI_CallDialNumber(state);
+    ret = ims_set_service_status_test(0, 5);
+    assert_int_equal(ret, 0);
+    ret = get_current_call_state_test(0);
+    assert_int_equal(ret, CALL_STATUS_DIALING);
+    ret = ims_is_volte_available_as_expect_test(0, true);
+    assert_int_equal(ret, 0);
+    ret = call_hangup_all_test(0);
+    assert_int_equal(ret, 0);
+}
+
+static void TestTeleAbn_ImsVolteCapOffWhenCallDialing(void** state)
+{
+    int ret = 0;
+
+    TestTeleFunc_CI_CallDialNumber(state);
+    TestTeleFunc_CI_ImsTurnOff(state);
+    ret = ims_set_service_status_test(0, 0);
+    assert_int_equal(ret, 0);
+    ret = get_current_call_state_test(0);
+    assert_int_equal(ret, CALL_STATUS_DIALING);
+    ret = ims_is_volte_available_as_expect_test(0, false);
+    assert_int_equal(ret, 0);
+    ret = call_hangup_all_test(0);
+    assert_int_equal(ret, 0);
+}
+
+static void TestTeleAbn_ImsTurnOnWhenCallActive(void** state)
+{
+    int ret = call_dial_in_active_test(0);
+    assert_int_equal(ret, 0);
+    /* in calling already ims on, set again by tapi */
+    ret = tapi_ims_turn_on(get_tapi_ctx(), 0);
+    assert_int_equal(ret, 0);
+    ret = ims_is_reg_as_expect_test(0, true);
+    assert_int_equal(ret, 0);
+    ret = call_hangup_all_test(0);
+    assert_int_equal(ret, 0);
+}
+
+static void TestTeleAbn_ImsTurnOffWhenCallActive(void** state)
+{
+    int ret = call_dial_in_active_test(0);
+    assert_int_equal(ret, 0);
+    TestTeleFunc_CI_ImsTurnOff(state);
+    ret = ims_is_reg_as_expect_test(0, false);
+    assert_int_equal(ret, 0);
+    ret = call_hangup_all_test(0);
+    assert_int_equal(ret, 0);
+}
+
+static void TestTeleAbn_ImsVolteAvailWhenCallActive(void** state)
+{
+    int ret = call_dial_in_active_test(0);
+    assert_int_equal(ret, 0);
+    ret = ims_set_service_status_test(0, 5);
+    assert_int_equal(ret, 0);
+    ret = ims_is_volte_available_as_expect_test(0, true);
+    assert_int_equal(ret, 0);
+    ret = call_hangup_all_test(0);
+    assert_int_equal(ret, 0);
+}
+
+static void TestTeleAbn_ImsVolteCapOffWhenCallActive(void** state)
+{
+    int ret = call_dial_in_active_test(0);
+    assert_int_equal(ret, 0);
+    TestTeleFunc_CI_ImsTurnOff(state);
+    ret = ims_set_service_status_test(0, 0);
+    assert_int_equal(ret, 0);
+    ret = ims_is_volte_available_as_expect_test(0, false);
+    assert_int_equal(ret, 0);
+    ret = call_hangup_all_test(0);
+    assert_int_equal(ret, 0);
+}
+
 static void TestTeleFunc_CallDialInVolteReg(void** state)
 {
     TestTeleFunc_CI_ImsSetVoiceCap(state);
@@ -2657,6 +2768,15 @@ static void TestTeleFunc_CI_SSEnableAndDisableCallWaiting(void** state)
     assert_int_equal(ret, 0);
     ret = ss_set_and_get_call_waiting_test(0, false);
     assert_int_equal(ret, 0);
+}
+
+static void TestTeleAbn_SSListenAbnormalIdFail(void** state)
+{
+    (void)state;
+    int ret = tapi_ss_register(get_tapi_ctx(), 0, 46, NULL, NULL);
+    assert_int_equal(ret, -EINVAL);
+    ret = tapi_ss_register(get_tapi_ctx(), 0, 50, NULL, NULL);
+    assert_int_equal(ret, -EINVAL);
 }
 
 static void TestTeleFunc_ModemGetDefaultPhoneState(void** state)
@@ -3662,6 +3782,14 @@ int main(int argc, char* argv[])
         cmocka_unit_test_setup_teardown(TestTeleAbn_ImsTurnOnWithSimAbsent, setup_imsAndSim, teardown_imsAndSim),
         cmocka_unit_test_setup_teardown(TestTeleAbn_ImsTurnOffWithSimAbsent, setup_imsAndSim, teardown_imsAndSim),
         cmocka_unit_test_setup_teardown(TestTeleAbn_ImsVolteAvailWithSimAbsent, setup_imsAndSim, teardown_imsAndSim),
+        cmocka_unit_test_setup_teardown(TestTeleAbn_ImsTurnOnWhenCallDialing, setup_imsAndCall, teardown_imsAndCall),
+        cmocka_unit_test_setup_teardown(TestTeleAbn_ImsTurnOffWhenCallDialing, setup_imsAndCall, teardown_imsAndCall),
+        cmocka_unit_test_setup_teardown(TestTeleAbn_ImsVolteAvailWhenCallDialing, setup_imsAndCall, teardown_imsAndCall),
+        cmocka_unit_test_setup_teardown(TestTeleAbn_ImsVolteCapOffWhenCallDialing, setup_imsAndCall, teardown_imsAndCall),
+        cmocka_unit_test_setup_teardown(TestTeleAbn_ImsTurnOnWhenCallActive, setup_imsAndCall, teardown_imsAndCall),
+        cmocka_unit_test_setup_teardown(TestTeleAbn_ImsTurnOffWhenCallActive, setup_imsAndCall, teardown_imsAndCall),
+        cmocka_unit_test_setup_teardown(TestTeleAbn_ImsVolteAvailWhenCallActive, setup_imsAndCall, teardown_imsAndCall),
+        cmocka_unit_test_setup_teardown(TestTeleAbn_ImsVolteCapOffWhenCallActive, setup_imsAndCall, teardown_imsAndCall),
     };
 
     const struct CMUnitTest SSTestSuits[] = {
@@ -3681,6 +3809,7 @@ int main(int argc, char* argv[])
         cmocka_unit_test(TestTeleFunc_SSEnableAndDisableFdn),
         cmocka_unit_test(TestTeleFunc_SSCallForwardingContinuous),
         cmocka_unit_test(TestTeleFunc_SSCallWaitingContinuous),
+        cmocka_unit_test(TestTeleAbn_SSListenAbnormalIdFail),
     };
 
     const struct CMUnitTest CommonTestSuites[] = {

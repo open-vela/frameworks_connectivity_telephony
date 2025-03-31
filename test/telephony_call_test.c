@@ -852,7 +852,7 @@ on_exit:
     return NULL;
 }
 
-static int get_current_call_state_test(int slot_id)
+int get_current_call_state_test(int slot_id)
 {
     int res = 0;
     test_case_data.current_call_state = -2;
@@ -4098,6 +4098,34 @@ int call_incoming_and_remote_hangup_for_times(int slot_id)
             goto on_exit;
         }
         sleep(3);
+    }
+
+on_exit:
+    return res;
+}
+
+int call_dial_in_active_test(int slot_id)
+{
+    int res = 0;
+
+    if (call_dial_test(0, phone_num, 0)) {
+        syslog(LOG_ERR, "Dial fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (remote_operation_call_active_test(0, phone_num)) {
+        syslog(LOG_ERR, "Remote call active fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(1);
+    if (get_current_call_state_test(0) != CALL_STATUS_ACTIVE) {
+        syslog(LOG_ERR, "Current call state is not active in %s", __func__);
+        res = -1;
+        goto on_exit;
     }
 
 on_exit:
