@@ -126,5 +126,6 @@ int call_unlisten_call_test(void);
 int remote_operation_call_incoming_test(int slot_id, char* phone_number);
 int remote_operation_call_active_test(int slot_id, char* phone_number);
 int answer_incoming_call_test(int slot_id);
-
+int get_current_call_state_test(int slot_id);
+int call_dial_in_active_test(int slot_id);
 #endif

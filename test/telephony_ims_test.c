@@ -1,4 +1,5 @@
 #include "telephony_ims_test.h"
+#include "telephony_call_test.h"
 #include "telephony_common_test.h"
 #include "telephony_sim_test.h"
 
@@ -206,6 +207,46 @@ int teardown_imsAndSim(void** state)
     }
 
     ret = teardown_sim(state);
+    if (ret) {
+        syslog(LOG_ERR, "teardown_sim execute fail in %s", __func__);
+        goto on_exit;
+    }
+
+on_exit:
+    return ret;
+}
+
+int setup_imsAndCall(void** state)
+{
+    int ret = 0;
+
+    ret = setup_call(state);
+    if (ret) {
+        syslog(LOG_ERR, "setup_call execute fail in %s", __func__);
+        goto on_exit;
+    }
+
+    ret = setup_ims(state);
+    if (ret) {
+        syslog(LOG_ERR, "setup_ims execute fail in %s", __func__);
+        goto on_exit;
+    }
+
+on_exit:
+    return ret;
+}
+
+int teardown_imsAndCall(void** state)
+{
+    int ret = 0;
+
+    ret = teardown_call(state);
+    if (ret) {
+        syslog(LOG_ERR, "teardown_call execute fail in %s", __func__);
+        goto on_exit;
+    }
+
+    ret = teardown_ims(state);
     if (ret) {
         syslog(LOG_ERR, "teardown_sim execute fail in %s", __func__);
         goto on_exit;
