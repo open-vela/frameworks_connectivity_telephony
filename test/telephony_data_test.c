@@ -1,13 +1,20 @@
 #include "telephony_data_test.h"
+#include "telephony_common_test.h"
+#include "telephony_sim_test.h"
 
 extern struct judge_type judge_data;
 static struct
 {
     int data_enabled_watch_id;
     int data_connection_state_change_watch_id;
+    int data_type_watch_id;
+    int data_registration_watch_id;
+    int data_registration_state;
+    int network_type;
     int data_on;
     int connection_state;
     int data_conn_count;
+    int global_dc_count;
 } global_data;
 
 static void data_event_response(tapi_async_result* result);
@@ -117,6 +124,26 @@ int data_listen_data_test(int slot_id)
         return -1;
     }
 
+    global_data.data_registration_watch_id = -1;
+    global_data.data_registration_watch_id = tapi_data_register(
+        get_tapi_ctx(), 0, MSG_DATA_REGISTRATION_STATE_CHANGE_IND, NULL, data_signal_change);
+    if (global_data.data_registration_watch_id < 0) {
+        syslog(LOG_ERR, "%s, slot_id: %d, target_state: %d, watch_id: %d",
+            __func__, 0, MSG_DATA_NETWORK_TYPE_CHANGE_IND,
+            global_data.data_registration_watch_id);
+        return -1;
+    }
+
+    global_data.data_type_watch_id = -1;
+    global_data.data_type_watch_id = tapi_data_register(
+        get_tapi_ctx(), slot_id, MSG_DATA_NETWORK_TYPE_CHANGE_IND, NULL, data_signal_change);
+    if (global_data.data_type_watch_id < 0) {
+        syslog(LOG_ERR, "%s, slot_id: %d, target_state: %d, watch_id: %d",
+            __func__, slot_id, MSG_DATA_NETWORK_TYPE_CHANGE_IND,
+            global_data.data_type_watch_id);
+        return -1;
+    }
+
     global_data.data_connection_state_change_watch_id = -1;
     global_data.data_connection_state_change_watch_id = tapi_data_register(
         get_tapi_ctx(), slot_id, MSG_DATA_CONNECTION_STATE_CHANGE_IND, NULL, data_signal_change);
@@ -146,6 +173,22 @@ int data_unlisten_data_test(void)
     ret = tapi_data_unregister(get_tapi_ctx(), global_data.data_connection_state_change_watch_id);
     if (ret) {
         syslog(LOG_ERR, "unregister data connection state change fail in %s, ret: %d",
+            __func__, ret);
+        res = -1;
+        goto on_exit;
+    }
+
+    ret = tapi_data_unregister(get_tapi_ctx(), global_data.data_type_watch_id);
+    if (ret) {
+        syslog(LOG_ERR, "unregister data type change fail in %s, ret: %d",
+            __func__, ret);
+        res = -1;
+        goto on_exit;
+    }
+
+    ret = tapi_data_unregister(get_tapi_ctx(), global_data.data_registration_watch_id);
+    if (ret) {
+        syslog(LOG_ERR, "unregister data registration state change fail in %s, ret: %d",
             __func__, ret);
         res = -1;
         goto on_exit;
@@ -207,6 +250,82 @@ int data_load_apn_contexts_test(int slot_id)
         syslog(LOG_ERR, "async result is invalid in %s", __func__);
         res = -1;
         goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
+int data_network_type_changed_while_change_rat_test(int slot_id, int expect_rat, int expect_type)
+{
+    int ret = -1;
+    int res = 0;
+
+    judge_data_init();
+    global_data.network_type = -1;
+    judge_data.expect = MSG_DATA_NETWORK_TYPE_CHANGE_IND;
+    ret = tapi_set_pref_net_mode(get_tapi_ctx(), slot_id, EVENT_RAT_MODE_SET_DONE, (tapi_pref_net_mode)expect_rat, NULL);
+    if (ret) {
+        syslog(LOG_ERR, "tapi_set_pref_net_mode execute fail in %s, ret: %d", __func__, ret);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(5);
+    if (judge()) {
+        syslog(LOG_DEBUG, "data_event_response is not executed in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge_data.result) {
+        syslog(LOG_ERR, "async result is invalid in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (global_data.network_type != expect_type) {
+        syslog(LOG_ERR, "network type is not %d in %s", expect_type, __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
+int data_registration_changed_while_change_radio_power(int slot_id, int expect_power, int expect_registration_state)
+{
+    int ret = -1;
+    int res = 0;
+
+    judge_data_init();
+    judge_data.expect = MSG_DATA_REGISTRATION_STATE_CHANGE_IND;
+    global_data.data_registration_state = -1;
+    ret = tapi_set_radio_power(get_tapi_ctx(), slot_id,
+        EVENT_RADIO_STATE_SET_DONE, (bool)expect_power, NULL);
+    if (ret) {
+        syslog(LOG_DEBUG, "tapi_set_radio_power execute fail in %s, ret: %d", __func__, ret);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge()) {
+        syslog(LOG_DEBUG, "data_event_response is not executed in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge_data.result) {
+        syslog(LOG_ERR, "async result is invalid in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (global_data.data_registration_state != expect_registration_state) {
+        syslog(LOG_ERR, "registration state (%d) is error in %s",
+            global_data.data_registration_state, __func__);
+        res = -1;
     }
 
 on_exit:
@@ -659,6 +778,90 @@ on_exit:
     return ret;
 }
 
+int data_load_carrier_apn_test(int slot_id, char* imsi)
+{
+    int res = 0, ret = -1;
+
+    sleep(3);
+    if (sim_set_operator_test(slot_id, imsi)) {
+        syslog(LOG_DEBUG, "Remote set sim operator (1) execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    global_data.global_dc_count = 0;
+    ret = data_load_apn_contexts_test(slot_id);
+    if (ret) {
+        syslog(LOG_ERR, "data_load_apn_contexts_test execute fail in %s, ret: %d", __func__, ret);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (global_data.global_dc_count <= 0) {
+        syslog(LOG_ERR, "apn count is invalid in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(3);
+    if (sim_set_operator_test(slot_id, "000")) {
+        syslog(LOG_DEBUG, "Remote set sim operator (2) execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
+int data_apn_after_flight_mode_test(int slot_id)
+{
+    int res = 0, ret = -1;
+    global_data.global_dc_count = 0;
+    ret = data_load_apn_contexts_test(slot_id);
+    if (ret) {
+        syslog(LOG_ERR, "data_load_apn_contexts_test (first) execute fail in %s, ret: %d",
+            __func__, ret);
+        res = -1;
+        goto on_exit;
+    }
+
+    int first_apn_count = global_data.global_dc_count;
+    ret = set_radio_power_test(0, false);
+    if (ret) {
+        syslog(LOG_ERR, "set_radio_power_test (false) execute fail in %s, ret: %d", __func__, ret);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(5);
+    ret = set_radio_power_test(0, true);
+    if (ret) {
+        syslog(LOG_ERR, "set_radio_power_test (true) execute fail in %s, ret: %d", __func__, ret);
+        res = -1;
+        goto on_exit;
+    }
+
+    sleep(5);
+    global_data.global_dc_count = 0;
+    ret = data_load_apn_contexts_test(slot_id);
+    if (ret) {
+        syslog(LOG_ERR, "data_load_apn_contexts_test (second) execute fail in %s, ret: %d",
+            __func__, ret);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (first_apn_count != global_data.global_dc_count) {
+        syslog(LOG_ERR, "apn count is invalid in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
 int data_set_data_allow_test(int slot_id)
 {
     int res = 0;
@@ -753,6 +956,7 @@ static void data_event_response(tapi_async_result* result)
     switch (event) {
     case EVENT_APN_LOADED_DONE:
         if (judge_data.expect == EVENT_APN_LOADED_DONE) {
+            global_data.global_dc_count = result->arg2;
             judge_data.result = status;
             judge_data.flag = EVENT_APN_LOADED_DONE;
         }
@@ -827,6 +1031,7 @@ static void data_signal_change(tapi_async_result* result)
     case MSG_DATA_REGISTRATION_STATE_CHANGE_IND:
         syslog(LOG_DEBUG, "data registration state changed to %d in slot[%d] \n", param, slot_id);
         if (judge_data.expect == MSG_DATA_REGISTRATION_STATE_CHANGE_IND) {
+            global_data.data_registration_state = param;
             judge_data.result = OK;
             judge_data.flag = MSG_DATA_REGISTRATION_STATE_CHANGE_IND;
         }
@@ -834,6 +1039,7 @@ static void data_signal_change(tapi_async_result* result)
     case MSG_DATA_NETWORK_TYPE_CHANGE_IND:
         syslog(LOG_DEBUG, "data network type changed to %d in slot[%d] \n", param, slot_id);
         if (judge_data.expect == MSG_DATA_NETWORK_TYPE_CHANGE_IND) {
+            global_data.network_type = param;
             judge_data.result = OK;
             judge_data.flag = MSG_DATA_NETWORK_TYPE_CHANGE_IND;
         }
