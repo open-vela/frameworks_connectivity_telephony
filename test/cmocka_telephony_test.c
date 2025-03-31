@@ -1221,6 +1221,61 @@ void TestTeleFunc_DataAirplaneOffAutoReconnect(void** state)
     assert_int_equal(ret, OK);
 }
 
+void TestTeleFunc_DataTypeChangedWhileChangeRAT(void** state)
+{
+    (void)state;
+    int ret = data_network_type_changed_while_change_rat_test(0, NETWORK_PREF_NET_TYPE_UMTS, NETWORK_TYPE_HSPA);
+    assert_int_equal(ret, OK);
+    sleep(5);
+    ret = data_network_type_changed_while_change_rat_test(0, NETWORK_PREF_NET_TYPE_LTE_ONLY, NETWORK_TYPE_LTE);
+    assert_int_equal(ret, OK);
+}
+
+void TestTeleFunc_DataRegStateChangedWhileChangeAP(void** state)
+{
+    (void)state;
+    int ret = data_registration_changed_while_change_radio_power(0, 0, 0);
+    assert_int_equal(ret, OK);
+    sleep(5);
+    ret = data_registration_changed_while_change_radio_power(0, 1, 1);
+    assert_int_equal(ret, OK);
+}
+
+void TestTeleFunc_DataAPNAfterFlightMode(void** state)
+{
+    (void)state;
+    int ret = data_apn_after_flight_mode_test(0);
+    assert_int_equal(ret, OK);
+}
+
+void TestTeleFunc_DataLoadChinaMobileAPN(void** state)
+{
+    (void)state;
+    int ret = data_load_carrier_apn_test(0, "46000");
+    assert_int_equal(ret, OK);
+}
+
+void TestTeleFunc_DataLoadChinaUnicomAPN(void** state)
+{
+    (void)state;
+    int ret = data_load_carrier_apn_test(0, "46001");
+    assert_int_equal(ret, OK);
+}
+
+void TestTeleFunc_DataLoadChinaTelecomAPN(void** state)
+{
+    (void)state;
+    int ret = data_load_carrier_apn_test(0, "46003");
+    assert_int_equal(ret, OK);
+}
+
+void TestTeleFunc_DataLoadChinaBroadcacstNetworkAPN(void** state)
+{
+    (void)state;
+    int ret = data_load_carrier_apn_test(0, "46013");
+    assert_int_equal(ret, OK);
+}
+
 // sms testcases
 static void TestTeleFunc_CI_SmsListen(void** state)
 {
@@ -3668,6 +3723,13 @@ int main(int argc, char* argv[])
         cmocka_unit_test_setup_teardown(TestTeleFunc_DataRequestNetworksAndCheck, setup_data_enable, teardown_data_enable),
         cmocka_unit_test_setup_teardown(TestTeleFunc_DataActivateAndCheckRAT, setup_data_enable, teardown_data_enable),
         cmocka_unit_test_setup_teardown(TestTeleFunc_DataAirplaneOffAutoReconnect, setup_data_enable, teardown_data_enable),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_DataTypeChangedWhileChangeRAT, setup_data_enable, teardown_data_enable),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_DataRegStateChangedWhileChangeAP, setup_data_enable, teardown_data_enable),
+        cmocka_unit_test(TestTeleFunc_DataAPNAfterFlightMode),
+        cmocka_unit_test(TestTeleFunc_DataLoadChinaMobileAPN),
+        cmocka_unit_test(TestTeleFunc_DataLoadChinaUnicomAPN),
+        cmocka_unit_test(TestTeleFunc_DataLoadChinaTelecomAPN),
+        cmocka_unit_test(TestTeleFunc_DataLoadChinaBroadcacstNetworkAPN),
     };
 
     const struct CMUnitTest SmsTestSuites[] = {

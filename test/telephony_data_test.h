@@ -35,6 +35,10 @@ int data_save_apn_context_test(char* slot_id, char* type, char* name, char* apn,
 int data_send_screen_stat_test(int slot_id);
 int data_set_and_get_default_data_slot_test(int slot_id);
 int data_set_and_get_preferred_apn_test(int slot_id, char* apn_id);
+int data_network_type_changed_while_change_rat_test(int slot_id, int expect_rat, int expect_type);
+int data_registration_changed_while_change_radio_power(int slot_id, int expect_power, int expect_registration_state);
+int data_apn_after_flight_mode_test(int slot_id);
+int data_load_carrier_apn_test(int slot_id, char* imsi);
 int data_set_data_allow_test(int slot_id);
 int data_unlisten_data_test(void);
 
