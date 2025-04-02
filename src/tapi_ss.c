@@ -52,8 +52,7 @@ typedef struct {
 static void set_clir_append(DBusMessageIter* iter, void* user_data)
 {
     tapi_async_handler* param = user_data;
-    tapi_clir_status status;
-    const char* clir_status;
+    int status;
 
     if (param == NULL) {
         tapi_log_error("param in %s is null", __func__);
@@ -66,8 +65,7 @@ static void set_clir_append(DBusMessageIter* iter, void* user_data)
     }
 
     status = param->result->arg2;
-    clir_status = tapi_utils_clir_status_to_string(status);
-    dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &clir_status);
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &status);
 }
 
 static void set_call_waiting_append(DBusMessageIter* iter, void* user_data)
