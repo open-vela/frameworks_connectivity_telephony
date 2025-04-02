@@ -5261,7 +5261,7 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         "get clip (enter example : get-clip 0 [slot_id])" },
     { "set-clir", SS_CMD,
         telephonytool_cmd_set_clir,
-        "set clir (enter example : set-clir 0 2 [slot_id][0-default 1-disabled 2-enabled])" },
+        "set clir (enter example : set-clir 0 2 [slot_id][0-default 1-invocation 2-suppression])" },
     { "get-clir", SS_CMD,
         telephonytool_cmd_get_clir,
         "get clir (enter example : get-clir 0 [slot_id])" },

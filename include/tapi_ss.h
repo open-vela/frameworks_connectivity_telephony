@@ -63,8 +63,8 @@ typedef struct {
 
 typedef enum {
     CLIR_DEFAULT = 0,
-    CLIR_DISABLED,
-    CLIR_ENABLED,
+    CLIR_INVOCATION,
+    CLIR_SUPPRESSION,
 } tapi_clir_status;
 
 typedef enum {
