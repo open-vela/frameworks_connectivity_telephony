@@ -247,6 +247,50 @@ int tapi_enable_modem_abnormal_event(tapi_context context, int slot_id, bool ena
     int event_id, int module_mask, int from_event_id, int to_event_id, tapi_async_function p_handle);
 
 /**
+ * set signal strength report threshold to control modem report signal strength
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] event_id       Async event identifier.
+ * @param[in] type           Indicate to control signal strength report for rsrp-0 or rssi-1
+ * @param[in] p_handle       Event callback.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_set_signal_report_threshold(tapi_context context, int slot_id, int event_id, int type, tapi_async_function p_handle);
+
+/**
+ * set suppress message list to control modem report unsol message when ap sleep
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] event_id       Async event identifier.
+ * @param[in] enable         Indicate whether to suppress message report,false-disable,true-enable
+ * @param[in] p_handle       Event callback.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_suppress_message_report(tapi_context context, int slot_id, int event_id, bool enable, tapi_async_function p_handle);
+
+/**
+ * set to control modem stationary or not
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] event_id       Async event identifier.
+ * @param[in] enable         Indicate to control modem stationary or not, stationary-0 or mobile-1
+ * @param[in] p_handle       Event callback.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_enable_modem_stationary(tapi_context context, int slot_id, int event_id, bool enable, tapi_async_function p_handle);
+
+/**
+ * set modem stationary threshold which modem used to judge stationary automatically
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] event_id       Async event identifier.
+ * @param[in] value          judge stationary threshold,default value is 3db
+ * @param[in] p_handle       Event callback.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_set_modem_stationary_threshold(tapi_context context, int slot_id, int event_id, int value, tapi_async_function p_handle);
+
+/**
  * get modem status asynchronously.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.

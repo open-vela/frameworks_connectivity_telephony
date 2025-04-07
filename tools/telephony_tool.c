@@ -50,6 +50,10 @@
 #define EVENT_OEM_RIL_REQUEST_STRINGS_DONE 0x08
 #define EVENT_REQUEST_SCREEN_STATE_DONE 0x09
 #define EVENT_MODEM_ENABLE_ABNORMAL_EVENT_DONE 0x0A
+#define EVENT_MODEM_SUPPRESS_MESSAGE_REPORT_DONE 0x0B
+#define EVENT_MODEM_SET_SIGNAL_REPORT_THRESHOLD_DONE 0x0C
+#define EVENT_MODEM_ENABLE_MODEM_STATIONARY_DONE 0x0D
+#define EVENT_MODEM_SET_MODEM_STATIONARY_THRESHOLD_DONE 0x0F
 
 // Data Callback Event
 #define EVENT_APN_LOADED_DONE 0x11
@@ -402,6 +406,14 @@ static void tele_call_async_fun(tapi_async_result* result)
         syslog(LOG_DEBUG, "stop dtmf , state : %d\n", result->status);
     } else if (result->msg_id == EVENT_REQUEST_SCREEN_STATE_DONE) {
         syslog(LOG_DEBUG, "send screen , state : %d\n", result->status);
+    } else if (result->msg_id == EVENT_MODEM_SET_SIGNAL_REPORT_THRESHOLD_DONE) {
+        syslog(LOG_DEBUG, "set signal report threshold, state : %d\n", result->status);
+    } else if (result->msg_id == EVENT_MODEM_SUPPRESS_MESSAGE_REPORT_DONE) {
+        syslog(LOG_DEBUG, "set suppress messsage report, state : %d\n", result->status);
+    } else if (result->msg_id == EVENT_MODEM_ENABLE_MODEM_STATIONARY_DONE) {
+        syslog(LOG_DEBUG, "set modem stationary, state : %d\n", result->status);
+    } else if (result->msg_id == EVENT_MODEM_SET_MODEM_STATIONARY_THRESHOLD_DONE) {
+        syslog(LOG_DEBUG, "set modem stationary threshold, state : %d\n", result->status);
     }
 }
 
@@ -601,6 +613,8 @@ static void tele_sim_async_fun(tapi_async_result* result)
         syslog(LOG_DEBUG, "uicc app enabled: %d\n", result->arg2);
     } else if (result->msg_id == MSG_SIM_ICCID_CHANGE_IND) {
         syslog(LOG_DEBUG, "iccid: %s\n", (char*)result->data);
+    } else if (result->msg_id == MSG_SIM_INVALID_CHANGE_IND) {
+        syslog(LOG_DEBUG, "sim invalid report");
     }
 }
 
@@ -1881,6 +1895,102 @@ static int telephonytool_cmd_enable_modem(tapi_context context, char* pargs)
         EVENT_MODEM_ENABLE_DONE, (bool)atoi(target_state), tele_call_async_fun);
 }
 
+static int telephonytool_cmd_set_signal_report_threshold(tapi_context context, char* pargs)
+{
+    char dst[2][MAX_INPUT_ARGS_LEN];
+    char* slot_id;
+    char* type;
+    int cnt;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    cnt = split_input(dst, 2, pargs, " ");
+    if (cnt != 2)
+        return -EINVAL;
+
+    slot_id = dst[0];
+    type = dst[1];
+    if (!is_valid_slot_id_str(slot_id))
+        return -EINVAL;
+
+    syslog(LOG_DEBUG, "%s, slotId : %s type: %s \n", __func__, slot_id, type);
+    return tapi_set_signal_report_threshold(context, atoi(slot_id),
+        EVENT_MODEM_SET_SIGNAL_REPORT_THRESHOLD_DONE, atoi(type), tele_call_async_fun);
+}
+
+static int telephonytool_cmd_suppress_message_report(tapi_context context, char* pargs)
+{
+    char dst[2][MAX_INPUT_ARGS_LEN];
+    char* slot_id;
+    char* target_state;
+    int cnt;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    cnt = split_input(dst, 2, pargs, " ");
+    if (cnt != 2)
+        return -EINVAL;
+
+    slot_id = dst[0];
+    target_state = dst[1];
+    if (!is_valid_slot_id_str(slot_id))
+        return -EINVAL;
+
+    syslog(LOG_DEBUG, "%s, slotId : %s target_state: %s \n", __func__, slot_id, target_state);
+    return tapi_suppress_message_report(context, atoi(slot_id),
+        EVENT_MODEM_SUPPRESS_MESSAGE_REPORT_DONE, (bool)atoi(target_state), tele_call_async_fun);
+}
+
+static int telephonytool_cmd_enable_modem_stationary(tapi_context context, char* pargs)
+{
+    char dst[2][MAX_INPUT_ARGS_LEN];
+    char* slot_id;
+    char* target_state;
+    int cnt;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    cnt = split_input(dst, 2, pargs, " ");
+    if (cnt != 2)
+        return -EINVAL;
+
+    slot_id = dst[0];
+    target_state = dst[1];
+    if (!is_valid_slot_id_str(slot_id))
+        return -EINVAL;
+
+    syslog(LOG_DEBUG, "%s, slotId : %s target_state: %s \n", __func__, slot_id, target_state);
+    return tapi_enable_modem_stationary(context, atoi(slot_id),
+        EVENT_MODEM_ENABLE_MODEM_STATIONARY_DONE, (bool)atoi(target_state), tele_call_async_fun);
+}
+
+static int telephonytool_cmd_set_modem_stationary_threshold(tapi_context context, char* pargs)
+{
+    char dst[2][MAX_INPUT_ARGS_LEN];
+    char* slot_id;
+    char* threshold_value;
+    int cnt;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    cnt = split_input(dst, 2, pargs, " ");
+    if (cnt != 2)
+        return -EINVAL;
+
+    slot_id = dst[0];
+    threshold_value = dst[1];
+    if (!is_valid_slot_id_str(slot_id))
+        return -EINVAL;
+
+    syslog(LOG_DEBUG, "%s, slotId : %s threshold_value: %s \n", __func__, slot_id, threshold_value);
+    return tapi_set_modem_stationary_threshold(context, atoi(slot_id),
+        EVENT_MODEM_SET_MODEM_STATIONARY_THRESHOLD_DONE, atoi(threshold_value), tele_call_async_fun);
+}
+
 static int telephonytool_cmd_enable_modem_abnormal_event(tapi_context context, char* pargs)
 {
     char dst[5][MAX_INPUT_ARGS_LEN];
@@ -2542,6 +2652,26 @@ static int telephonytool_cmd_get_sim_state(tapi_context context, char* pargs)
 
     syslog(LOG_DEBUG, "%s, slotId : %s state : %s \n", __func__, slot_id,
         tapi_sim_state_to_string((tapi_sim_state)state));
+
+    return 0;
+}
+
+static int telephonytool_cmd_get_sim_invalid(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    int state;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", NULL);
+    if (!is_valid_slot_id_str(slot_id))
+        return -EINVAL;
+
+    state = 0;
+    tapi_sim_get_sim_invalid(context, atoi(slot_id), &state);
+
+    syslog(LOG_DEBUG, "%s, slotId : %s state : %d \n", __func__, slot_id, state);
 
     return 0;
 }
@@ -4702,6 +4832,22 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         telephonytool_cmd_send_screen_state,
         "send screen state to modem (enter example : send-screen-state 0 1"
         "[slot_id][][screen_state])" },
+    { "set-signal-report-threshold", RADIO_CMD,
+        telephonytool_cmd_set_signal_report_threshold,
+        "set signal report threshold to modem (enter example : set-signal-report-threshold 0 0"
+        "[slot_id][type, 0:rsrp 1:rssi])" },
+    { "suppress-message-report", RADIO_CMD,
+        telephonytool_cmd_suppress_message_report,
+        "enable/disable suppress message report when ap sleep(enter example :set-suppress-message-report 0 1"
+        "[slot_id][state: 0:disable 1:enable])" },
+    { "enable-modem-stationary", RADIO_CMD,
+        telephonytool_cmd_enable_modem_stationary,
+        "enable modem stationary or not(enter example :enable-modem-stationary 0 1"
+        "[slot_id][state: 0:disable 1:enable])" },
+    { "set-modem-stationary-threshold", RADIO_CMD,
+        telephonytool_cmd_set_modem_stationary_threshold,
+        "configure modem stationary judge threshold(enter example :set-modem-stationary-threshold 0 3"
+        "[slot_id][threshold_value(db)])" },
 
     /* Call Command */
     { "listen-call", CALL_CMD,
@@ -4927,6 +5073,9 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         telephonytool_cmd_set_uicc_enablement,
         "set uicc enablement (enter example : set-uicc-enablement 0 1"
         "[slot_id][state, 0:disable uicc app 1:enable uicc app])" },
+    { "get-sim-invalid-value", SIM_CMD,
+        telephonytool_cmd_get_sim_invalid,
+        "get sim invalid value (enter example : get-sim-invalid-value 0 [slot_id])" },
 
     /* Sms & Cbs Command */
     { "listen-sms", SMS_AND_CBS_CMD,

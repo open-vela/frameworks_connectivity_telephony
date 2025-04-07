@@ -295,6 +295,17 @@ int tapi_sim_get_uicc_enablement(tapi_context context, int slot_id, tapi_sim_uic
 int tapi_sim_set_uicc_enablement(tapi_context context,
     int slot_id, int event_id, int state, tapi_async_function p_handle);
 
+/**
+ * Get SIM invalid value.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[out] out           value of sim invalid. The possible values are:
+                0 - sim is valid
+                1 - sim is invalid
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_sim_get_sim_invalid(tapi_context context, int slot_id, int* out);
+
 #ifdef __cplusplus
 }
 #endif
