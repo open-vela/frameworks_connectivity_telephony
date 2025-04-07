@@ -2498,6 +2498,7 @@ int tapi_register(tapi_context context,
         return tapi_data_register(context, slot_id, msg, user_obj, p_handle);
     case MSG_SIM_STATE_CHANGE_IND:
     case MSG_SIM_UICC_APP_ENABLED_CHANGE_IND:
+    case MSG_SIM_INVALID_CHANGE_IND:
         return tapi_sim_register(context, slot_id, msg, user_obj, p_handle);
     case MSG_INCOMING_MESSAGE_IND:
     case MSG_IMMEDIATE_MESSAGE_IND:
@@ -2647,6 +2648,442 @@ int tapi_set_fast_dormancy(tapi_context context,
     if (!g_dbus_proxy_set_property_basic(proxy, "FastDormancy", DBUS_TYPE_BOOLEAN,
             &value, property_set_done, handler, handler_free)) {
         tapi_log_error("set property failed in %s", __func__);
+        handler_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
+}
+
+static void suppress_message_report_param_append(DBusMessageIter* iter, void* data)
+{
+    tapi_async_handler* param = data;
+    int enable;
+
+    if (param == NULL) {
+        tapi_log_error("suppress message data in %s is null", __func__);
+        return;
+    }
+
+    if (param->result == NULL) {
+        tapi_log_error("invalid call waiting value in %s!!", __func__);
+        return;
+    }
+
+    enable = param->result->arg2;
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &enable);
+}
+
+static void suppress_message_report_cb(DBusMessage* message, void* user_data)
+{
+    tapi_async_handler* handler = user_data;
+    tapi_async_result* ar;
+    tapi_async_function cb;
+    DBusError err;
+
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
+        return;
+    }
+
+    ar = handler->result;
+    if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
+        return;
+    }
+
+    ar->status = OK;
+    dbus_error_init(&err);
+    if (dbus_set_error_from_message(&err, message) == true) {
+        tapi_log_error("%s: %s\n", err.name, err.message);
+        dbus_error_free(&err);
+        ar->status = ERROR;
+    }
+    cb = handler->cb_function;
+    if (cb == NULL) {
+        tapi_log_debug("callback is null");
+        return;
+    }
+    cb(ar);
+}
+
+int tapi_suppress_message_report(tapi_context context, int slot_id, int event_id, bool enable, tapi_async_function p_handle)
+{
+    dbus_context* ctx = context;
+    GDBusProxy* proxy;
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
+
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
+        return -EINVAL;
+    }
+
+    if (!ctx->client_ready) {
+        tapi_log_error("client is not ready in %s", __func__);
+        return -EAGAIN;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy in %s", __func__);
+        return -EIO;
+    }
+
+    handler = malloc(sizeof(tapi_async_handler));
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
+        return -ENOMEM;
+    }
+
+    ar = calloc(1, sizeof(tapi_async_result));
+    if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
+        free(handler);
+        return -ENOMEM;
+    }
+
+    handler->result = ar;
+    ar->msg_id = event_id;
+    ar->arg1 = slot_id;
+    ar->arg2 = enable;
+    handler->cb_function = p_handle;
+
+    if (!g_dbus_proxy_method_call(proxy, "SuppressMessageReport", suppress_message_report_param_append,
+            suppress_message_report_cb, handler, handler_free)) {
+        tapi_log_error("method call failed in %s", __func__);
+        handler_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
+}
+
+static void set_signal_report_threshold_param_append(DBusMessageIter* iter, void* data)
+{
+    tapi_async_handler* param = data;
+    int type;
+
+    if (param == NULL) {
+        tapi_log_error("suppress message data in %s is null", __func__);
+        return;
+    }
+
+    if (param->result == NULL) {
+        tapi_log_error("invalid call waiting value in %s!!", __func__);
+        return;
+    }
+
+    type = param->result->arg2;
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &type);
+}
+
+static void set_signal_report_threshold_cb(DBusMessage* message, void* user_data)
+{
+    tapi_async_handler* handler = user_data;
+    tapi_async_result* ar;
+    tapi_async_function cb;
+    DBusError err;
+
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
+        return;
+    }
+
+    ar = handler->result;
+    if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
+        return;
+    }
+
+    ar->status = OK;
+    dbus_error_init(&err);
+    if (dbus_set_error_from_message(&err, message) == true) {
+        tapi_log_error("%s: %s\n", err.name, err.message);
+        dbus_error_free(&err);
+        ar->status = ERROR;
+    }
+    cb = handler->cb_function;
+    if (cb == NULL) {
+        tapi_log_debug("callback is null");
+        return;
+    }
+    cb(ar);
+}
+
+int tapi_set_signal_report_threshold(tapi_context context, int slot_id, int event_id, int type, tapi_async_function p_handle)
+{
+    dbus_context* ctx = context;
+    GDBusProxy* proxy;
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
+
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
+        return -EINVAL;
+    }
+
+    if (!ctx->client_ready) {
+        tapi_log_error("client is not ready in %s", __func__);
+        return -EAGAIN;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy in %s", __func__);
+        return -EIO;
+    }
+
+    handler = malloc(sizeof(tapi_async_handler));
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
+        return -ENOMEM;
+    }
+
+    ar = calloc(1, sizeof(tapi_async_result));
+    if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
+        free(handler);
+        return -ENOMEM;
+    }
+
+    handler->result = ar;
+    ar->msg_id = event_id;
+    ar->arg1 = slot_id;
+    ar->arg2 = type;
+    handler->cb_function = p_handle;
+
+    if (!g_dbus_proxy_method_call(proxy, "SetSignalReportThreshold", set_signal_report_threshold_param_append,
+            set_signal_report_threshold_cb, handler, handler_free)) {
+        tapi_log_error("method call failed in %s", __func__);
+        handler_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
+}
+
+static void enable_modem_stationary_param_append(DBusMessageIter* iter, void* data)
+{
+    tapi_async_handler* param = data;
+    int enable;
+
+    if (param == NULL) {
+        tapi_log_error("suppress message data in %s is null", __func__);
+        return;
+    }
+
+    if (param->result == NULL) {
+        tapi_log_error("invalid call waiting value in %s!!", __func__);
+        return;
+    }
+
+    enable = param->result->arg2;
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &enable);
+}
+
+static void enable_modem_stationary_cb(DBusMessage* message, void* user_data)
+{
+    tapi_async_handler* handler = user_data;
+    tapi_async_result* ar;
+    tapi_async_function cb;
+    DBusError err;
+
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
+        return;
+    }
+
+    ar = handler->result;
+    if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
+        return;
+    }
+
+    ar->status = OK;
+    dbus_error_init(&err);
+    if (dbus_set_error_from_message(&err, message) == true) {
+        tapi_log_error("%s: %s\n", err.name, err.message);
+        dbus_error_free(&err);
+        ar->status = ERROR;
+    }
+    cb = handler->cb_function;
+    if (cb == NULL) {
+        tapi_log_debug("callback is null");
+        return;
+    }
+    cb(ar);
+}
+
+int tapi_enable_modem_stationary(tapi_context context, int slot_id, int event_id, bool enable, tapi_async_function p_handle)
+{
+    dbus_context* ctx = context;
+    GDBusProxy* proxy;
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
+
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
+        return -EINVAL;
+    }
+
+    if (!ctx->client_ready) {
+        tapi_log_error("client is not ready in %s", __func__);
+        return -EAGAIN;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy in %s", __func__);
+        return -EIO;
+    }
+
+    handler = malloc(sizeof(tapi_async_handler));
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
+        return -ENOMEM;
+    }
+
+    ar = calloc(1, sizeof(tapi_async_result));
+    if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
+        free(handler);
+        return -ENOMEM;
+    }
+
+    handler->result = ar;
+    ar->msg_id = event_id;
+    ar->arg1 = slot_id;
+    ar->arg2 = enable;
+    handler->cb_function = p_handle;
+
+    if (!g_dbus_proxy_method_call(proxy, "SetModemStationary", enable_modem_stationary_param_append,
+            enable_modem_stationary_cb, handler, handler_free)) {
+        tapi_log_error("method call failed in %s", __func__);
+        handler_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
+}
+
+static void set_modem_stationary_threshold_param_append(DBusMessageIter* iter, void* data)
+{
+    tapi_async_handler* param = data;
+    int value;
+
+    if (param == NULL) {
+        tapi_log_error("suppress message data in %s is null", __func__);
+        return;
+    }
+
+    if (param->result == NULL) {
+        tapi_log_error("invalid call waiting value in %s!!", __func__);
+        return;
+    }
+
+    value = param->result->arg2;
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &value);
+}
+
+static void set_modem_stationary_threshold_cb(DBusMessage* message, void* user_data)
+{
+    tapi_async_handler* handler = user_data;
+    tapi_async_result* ar;
+    tapi_async_function cb;
+    DBusError err;
+
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
+        return;
+    }
+
+    ar = handler->result;
+    if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
+        return;
+    }
+
+    ar->status = OK;
+    dbus_error_init(&err);
+    if (dbus_set_error_from_message(&err, message) == true) {
+        tapi_log_error("%s: %s\n", err.name, err.message);
+        dbus_error_free(&err);
+        ar->status = ERROR;
+    }
+    cb = handler->cb_function;
+    if (cb == NULL) {
+        tapi_log_debug("callback is null");
+        return;
+    }
+    cb(ar);
+}
+
+int tapi_set_modem_stationary_threshold(tapi_context context, int slot_id, int event_id, int value, tapi_async_function p_handle)
+{
+    dbus_context* ctx = context;
+    GDBusProxy* proxy;
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
+
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
+        return -EINVAL;
+    }
+
+    if (!ctx->client_ready) {
+        tapi_log_error("client is not ready in %s", __func__);
+        return -EAGAIN;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy in %s", __func__);
+        return -EIO;
+    }
+
+    handler = malloc(sizeof(tapi_async_handler));
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
+        return -ENOMEM;
+    }
+
+    ar = calloc(1, sizeof(tapi_async_result));
+    if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
+        free(handler);
+        return -ENOMEM;
+    }
+
+    handler->result = ar;
+    ar->msg_id = event_id;
+    ar->arg1 = slot_id;
+    ar->arg2 = value;
+    handler->cb_function = p_handle;
+
+    if (!g_dbus_proxy_method_call(proxy, "SetModemStationaryThreshold", set_modem_stationary_threshold_param_append,
+            set_modem_stationary_threshold_cb, handler, handler_free)) {
+        tapi_log_error("method call failed in %s", __func__);
         handler_free(handler);
         return -EINVAL;
     }

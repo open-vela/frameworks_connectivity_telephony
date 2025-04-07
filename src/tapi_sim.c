@@ -117,6 +117,11 @@ static int sim_property_changed(DBusConnection* connection,
         ar->data = iccid;
         ar->status = OK;
         cb(ar);
+    } else if ((ar->msg_id == MSG_SIM_INVALID_CHANGE_IND)
+        && strcmp(property, "SimInvalid") == 0) {
+        dbus_message_iter_get_basic(&var, &ar->arg2);
+        ar->status = OK;
+        cb(ar);
     }
 
     return 1;
@@ -607,6 +612,42 @@ int tapi_sim_get_sim_state(tapi_context context, int slot_id, int* out)
     return -EINVAL;
 }
 
+int tapi_sim_get_sim_invalid(tapi_context context, int slot_id, int* out)
+{
+    dbus_context* ctx = context;
+    GDBusProxy* proxy;
+    DBusMessageIter iter;
+
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("invalid slot id in %s", __func__);
+        return -EINVAL;
+    }
+
+    if (!ctx->client_ready) {
+        tapi_log_error("client is not ready in %s", __func__);
+        return -EAGAIN;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy in %s", __func__);
+        return -EIO;
+    }
+
+    if (g_dbus_proxy_get_property(proxy, "SimInvalid", &iter)) {
+        dbus_message_iter_get_basic(&iter, out);
+        return OK;
+    }
+
+    tapi_log_error("get property failed in %s", __func__);
+    return -EINVAL;
+}
+
 int tapi_sim_get_sim_iccid(tapi_context context, int slot_id, char** out)
 {
     dbus_context* ctx = context;
@@ -838,7 +879,7 @@ int tapi_sim_register(tapi_context context, int slot_id,
         return -EINVAL;
     }
 
-    if (msg < MSG_SIM_STATE_CHANGE_IND || msg > MSG_SIM_ICCID_CHANGE_IND) {
+    if (msg < MSG_SIM_STATE_CHANGE_IND || msg > MSG_SIM_INVALID_CHANGE_IND) {
         tapi_log_error("invalid msg type in %s", __func__);
         return -EINVAL;
     }
@@ -872,6 +913,7 @@ int tapi_sim_register(tapi_context context, int slot_id,
     case MSG_SIM_STATE_CHANGE_IND:
     case MSG_SIM_UICC_APP_ENABLED_CHANGE_IND:
     case MSG_SIM_ICCID_CHANGE_IND:
+    case MSG_SIM_INVALID_CHANGE_IND:
         watch_id = g_dbus_add_signal_watch(ctx->connection,
             OFONO_SERVICE, modem_path, OFONO_SIM_MANAGER_INTERFACE,
             "PropertyChanged", sim_property_changed, handler, handler_free);
