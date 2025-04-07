@@ -138,6 +138,20 @@ static void TestTeleDataUnregister(void** state)
     assert_int_equal(ret, OK);
 }
 
+static void TestTeleImsGetEnabled(void** state)
+{
+    (void)state;
+    int ret = ims_get_enabled_test(0, true);
+    assert_int_equal(ret, 0);
+}
+
+static void TestTeleImsGetRegistration(void** state)
+{
+    (void)state;
+    int ret = ims_get_registration_test(0, 1);
+    assert_int_equal(ret, 0);
+}
+
 // modem
 static void TestTeleModemGetImei(void** state)
 {
@@ -425,6 +439,8 @@ int main(int argc, char* argv[])
         cmocka_unit_test(TestTeleDataDisable),
         cmocka_unit_test(TestTeleDataIsDisable),
         cmocka_unit_test(TestTeleDataUnregister),
+        cmocka_unit_test(TestTeleImsGetEnabled),
+        cmocka_unit_test(TestTeleImsGetRegistration),
         cmocka_unit_test(TestTeleModemDisable),
         cmocka_unit_test(TestTeleGetModemDsiableStatus),
         cmocka_unit_test(TestTeleModemEnableDisableRepeatedly),
