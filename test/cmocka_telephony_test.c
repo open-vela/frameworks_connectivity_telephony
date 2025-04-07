@@ -194,7 +194,7 @@ static void TestTeleFunc_CI_SimListenAndUnListen(void** state)
     TestTeleFunc_CI_SimUnListen(state);
 }
 
-static void TestTeleFunc_SimCheckSimInvalid(void** state)
+static void TestTeleFunc_CI_SimCheckSimInvalid(void** state)
 {
     (void)state;
     int ret = sim_set_and_check_sim_invalid(0);
@@ -3717,7 +3717,7 @@ int main(int argc, char* argv[])
         cmocka_unit_test(TestTeleFunc_SimInsertFdnEntry),
         cmocka_unit_test(TestTeleFunc_SimUpdateFdnEntry),
         cmocka_unit_test(TestTeleFunc_SimDeleteFdnEntry),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_SimCheckSimInvalid, setup_sim, teardown_sim),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_SimCheckSimInvalid, setup_sim, teardown_sim),
     };
 
     const struct CMUnitTest CallTestSuites[] = {
