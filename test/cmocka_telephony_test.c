@@ -2920,7 +2920,9 @@ static void TestTeleFunc_ModemGetDefaultPhoneState(void** state)
     int ret;
 
     (void)state;
+
     target = PHONE_IDLE;
+    TestTeleFunc_CallIncomingandLocalHangup(state);
     ret = get_phone_state_test(0, target);
     assert_int_equal(ret, OK);
 }
@@ -3994,7 +3996,7 @@ int main(int argc, char* argv[])
         cmocka_unit_test_setup_teardown(TestTeleFunc_ModemEnableDisableNTimesUnderDialingCall, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_ModemEnableDisableNTimesUnderOngoingCall, setup_call, teardown_call),
         cmocka_unit_test(TestTeleFunc_CI_ModemVerifyPrefNetMode),
-        cmocka_unit_test(TestTeleFunc_ModemGetDefaultPhoneState),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_ModemGetDefaultPhoneState, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_ModemGetPhoneState, setup_call, teardown_call),
         cmocka_unit_test(TestTeleFunc_ModemGetPhoneStateUnderMOCall),
         cmocka_unit_test(TestTeleFunc_ModemGetPhoneStateUnderMTCall),
