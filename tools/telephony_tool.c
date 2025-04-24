@@ -4838,7 +4838,7 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         "[slot_id][type, 0:rsrp 1:rssi])" },
     { "suppress-message-report", RADIO_CMD,
         telephonytool_cmd_suppress_message_report,
-        "enable/disable suppress message report when ap sleep(enter example :set-suppress-message-report 0 1"
+        "enable/disable suppress message report when ap sleep(enter example :suppress-message-report 0 1"
         "[slot_id][state: 0:disable 1:enable])" },
     { "enable-modem-stationary", RADIO_CMD,
         telephonytool_cmd_enable_modem_stationary,
