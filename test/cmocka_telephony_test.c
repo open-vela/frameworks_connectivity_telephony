@@ -446,7 +446,7 @@ static void TestTeleFunc_CI_CallDialEccNumber(void** state)
     assert_int_equal(ret, OK);
 }
 
-static void TestTeleFunc_CI_CallDialEccNumberWithoutSimCard(void** state)
+static void TestTeleFunc_CallDialEccNumberWithoutSimCard(void** state)
 {
     (void)state;
     int ret = call_dial_ecc_number_without_sim_card(0);
@@ -3681,7 +3681,7 @@ int main(int argc, char* argv[])
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_CallDialNumber, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_CallDialNumberWithoutSimCard, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_CallDialEccNumber, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_CallDialEccNumberWithoutSimCard, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialEccNumberWithoutSimCard, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialLongPhoneNumber, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialShotPhoneNumber, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialWithEnableHideCallId, setup_call, teardown_call),
