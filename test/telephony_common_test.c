@@ -141,6 +141,38 @@ static void tele_call_async_fun(tapi_async_result* result)
             judge_data.flag = EVENT_RAT_MODE_SET_DONE;
         }
         break;
+    case EVENT_MODEM_SET_SIGNAL_REPORT_THRESHOLD_DONE:
+        syslog(LOG_DEBUG, "%s: EVENT_MODEM_SET_SIGNAL_REPORT_THRESHOLD_DONE status: %d\n",
+            __func__, result->status);
+        if (judge_data.expect == EVENT_MODEM_SET_SIGNAL_REPORT_THRESHOLD_DONE) {
+            judge_data.result = status;
+            judge_data.flag = EVENT_MODEM_SET_SIGNAL_REPORT_THRESHOLD_DONE;
+        }
+        break;
+    case EVENT_MODEM_SUPPRESS_MESSAGE_REPORT_DONE:
+        syslog(LOG_DEBUG, "%s: EVENT_MODEM_SUPPRESS_MESSAGE_REPORT_DONE status: %d\n",
+            __func__, result->status);
+        if (judge_data.expect == EVENT_MODEM_SUPPRESS_MESSAGE_REPORT_DONE) {
+            judge_data.result = status;
+            judge_data.flag = EVENT_MODEM_SUPPRESS_MESSAGE_REPORT_DONE;
+        }
+        break;
+    case EVENT_MODEM_ENABLE_MODEM_STATIONARY_DONE:
+        syslog(LOG_DEBUG, "%s: EVENT_MODEM_SET_DEVICE_STATIONARY_DONE status: %d\n",
+            __func__, result->status);
+        if (judge_data.expect == EVENT_MODEM_ENABLE_MODEM_STATIONARY_DONE) {
+            judge_data.result = status;
+            judge_data.flag = EVENT_MODEM_ENABLE_MODEM_STATIONARY_DONE;
+        }
+        break;
+    case EVENT_MODEM_SET_MODEM_STATIONARY_THRESHOLD_DONE:
+        syslog(LOG_DEBUG, "%s: EVENT_MODEM_SET_DEVICE_STATIONARY_THRESHOLD_DONE status: %d\n",
+            __func__, result->status);
+        if (judge_data.expect == EVENT_MODEM_SET_MODEM_STATIONARY_THRESHOLD_DONE) {
+            judge_data.result = status;
+            judge_data.flag = EVENT_MODEM_SET_MODEM_STATIONARY_THRESHOLD_DONE;
+        }
+        break;
     default:
         break;
     }
@@ -1084,6 +1116,138 @@ int modem_keep_status_as_expected_test(int slot_id, bool expected_state)
             goto on_exit;
         }
         sleep(10);
+    }
+
+on_exit:
+    return res;
+}
+
+int set_signal_report_threshold_test(int slot_id, int type)
+{
+    int res = 0;
+
+    judge_data_init();
+    judge_data.expect = EVENT_MODEM_SET_SIGNAL_REPORT_THRESHOLD_DONE;
+
+    int ret = tapi_set_signal_report_threshold(get_tapi_ctx(), slot_id,
+        EVENT_MODEM_SET_SIGNAL_REPORT_THRESHOLD_DONE, type, tele_call_async_fun);
+
+    if (ret) {
+        syslog(LOG_ERR, "set_signal_report_threshold_test execute fail in %s, ret: %d",
+            __func__, ret);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge()) {
+        syslog(LOG_DEBUG, "set_signal_report_threshold_test is not executed in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge_data.result) {
+        syslog(LOG_ERR, "async result is invalid in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
+int suppress_message_report(int slot_id, bool target_state)
+{
+    int res = 0;
+
+    judge_data_init();
+    judge_data.expect = EVENT_MODEM_SUPPRESS_MESSAGE_REPORT_DONE;
+
+    int ret = tapi_suppress_message_report(get_tapi_ctx(), slot_id,
+        EVENT_MODEM_SUPPRESS_MESSAGE_REPORT_DONE, target_state, tele_call_async_fun);
+
+    if (ret) {
+        syslog(LOG_ERR, "suppress_message_report execute fail in %s, ret: %d",
+            __func__, ret);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge()) {
+        syslog(LOG_DEBUG, "suppress_message_report is not executed in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge_data.result) {
+        syslog(LOG_ERR, "async result is invalid in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
+int enable_modem_stationary(int slot_id, bool target_state)
+{
+    int res = 0;
+
+    judge_data_init();
+    judge_data.expect = EVENT_MODEM_ENABLE_MODEM_STATIONARY_DONE;
+
+    int ret = tapi_enable_modem_stationary(get_tapi_ctx(), slot_id,
+        EVENT_MODEM_ENABLE_MODEM_STATIONARY_DONE, target_state, tele_call_async_fun);
+
+    if (ret) {
+        syslog(LOG_ERR, "enable_modem_stationary execute fail in %s, ret: %d",
+            __func__, ret);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge()) {
+        syslog(LOG_DEBUG, "enable_modem_stationary is not executed in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge_data.result) {
+        syslog(LOG_ERR, "async result is invalid in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
+int set_modem_stationary_threshold(int slot_id, int value)
+{
+    int res = 0;
+
+    judge_data_init();
+    judge_data.expect = EVENT_MODEM_SET_MODEM_STATIONARY_THRESHOLD_DONE;
+
+    int ret = tapi_set_modem_stationary_threshold(get_tapi_ctx(), slot_id,
+        EVENT_MODEM_SET_MODEM_STATIONARY_THRESHOLD_DONE, value, tele_call_async_fun);
+
+    if (ret) {
+        syslog(LOG_ERR, "set_modem_stationary_threshold execute fail in %s, ret: %d",
+            __func__, ret);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge()) {
+        syslog(LOG_DEBUG, "set_modem_stationary_threshold is not executed in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge_data.result) {
+        syslog(LOG_ERR, "async result is invalid in %s", __func__);
+        res = -1;
+        goto on_exit;
     }
 
 on_exit:

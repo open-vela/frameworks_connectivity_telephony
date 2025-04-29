@@ -194,6 +194,13 @@ static void TestTeleFunc_CI_SimListenAndUnListen(void** state)
     TestTeleFunc_CI_SimUnListen(state);
 }
 
+static void TestTeleFunc_SimCheckSimInvalid(void** state)
+{
+    (void)state;
+    int ret = sim_set_and_check_sim_invalid(0);
+    assert_int_equal(ret, OK);
+}
+
 static void TestTeleFunc_CI_SimHasIccCard(void** state)
 {
     (void)state;
@@ -2099,6 +2106,44 @@ static void TestTeleFunc_ModemDisableRadioPowerOff(void** state)
     TestTeleFunc_CI_ModemSetRadioPowerOn(state);
 }
 
+static void TestTeleFunc_ModemSetSignalReportThreshold(void** state)
+{
+    int ret;
+
+    (void)state;
+    ret = set_signal_report_threshold_test(0, 0);
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_ModemSuppressMsgReport(void** state)
+{
+    int ret;
+
+    (void)state;
+    ret = suppress_message_report(0, true);
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_ModemEnableModemStationary(void** state)
+{
+    int ret;
+
+    (void)state;
+    ret = enable_modem_stationary(0, true);
+    assert_int_equal(ret, OK);
+    ret = enable_modem_stationary(0, false);
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_ModemSetModemStationaryThreshold(void** state)
+{
+    int ret;
+
+    (void)state;
+    ret = set_modem_stationary_threshold(0, 1);
+    assert_int_equal(ret, OK);
+}
+
 static void TestTeleFunc_ModemEnableDisableNTimesUnderDialingCall(void** state)
 {
     (void)state;
@@ -3672,6 +3717,7 @@ int main(int argc, char* argv[])
         cmocka_unit_test(TestTeleFunc_SimInsertFdnEntry),
         cmocka_unit_test(TestTeleFunc_SimUpdateFdnEntry),
         cmocka_unit_test(TestTeleFunc_SimDeleteFdnEntry),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SimCheckSimInvalid, setup_sim, teardown_sim),
     };
 
     const struct CMUnitTest CallTestSuites[] = {
@@ -4006,6 +4052,10 @@ int main(int argc, char* argv[])
         cmocka_unit_test_setup_teardown(TestTeleFunc_ModemSetRadioOffUnderOngoingCall, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_ModemDisableEnableRadioPowerOff, setup_modem, teardown_modem),
         cmocka_unit_test(TestTeleFunc_ModemDisableRadioPowerOff),
+        cmocka_unit_test(TestTeleFunc_ModemSetSignalReportThreshold),
+        cmocka_unit_test(TestTeleFunc_ModemSuppressMsgReport),
+        cmocka_unit_test(TestTeleFunc_ModemEnableModemStationary),
+        cmocka_unit_test(TestTeleFunc_ModemSetModemStationaryThreshold),
     };
 
     sleep(5);
