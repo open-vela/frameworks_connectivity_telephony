@@ -42,5 +42,5 @@ int sim_transmit_apdu_basic_channel_test(int slot_id);
 int sim_transmit_apdu_logical_channel_test(int slot_id);
 int sim_unlisten_sim_test(void);
 int sim_unlock_pin_test(int slot_id);
-
+int sim_set_and_check_sim_invalid(int slot_id);
 #endif

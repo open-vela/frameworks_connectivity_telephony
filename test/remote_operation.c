@@ -120,3 +120,15 @@ int remote_radio_on_off_delay(int delay_sec)
     return tapi_invoke_oem_ril_request_strings(get_tapi_ctx(), 0,
         EVENT_OEM_RIL_REQUEST_STRINGS_DONE, oem_req, 1, NULL);
 }
+
+int remote_sim_invalid_operation(int slot_id)
+{
+    char req_data[30] = { 0 };
+    char* oem_req[1];
+    oem_req[0] = req_data;
+
+    sprintf(req_data, "AT+REMOTENETSIMVALID");
+    syslog(LOG_DEBUG, "%s, req_data: %s\n", __func__, req_data);
+    return tapi_invoke_oem_ril_request_strings(get_tapi_ctx(), 0,
+        EVENT_OEM_RIL_REQUEST_STRINGS_DONE, oem_req, 1, NULL);
+}

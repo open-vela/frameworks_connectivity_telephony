@@ -31,4 +31,8 @@ int radio_power_on_off_pending_test(int slot_id);
 int set_pref_net_mode_test(int slot_id, tapi_pref_net_mode target_state);
 int set_radio_power_test(int slot_id, bool target_state);
 int set_radio_power_off_then_on(int slot_id);
+int set_signal_report_threshold_test(int slot_id, int type);
+int suppress_message_report(int slot_id, bool target_state);
+int enable_modem_stationary(int slot_id, bool target_state);
+int set_modem_stationary_threshold(int slot_id, int value);
 #endif
