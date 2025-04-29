@@ -8,6 +8,7 @@ static struct
 {
     int sim_state_change_watch_id;
     int sim_uicc_app_enabled_change_watch_id;
+    int sim_invalid_watch_id;
     int current_channel_session_id;
 } global_data;
 
@@ -15,6 +16,7 @@ static void global_data_init(void)
 {
     global_data.sim_state_change_watch_id = -1;
     global_data.sim_uicc_app_enabled_change_watch_id = -1;
+    global_data.sim_invalid_watch_id = -1;
 }
 
 int setup_sim(void** state)
@@ -423,6 +425,12 @@ static void tele_sim_async_fun(tapi_async_result* result)
             judge_data.result = 0;
             judge_data.flag = EVENT_UNLOCK_SIM_PIN_DONE;
         }
+    } else if (result->msg_id == MSG_SIM_INVALID_CHANGE_IND) {
+        syslog(LOG_DEBUG, "sim invalid change ind :\n");
+        if (judge_data.expect == EVENT_SIM_INVALID_SET_DONE) {
+            judge_data.result = 0;
+            judge_data.flag = EVENT_SIM_INVALID_SET_DONE;
+        }
     }
 }
 
@@ -449,6 +457,15 @@ int sim_listen_sim_test(int slot_id)
         goto on_exit;
     }
 
+    global_data.sim_invalid_watch_id = tapi_sim_register(get_tapi_ctx(), slot_id,
+        MSG_SIM_INVALID_CHANGE_IND, NULL, tele_sim_async_fun);
+    if (global_data.sim_invalid_watch_id < 0) {
+        syslog(LOG_ERR, "%s, slot_id: %d, MSG_SIM_INVALID_CHANGE_IND, watch id < 0\n",
+            __func__, slot_id);
+        res = -1;
+        goto on_exit;
+    }
+
 on_exit:
     return res;
 }
@@ -467,6 +484,90 @@ int sim_unlisten_sim_test(void)
     if (ret) {
         syslog(LOG_ERR, "unregister uicc app enable change fail in %s, ret: %d", __func__, ret);
         res = -1;
+        goto on_exit;
+    }
+
+    ret = tapi_sim_unregister(get_tapi_ctx(), global_data.sim_invalid_watch_id);
+    if (ret) {
+        syslog(LOG_ERR, "unregister sim invalid change fail in %s, ret: %d", __func__, ret);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
+int sim_inavlid_ind_test(int slot_id)
+{
+    int ret;
+    int res = 0;
+
+    judge_data_init();
+    judge_data.expect = EVENT_SIM_INVALID_SET_DONE;
+
+    ret = remote_sim_invalid_operation(slot_id);
+    if (ret) {
+        syslog(LOG_ERR, "remote_sim_invalid_operation execute fail in %s, ret: %d",
+            __func__, ret);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge()) {
+        syslog(LOG_DEBUG, "remote_sim_invalid_operation is not executed in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge_data.result) {
+        syslog(LOG_ERR, "async result is invalid in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
+int sim_invalid_get_test(int slot_id, int expected_value)
+{
+    int ret;
+    int res = 0;
+    int sim_invalid = 0;
+
+    ret = tapi_sim_get_sim_invalid(get_tapi_ctx(), slot_id, &sim_invalid);
+
+    if (ret != 0) {
+        syslog(LOG_ERR, "sim_invalid_get_test fail,ret=%d", ret);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (expected_value != sim_invalid) {
+        syslog(LOG_ERR, "sim_invalid_get_test fail,expected_value != sim_invalid");
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
+int sim_set_and_check_sim_invalid(int slot_id)
+{
+    int res;
+    int expected_value = 1;
+
+    res = sim_inavlid_ind_test(slot_id);
+    if (res != 0) {
+        syslog(LOG_ERR, "sim_inavlid_ind_test fail");
+        goto on_exit;
+    }
+
+    res = sim_invalid_get_test(slot_id, expected_value);
+    if (res != 0) {
+        syslog(LOG_ERR, "sim_invalid_get_test fail");
         goto on_exit;
     }
 

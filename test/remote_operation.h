@@ -19,3 +19,4 @@ int remote_sms_send_chinese_long_message(int slot_id);
 int remote_sms_send_english_long_message(int slot_id);
 int remote_sms_send_message(int slot_id);
 int remote_radio_on_off_delay(int delay_sec);
+int remote_sim_invalid_operation(int slot_id);
