@@ -5057,7 +5057,7 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     { "open-logical-channel", SIM_CMD,
         telephonytool_cmd_open_logical_channel,
         "open logical channel (enter example : "
-        "open-logical-channel 0 A0000000871002FF86FFFF89FFFFFFFF 16"
+        "open-logical-channel 0 A0000000871002FF86FF0389FFFFFFFF 16"
         "[slot_id][aid_str])" },
     { "close-logical-channel", SIM_CMD,
         telephonytool_cmd_close_logical_channel,
@@ -5066,7 +5066,7 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     { "transmit-apdu-logical-channel", SIM_CMD,
         telephonytool_cmd_transmit_apdu_logical_channel,
         "transmit apdu logical channel (enter example : "
-        "transmit-apdu-logical-channel 0 1 FFF2000000 5"
+        "transmit-apdu-logical-channel 0 1 FFC0000024 5"
         "[slot_id][session_id][pdu][len])" },
     { "transmit-apdu-basic-channel", SIM_CMD,
         telephonytool_cmd_transmit_apdu_basic_channel,

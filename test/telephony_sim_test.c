@@ -60,6 +60,8 @@ on_exit:
     return res;
 }
 
+static int hex_string_to_byte_array(char* hex_str, unsigned char* byte_arr, int arr_len);
+
 int sim_has_icc_card_test(int slot_id)
 {
     bool result = false;
@@ -579,9 +581,16 @@ int sim_open_logical_channel_test(int slot_id)
 {
     judge_data_init();
     judge_data.expect = EVENT_OPEN_LOGICAL_CHANNEL_DONE;
-    unsigned char aid[] = "A0000000871002FF86FFFF89FFFFFFFF";
+    char* data = "A0000000871002FF86FF0389FFFFFFFF";
+    unsigned char aid[32];
     int res = 0;
     global_data.current_channel_session_id = -1;
+
+    if (hex_string_to_byte_array(data, aid, 32) != 0) {
+        syslog(LOG_ERR, "%s: hex_string_to_byte_array execute fail.", __func__);
+        res = -1;
+        goto on_exit;
+    }
 
     int ret = tapi_sim_open_logical_channel(get_tapi_ctx(), slot_id,
         EVENT_OPEN_LOGICAL_CHANNEL_DONE, aid, 16, tele_sim_async_fun);
@@ -755,7 +764,7 @@ int sim_transmit_apdu_logical_channel_test(int slot_id)
     }
 
     unsigned char pdu[128];
-    char data[] = "FFF2000000";
+    char data[] = "FFC0000024";
     int len = strlen(data) / 2;
 
     if (hex_string_to_byte_array(data, pdu, 128) != 0) {
