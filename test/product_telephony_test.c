@@ -417,11 +417,11 @@ int main(int argc, char* argv[])
         cmocka_unit_test(TestTeleModemRegister),
         cmocka_unit_test(TestTeleModemUnregister),
         cmocka_unit_test(TestTeleDataRegister),
-        cmocka_unit_test(TestTeleDataLoadApnContexts),
         cmocka_unit_test(TestTeleDataUnregister),
         cmocka_unit_test(TestTeleDataRegister),
         cmocka_unit_test(TestTeleModemEnable),
         cmocka_unit_test(TestTeleGetModemEnableStatus),
+        cmocka_unit_test(TestTeleDataLoadApnContexts),
         cmocka_unit_test(TestTeleHasIccCard),
         cmocka_unit_test(TestTeleHasIccCardNumerousTimes),
         cmocka_unit_test(TestTeleSimGetOperatorName),
@@ -447,18 +447,17 @@ int main(int argc, char* argv[])
         cmocka_unit_test(TestTeleUnlistenCall),
     };
 
-    sleep(120);
     tapi_get_modem_status(get_tapi_ctx(), 0,
         EVENT_MODEM_STATUS_QUERY_DONE, modem_status_cb);
-    sleep(30);
+    sleep(15);
     if (modem_status == -1) {
         assert(0);
     } else if (modem_status == 1) {
         tapi_data_enable_data(get_tapi_ctx(), false);
-        sleep(30);
+        sleep(15);
         tapi_enable_modem(get_tapi_ctx(), 0,
             EVENT_MODEM_ENABLE_DONE, false, NULL);
-        sleep(60);
+        sleep(30);
     }
 
     cmocka_run_group_tests(StabilityTestSuites, NULL, NULL);

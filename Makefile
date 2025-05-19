@@ -36,9 +36,11 @@ endif
 
 ifneq ($(CONFIG_TELEPHONY_TEST),)
   CFLAGS += ${INCDIR_PREFIX}$(APPDIR)/testing/cmocka/cmocka/include
-  CSRCS  += $(filter-out test/*_telephony_test.c, $(wildcard test/*.c))
+  CSRCS  += $(filter-out test/cmocka_telephony_test.c test/product_telephony_test.c \
+              test/remote_operation.c, $(wildcard test/*.c))
 
   ifneq ($(CONFIG_GOLDFISH_RIL),)
+  CSRCS     += test/remote_operation.c
   MAINSRC   += $(CURDIR)/test/cmocka_telephony_test.c
   else
   MAINSRC   += $(CURDIR)/test/product_telephony_test.c
