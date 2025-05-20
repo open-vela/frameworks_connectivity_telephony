@@ -620,7 +620,7 @@ static void tele_sim_async_fun(tapi_async_result* result)
     } else if (result->msg_id == MSG_SIM_ICCID_CHANGE_IND) {
         syslog(LOG_DEBUG, "iccid: %s\n", (char*)result->data);
     } else if (result->msg_id == MSG_SIM_INVALID_CHANGE_IND) {
-        syslog(LOG_DEBUG, "sim invalid report");
+        syslog(LOG_DEBUG, "sim invalid/valid report:%d", result->arg2);
     }
 }
 
