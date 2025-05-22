@@ -19,6 +19,7 @@
  ****************************************************************************/
 
 #include <ofono/dfx.h>
+#include <unistd.h>
 #include <stdio.h>
 
 #include "tapi_internal.h"
