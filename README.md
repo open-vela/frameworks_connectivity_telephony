@@ -24,6 +24,8 @@ TAPI provides a set of feature-rich tools and interfaces, covering network servi
 │   ├── tapi_sim.h
 │   ├── tapi_sms.h
 │   ├── tapi_ss.h
+│   ├── tapi_phone.h
+│   ├── tapi_xpc.h
 │   └── tapi_stk.h
 ├── src
 │   ├── tapi_call.c
@@ -37,8 +39,14 @@ TAPI provides a set of feature-rich tools and interfaces, covering network servi
 │   ├── tapi_sms.c
 │   ├── tapi_ss.c
 │   ├── tapi_stk.c
+│   ├── tapi_phone.c
+│   ├── tapi_common.h
+│   ├── tapi_internal.h
 │   └── tapi_utils.c
 ├── tools
+│   ├── telephony_esim_tool.c
+│   ├── telephony_phone_tool.c
+│   ├── tapi_tool.h
 │   └── telephony_tool.c
 ├── test
 │   ├── cmocka_telephony_test.c
@@ -80,6 +88,7 @@ TAPI provides a set of feature-rich tools and interfaces, covering network servi
 | <div style="width: 120pt">Telephony Utils| tapi_utils.c |Telephony util interface |
 | Telephony Tools| telephony_tool.c | Telephony internal interface test  |
 | Telephony Test Case| test/* | Telephony internal test case |
+| PHONESERVICE| tapi_phone.c/h | phoneservice interface  |
 
 ### **Function Introduction**
 

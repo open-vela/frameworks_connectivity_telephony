@@ -20,15 +20,36 @@
 
 include $(APPDIR)/Make.defs
 
+ifneq ($(CONFIG_TELEPHONY),)
 CFLAGS += ${INCDIR_PREFIX}$(APPDIR)/external/dbus/dbus
 CFLAGS += ${INCDIR_PREFIX}$(APPDIR)/external/ofono/include
 CFLAGS += ${INCDIR_PREFIX}$(APPDIR)/frameworks/system/utils/gdbus
+endif
+
+ifneq ($(CONFIG_PHONE_SERVICE),)
+CFLAGS += -I$(APPDIR)/frameworks/connectivity/common/xpc/conn_xpc/include
+CFLAGS += ${INCDIR_PREFIX}$(APPDIR)/frameworks/bluetooth/framework/include
+endif
+
 CFLAGS += ${INCDIR_PREFIX}$(APPDIR)/frameworks/connectivity/telephony
 
-CSRCS += $(wildcard src/*.c)
+ifneq ($(CONFIG_TELEPHONY),)
+CSRCS += src/tapi_manager.c src/tapi_call.c src/tapi_data.c src/tapi_sim.c src/tapi_stk.c src/tapi_utils.c
+CSRCS += src/tapi_cbs.c src/tapi_sms.c src/tapi_network.c src/tapi_ss.c src/tapi_ims.c src/tapi_phonebook.c
+endif
+
+ifneq ($(CONFIG_PHONE_SERVICE),)
+CSRCS += src/tapi_phone.c
+endif
 
 ifneq ($(CONFIG_TELEPHONY_TOOL),)
   MAINSRC   += tools/telephony_tool.c
+  ifneq ($(CONFIG_TELEPHONY),)
+    CSRCS += tools/telephony_esim_tool.c
+  endif
+  ifneq ($(CONFIG_PHONE_SERVICE),)
+    CSRCS += tools/telephony_phone_tool.c
+  endif
   PROGNAME  += telephonytool
   PRIORITY  += $(CONFIG_TELEPHONY_TOOL_PRIORITY)
   STACKSIZE += $(CONFIG_TELEPHONY_TOOL_STACKSIZE)
