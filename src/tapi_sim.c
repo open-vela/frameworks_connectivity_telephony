@@ -19,6 +19,7 @@
  ****************************************************************************/
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "tapi_internal.h"
 #include "tapi_sim.h"
@@ -214,6 +215,33 @@ done:
     cb(ar);
 }
 
+static void handle_error_code_message(const char *error_message, tapi_async_result *ar)
+{
+    char *error_code_str = NULL;
+    long value;
+
+    ar->status = ERROR;
+
+    if (error_message == NULL || error_message[0] == '\0') {
+        ar->arg1 = -1;
+        tapi_log_error("error message is null in %s", __func__);
+        return;
+    }
+
+    value = strtol(error_message, &error_code_str, 10);
+
+    if (error_code_str == error_message || (*error_code_str != '\0')) {
+        ar->arg1 = -1;
+    } else {
+        if (value > INT_MAX || value < INT_MIN) {
+            ar->arg1 = -1;
+        } else {
+            ar->arg1 = (int)value;
+        }
+    }
+    tapi_log_error("status is %d in %s", ar->arg1, __func__);
+}
+
 static void open_logical_channel_cb(DBusMessage* message, void* user_data)
 {
     DBusMessageIter iter;
@@ -240,9 +268,8 @@ static void open_logical_channel_cb(DBusMessage* message, void* user_data)
 
     dbus_error_init(&err);
     if (dbus_set_error_from_message(&err, message) == true) {
-        tapi_log_error("error from message in %s, %s: %s", __func__, err.name, err.message);
+        handle_error_code_message(err.message, ar);
         dbus_error_free(&err);
-        ar->status = ERROR;
         goto done;
     }
 
@@ -253,6 +280,43 @@ static void open_logical_channel_cb(DBusMessage* message, void* user_data)
     }
 
     dbus_message_iter_get_basic(&iter, &ar->arg2); /*session id*/
+
+    ar->status = OK;
+
+done:
+    cb(ar);
+}
+
+static void close_logical_channel_cb(DBusMessage* message, void* user_data)
+{
+    tapi_async_handler* handler = user_data;
+    tapi_async_result* ar;
+    tapi_async_function cb;
+    DBusError err;
+
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
+        return;
+    }
+
+    ar = handler->result;
+    if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
+        return;
+    }
+
+    cb = handler->cb_function;
+    if (cb == NULL) {
+        tapi_log_error("callback in %s is null", __func__);
+        return;
+    }
+
+    dbus_error_init(&err);
+    if (dbus_set_error_from_message(&err, message) == true) {
+        handle_error_code_message(err.message, ar);
+        dbus_error_free(&err);
+        goto done;
+    }
 
     ar->status = OK;
 
@@ -288,9 +352,8 @@ static void transmit_apdu_cb(DBusMessage* message, void* user_data)
 
     dbus_error_init(&err);
     if (dbus_set_error_from_message(&err, message) == true) {
-        tapi_log_error("error from message in %s, %s: %s", __func__, err.name, err.message);
+        handle_error_code_message(err.message, ar);
         dbus_error_free(&err);
-        ar->status = ERROR;
         goto done;
     }
 
@@ -1487,7 +1550,7 @@ int tapi_sim_close_logical_channel(tapi_context context, int slot_id,
     user_data->result = ar;
 
     if (!g_dbus_proxy_method_call(proxy, "CloseLogicalChannel", close_channel_param_append,
-            method_call_complete, user_data, handler_free)) {
+            close_logical_channel_cb, user_data, handler_free)) {
         tapi_log_error("method call failed in %s", __func__);
         handler_free(user_data);
         return -EINVAL;
