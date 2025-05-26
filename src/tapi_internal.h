@@ -29,22 +29,9 @@
 #include <nuttx/list.h>
 #include <ofono/dbus.h>
 #include <stdbool.h>
-#include <syslog.h>
 
 #include "tapi.h"
-
-/****************************************************************************
- * Pre-processor Definitions
- ****************************************************************************/
-
-#define tapi_log_info(format, ...) syslog(LOG_INFO, format, ##__VA_ARGS__)
-#define tapi_log_warn(format, ...) syslog(LOG_WARN, format, ##__VA_ARGS__)
-#define tapi_log_error(format, ...) syslog(LOG_ERR, format, ##__VA_ARGS__)
-#define tapi_log_debug(format, ...) syslog(LOG_DEBUG, format, ##__VA_ARGS__)
-
-#define MAX_CONTEXT_NAME_LENGTH 256
-#define MAX_VOICE_CALL_PROXY_COUNT 99
-#define SLOT_NOT_SET "SLOT_NOT_SET"
+#include "tapi_common.h"
 
 /****************************************************************************
  * Public Types
@@ -82,11 +69,6 @@ typedef struct {
     tapi_async_function logging_over_miwear_cb;
     bool client_ready;
 } dbus_context;
-
-typedef struct {
-    tapi_async_result* result;
-    tapi_async_function cb_function;
-} tapi_async_handler;
 
 /****************************************************************************
  * Public Function Prototypes

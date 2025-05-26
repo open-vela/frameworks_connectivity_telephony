@@ -14,23 +14,54 @@
 # the License.
 #
 
-if(CONFIG_TELEPHONY)
+if(CONFIG_TELEPHONY OR CONFIG_PHONE_SERVICE)
   set_property(
     TARGET nuttx
     APPEND
     PROPERTY NUTTX_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_LIST_DIR}/include)
-  set(CSRCS)
-  file(GLOB APPEND_FILES ${CMAKE_CURRENT_LIST_DIR}/src/*.c)
-  list(APPEND CSRCS ${APPEND_FILES})
-  set(INCDIR
-      ${NUTTX_APPS_DIR}/external/dbus/dbus
-      ${NUTTX_APPS_DIR}/external/ofono/include
-      ${NUTTX_APPS_DIR}/frameworks/system/utils/gdbus
-      ${NUTTX_APPS_DIR}/frameworks/connectivity/telephony)
+  set(INCDIR)
+  if(CONFIG_TELEPHONY)
+    list(APPEND CSRCS
+        ${CMAKE_CURRENT_LIST_DIR}/src/tapi_manager.c
+        ${CMAKE_CURRENT_LIST_DIR}/src/tapi_call.c
+        ${CMAKE_CURRENT_LIST_DIR}/src/tapi_data.c
+        ${CMAKE_CURRENT_LIST_DIR}/src/tapi_sim.c
+        ${CMAKE_CURRENT_LIST_DIR}/src/tapi_stk.c
+        ${CMAKE_CURRENT_LIST_DIR}/src/tapi_cbs.c
+        ${CMAKE_CURRENT_LIST_DIR}/src/tapi_sms.c
+        ${CMAKE_CURRENT_LIST_DIR}/src/tapi_network.c
+        ${CMAKE_CURRENT_LIST_DIR}/src/tapi_ss.c
+        ${CMAKE_CURRENT_LIST_DIR}/src/tapi_ims.c
+        ${CMAKE_CURRENT_LIST_DIR}/src/tapi_utils.c
+        ${CMAKE_CURRENT_LIST_DIR}/src/tapi_phonebook.c)
+
+    list(APPEND INCDIR
+        ${NUTTX_APPS_DIR}/external/dbus/dbus
+        ${NUTTX_APPS_DIR}/external/ofono/include
+        ${NUTTX_APPS_DIR}/frameworks/system/utils/gdbus)
+  endif()
+
+  if(CONFIG_PHONE_SERVICE)
+    list(APPEND CSRCS
+        ${CMAKE_CURRENT_LIST_DIR}/src/tapi_phone.c)
+
+    list(APPEND INCDIR
+        ${NUTTX_APPS_DIR}/frameworks/connectivity/common/xpc/conn_xpc/include
+        ${NUTTX_APPS_DIR}/frameworks/bluetooth/framework/include)
+  endif()
+
+  list(APPEND INCDIR ${NUTTX_APPS_DIR}/frameworks/connectivity/telephony)
 
   nuttx_add_library(tapi)
 
   if(CONFIG_TELEPHONY_TOOL)
+    set(TOOL_SRCS ${CMAKE_CURRENT_LIST_DIR}/tools/telephony_tool.c)
+    if(CONFIG_TELEPHONY)
+      list(APPEND TOOL_SRCS ${CMAKE_CURRENT_LIST_DIR}/tools/telephony_esim_tool.c)
+    endif()
+    if(CONFIG_PHONE_SERVICE)
+      list(APPEND TOOL_SRCS ${CMAKE_CURRENT_LIST_DIR}/tools/telephony_phone_tool.c)
+    endif()
     nuttx_add_application(
       MODULE
       ${CONFIG_TELEPHONY_TOOL}
@@ -41,7 +72,7 @@ if(CONFIG_TELEPHONY)
       PRIORITY
       ${CONFIG_TELEPHONY_TOOL_PRIORITY}
       SRCS
-      tools/telephony_tool.c
+      ${TOOL_SRCS}
       INCLUDE_DIRECTORIES
       ${INCDIR}
       DEPENDS

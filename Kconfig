@@ -35,6 +35,7 @@ config MODEM_ABNORMAL_EVENT
 	default y
 	---help---
 		enable/disable modem abnormal event feature
+endif
 
 config TELEPHONY_TOOL
 	bool "Telephony tool"
@@ -71,5 +72,4 @@ config TEST_PHONE_NUMBER
 	string "test phone number"
 	default "10086"
 
-endif
 endif

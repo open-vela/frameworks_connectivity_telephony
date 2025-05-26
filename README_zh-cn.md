@@ -25,6 +25,8 @@ TAPI 提供了一组功能丰富的工具和接口，涵盖网络服务、通话
 │   ├── tapi_sim.h
 │   ├── tapi_sms.h
 │   ├── tapi_ss.h
+│   ├── tapi_phone.h
+│   ├── tapi_xpc.h
 │   └── tapi_stk.h
 ├── src
 │   ├── tapi_call.c
@@ -38,8 +40,14 @@ TAPI 提供了一组功能丰富的工具和接口，涵盖网络服务、通话
 │   ├── tapi_sms.c
 │   ├── tapi_ss.c
 │   ├── tapi_stk.c
+│   ├── tapi_phone.c
+│   ├── tapi_common.h
+│   ├── tapi_internal.h
 │   └── tapi_utils.c
 ├── tools
+│   ├── telephony_esim_tool.c
+│   ├── telephony_phone_tool.c
+│   ├── tapi_tool.h
 │   └── telephony_tool.c
 ├── test
 │   ├── cmocka_telephony_test.c
@@ -81,6 +89,7 @@ TAPI 提供了一组功能丰富的工具和接口，涵盖网络服务、通话
 | <div style="width: 120pt">Telephony Utils| tapi_utils.c | Telephony 工具类接口  |
 | Telephony Tools| telephony_tool.c | Telephony 内部接口测试  |
 | Telephony Test Case| test/* | Telephony 内部测试用例 |
+| PHONESERVICE接口| tapi_phone.c/h | phoneservice服务接口  |
 
 ### **功能介绍**
 

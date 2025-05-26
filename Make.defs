@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-ifneq ($(CONFIG_TELEPHONY),)
+ifneq ($(or $(CONFIG_TELEPHONY),$(CONFIG_PHONE_SERVICE)),)
 
 CONFIGURED_APPS += $(APPDIR)/frameworks/connectivity/telephony
 
