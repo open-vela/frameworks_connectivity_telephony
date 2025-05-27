@@ -206,6 +206,11 @@ static void tele_call_manager_call_async_fun(tapi_async_result* result)
 int setup_call(void** state)
 {
     (void)state;
+
+    #ifdef CONFIG_TELEPHONY_TEST_CLCC_WITH_DATA
+        remote_call_clcc_with_data(0, 1);
+    #endif
+
     return call_listen_call_test(0);
 }
 
@@ -238,6 +243,10 @@ int teardown_call(void** state)
             res = -1;
         }
     }
+
+    #ifdef CONFIG_TELEPHONY_TEST_CLCC_WITH_DATA
+        remote_call_clcc_with_data(0, 0);
+    #endif
 
     if (call_unlisten_call_test()) {
         syslog(LOG_ERR, "Unlisten call execute fail in %s", __func__);
