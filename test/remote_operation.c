@@ -26,6 +26,13 @@ void remote_call_hangup_with_disconnect_reason(int slot_id, const char* phone_nu
         EVENT_OEM_RIL_REQUEST_STRINGS_DONE, oem_req, 1, NULL);
 }
 
+int remote_call_clcc_with_data(int slot_id, int clcc_with_data)
+{
+    memset(remote_command_buf, 0, sizeof(remote_command_buf));
+    sprintf(remote_command_buf, "AT+REMOTECLCCWITHDATA=%d", clcc_with_data);
+    return modem_invoke_oem_ril_request_strings_test(slot_id, remote_command_buf, 1);
+}
+
 int remote_sim_absent_operation(int slot_id)
 {
     char* oem_req[1];

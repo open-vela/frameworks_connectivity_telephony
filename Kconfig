@@ -54,9 +54,14 @@ config TELEPHONY_TOOL
 	default n
 
 config TELEPHONY_TEST
-	bool "enbale telephony test"
+	bool "enable telephony test"
 	default n
 	depends on TELEPHONY && TESTING_CMOCKA
+
+config TELEPHONY_TEST_CLCC_WITH_DATA
+	bool "enable telephony clcc with call info test"
+	default n
+	depends on TELEPHONY_TEST
 
 if TELEPHONY_TOOL
 
