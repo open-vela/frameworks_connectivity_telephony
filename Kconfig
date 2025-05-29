@@ -35,6 +35,18 @@ config MODEM_ABNORMAL_EVENT
 	default y
 	---help---
 		enable/disable modem abnormal event feature
+
+config SUPPRESS_CP_MESSAGE
+	bool "support suppress cp message"
+	default y
+	---help---
+		enable/disable suppress cp message feature
+
+config SIGNAL_REPORT_THRESHOLD
+	bool "support signal report threshlod"
+	default y
+	---help---
+		enable/disable signal report threshlod feature
 endif
 
 config TELEPHONY_TOOL
