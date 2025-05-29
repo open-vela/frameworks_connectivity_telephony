@@ -1083,6 +1083,17 @@ static void on_modem_property_change(GDBusProxy* proxy, const char* name,
     }
 
     ctx->modem_state[modem_id] = new_state;
+
+    if (new_state == MODEM_STATE_ALIVE) {
+#ifdef CONFIG_SUPPRESS_CP_MESSAGE
+        tapi_suppress_message_report(ctx, modem_id,
+            0, true, NULL);
+#endif
+#ifdef CONFIG_SIGNAL_REPORT_THRESHOLD
+        tapi_set_signal_report_threshold(ctx, modem_id,
+            0, 0, NULL);
+#endif
+    }
 }
 
 static int tapi_modem_register(tapi_context context,
