@@ -1971,10 +1971,10 @@ int tapi_ss_get_calling_line_presentation_info(tapi_context context, int slot_id
     }
 
     if (g_dbus_proxy_get_property_basic(proxy, "CallingLinePresentation", out)) {
-        report_data_logging_for_ss(ctx, "ss:get clip", "dbus method fail");
         return OK;
     }
 
+    report_data_logging_for_ss(ctx, "ss:get clip", "dbus method fail");
     tapi_log_error("get property failed in %s", __func__);
     return -EINVAL;
 }
