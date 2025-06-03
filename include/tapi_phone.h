@@ -21,8 +21,10 @@
 #ifndef __TAPI_PHONE_H
 #define __TAPI_PHONE_H
 
-#include "bt_wtp.h"
 #include "tapi.h"
+#include <uv.h>
+
+#define MAX_TONE_LEN 32
 
 typedef struct {
     char* remote_bt_addr; // 60:136:70:219:143:100
@@ -31,16 +33,96 @@ typedef struct {
 } tapi_wtp_call_data_t; // wtp call info
 
 typedef struct {
+    int slot;
     char* phone_number;
+    int hide_callerid;
     char* call_id;
-    uint16_t other_info_len; // reserved field
-    uint8_t value[0]; // reserved field
 } tapi_cell_call_data_t; // esim call info
 
 typedef struct {
-    tapi_async_result* phone_info; // esim call+hf call param
+    tapi_cell_call_data_t* phone_info; // esim call+hf call param
     tapi_wtp_call_data_t* wtp_info; // wtp call param
 } tapi_call_data_t; // call data info
+
+typedef enum {
+    ESIM_TYPE,
+    WTP_TYPE,
+} tapi_phone_call_type;
+
+/**
+ * @brief Callback for radio state changed.
+ *
+ * This callback is triggered when esim radio state changed
+ * @param[out] state - the radio state.
+ */
+typedef void (*radio_state_change_callback_t)(int radio_state);
+
+/**
+ * @brief Callback for operator status changed.
+ *
+ * This callback is triggered when  operator status changed
+ * @param[out] status - the operator status.
+ */
+typedef void (*network_operator_status_changed_callback_t)(int status);
+
+/**
+ * @brief Callback for operator name changed.
+ *
+ * This callback is triggered when operator name changed
+ * @param[out] name - the operator name.
+ */
+typedef void (*network_operator_name_changed_callback_t)(const char* name);
+
+/**
+ * @brief Callback for network register state changed.
+ *
+ * This callback is triggered when network register state changed
+ * @param[out] status - the network register status.
+ */
+typedef void (*network_reg_state_changed_callback_t)(int status);
+
+/**
+ * @brief Callback for network strength changed.
+ *
+ * This callback is triggered when network strength changed
+ * @param[out] strength - the network strength.
+ */
+typedef void (*network_strength_changed_callback_t)(int strength);
+
+/**
+ * @brief Callback for modem status changed.
+ *
+ * This callback is triggered when modem status changed
+ * @param[out] status - the modem status.
+ */
+typedef void (*modem_status_changed_callback_t)(int status);
+
+/**
+ * @brief Callback for radio power changed.
+ *
+ * This callback is triggered when radio power changed
+ * @param[out] state - radio power state.
+ */
+typedef void (*radio_power_changed_callback_t)(bool state);
+
+/**
+ * @brief Callback for call state changed.
+ *
+ * This callback is triggered when call state changed
+ * @param[out] call_info - call state info.
+ */
+typedef void (*call_state_changed_callback_t)(tapi_call_info call_info);
+
+typedef struct {
+    radio_state_change_callback_t radio_state_change_cb;
+    network_operator_status_changed_callback_t operator_status_changed_cb;
+    network_operator_name_changed_callback_t operator_name_changed_cb;
+    network_reg_state_changed_callback_t network_reg_state_changed_cb;
+    network_strength_changed_callback_t strength_changed_cb;
+    modem_status_changed_callback_t modem_status_changed_cb;
+    radio_power_changed_callback_t radio_power_changed_cb;
+    call_state_changed_callback_t call_state_changed_cb;
+} tele_callbacks_t;
 
 /**
  * @brief it will be called when phone service client is ready.client
@@ -56,17 +138,20 @@ typedef int32_t (*phone_client_status_cb)(int status);
  * after start client,it can be used to communicate with phone service
  *
  * @param[in] loop - default uv_loop
- * @param[in] cb - Event callback.it will be called when client ready or fail
  * @param[in] user_data - user data
+ * @parma[in] remote - false-client locate on AP,true-client locate on not AP
  * @return - 0-success,1-fail
  */
-int tapi_start_phone_service_client(uv_loop_t* loop, phone_client_status_cb cb, void* user_data);
+int tapi_start_phone_service_client(uv_loop_t* loop, void* user_data, bool remote);
 
 /**
  * @brief stop a phone service client.after stop client,client can't be used to
  * communicate with phone service
  */
 void tapi_stop_phone_service_client(void);
+
+#ifdef CONFIG_PHONE_SERVICE_WTP
+#include "bt_wtp.h"
 
 /**
  * @brief register wtp callback functions.An application may register interested callbacks
@@ -139,14 +224,12 @@ int tapi_wtp_modify_discovery(bool enable, tapi_async_function async_cb, void* u
  * @return 0-start_visibility request send success,other fail
  */
 int tapi_wtp_modify_visibility(bool enable, tapi_async_function async_cb, void* user_obj);
+#endif
 
 /**
- * @brief Initiate a call (wtp:WTP transport with the remote device or network).
- * This function is used by the application to initiate a call (wtp:WTP transport with the selected peer
- * device or network. At least one identification information (e.g., address or phone number) shall
- * be provided. Available parameter sets shall be provided to indicate the expected transport type.)
+ * @brief dial a call.This function is used by the application to dial a call
  *
- * @param[in] call_data- Information of call needed,wtp call wtp_remote_t* remote and wtp_param_t* param
+ * @param[in] call_data- Information of call needed
  * @param[in] async_cb - Event callback.
  * @param[in] user_obj - user data
  * @return 0- call request send success,other fail
@@ -166,7 +249,7 @@ int tapi_hangup_call(tapi_call_data_t call_data, tapi_async_function async_cb, v
 /**
  * @brief answer a call.This function is used by the application to answer a call
  *
- * @param[in] call_data- Information of call needed,wtp call wtp_remote_t* remote and wtp_param_t* param
+ * @param[in] call_data- Information of call needed
  * @param[in] async_cb - Event callback.
  * @param[in] user_obj - user data
  * @return 0-call answer request send success,other fail
@@ -176,11 +259,86 @@ int tapi_answer_call(tapi_call_data_t call_data, tapi_async_function async_cb, v
 /**
  * @brief reject a call.This function is used by the application to reject a call
  *
- * @param[in] call_data- Information of call needed,wtp call wtp_remote_t* remote and NULL
+ * @param[in] call_data- Information of call needed
  * @param[in] async_cb - Event callback.
  * @param[in] user_obj - user data
  * @return 0-call rejct request send success,other fail
  */
 int tapi_reject_call(tapi_call_data_t call_data, tapi_async_function async_cb, void* user_obj);
+
+/**
+ * @brief reject a call.This function is used by the application to reject a call
+ *
+ * @param[in] tele_cbs- callback list
+ * @param[in] async_cb - Event callback.
+ * @param[in] user_obj - user data
+ * @return 0-callback register success,other fail
+ */
+int tapi_client_register_callbacks(tele_callbacks_t tele_cbs, tapi_async_function async_cb, void* user_obj);
+
+/**
+ * @brief register tele callback functions.
+ *
+ * @param[in] async_cb - Event callback.
+ * @param[in] user_obj - user data
+ * @return 0-callback register success,other fail
+ */
+int tapi_client_unregister_callbacks(tapi_async_function async_cb, void* user_obj);
+
+/**
+ * @brief set radio power functions.
+ *
+ * @param[in] poweron - 0-disable,1-enable.
+ * @param[in] async_cb - Event callback.
+ * @param[in] user_obj - user data
+ * @return 0-callback register success,other fail
+ */
+int tapi_client_set_radio_power(bool poweron, tapi_async_function async_cb, void* user_obj);
+
+/**
+ * Hangup one active call and answer another waiting call.
+ * @param[in] call_type - 0-esim,1-wtp.just support 0 currently
+ * @param[in] async_cb - Event callback.
+ * @param[in] user_obj - user data
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_release_and_answer_call(int call_type, tapi_async_function async_cb, void* user_obj);
+
+/**
+ * Hold one active call and answer another waiting call.
+ * @param[in] call_type - 0-esim,1-wtp.just support 0 currently
+ * @param[in] async_cb - Event callback.
+ * @param[in] user_obj - user data
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_hold_and_answer_call(int call_type, tapi_async_function async_cb, void* user_obj);
+
+/**
+ * Hold one active call as background call or Resume one background call to foreground.
+ * @param[in] call_type - 0-esim,1-wtp.just support 0 currently
+ * @param[in] call_type - 0-hold,1-resume
+ * @param[in] async_cb - Event callback.
+ * @param[in] user_obj - user data
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_hold_call(int call_type, bool hold, tapi_async_function async_cb, void* user_obj);
+
+/**
+ * Merge multiple calls into one conference call.
+ * @param[in] call_type - 0-esim,1-wtp.just support 0 currently
+ * @param[in] async_cb - Event callback.
+ * @param[in] user_obj - user data
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_merge_call(int call_type, tapi_async_function async_cb, void* user_obj);
+
+/**
+ * Send DTMF tone playing request.
+ * @param[in] tones - DTMF tone character.
+ * @param[in] async_cb - Event callback.
+ * @param[in] user_obj - user data
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_send_tones(const char* tones, tapi_async_function async_cb, void* user_obj);
 
 #endif

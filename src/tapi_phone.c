@@ -18,46 +18,23 @@
 #include "conn_xpc_client_msg.h"
 #include "tapi_common.h"
 #include "tapi_xpc.h"
-#include <uv.h>
 
 #define PHONE_SERVICE_SOCKET_PATH "telephony/phone_service"
 #define COLON_NUM 5
+#define CLIENT_START_RETRY_COUNT 9
 
-int string_to_bt_address(bt_address_t* addr, const char* str)
+static void free_handler_in_client(void* user_data)
 {
-    int colon_count = 0;
-    int result = 0;
+    tapi_async_handler* handler;
 
-    if (addr == NULL || str == NULL) {
-        tapi_log_error("%s: addr or str is null", __func__);
-        return -1;
-    }
-
-    if (strlen(str) < BT_ADDR_STR_LENGTH) {
-        tapi_log_error("%s: str len is not correct", __func__);
-        return -1;
-    }
-
-    for (int i = 0; i < strlen(str); i++) {
-        if (str[i] == ':') {
-            colon_count++;
+    tapi_log_info("%s", __func__);
+    handler = (tapi_async_handler*)user_data;
+    if (handler != NULL) {
+        if (handler->result != NULL) {
+            free(handler->result);
         }
+        free(handler);
     }
-    if (colon_count != COLON_NUM) {
-        tapi_log_error("%s: str format is not correct", __func__);
-        return -1;
-    }
-
-    result = sscanf(str, "%02hhX:%02hhX:%02hhX:%02hhX:%02hhX:%02hhX",
-        &addr->addr[0], &addr->addr[1], &addr->addr[2],
-        &addr->addr[3], &addr->addr[4], &addr->addr[5]);
-
-    if (result != BT_ADDR_LENGTH) {
-        tapi_log_error("%s: parsing bt addr fail", __func__);
-        return -1;
-    }
-
-    return 0;
 }
 
 tapi_async_handler* create_aync_handler(int msg_id, tapi_async_function async_cb, void* user_obj)
@@ -85,6 +62,44 @@ tapi_async_handler* create_aync_handler(int msg_id, tapi_async_function async_cb
     ar->user_obj = user_obj;
 
     return handler;
+}
+
+#ifdef CONFIG_PHONE_SERVICE_WTP
+int string_to_bt_address(bt_address_t* addr, const char* str)
+{
+    int colon_count = 0;
+    int result = 0;
+
+    if (addr == NULL || str == NULL) {
+        tapi_log_error("%s: addr or str is null", __func__);
+        return -1;
+    }
+
+    if (strlen(str) > BT_ADDR_STR_LENGTH) {
+        tapi_log_error("%s: str len is not correct", __func__);
+        return -1;
+    }
+
+    for (int i = 0; i < strlen(str); i++) {
+        if (str[i] == ':') {
+            colon_count++;
+        }
+    }
+    if (colon_count != COLON_NUM) {
+        tapi_log_error("%s: str format is not correct", __func__);
+        return -1;
+    }
+
+    result = sscanf(str, "%02hhX:%02hhX:%02hhX:%02hhX:%02hhX:%02hhX",
+        &addr->addr[0], &addr->addr[1], &addr->addr[2],
+        &addr->addr[3], &addr->addr[4], &addr->addr[5]);
+
+    if (result != BT_ADDR_LENGTH) {
+        tapi_log_error("%s: parsing bt addr fail", __func__);
+        return -1;
+    }
+
+    return 0;
 }
 
 static wtp_xpc_data_t* covert_wtp_data_to_xpc_data_in_client(tapi_wtp_call_data_t* wtp_data, int msg_id, tapi_async_function async_cb, void* user_obj)
@@ -240,20 +255,6 @@ static wtp_remote_t* covert_xpc_device_to_wtp_remote_in_client(wtp_xpc_device_t*
     return remote;
 }
 
-static void free_handler_in_client(void* user_data)
-{
-    tapi_async_handler* handler;
-
-    tapi_log_info("%s", __func__);
-    handler = (tapi_async_handler*)user_data;
-    if (handler != NULL) {
-        if (handler->result != NULL) {
-            free(handler->result);
-        }
-        free(handler);
-    }
-}
-
 wtp_xpc_device_local_t* covert_wtp_local_to_xpc_local_in_client(wtp_local_t* wtp_local, int msg_id, tapi_async_function async_cb, void* user_obj)
 {
     wtp_xpc_device_local_t* xpc_local;
@@ -308,7 +309,8 @@ int tapi_client_wtp_unregister_cb(tapi_async_function async_cb, void* user_obj)
     handler = create_aync_handler(PHONE_SERVICE_WTP_UNREGISTER_CALLBACK, async_cb, user_obj);
     if (handler == NULL) {
         tapi_log_error("%s:aync handler create fail", __func__);
-        return -1;
+        ret = -1;
+        goto end;
     }
     xpc_cb.user_data = handler;
     memcpy(module_msg->xpc_msg.value, &xpc_cb, sizeof(wtp_xpc_unregister_callback_t));
@@ -316,6 +318,10 @@ int tapi_client_wtp_unregister_cb(tapi_async_function async_cb, void* user_obj)
     if (ret != 0) {
         tapi_log_error("%s:send xpc message fail", __func__);
         free_handler_in_client(handler);
+    }
+end:
+    if (module_msg != NULL) {
+        conn_xpc_module_msg_free(module_msg);
     }
     return ret; // 0 success,other fail
 }
@@ -342,7 +348,8 @@ int tapi_client_wtp_register_cb(const wtp_callbacks_t* cb_list, tapi_async_funct
     handler = create_aync_handler(PHONE_SERVICE_WTP_REGISTER_CALLBACK, async_cb, user_obj);
     if (handler == NULL) {
         tapi_log_error("%s:aync handler create fail", __func__);
-        return -1;
+        ret = -1;
+        goto end;
     }
     xpc_cb.user_data = handler;
     memcpy(module_msg->xpc_msg.value, &xpc_cb, sizeof(wtp_xpc_callbacks_t));
@@ -351,6 +358,10 @@ int tapi_client_wtp_register_cb(const wtp_callbacks_t* cb_list, tapi_async_funct
         tapi_log_error("%s:send xpc message fail", __func__);
         free_handler_in_client(xpc_cb.user_data);
     }
+end:
+    if (module_msg != NULL) {
+        conn_xpc_module_msg_free(module_msg);
+    }
     return ret; // 0 success,other fail
 }
 
@@ -358,7 +369,7 @@ int tapi_wtp_set_local_info(wtp_local_t* local, tapi_async_function async_cb, vo
 {
     int ret = 0;
     wtp_xpc_device_local_t* xpc_local;
-    conn_xpc_module_msg_t* module_msg;
+    conn_xpc_module_msg_t* module_msg = NULL;
 
     xpc_local = covert_wtp_local_to_xpc_local_in_client(local, PHONE_SERVICE_WTP_SET_LOCAL_INFO, async_cb, user_obj);
     if (xpc_local == NULL) {
@@ -370,8 +381,8 @@ int tapi_wtp_set_local_info(wtp_local_t* local, tapi_async_function async_cb, vo
     if (!module_msg) {
         tapi_log_error("%s:malloc module msg fail", __func__);
         free_handler_in_client(xpc_local);
-        free(xpc_local);
-        return -1;
+        ret = -1;
+        goto end;
     }
     memcpy(module_msg->xpc_msg.value, xpc_local, sizeof(wtp_xpc_device_local_t));
 
@@ -380,7 +391,11 @@ int tapi_wtp_set_local_info(wtp_local_t* local, tapi_async_function async_cb, vo
         tapi_log_error("%s:send xpc message fail", __func__);
         free_handler_in_client(xpc_local->user_data);
     }
+end:
     free(xpc_local);
+    if (module_msg != NULL) {
+        conn_xpc_module_msg_free(module_msg);
+    }
     return ret; // 0 success,other fail
 }
 
@@ -388,7 +403,7 @@ int tapi_client_set_audio_type(int type, tapi_async_function async_cb, void* use
 {
     int ret = 0;
     wtp_audio_type_t xpc_audio_data;
-    conn_xpc_module_msg_t* module_msg;
+    conn_xpc_module_msg_t* module_msg = NULL;
     tapi_async_handler* handler;
 
     module_msg = conn_xpc_module_msg_alloc(PHONE_SERVICE_WTP,
@@ -401,7 +416,8 @@ int tapi_client_set_audio_type(int type, tapi_async_function async_cb, void* use
     handler = create_aync_handler(PHONE_SERVICE_WTP_SET_AUDIO_TYPE, async_cb, user_obj);
     if (handler == NULL) {
         tapi_log_error("%s:aync handler create fail", __func__);
-        return -1;
+        ret = -1;
+        goto end;
     }
     xpc_audio_data.user_data = handler;
 
@@ -411,13 +427,17 @@ int tapi_client_set_audio_type(int type, tapi_async_function async_cb, void* use
         tapi_log_error("%s:send xpc message fail", __func__);
         free_handler_in_client(xpc_audio_data.user_data);
     }
+end:
+    if (module_msg != NULL) {
+        conn_xpc_module_msg_free(module_msg);
+    }
     return ret; // 0 success,other fail
 }
 
 int tapi_wtp_modify_discovery(bool enable, tapi_async_function async_cb, void* user_obj)
 {
     int ret = 0;
-    conn_xpc_module_msg_t* module_msg;
+    conn_xpc_module_msg_t* module_msg = NULL;
     wtp_discovery_t xpc_data;
     tapi_async_handler* handler;
 
@@ -432,7 +452,8 @@ int tapi_wtp_modify_discovery(bool enable, tapi_async_function async_cb, void* u
     handler = create_aync_handler(PHONE_SERVICE_WTP_MODIFY_DISCOVERY, async_cb, user_obj);
     if (handler == NULL) {
         tapi_log_error("%s:aync handler create fail", __func__);
-        return -1;
+        ret = -1;
+        goto end;
     }
     xpc_data.user_data = handler;
     memcpy(module_msg->xpc_msg.value, &xpc_data, sizeof(wtp_discovery_t));
@@ -441,13 +462,17 @@ int tapi_wtp_modify_discovery(bool enable, tapi_async_function async_cb, void* u
         tapi_log_error("%s:send xpc message fail", __func__);
         free_handler_in_client(xpc_data.user_data);
     }
+end:
+    if (module_msg != NULL) {
+        conn_xpc_module_msg_free(module_msg);
+    }
     return ret; // 0 success,other fail
 }
 
 int tapi_wtp_modify_visibility(bool enable, tapi_async_function async_cb, void* user_obj)
 {
     int ret = 0;
-    conn_xpc_module_msg_t* module_msg;
+    conn_xpc_module_msg_t* module_msg = NULL;
     wtp_visibility_t xpc_data;
     tapi_async_handler* handler;
 
@@ -462,7 +487,8 @@ int tapi_wtp_modify_visibility(bool enable, tapi_async_function async_cb, void* 
     handler = create_aync_handler(PHONE_SERVICE_WTP_MODIFY_VISIBILITY, async_cb, user_obj);
     if (handler == NULL) {
         tapi_log_error("%s:aync handler create fail", __func__);
-        return -1;
+        ret = -1;
+        goto end;
     }
     xpc_data.user_data = handler;
     memcpy(module_msg->xpc_msg.value, &xpc_data, sizeof(wtp_visibility_t));
@@ -471,121 +497,299 @@ int tapi_wtp_modify_visibility(bool enable, tapi_async_function async_cb, void* 
         tapi_log_error("%s:send xpc message fail", __func__);
         free_handler_in_client(xpc_data.user_data);
     }
+end:
+    if (module_msg != NULL) {
+        conn_xpc_module_msg_free(module_msg);
+    }
     return ret; // 0 success,other fail
 }
+#endif
 
 int tapi_dial_call(tapi_call_data_t call_data, tapi_async_function async_cb, void* user_obj)
 {
     int ret = 0;
-    wtp_xpc_data_t* xpc_data;
-    conn_xpc_module_msg_t* module_msg;
+    conn_xpc_module_msg_t* module_msg = NULL;
 
-    xpc_data = covert_wtp_data_to_xpc_data_in_client(call_data.wtp_info, PHONE_SERVICE_WTP_DIAL, async_cb, user_obj);
-    if (xpc_data == NULL) {
-        tapi_log_error("%s,device info fail", __func__);
-        return -1;
-    }
-    module_msg = conn_xpc_module_msg_alloc(PHONE_SERVICE_WTP,
-        PHONE_SERVICE_WTP_DIAL, sizeof(wtp_xpc_data_t) + sizeof(uint8_t) * xpc_data->other_info_len);
-    if (!module_msg) {
-        tapi_log_error("%s,malloc module msg fail", __func__);
+    if (call_data.wtp_info != NULL && call_data.phone_info == NULL) {
+#ifdef CONFIG_PHONE_SERVICE_WTP
+        wtp_xpc_data_t* xpc_data;
+
+        xpc_data = covert_wtp_data_to_xpc_data_in_client(call_data.wtp_info, PHONE_SERVICE_WTP_DIAL, async_cb, user_obj);
+        if (xpc_data == NULL) {
+            tapi_log_error("%s,device info fail", __func__);
+            return -1;
+        }
+        module_msg = conn_xpc_module_msg_alloc(PHONE_SERVICE_WTP,
+            PHONE_SERVICE_WTP_DIAL, sizeof(wtp_xpc_data_t) + sizeof(uint8_t) * xpc_data->other_info_len);
+        if (!module_msg) {
+            tapi_log_error("%s,malloc module msg fail", __func__);
+            free_handler_in_client(xpc_data->user_data);
+            free(xpc_data);
+            return -1;
+        }
+        memcpy(module_msg->xpc_msg.value, xpc_data, sizeof(wtp_xpc_data_t) + sizeof(uint8_t) * xpc_data->other_info_len);
+        ret = conn_xpc_client_send(module_msg);
+        if (ret != 0) {
+            tapi_log_error("%s:send xpc message fail", __func__);
+            free_handler_in_client(xpc_data->user_data);
+        }
         free(xpc_data);
-        return -1;
+#else
+        tapi_log_error("%s:CONFIG_PHONE_SERVICE_WTP not support", __func__);
+#endif
+    } else if (call_data.wtp_info == NULL && call_data.phone_info != NULL) {
+        xpc_tele_dial_t tele_dial_data;
+        tapi_async_handler* handler;
+
+        module_msg = conn_xpc_module_msg_alloc(PHONE_SERVICE_ESIM,
+            PHONE_SERVICE_ESIM_DIAL, sizeof(xpc_tele_dial_t));
+        if (!module_msg) {
+            tapi_log_error("%s,malloc module msg fail", __func__);
+            return -1;
+        }
+        tele_dial_data.slot_id = call_data.phone_info->slot;
+        snprintf(tele_dial_data.number, 81, "%s", call_data.phone_info->phone_number);
+        tele_dial_data.hide_callerid = call_data.phone_info->hide_callerid;
+        handler = create_aync_handler(PHONE_SERVICE_ESIM_DIAL, async_cb, user_obj);
+        if (handler == NULL) {
+            tapi_log_error("%s:aync handler create fail", __func__);
+            ret = -1;
+            goto end;
+        }
+        tele_dial_data.user_data = handler;
+        memcpy(module_msg->xpc_msg.value, &tele_dial_data, sizeof(xpc_tele_dial_t));
+        ret = conn_xpc_client_send(module_msg);
+        if (ret != 0) {
+            tapi_log_error("%s:send xpc message fail", __func__);
+            free_handler_in_client(handler);
+        }
+    } else {
+        tapi_log_error("%s:unexpected data", __func__);
     }
-    memcpy(module_msg->xpc_msg.value, xpc_data, sizeof(wtp_xpc_data_t) + sizeof(uint8_t) * xpc_data->other_info_len);
-    ret = conn_xpc_client_send(module_msg);
-    if (ret != 0) {
-        tapi_log_error("%s:send xpc message fail", __func__);
-        free_handler_in_client(xpc_data->user_data);
+end:
+    if (module_msg != NULL) {
+        conn_xpc_module_msg_free(module_msg);
     }
-    free(xpc_data);
     return ret; // 0 success,other fail
 }
 
 int tapi_hangup_call(tapi_call_data_t call_data, tapi_async_function async_cb, void* user_obj)
 {
     int ret = 0;
-    wtp_xpc_data_t* xpc_data;
-    conn_xpc_module_msg_t* module_msg;
+    conn_xpc_module_msg_t* module_msg = NULL;
 
-    xpc_data = covert_wtp_data_to_xpc_data_in_client(call_data.wtp_info, PHONE_SERVICE_WTP_HANGUP, async_cb, user_obj);
-    if (xpc_data == NULL) {
-        tapi_log_error("%s,device info fail", __func__);
-        return -1;
-    }
-    module_msg = conn_xpc_module_msg_alloc(PHONE_SERVICE_WTP,
-        PHONE_SERVICE_WTP_HANGUP, sizeof(wtp_xpc_data_t) + sizeof(uint8_t) * xpc_data->other_info_len);
-    if (!module_msg) {
-        tapi_log_error("malloc module msg fail");
+    if (call_data.wtp_info != NULL && call_data.phone_info == NULL) {
+#ifdef CONFIG_PHONE_SERVICE_WTP
+        wtp_xpc_data_t* xpc_data;
+
+        xpc_data = covert_wtp_data_to_xpc_data_in_client(call_data.wtp_info, PHONE_SERVICE_WTP_HANGUP, async_cb, user_obj);
+        if (xpc_data == NULL) {
+            tapi_log_error("%s,device info fail", __func__);
+            return -1;
+        }
+        module_msg = conn_xpc_module_msg_alloc(PHONE_SERVICE_WTP,
+            PHONE_SERVICE_WTP_HANGUP, sizeof(wtp_xpc_data_t) + sizeof(uint8_t) * xpc_data->other_info_len);
+        if (!module_msg) {
+            tapi_log_error("malloc module msg fail");
+            free_handler_in_client(xpc_data->user_data);
+            free(xpc_data);
+            return -1;
+        }
+        memcpy(module_msg->xpc_msg.value, xpc_data, sizeof(wtp_xpc_data_t) + sizeof(uint8_t) * xpc_data->other_info_len);
+        ret = conn_xpc_client_send(module_msg);
+        if (ret != 0) {
+            tapi_log_error("%s:send xpc message fail", __func__);
+            free_handler_in_client(xpc_data->user_data);
+        }
         free(xpc_data);
-        return -1;
+#else
+        tapi_log_error("%s:CONFIG_PHONE_SERVICE_WTP not support", __func__);
+#endif
+    } else if (call_data.wtp_info == NULL && call_data.phone_info != NULL) {
+        xpc_tele_hangup_t tele_hangup_data;
+        tapi_async_handler* handler;
+
+        module_msg = conn_xpc_module_msg_alloc(PHONE_SERVICE_ESIM,
+            PHONE_SERVICE_ESIM_HANGUP, sizeof(xpc_tele_hangup_t));
+        if (!module_msg) {
+            tapi_log_error("%s,malloc module msg fail", __func__);
+            return -1;
+        }
+        tele_hangup_data.slot_id = call_data.phone_info->slot;
+        if (call_data.phone_info->call_id != NULL) {
+            tele_hangup_data.call_id_exist = 1;
+            snprintf(tele_hangup_data.call_id, MAX_CALL_ID_LENGTH, "%s", call_data.phone_info->call_id);
+        } else {
+            tele_hangup_data.call_id_exist = 0;
+        }
+        handler = create_aync_handler(PHONE_SERVICE_ESIM_HANGUP, async_cb, user_obj);
+        if (handler == NULL) {
+            tapi_log_error("%s:aync handler create fail", __func__);
+            ret = -1;
+            goto end;
+        }
+        tele_hangup_data.user_data = handler;
+        memcpy(module_msg->xpc_msg.value, &tele_hangup_data, sizeof(xpc_tele_hangup_t));
+        ret = conn_xpc_client_send(module_msg);
+        if (ret != 0) {
+            tapi_log_error("%s:send xpc message fail", __func__);
+            free_handler_in_client(handler);
+        }
+    } else {
+        tapi_log_error("%s:unexpected data", __func__);
     }
-    memcpy(module_msg->xpc_msg.value, xpc_data, sizeof(wtp_xpc_data_t) + sizeof(uint8_t) * xpc_data->other_info_len);
-    ret = conn_xpc_client_send(module_msg);
-    if (ret != 0) {
-        tapi_log_error("%s:send xpc message fail", __func__);
-        free_handler_in_client(xpc_data->user_data);
+end:
+    if (module_msg != NULL) {
+        conn_xpc_module_msg_free(module_msg);
     }
-    free(xpc_data);
     return ret; // 0 success,other fail
 }
 
 int tapi_answer_call(tapi_call_data_t call_data, tapi_async_function async_cb, void* user_obj)
 {
     int ret = 0;
-    wtp_xpc_data_t* xpc_data;
-    conn_xpc_module_msg_t* module_msg;
+    conn_xpc_module_msg_t* module_msg = NULL;
 
-    xpc_data = covert_wtp_data_to_xpc_data_in_client(call_data.wtp_info, PHONE_SERVICE_WTP_ANSWER, async_cb, user_obj);
-    if (xpc_data == NULL) {
-        tapi_log_error("%s,device info fail", __func__);
-        return -1;
-    }
-    module_msg = conn_xpc_module_msg_alloc(PHONE_SERVICE_WTP,
-        PHONE_SERVICE_WTP_ANSWER, sizeof(wtp_xpc_data_t) + sizeof(uint8_t) * xpc_data->other_info_len);
-    if (!module_msg) {
-        tapi_log_error("malloc module msg fail");
+    if (call_data.wtp_info != NULL && call_data.phone_info == NULL) {
+#ifdef CONFIG_PHONE_SERVICE_WTP
+        wtp_xpc_data_t* xpc_data;
+
+        xpc_data = covert_wtp_data_to_xpc_data_in_client(call_data.wtp_info, PHONE_SERVICE_WTP_ANSWER, async_cb, user_obj);
+        if (xpc_data == NULL) {
+            tapi_log_error("%s,device info fail", __func__);
+            return -1;
+        }
+        module_msg = conn_xpc_module_msg_alloc(PHONE_SERVICE_WTP,
+            PHONE_SERVICE_WTP_ANSWER, sizeof(wtp_xpc_data_t) + sizeof(uint8_t) * xpc_data->other_info_len);
+        if (!module_msg) {
+            tapi_log_error("malloc module msg fail");
+            free_handler_in_client(xpc_data->user_data);
+            free(xpc_data);
+            return -1;
+        }
+        memcpy(module_msg->xpc_msg.value, xpc_data, sizeof(wtp_xpc_data_t) + sizeof(uint8_t) * xpc_data->other_info_len);
+        ret = conn_xpc_client_send(module_msg);
+        if (ret != 0) {
+            tapi_log_error("%s:send xpc message fail", __func__);
+            free_handler_in_client(xpc_data->user_data);
+        }
         free(xpc_data);
-        return -1;
+#else
+        tapi_log_error("%s:CONFIG_PHONE_SERVICE_WTP not support", __func__);
+#endif
+    } else if (call_data.wtp_info == NULL && call_data.phone_info != NULL) {
+        xpc_tele_answer_t tele_answer_data;
+        tapi_async_handler* handler;
+
+        module_msg = conn_xpc_module_msg_alloc(PHONE_SERVICE_ESIM,
+            PHONE_SERVICE_ESIM_ANSWER, sizeof(xpc_tele_answer_t));
+        if (!module_msg) {
+            tapi_log_error("%s,malloc module msg fail", __func__);
+            return -1;
+        }
+        tele_answer_data.slot_id = call_data.phone_info->slot;
+        if (call_data.phone_info->call_id != NULL) {
+            snprintf(tele_answer_data.call_id, MAX_CALL_ID_LENGTH, "%s", call_data.phone_info->call_id);
+        } else {
+            tapi_log_error("%s,no call id", __func__);
+            ret = -1;
+            goto end;
+        }
+        handler = create_aync_handler(PHONE_SERVICE_ESIM_ANSWER, async_cb, user_obj);
+        if (handler == NULL) {
+            tapi_log_error("%s:aync handler create fail", __func__);
+            ret = -1;
+            goto end;
+        }
+        tele_answer_data.user_data = handler;
+        memcpy(module_msg->xpc_msg.value, &tele_answer_data, sizeof(xpc_tele_answer_t));
+        ret = conn_xpc_client_send(module_msg);
+        if (ret != 0) {
+            tapi_log_error("%s:send xpc message fail", __func__);
+            free_handler_in_client(handler);
+        }
+    } else {
+        tapi_log_error("%s:unexpected data", __func__);
     }
-    memcpy(module_msg->xpc_msg.value, xpc_data, sizeof(wtp_xpc_data_t) + sizeof(uint8_t) * xpc_data->other_info_len);
-    ret = conn_xpc_client_send(module_msg);
-    if (ret != 0) {
-        tapi_log_error("%s:send xpc message fail", __func__);
-        free_handler_in_client(xpc_data->user_data);
+end:
+    if (module_msg != NULL) {
+        conn_xpc_module_msg_free(module_msg);
     }
-    free(xpc_data);
     return ret; // 0 success,other fail
 }
 
 int tapi_reject_call(tapi_call_data_t call_data, tapi_async_function async_cb, void* user_obj)
 {
     int ret = 0;
-    wtp_xpc_data_t* xpc_data;
-    conn_xpc_module_msg_t* module_msg;
+    conn_xpc_module_msg_t* module_msg = NULL;
 
-    xpc_data = covert_wtp_data_to_xpc_data_in_client(call_data.wtp_info, PHONE_SERVICE_WTP_REJECT, async_cb, user_obj);
-    if (xpc_data == NULL) {
-        tapi_log_error("%s,device info fail", __func__);
-        return -1;
-    }
-    module_msg = conn_xpc_module_msg_alloc(PHONE_SERVICE_WTP,
-        PHONE_SERVICE_WTP_REJECT, sizeof(wtp_xpc_data_t) + sizeof(uint8_t) * xpc_data->other_info_len);
-    if (!module_msg) {
-        tapi_log_error("malloc module msg fail");
+    if (call_data.wtp_info != NULL && call_data.phone_info == NULL) {
+#ifdef CONFIG_PHONE_SERVICE_WTP
+        wtp_xpc_data_t* xpc_data;
+
+        xpc_data = covert_wtp_data_to_xpc_data_in_client(call_data.wtp_info, PHONE_SERVICE_WTP_REJECT, async_cb, user_obj);
+        if (xpc_data == NULL) {
+            tapi_log_error("%s,device info fail", __func__);
+            return -1;
+        }
+        module_msg = conn_xpc_module_msg_alloc(PHONE_SERVICE_WTP,
+            PHONE_SERVICE_WTP_REJECT, sizeof(wtp_xpc_data_t) + sizeof(uint8_t) * xpc_data->other_info_len);
+        if (!module_msg) {
+            tapi_log_error("malloc module msg fail");
+            free(xpc_data);
+            return -1;
+        }
+        memcpy(module_msg->xpc_msg.value, xpc_data, sizeof(wtp_xpc_data_t) + sizeof(uint8_t) * xpc_data->other_info_len);
+        ret = conn_xpc_client_send(module_msg);
+        if (ret != 0) {
+            tapi_log_error("%s:send xpc message fail", __func__);
+            free_handler_in_client(xpc_data->user_data);
+        }
         free(xpc_data);
-        return -1;
+#else
+        tapi_log_error("%s:CONFIG_PHONE_SERVICE_WTP not support", __func__);
+#endif
+    } else if (call_data.wtp_info == NULL && call_data.phone_info != NULL) {
+        xpc_tele_reject_t tele_reject_data;
+        tapi_async_handler* handler;
+
+        module_msg = conn_xpc_module_msg_alloc(PHONE_SERVICE_ESIM,
+            PHONE_SERVICE_ESIM_REJECT, sizeof(xpc_tele_reject_t));
+        if (!module_msg) {
+            tapi_log_error("%s,malloc module msg fail", __func__);
+            return -1;
+        }
+        tele_reject_data.slot_id = call_data.phone_info->slot;
+        if (call_data.phone_info->call_id != NULL) {
+            tele_reject_data.call_id_exist = 1;
+            snprintf(tele_reject_data.call_id, MAX_CALL_ID_LENGTH, "%s", call_data.phone_info->call_id);
+        } else {
+            tele_reject_data.call_id_exist = 0;
+        }
+        handler = create_aync_handler(PHONE_SERVICE_ESIM_REJECT, async_cb, user_obj);
+        if (handler == NULL) {
+            tapi_log_error("%s:aync handler create fail", __func__);
+            ret = -1;
+            goto end;
+        }
+        tele_reject_data.user_data = handler;
+        memcpy(module_msg->xpc_msg.value, &tele_reject_data, sizeof(xpc_tele_reject_t));
+        ret = conn_xpc_client_send(module_msg);
+        if (ret != 0) {
+            tapi_log_error("%s:send xpc message fail", __func__);
+            free_handler_in_client(handler);
+        }
+    } else {
+        tapi_log_error("%s:unexpected data", __func__);
     }
-    memcpy(module_msg->xpc_msg.value, xpc_data, sizeof(wtp_xpc_data_t) + sizeof(uint8_t) * xpc_data->other_info_len);
-    ret = conn_xpc_client_send(module_msg);
-    if (ret != 0) {
-        tapi_log_error("%s:send xpc message fail", __func__);
-        free_handler_in_client(xpc_data->user_data);
+end:
+    if (module_msg != NULL) {
+        conn_xpc_module_msg_free(module_msg);
     }
-    free(xpc_data);
     return ret; // 0 success,other fail
 }
 
+#ifdef CONFIG_PHONE_SERVICE_WTP
 int32_t phone_service_wtp_client_dispatch(uv_stream_t* handle, conn_xpc_msg_t* xpc_msg)
 {
     tapi_async_handler* handler;
@@ -687,19 +891,453 @@ int32_t phone_service_wtp_client_dispatch(uv_stream_t* handle, conn_xpc_msg_t* x
     }
     return 0;
 }
+#endif
 
-int tapi_start_phone_service_client(uv_loop_t* loop, phone_client_status_cb cb, void* user_data)
+static int send_common_req(int call_type, int req_id, tapi_async_function async_cb, void* user_obj)
 {
+    xpc_tele_common_req_t tele_common_data;
+    tapi_async_handler* handler;
+    conn_xpc_module_msg_t* module_msg = NULL;
+    int ret = -1;
+
     tapi_log_info("%s", __func__);
-    if (start_conn_xpc_client(loop, PHONE_SERVICE_SOCKET_PATH, user_data) < 0) {
-        tapi_log_error("start xpc client failed\n");
+    if (call_type != 0) {
+        tapi_log_error("%s,just support call_type = 0 currently", __func__);
         return -1;
     }
-    if (cb != NULL) {
-        register_conn_xpc_client_pipe_status_cb(cb);
+
+    module_msg = conn_xpc_module_msg_alloc(PHONE_SERVICE_ESIM,
+        req_id, sizeof(xpc_tele_common_req_t));
+    if (!module_msg) {
+        tapi_log_error("%s,malloc module msg fail", __func__);
+        return -1;
     }
-    // register wtp dispatch func
+    handler = create_aync_handler(req_id, async_cb, user_obj);
+    if (handler == NULL) {
+        tapi_log_error("%s:aync handler create fail", __func__);
+        ret = -1;
+        goto end;
+    }
+    tele_common_data.slot_id = 0;
+    tele_common_data.user_data = handler;
+    memcpy(module_msg->xpc_msg.value, &tele_common_data, sizeof(xpc_tele_common_req_t));
+    ret = conn_xpc_client_send(module_msg);
+    if (ret != 0) {
+        tapi_log_error("%s:send xpc message fail", __func__);
+        free_handler_in_client(handler);
+    }
+end:
+    if (module_msg != NULL) {
+        conn_xpc_module_msg_free(module_msg);
+    }
+    return ret; // 0 success,other fail
+}
+
+int tapi_release_and_answer_call(int call_type, tapi_async_function async_cb, void* user_obj)
+{
+    return send_common_req(call_type, PHONE_SERVICE_ESIM_RELEASE_AND_ANSWER, async_cb, user_obj);
+}
+
+int tapi_hold_and_answer_call(int call_type, tapi_async_function async_cb, void* user_obj)
+{
+    return send_common_req(call_type, PHONE_SERVICE_ESIM_HOLD_AND_ANSWER, async_cb, user_obj);
+}
+
+int tapi_hold_call(int call_type, bool hold, tapi_async_function async_cb, void* user_obj)
+{
+    xpc_tele_hold_unhold_req_t tele_hold_data;
+    tapi_async_handler* handler;
+    conn_xpc_module_msg_t* module_msg = NULL;
+    int ret = -1;
+
+    tapi_log_info("%s", __func__);
+    if (call_type != 0) {
+        tapi_log_error("%s,just support call_type = 0 currently", __func__);
+        return -1;
+    }
+
+    module_msg = conn_xpc_module_msg_alloc(PHONE_SERVICE_ESIM,
+        PHONE_SERVICE_ESIM_HOLD_CALL, sizeof(xpc_tele_hold_unhold_req_t));
+    if (!module_msg) {
+        tapi_log_error("%s,malloc module msg fail", __func__);
+        return -1;
+    }
+    handler = create_aync_handler(PHONE_SERVICE_ESIM_HOLD_CALL, async_cb, user_obj);
+    if (handler == NULL) {
+        tapi_log_error("%s:aync handler create fail", __func__);
+        ret = -1;
+        goto end;
+    }
+    tele_hold_data.slot_id = 0;
+    tele_hold_data.hold = hold;
+    tele_hold_data.user_data = handler;
+    memcpy(module_msg->xpc_msg.value, &tele_hold_data, sizeof(xpc_tele_hold_unhold_req_t));
+    ret = conn_xpc_client_send(module_msg);
+    if (ret != 0) {
+        tapi_log_error("%s:send xpc message fail", __func__);
+        free_handler_in_client(handler);
+    }
+end:
+    if (module_msg != NULL) {
+        conn_xpc_module_msg_free(module_msg);
+    }
+    return ret; // 0 success,other fail
+}
+
+int tapi_merge_call(int call_type, tapi_async_function async_cb, void* user_obj)
+{
+    return send_common_req(call_type, PHONE_SERVICE_ESIM_MERGE_CALL, async_cb, user_obj);
+}
+
+int tapi_send_tones(const char* tones, tapi_async_function async_cb, void* user_obj)
+{
+    xpc_tele_tones_t tele_tones_data;
+    tapi_async_handler* handler;
+    conn_xpc_module_msg_t* module_msg = NULL;
+    int ret = -1;
+
+    tapi_log_info("%s,tones:%s", __func__, tones);
+    module_msg = conn_xpc_module_msg_alloc(PHONE_SERVICE_ESIM,
+        PHONE_SERVICE_ESIM_SEND_TONES, sizeof(xpc_tele_tones_t));
+    if (!module_msg) {
+        tapi_log_error("%s,malloc module msg fail", __func__);
+        return -1;
+    }
+    handler = create_aync_handler(PHONE_SERVICE_ESIM_SEND_TONES, async_cb, user_obj);
+    if (handler == NULL) {
+        tapi_log_error("%s:aync handler create fail", __func__);
+        ret = -1;
+        goto end;
+    }
+    tele_tones_data.slot_id = 0;
+    tele_tones_data.user_data = handler;
+    snprintf(tele_tones_data.tone, MAX_TONE_LEN, "%s", tones);
+    tapi_log_info("tones:%s", tele_tones_data.tone);
+    memcpy(module_msg->xpc_msg.value, &tele_tones_data, sizeof(xpc_tele_tones_t));
+    ret = conn_xpc_client_send(module_msg);
+    if (ret != 0) {
+        tapi_log_error("%s:send xpc message fail", __func__);
+        free_handler_in_client(handler);
+    }
+end:
+    if (module_msg != NULL) {
+        conn_xpc_module_msg_free(module_msg);
+    }
+    return ret; // 0 success,other fail
+}
+
+int tapi_client_register_callbacks(tele_callbacks_t tele_cbs, tapi_async_function async_cb, void* user_obj)
+{
+    int ret = 0;
+    xpc_tele_reg_callbacks_t xpc_cbs;
+    tapi_async_handler* handler;
+
+    tapi_log_info("%s", __func__);
+    conn_xpc_module_msg_t* module_msg = conn_xpc_module_msg_alloc(PHONE_SERVICE_ESIM,
+        PHONE_SERVICE_ESIM_REGISTER_CALLBACK, sizeof(xpc_tele_reg_callbacks_t));
+    if (!module_msg) {
+        tapi_log_error("%s:malloc module msg fail", __func__);
+        return -1;
+    }
+    xpc_cbs.tele_callback.radio_state_change_cb = tele_cbs.radio_state_change_cb;
+    xpc_cbs.tele_callback.operator_status_changed_cb = tele_cbs.operator_status_changed_cb;
+    xpc_cbs.tele_callback.operator_name_changed_cb = tele_cbs.operator_name_changed_cb;
+    xpc_cbs.tele_callback.network_reg_state_changed_cb = tele_cbs.network_reg_state_changed_cb;
+    xpc_cbs.tele_callback.strength_changed_cb = tele_cbs.strength_changed_cb;
+    xpc_cbs.tele_callback.modem_status_changed_cb = tele_cbs.modem_status_changed_cb;
+    xpc_cbs.tele_callback.radio_power_changed_cb = tele_cbs.radio_power_changed_cb;
+    xpc_cbs.tele_callback.call_state_changed_cb = tele_cbs.call_state_changed_cb;
+
+    handler = create_aync_handler(PHONE_SERVICE_ESIM_REGISTER_CALLBACK, async_cb, user_obj);
+    if (handler == NULL) {
+        tapi_log_error("%s:aync handler create fail", __func__);
+        return -1;
+    }
+    xpc_cbs.user_data = handler;
+    memcpy(module_msg->xpc_msg.value, &xpc_cbs, sizeof(xpc_tele_reg_callbacks_t));
+    ret = conn_xpc_client_send(module_msg);
+    if (ret != 0) {
+        tapi_log_error("%s:send xpc message fail", __func__);
+        free_handler_in_client(xpc_cbs.user_data);
+    }
+    return ret;
+}
+
+int tapi_client_unregister_callbacks(tapi_async_function async_cb, void* user_obj)
+{
+    int ret = 0;
+    xpc_tele_unreg_callbacks_t xpc_cbs;
+    tapi_async_handler* handler;
+
+    tapi_log_info("%s", __func__);
+    conn_xpc_module_msg_t* module_msg = conn_xpc_module_msg_alloc(PHONE_SERVICE_ESIM,
+        PHONE_SERVICE_ESIM_UNREGISTER_CALLBACK, sizeof(xpc_tele_unreg_callbacks_t));
+    if (!module_msg) {
+        tapi_log_error("%s:malloc module msg fail", __func__);
+        return -1;
+    }
+
+    handler = create_aync_handler(PHONE_SERVICE_ESIM_UNREGISTER_CALLBACK, async_cb, user_obj);
+    xpc_cbs.user_data = handler;
+    memcpy(module_msg->xpc_msg.value, &xpc_cbs, sizeof(xpc_tele_unreg_callbacks_t));
+    ret = conn_xpc_client_send(module_msg);
+    if (ret != 0) {
+        tapi_log_error("%s:send xpc message fail", __func__);
+        free_handler_in_client(xpc_cbs.user_data);
+    }
+    return ret;
+}
+
+int tapi_client_set_radio_power(bool poweron, tapi_async_function async_cb, void* user_obj)
+{
+    int ret = 0;
+    xpc_tele_radio_power_t xpc_cbs;
+    tapi_async_handler* handler;
+
+    tapi_log_info("%s", __func__);
+    conn_xpc_module_msg_t* module_msg = conn_xpc_module_msg_alloc(PHONE_SERVICE_ESIM,
+        PHONE_SERVICE_ESIM_MODIFY_RADIO_POWER, sizeof(xpc_tele_radio_power_t));
+    if (!module_msg) {
+        tapi_log_error("%s:malloc module msg fail", __func__);
+        return -1;
+    }
+
+    handler = create_aync_handler(PHONE_SERVICE_ESIM_MODIFY_RADIO_POWER, async_cb, user_obj);
+    xpc_cbs.user_data = handler;
+    xpc_cbs.enable = poweron;
+    memcpy(module_msg->xpc_msg.value, &xpc_cbs, sizeof(xpc_tele_radio_power_t));
+    ret = conn_xpc_client_send(module_msg);
+    if (ret != 0) {
+        tapi_log_error("%s:send xpc message fail", __func__);
+        free_handler_in_client(xpc_cbs.user_data);
+    }
+    return ret;
+}
+
+void esim_deal_network_operator_status_changed(xpc_tele_operator_status_change_cb_t* data)
+{
+    tapi_log_info("%s", __func__);
+
+    if (data->operator_status_changed_cb == NULL) {
+        tapi_log_error("%s:func_cb == NULL", __func__);
+        return;
+    }
+    data->operator_status_changed_cb(data->status);
+}
+
+void esim_deal_network_operator_name_changed(xpc_tele_operator_name_change_cb_t* data)
+{
+    tapi_log_info("%s", __func__);
+
+    if (data->operator_name_changed_cb == NULL) {
+        tapi_log_error("%s:func_cb == NULL", __func__);
+        return;
+    }
+    data->operator_name_changed_cb(data->operator_name);
+}
+
+void esim_deal_network_reg_state_changed(xpc_tele_reg_state_change_cb_t* data)
+{
+    tapi_log_info("%s", __func__);
+
+    if (data->network_reg_state_changed_cb == NULL) {
+        tapi_log_error("%s:func_cb == NULL", __func__);
+        return;
+    }
+    data->network_reg_state_changed_cb(data->status);
+}
+
+void esim_deal_network_strength_changed(xpc_tele_network_strength_change_cb_t* data)
+{
+    tapi_log_info("%s", __func__);
+
+    if (data->strength_changed_cb == NULL) {
+        tapi_log_error("%s:func_cb == NULL", __func__);
+        return;
+    }
+    data->strength_changed_cb(data->strength);
+}
+
+void esim_deal_radio_power_changed(xpc_tele_radio_power_change_cb_t* data)
+{
+    tapi_log_info("%s", __func__);
+
+    if (data->radio_power_changed_cb == NULL) {
+        tapi_log_error("%s:func_cb == NULL", __func__);
+        return;
+    }
+    data->radio_power_changed_cb(data->state);
+}
+
+void esim_deal_modem_status_changed(xpc_tele_modem_status_change_cb_t* data)
+{
+    tapi_log_info("%s", __func__);
+
+    if (data->modem_status_changed_cb == NULL) {
+        tapi_log_error("%s:func_cb == NULL", __func__);
+        return;
+    }
+    data->modem_status_changed_cb(data->status);
+}
+
+void esim_deal_radio_state_changed(xpc_tele_radio_state_change_cb_t* data)
+{
+    tapi_log_info("%s", __func__);
+
+    if (data->radio_state_change_cb == NULL) {
+        tapi_log_error("%s:func_cb == NULL", __func__);
+        return;
+    }
+    data->radio_state_change_cb(data->radio_state);
+}
+
+void esim_deal_call_state_changed(xpc_tele_call_state_change_cb_t* data)
+{
+    tapi_log_info("%s", __func__);
+
+    if (data->call_state_changed_cb == NULL) {
+        tapi_log_error("%s:func_cb == NULL", __func__);
+        return;
+    }
+    data->call_state_changed_cb(data->call_info);
+}
+
+void esim_deal_common_resp(common_resp_t* resp)
+{
+    tapi_async_handler* handler;
+
+    tapi_log_info("%s", __func__);
+    if (resp->aync_handler != NULL) {
+        handler = resp->aync_handler;
+    } else {
+        tapi_log_error("%s:resp->aync_handler == NULL", __func__);
+        return;
+    }
+    if (handler->result != NULL) {
+        handler->result->status = resp->ret;
+    } else {
+        tapi_log_error("%s:handler->result == NULL", __func__);
+        free_handler_in_client(handler);
+        return;
+    }
+    if (handler->cb_function != NULL) {
+        handler->cb_function(handler->result);
+    } else {
+        tapi_log_error("%s:handler->cb_function == NULL", __func__);
+    }
+    free_handler_in_client(handler);
+}
+
+int32_t phone_service_esim_client_dispatch(uv_stream_t* handle, conn_xpc_msg_t* xpc_msg)
+{
+    tapi_log_info("%s,%d", __func__, xpc_msg->msg_type);
+
+    switch (xpc_msg->msg_type) {
+    case PHONE_SERVICE_ESIM_REGISTER_CALLBACK:
+    case PHONE_SERVICE_ESIM_UNREGISTER_CALLBACK:
+    case PHONE_SERVICE_ESIM_MODIFY_RADIO_POWER:
+    case PHONE_SERVICE_ESIM_DIAL:
+    case PHONE_SERVICE_ESIM_ANSWER:
+    case PHONE_SERVICE_ESIM_REJECT:
+    case PHONE_SERVICE_ESIM_HANGUP:
+    case PHONE_SERVICE_ESIM_RELEASE_AND_ANSWER:
+    case PHONE_SERVICE_ESIM_HOLD_AND_ANSWER:
+    case PHONE_SERVICE_ESIM_HOLD_CALL:
+    case PHONE_SERVICE_ESIM_MERGE_CALL:
+    case PHONE_SERVICE_ESIM_SEND_TONES:
+        if (xpc_msg->len != sizeof(common_resp_t)) {
+            tapi_log_error("%s:unexpected msg len", __func__);
+            return -1;
+        }
+        common_resp_t* resp = (common_resp_t*)xpc_msg->value;
+        esim_deal_common_resp(resp);
+        break;
+    case PHONE_SERVICE_ESIM_NETWORK_OPERATOR_STATUS_CHANGED:
+        if (xpc_msg->len != sizeof(xpc_tele_operator_status_change_cb_t)) {
+            tapi_log_error("%s:unexpected msg len", __func__);
+            return -1;
+        }
+        esim_deal_network_operator_status_changed((xpc_tele_operator_status_change_cb_t*)xpc_msg->value);
+        break;
+    case PHONE_SERVICE_ESIM_NETWORK_OPERATOR_NAME_CHANGED:
+        if (xpc_msg->len != sizeof(xpc_tele_operator_name_change_cb_t)) {
+            tapi_log_error("%s:unexpected msg len", __func__);
+            return -1;
+        }
+        esim_deal_network_operator_name_changed((xpc_tele_operator_name_change_cb_t*)xpc_msg->value);
+        break;
+    case PHONE_SERVICE_ESIM_NETWORK_REG_STATUS_CHANGED:
+        if (xpc_msg->len != sizeof(xpc_tele_reg_state_change_cb_t)) {
+            tapi_log_error("%s:unexpected msg len", __func__);
+            return -1;
+        }
+        esim_deal_network_reg_state_changed((xpc_tele_reg_state_change_cb_t*)xpc_msg->value);
+        break;
+    case PHONE_SERVICE_ESIM_NETWORK_STRENGTH_CHANGED:
+        if (xpc_msg->len != sizeof(xpc_tele_network_strength_change_cb_t)) {
+            tapi_log_error("%s:unexpected msg len", __func__);
+            return -1;
+        }
+        esim_deal_network_strength_changed((xpc_tele_network_strength_change_cb_t*)xpc_msg->value);
+        break;
+    case PHONE_SERVICE_ESIM_RADIO_POWER_CHANGED:
+        if (xpc_msg->len != sizeof(xpc_tele_radio_power_change_cb_t)) {
+            tapi_log_error("%s:unexpected msg len", __func__);
+            return -1;
+        }
+        esim_deal_radio_power_changed((xpc_tele_radio_power_change_cb_t*)xpc_msg->value);
+        break;
+    case PHONE_SERVICE_ESIM_MODEM_STATUS_CHANGED:
+        if (xpc_msg->len != sizeof(xpc_tele_modem_status_change_cb_t)) {
+            tapi_log_error("%s:unexpected msg len", __func__);
+            return -1;
+        }
+        esim_deal_modem_status_changed((xpc_tele_modem_status_change_cb_t*)xpc_msg->value);
+        break;
+    case PHONE_SERVICE_ESIM_RADIO_STATE_CHANGED:
+        if (xpc_msg->len != sizeof(xpc_tele_radio_state_change_cb_t)) {
+            tapi_log_error("%s:unexpected msg len", __func__);
+            return -1;
+        }
+        esim_deal_radio_state_changed((xpc_tele_radio_state_change_cb_t*)xpc_msg->value);
+        break;
+    case PHONE_SERVICE_ESIM_CALL_STATE_CHANGED:
+        if (xpc_msg->len != sizeof(xpc_tele_call_state_change_cb_t)) {
+            tapi_log_error("%s:unexpected msg len", __func__);
+            return -1;
+        }
+        esim_deal_call_state_changed((xpc_tele_call_state_change_cb_t*)xpc_msg->value);
+        break;
+    default:
+        tapi_log_info("%s,unexpected msg", __func__);
+        break;
+    }
+    return 0;
+}
+
+int tapi_start_phone_service_client(uv_loop_t* loop, void* user_data, bool remote)
+{
+    int count = CLIENT_START_RETRY_COUNT - 1;
+
+    tapi_log_info("%s", __func__);
+    do {
+        if (start_conn_xpc_client(loop, PHONE_SERVICE_SOCKET_PATH, remote ? CONN_XPC_COMMUNICATE_TYPE_CPC : CONN_XPC_COMMUNICATE_TYPE_IPC, NULL, user_data) >= 0) {
+            tapi_log_info("start conn cpc client success");
+            break;
+        }
+        sleep(2);
+        tapi_log_info("start conn xpc client failed, retry %d times", CLIENT_START_RETRY_COUNT - count);
+    } while (--count);
+
+    if (count == 0) {
+        tapi_log_error("start conn xpc client failed");
+        return -1;
+    }
+#ifdef CONFIG_PHONE_SERVICE_WTP
     register_conn_xpc_client_service(PHONE_SERVICE_WTP, phone_service_wtp_client_dispatch);
+#endif
+    register_conn_xpc_client_service(PHONE_SERVICE_ESIM, phone_service_esim_client_dispatch);
+
     return 0;
 }
 

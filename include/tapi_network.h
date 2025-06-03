@@ -93,6 +93,13 @@ typedef enum {
     SIGNAL_STRENGTH_EXCELLENT,
 } tapi_signal_strength_level;
 
+typedef enum {
+    OPERATOR_STATUS_UNKNOWN = 0,
+    OPERATOR_STATUS_AVAILABLE = 1,
+    OPERATOR_STATUS_CURRENT = 2,
+    OPERATOR_STATUS_FORBIDDEN = 3,
+} tapi_network_operator_status;
+
 typedef struct {
     int rssi;
     int rsrp;
@@ -298,6 +305,32 @@ int tapi_network_get_mcc(tapi_context context, int slot_id, char** mcc);
  */
 int tapi_network_get_mnc(tapi_context context, int slot_id, char** mnc);
 
+/**
+ * Get the operator status.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[out] out           operator status returned from ofono.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_network_get_operator_status(tapi_context context, int slot_id, int* out);
+
+/**
+ * Get operator name.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[out] out           operator name returned from ofono.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_network_get_operator_name(tapi_context context, int slot_id, char** out);
+
+/**
+ * Get reg state infomation.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[out] out           registeration status from ofono.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_network_get_reg_state(tapi_context context, int slot_id, tapi_registration_state* out);
 #ifdef __cplusplus
 }
 #endif

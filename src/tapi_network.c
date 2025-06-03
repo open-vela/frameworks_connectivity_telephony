@@ -315,6 +315,96 @@ static int network_state_changed(DBusConnection* connection,
     return 1;
 }
 
+static int network_operator_name_changed(DBusConnection* connection,
+    DBusMessage* message, void* user_data)
+{
+    tapi_async_handler* handler = user_data;
+    DBusMessageIter iter;
+    tapi_async_result* ar;
+    tapi_async_function cb;
+    const char* property;
+
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
+        return 0;
+    }
+
+    ar = handler->result;
+    if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
+        return 0;
+    }
+
+    cb = handler->cb_function;
+    if (cb == NULL) {
+        tapi_log_error("callback in %s is null", __func__);
+        return 0;
+    }
+
+    if (ar->msg_id != MSG_NETWORK_OPERATOR_NAME_CHANGE_IND) {
+        tapi_log_error("message id in %s is invalid", __func__);
+        return 0;
+    }
+
+    if (dbus_message_iter_init(message, &iter) == false) {
+        tapi_log_error("message iter init failed in %s", __func__);
+        return 0;
+    }
+
+    dbus_message_iter_get_basic(&iter, &property);
+    if (strcmp(property, "Name") == 0) {
+        ar->status = OK;
+        cb(ar);
+    }
+
+    return 1;
+}
+
+static int network_operator_status_changed(DBusConnection* connection,
+    DBusMessage* message, void* user_data)
+{
+    tapi_async_handler* handler = user_data;
+    DBusMessageIter iter;
+    tapi_async_result* ar;
+    tapi_async_function cb;
+    const char* property;
+
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
+        return 0;
+    }
+
+    ar = handler->result;
+    if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
+        return 0;
+    }
+
+    cb = handler->cb_function;
+    if (cb == NULL) {
+        tapi_log_error("callback in %s is null", __func__);
+        return 0;
+    }
+
+    if (ar->msg_id != MSG_NETWORK_OPERATOR_STATUS_CHANGE_IND) {
+        tapi_log_error("message id in %s is invalid", __func__);
+        return 0;
+    }
+
+    if (dbus_message_iter_init(message, &iter) == false) {
+        tapi_log_error("message iter init failed in %s", __func__);
+        return 0;
+    }
+
+    dbus_message_iter_get_basic(&iter, &property);
+    if (strcmp(property, "Status") == 0) {
+        ar->status = OK;
+        cb(ar);
+    }
+
+    return 1;
+}
+
 static int cellinfo_list_changed(DBusConnection* connection,
     DBusMessage* message, void* user_data)
 {
@@ -1188,6 +1278,77 @@ int tapi_network_get_neighbouring_cellinfos(tapi_context context,
     return OK;
 }
 
+int tapi_network_get_operator_status(tapi_context context, int slot_id, int* out)
+{
+    dbus_context* ctx = context;
+    GDBusProxy* proxy;
+    char* result;
+
+    if (ctx == NULL) {
+        tapi_log_error("contex in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("slot_id in %s is invalid", __func__);
+        return -EINVAL;
+    }
+
+    if (!ctx->client_ready) {
+        tapi_log_error("client is not ready in %s", __func__);
+        return -EAGAIN;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_NETWORK_OPERATOR];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy in %s", __func__);
+        return -EIO;
+    }
+
+    if (!g_dbus_proxy_get_property_basic(proxy, "Status", &result)) {
+        tapi_log_error("get property failed in %s", __func__);
+        return -EINVAL;
+    }
+
+    *out = tapi_utils_network_operator_status_from_string(result);
+
+    return OK;
+}
+
+int tapi_network_get_operator_name(tapi_context context, int slot_id, char** out)
+{
+    dbus_context* ctx = context;
+    GDBusProxy* proxy;
+
+    if (ctx == NULL) {
+        tapi_log_error("contex in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("slot_id in %s is invalid", __func__);
+        return -EINVAL;
+    }
+
+    if (!ctx->client_ready) {
+        tapi_log_error("client is not ready in %s", __func__);
+        return -EAGAIN;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_NETWORK_OPERATOR];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy in %s", __func__);
+        return -EIO;
+    }
+
+    if (!g_dbus_proxy_get_property_basic(proxy, "Name", out)) {
+        tapi_log_error("get property failed in %s", __func__);
+        return -EINVAL;
+    }
+
+    return OK;
+}
+
 int tapi_network_is_voice_registered(tapi_context context, int slot_id, bool* out)
 {
     dbus_context* ctx = context;
@@ -1224,6 +1385,43 @@ int tapi_network_is_voice_registered(tapi_context context, int slot_id, bool* ou
     reg_state = tapi_utils_registration_status_from_string(result);
     *out = (reg_state == NETWORK_REGISTRATION_STATUS_REGISTERED
         || reg_state == NETWORK_REGISTRATION_STATUS_ROAMING);
+
+    return OK;
+}
+
+int tapi_network_get_reg_state(tapi_context context, int slot_id, tapi_registration_state* out)
+{
+    dbus_context* ctx = context;
+    GDBusProxy* proxy;
+    char* result;
+
+    if (ctx == NULL) {
+        tapi_log_error("contex in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("slot_id in %s is invalid", __func__);
+        return -EINVAL;
+    }
+
+    if (!ctx->client_ready) {
+        tapi_log_error("client is not ready in %s", __func__);
+        return -EAGAIN;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_NETREG];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy in %s", __func__);
+        return -EIO;
+    }
+
+    if (!g_dbus_proxy_get_property_basic(proxy, "Status", &result)) {
+        tapi_log_error("get property failed in %s", __func__);
+        return -EINVAL;
+    }
+
+    *out = tapi_utils_registration_status_from_string(result);
 
     return OK;
 }
@@ -1701,6 +1899,14 @@ int tapi_network_register(tapi_context context,
             OFONO_SERVICE, modem_path, OFONO_NETWORK_REGISTRATION_INTERFACE,
             "PropertyChanged", nitz_state_changed, handler, handler_free);
         break;
+    case MSG_NETWORK_OPERATOR_STATUS_CHANGE_IND:
+        watch_id = dbus_client_add_signal_watch(ctx->client,
+            OFONO_SERVICE, modem_path, OFONO_NETWORK_OPERATOR_INTERFACE,
+            "PropertyChanged", network_operator_status_changed, handler, handler_free);
+    case MSG_NETWORK_OPERATOR_NAME_CHANGE_IND:
+        watch_id = dbus_client_add_signal_watch(ctx->client,
+            OFONO_SERVICE, modem_path, OFONO_NETWORK_OPERATOR_INTERFACE,
+            "PropertyChanged", network_operator_name_changed, handler, handler_free);
     default:
         break;
     }

@@ -20,6 +20,8 @@
 #include "tapi_phone.h"
 #include "tapi_tool.h"
 
+MLinkedList* g_wtp_device_list = NULL;
+#ifdef CONFIG_PHONE_SERVICE_WTP
 typedef struct {
     wtp_remote_t* remote; // remote device info
     wtp_param_t* param; // wtp call param,just used by dial senario,NULL for other scenario
@@ -27,8 +29,6 @@ typedef struct {
     uint8_t value[0]; // reserved field
 } wtp_whole_data_t; // wtp call info
 
-static int xpc_client_status = -1;
-MLinkedList* g_wtp_device_list = NULL;
 wtp_whole_data_t* g_incoming_wtp_call = NULL;
 wtp_whole_data_t* g_connected_wtp_call = NULL;
 
@@ -76,6 +76,7 @@ static void modify_wtp_visibility_done(tapi_async_result* result)
         syslog(LOG_DEBUG, "%s:set modify wtp visibility success", __func__);
     }
 }
+#endif
 
 static void dial_call_done(tapi_async_result* result)
 {
@@ -113,6 +114,52 @@ static void reject_call_done(tapi_async_result* result)
     }
 }
 
+static void release_and_answer_call_callback_done(tapi_async_result* result)
+{
+    if (result->status != OK) {
+        syslog(LOG_ERR, "%s:release and answer call fail,status=%d", __func__, result->status);
+    } else {
+        syslog(LOG_DEBUG, "%s:release and answer callsuccess", __func__);
+    }
+}
+
+static void hold_and_answer_call_callback_done(tapi_async_result* result)
+{
+    if (result->status != OK) {
+        syslog(LOG_ERR, "%s:hold and answer call fail,status=%d", __func__, result->status);
+    } else {
+        syslog(LOG_DEBUG, "%s:hold and answer call success", __func__);
+    }
+}
+
+static void hold_call_callback_done(tapi_async_result* result)
+{
+    if (result->status != OK) {
+        syslog(LOG_ERR, "%s:hold call fail,status=%d", __func__, result->status);
+    } else {
+        syslog(LOG_DEBUG, "%s:hold call success", __func__);
+    }
+}
+
+static void merge_call_callback_done(tapi_async_result* result)
+{
+    if (result->status != OK) {
+        syslog(LOG_ERR, "%s:merge call fail,status=%d", __func__, result->status);
+    } else {
+        syslog(LOG_DEBUG, "%s:merge call success", __func__);
+    }
+}
+
+static void send_tones_callback_done(tapi_async_result* result)
+{
+    if (result->status != OK) {
+        syslog(LOG_ERR, "%s:send tones fail,status=%d", __func__, result->status);
+    } else {
+        syslog(LOG_DEBUG, "%s:send tones success", __func__);
+    }
+}
+
+#ifdef CONFIG_PHONE_SERVICE_WTP
 static void set_audio_type_done(tapi_async_result* result)
 {
     if (result->status != OK) {
@@ -452,13 +499,6 @@ static void wtp_call_remote_info_update_cb(void* cookie, wtp_remote_t* remote)
     }
 }
 
-int32_t xpc_client_status_update(int pipe_status)
-{
-    printf("%s,status=%d\n", __func__, pipe_status);
-    xpc_client_status = pipe_status;
-    return 0;
-}
-
 static int telephonytool_cmd_set_audio_type(char* pargs)
 {
     char dst[1][MAX_INPUT_ARGS_LEN];
@@ -480,142 +520,244 @@ static int telephonytool_cmd_set_audio_type(char* pargs)
         syslog(LOG_ERR, "%s:parameter value is not supported currently", __func__);
         return -1;
     }
-    if (xpc_client_status) {
-        syslog(LOG_ERR, "xpc client is not ready");
-        return -1;
-    }
+
     ret = tapi_client_set_audio_type(type, set_audio_type_done, NULL);
     if (ret < 0) {
         syslog(LOG_ERR, "%s:set audio type fail,ret=%d", __func__, ret);
     }
     return ret;
 }
+#endif
 
 static int telephonytool_cmd_reject_call(char* pargs)
 {
-    char dst[1][MAX_INPUT_ARGS_LEN];
+    char dst[2][MAX_INPUT_ARGS_LEN];
     int cnt;
-    int ret = 0;
+    int ret = -1;
     int type;
+    tapi_call_data_t call_info;
 
     if (strlen(pargs) == 0) {
         syslog(LOG_ERR, "%s:parameter num is not correct", __func__);
         return -EINVAL;
     }
-    cnt = split_input(dst, 1, pargs, " ");
-    if (!(cnt == 1)) {
+    cnt = split_input(dst, 2, pargs, " ");
+    if (!(cnt == 1 || cnt == 2)) {
         syslog(LOG_ERR, "%s:parameter num is not correct", __func__);
         return -EINVAL;
     }
     type = atoi(dst[0]);
-    if (type != 1) {
-        syslog(LOG_ERR, "%s:parameter value is not supported currently", __func__);
-        return -1;
-    }
-    if (xpc_client_status) {
-        syslog(LOG_ERR, "xpc client is not ready");
-        return -1;
-    }
-
-    if (g_incoming_wtp_call != NULL) { // just can reject incoming call
-        tapi_call_data_t call_info;
-        call_info.wtp_info = (tapi_wtp_call_data_t*)calloc(1, sizeof(tapi_wtp_call_data_t)); ////need consider calloc other_info if exist
-        if (call_info.wtp_info == NULL) {
+    if (type == 0) {
+        call_info.phone_info = (tapi_cell_call_data_t*)calloc(1, sizeof(tapi_cell_call_data_t));
+        if (call_info.phone_info == NULL) {
             syslog(LOG_ERR, "%s:calloc fail", __func__);
-            return -1;
+            goto done;
         }
-        call_info.phone_info = NULL;
-        call_info.wtp_info->remote_bt_addr = bt_address_to_string(g_incoming_wtp_call->remote->addr);
-        if (call_info.wtp_info->remote_bt_addr == NULL) {
-            syslog(LOG_ERR, "%s: addr is not correct", __func__);
-            return -1;
-        }
-        call_info.wtp_info->other_info_len = 0;
+        call_info.phone_info->slot = 0;
+        call_info.phone_info->call_id = dst[1];
+        call_info.wtp_info = NULL;
 
         ret = tapi_reject_call(call_info, reject_call_done, NULL);
-        if (call_info.wtp_info->remote_bt_addr != NULL) {
-            free(call_info.wtp_info->remote_bt_addr);
+        free(call_info.phone_info);
+    } else if (type == 1) {
+#ifdef CONFIG_PHONE_SERVICE_WTP
+        if (g_incoming_wtp_call != NULL) { // just can reject incoming call
+            call_info.wtp_info = (tapi_wtp_call_data_t*)calloc(1, sizeof(tapi_wtp_call_data_t)); ////need consider calloc other_info if exist
+            if (call_info.wtp_info == NULL) {
+                syslog(LOG_ERR, "%s:calloc fail", __func__);
+                return -1;
+            }
+            call_info.phone_info = NULL;
+            call_info.wtp_info->remote_bt_addr = bt_address_to_string(g_incoming_wtp_call->remote->addr);
+            if (call_info.wtp_info->remote_bt_addr == NULL) {
+                syslog(LOG_ERR, "%s: addr is not correct", __func__);
+                return -1;
+            }
+            call_info.wtp_info->other_info_len = 0;
+
+            ret = tapi_reject_call(call_info, reject_call_done, NULL);
+            if (call_info.wtp_info->remote_bt_addr != NULL) {
+                free(call_info.wtp_info->remote_bt_addr);
+            }
+            if (call_info.wtp_info) {
+                free(call_info.wtp_info);
+            }
+            if (ret < 0) {
+                syslog(LOG_ERR, "%s:reject call fail,ret=%d", __func__, ret);
+            }
+            free_wtp_call_data(g_incoming_wtp_call);
+            g_incoming_wtp_call = NULL;
+        } else {
+            syslog(LOG_ERR, "%s: no incoming wtp call exist", __func__);
+            ret = -1;
         }
-        if (call_info.wtp_info) {
-            free(call_info.wtp_info);
-        }
-        if (ret < 0) {
-            syslog(LOG_ERR, "%s:reject call fail,ret=%d", __func__, ret);
-        }
-        free_wtp_call_data(g_incoming_wtp_call);
-        g_incoming_wtp_call = NULL;
+#else
+        syslog(LOG_ERR, "%s: CONFIG_PHONE_SERVICE_WTP not supporrt", __func__);
+#endif
     } else {
-        syslog(LOG_ERR, "%s: no incoming wtp call exist", __func__);
-        ret = -1;
+        syslog(LOG_ERR, "%s:not supporrt", __func__);
+    }
+done:
+    if (ret < 0) {
+        syslog(LOG_ERR, "%s:reject call fail,ret=%d", __func__, ret);
     }
     return ret;
 }
 
 static int telephonytool_cmd_answer_call(char* pargs)
 {
-    char dst[1][MAX_INPUT_ARGS_LEN];
+    char dst[2][MAX_INPUT_ARGS_LEN];
     int cnt;
-    int ret = 0;
+    int ret = -1;
     int type;
+    tapi_call_data_t call_info;
 
     if (strlen(pargs) == 0) {
         syslog(LOG_ERR, "%s:parameter num is not correct", __func__);
         return -EINVAL;
     }
-    cnt = split_input(dst, 1, pargs, " ");
-    if (!(cnt == 1)) {
+    cnt = split_input(dst, 2, pargs, " ");
+    if (!(cnt == 1 || cnt == 2)) {
         syslog(LOG_ERR, "%s:parameter num is not correct", __func__);
         return -EINVAL;
     }
     type = atoi(dst[0]);
-    if (type != 1) {
-        syslog(LOG_ERR, "%s:parameter value is not supported currently", __func__);
-        return -1;
-    }
-    if (xpc_client_status) {
-        syslog(LOG_ERR, "xpc client is not ready");
-        return -1;
-    }
-    if (g_incoming_wtp_call != NULL) {
-        tapi_call_data_t call_info;
-        call_info.wtp_info = (tapi_wtp_call_data_t*)calloc(1, sizeof(tapi_wtp_call_data_t)); // call_info.wtp_info->other_info_len = 0;
-        if (call_info.wtp_info == NULL) {
+    if (type == 0) {
+        call_info.phone_info = (tapi_cell_call_data_t*)calloc(1, sizeof(tapi_cell_call_data_t));
+        if (call_info.phone_info == NULL) {
             syslog(LOG_ERR, "%s:calloc fail", __func__);
-            return -1;
+            goto done;
         }
-        call_info.phone_info = NULL;
-        call_info.wtp_info->remote_bt_addr = bt_address_to_string(g_incoming_wtp_call->remote->addr);
-        if (call_info.wtp_info->remote_bt_addr == NULL) {
-            syslog(LOG_ERR, "%s: addr is not correct", __func__);
-            return -1;
-        }
-        call_info.wtp_info->other_info_len = 0;
+        call_info.phone_info->slot = 0;
+        call_info.phone_info->call_id = dst[1];
+        call_info.wtp_info = NULL;
 
         ret = tapi_answer_call(call_info, answer_call_done, NULL);
-        if (call_info.wtp_info->remote_bt_addr != NULL) {
-            free(call_info.wtp_info->remote_bt_addr);
+        free(call_info.phone_info);
+    } else if (type == 1) {
+#ifdef CONFIG_PHONE_SERVICE_WTP
+        if (g_incoming_wtp_call != NULL) {
+            call_info.wtp_info = (tapi_wtp_call_data_t*)calloc(1, sizeof(tapi_wtp_call_data_t)); // call_info.wtp_info->other_info_len = 0;
+            if (call_info.wtp_info == NULL) {
+                syslog(LOG_ERR, "%s:calloc fail", __func__);
+                return -1;
+            }
+            call_info.phone_info = NULL;
+            call_info.wtp_info->remote_bt_addr = bt_address_to_string(g_incoming_wtp_call->remote->addr);
+            if (call_info.wtp_info->remote_bt_addr == NULL) {
+                syslog(LOG_ERR, "%s: addr is not correct", __func__);
+                return -1;
+            }
+            call_info.wtp_info->other_info_len = 0;
+
+            ret = tapi_answer_call(call_info, answer_call_done, NULL);
+            if (call_info.wtp_info->remote_bt_addr != NULL) {
+                free(call_info.wtp_info->remote_bt_addr);
+            }
+            if (call_info.wtp_info != NULL) {
+                free(call_info.wtp_info);
+            }
+            if (ret < 0) {
+                syslog(LOG_ERR, "%s:answer call fail,ret=%d", __func__, ret);
+            }
+            free_wtp_call_data(g_incoming_wtp_call);
+            g_incoming_wtp_call = NULL;
+        } else {
+            syslog(LOG_ERR, "%s: no incoming wtp call exist", __func__);
+            ret = -1;
         }
-        if (call_info.wtp_info != NULL) {
-            free(call_info.wtp_info);
-        }
-        if (ret < 0) {
-            syslog(LOG_ERR, "%s:answer call fail,ret=%d", __func__, ret);
-        }
-        free_wtp_call_data(g_incoming_wtp_call);
-        g_incoming_wtp_call = NULL;
+#else
+        syslog(LOG_ERR, "%s: CONFIG_PHONE_SERVICE_WTP not supporrt", __func__);
+#endif
     } else {
-        syslog(LOG_ERR, "%s: no incoming wtp call exist", __func__);
-        ret = -1;
+        syslog(LOG_ERR, "%s:not supporrt", __func__);
+    }
+done:
+    if (ret < 0) {
+        syslog(LOG_ERR, "%s:answer call fail,ret=%d", __func__, ret);
     }
     return ret;
 }
 
 static int telephonytool_cmd_hangup_call(char* pargs)
 {
+    char dst[2][MAX_INPUT_ARGS_LEN];
+    int cnt;
+    int ret = -1;
+    int type;
+    tapi_call_data_t call_info;
+
+    if (strlen(pargs) == 0) {
+        syslog(LOG_ERR, "%s:parameter num is not correct", __func__);
+        return -EINVAL;
+    }
+    cnt = split_input(dst, 2, pargs, " ");
+    if (!(cnt == 1 || cnt == 2)) {
+        syslog(LOG_ERR, "%s:parameter num is not correct", __func__);
+        return -EINVAL;
+    }
+    type = atoi(dst[0]);
+    if (type == 0) {
+        call_info.phone_info = (tapi_cell_call_data_t*)calloc(1, sizeof(tapi_cell_call_data_t));
+        if (call_info.phone_info == NULL) {
+            syslog(LOG_ERR, "%s:calloc fail", __func__);
+            goto done;
+        }
+        call_info.phone_info->slot = 0;
+        call_info.phone_info->call_id = dst[1];
+        call_info.wtp_info = NULL;
+        ret = tapi_hangup_call(call_info, hangup_call_done, NULL);
+        free(call_info.phone_info);
+    } else if (type == 1) {
+#ifdef CONFIG_PHONE_SERVICE_WTP
+        if (g_connected_wtp_call != NULL) { // just hangup connected call
+            call_info.wtp_info = (tapi_wtp_call_data_t*)calloc(1, sizeof(tapi_wtp_call_data_t)); // need consider calloc other_info if exist
+            if (call_info.wtp_info == NULL) {
+                syslog(LOG_ERR, "%s:calloc fail", __func__);
+                return -1;
+            }
+            call_info.phone_info = NULL;
+            call_info.wtp_info->remote_bt_addr = bt_address_to_string(g_connected_wtp_call->remote->addr);
+            if (call_info.wtp_info->remote_bt_addr == NULL) {
+                syslog(LOG_ERR, "%s: addr is not correct", __func__);
+                return -1;
+            }
+            call_info.wtp_info->other_info_len = 0;
+
+            ret = tapi_hangup_call(call_info, hangup_call_done, NULL);
+            if (call_info.wtp_info->remote_bt_addr != NULL) {
+                free(call_info.wtp_info->remote_bt_addr);
+            }
+            if (call_info.wtp_info != NULL) {
+                free(call_info.wtp_info);
+            }
+            if (ret < 0) {
+                syslog(LOG_ERR, "%s:hangup call fail,ret=%d", __func__, ret);
+            }
+        } else {
+            syslog(LOG_ERR, "%s: no connected wtp call exist", __func__);
+            ret = -1;
+        }
+#else
+        syslog(LOG_ERR, "%s: CONFIG_PHONE_SERVICE_WTP not supporrt", __func__);
+#endif
+    } else {
+        syslog(LOG_ERR, "%s:not supporrt", __func__);
+    }
+done:
+    if (ret < 0) {
+        syslog(LOG_ERR, "%s:hangup call fail,ret=%d", __func__, ret);
+    }
+    return ret;
+}
+
+static int telephonytool_cmd_hangup_all_call(char* pargs)
+{
     char dst[1][MAX_INPUT_ARGS_LEN];
     int cnt;
-    int ret = 0;
+    int ret = -1;
     int type;
+    tapi_call_data_t call_info;
 
     if (strlen(pargs) == 0) {
         syslog(LOG_ERR, "%s:parameter num is not correct", __func__);
@@ -627,43 +769,109 @@ static int telephonytool_cmd_hangup_call(char* pargs)
         return -EINVAL;
     }
     type = atoi(dst[0]);
-    if (type != 1) {
-        syslog(LOG_ERR, "%s:parameter value is not supported currently", __func__);
-        return -1;
-    }
-    if (xpc_client_status) {
-        syslog(LOG_ERR, "xpc client is not ready");
-        return -1;
-    }
-
-    if (g_connected_wtp_call != NULL) { // just hangup connected call
-        tapi_call_data_t call_info;
-        call_info.wtp_info = (tapi_wtp_call_data_t*)calloc(1, sizeof(tapi_wtp_call_data_t)); // need consider calloc other_info if exist
-        if (call_info.wtp_info == NULL) {
+    if (type == 0) {
+        call_info.phone_info = (tapi_cell_call_data_t*)calloc(1, sizeof(tapi_cell_call_data_t));
+        if (call_info.phone_info == NULL) {
             syslog(LOG_ERR, "%s:calloc fail", __func__);
-            return -1;
+            goto done;
         }
-        call_info.phone_info = NULL;
-        call_info.wtp_info->remote_bt_addr = bt_address_to_string(g_connected_wtp_call->remote->addr);
-        if (call_info.wtp_info->remote_bt_addr == NULL) {
-            syslog(LOG_ERR, "%s: addr is not correct", __func__);
-            return -1;
-        }
-        call_info.wtp_info->other_info_len = 0;
+        call_info.phone_info->slot = 0;
+        call_info.phone_info->call_id = NULL;
+        call_info.wtp_info = NULL;
 
         ret = tapi_hangup_call(call_info, hangup_call_done, NULL);
-        if (call_info.wtp_info->remote_bt_addr != NULL) {
-            free(call_info.wtp_info->remote_bt_addr);
-        }
-        if (call_info.wtp_info != NULL) {
-            free(call_info.wtp_info);
-        }
-        if (ret < 0) {
-            syslog(LOG_ERR, "%s:hangup call fail,ret=%d", __func__, ret);
-        }
+        free(call_info.phone_info);
     } else {
-        syslog(LOG_ERR, "%s: no connected wtp call exist", __func__);
-        ret = -1;
+        syslog(LOG_ERR, "%s:not supporrt", __func__);
+    }
+done:
+    if (ret < 0) {
+        syslog(LOG_ERR, "%s:hangup all call fail,ret=%d", __func__, ret);
+    }
+    return ret;
+}
+
+static int telephonytool_cmd_release_and_answer(char* pargs)
+{
+    int ret = 0;
+
+    printf("%s\n", __func__);
+
+    ret = tapi_release_and_answer_call(0, release_and_answer_call_callback_done, NULL);
+    if (ret < 0) {
+        syslog(LOG_ERR, "%s:release and answer call fail,ret=%d", __func__, ret);
+    }
+    return ret;
+}
+
+static int telephonytool_cmd_hold_and_answer(char* pargs)
+{
+    int ret = 0;
+
+    printf("%s\n", __func__);
+
+    ret = tapi_hold_and_answer_call(0, hold_and_answer_call_callback_done, NULL);
+    if (ret < 0) {
+        syslog(LOG_ERR, "%s:hold and answer call fail,ret=%d", __func__, ret);
+    }
+    return ret;
+}
+
+static int telephonytool_cmd_hold(char* pargs)
+{
+    char dst[1][MAX_INPUT_ARGS_LEN];
+    int cnt;
+    int ret = -1;
+    bool hold_flag;
+
+    if (strlen(pargs) == 0) {
+        syslog(LOG_ERR, "%s:parameter num is not correct", __func__);
+        return -EINVAL;
+    }
+    cnt = split_input(dst, 1, pargs, " ");
+    if (!(cnt == 1)) {
+        syslog(LOG_ERR, "%s:parameter num is not correct", __func__);
+        return -EINVAL;
+    }
+    hold_flag = atoi(dst[0]) ? true : false;
+    ret = tapi_hold_call(0, hold_flag, hold_call_callback_done, NULL);
+    if (ret < 0) {
+        syslog(LOG_ERR, "%s:hold call fail,ret=%d", __func__, ret);
+    }
+    return ret;
+}
+
+static int telephonytool_cmd_merge(char* pargs)
+{
+    int ret = 0;
+
+    printf("%s\n", __func__);
+
+    ret = tapi_merge_call(0, merge_call_callback_done, NULL);
+    if (ret < 0) {
+        syslog(LOG_ERR, "%s:merge call fail,ret=%d", __func__, ret);
+    }
+    return ret;
+}
+
+static int telephonytool_cmd_send_tones(char* pargs)
+{
+    char dst[1][MAX_INPUT_ARGS_LEN];
+    int cnt;
+    int ret = -1;
+
+    if (strlen(pargs) == 0) {
+        syslog(LOG_ERR, "%s:parameter num is not correct", __func__);
+        return -EINVAL;
+    }
+    cnt = split_input(dst, 1, pargs, " ");
+    if (!(cnt == 1)) {
+        syslog(LOG_ERR, "%s:parameter num is not correct", __func__);
+        return -EINVAL;
+    }
+    ret = tapi_send_tones(dst[0], send_tones_callback_done, NULL);
+    if (ret < 0) {
+        syslog(LOG_ERR, "%s:send tones fail,ret=%d", __func__, ret);
     }
     return ret;
 }
@@ -687,63 +895,82 @@ static int telephonytool_cmd_dial_call(char* pargs)
 {
     char dst[3][MAX_INPUT_ARGS_LEN];
     int cnt;
-    int ret = 0;
+    int ret = -1;
     int type;
-    wtp_whole_data_t* wtp_data = NULL;
+    tapi_call_data_t call_info;
 
     if (strlen(pargs) == 0) {
         syslog(LOG_ERR, "%s:parameter num is not correct", __func__);
-        return -EINVAL;
+        ret = -EINVAL;
+        goto done;
     }
     cnt = split_input(dst, 3, pargs, " ");
     if (!(cnt == 3 || cnt == 2)) {
         syslog(LOG_ERR, "%s:parameter num is not correct", __func__);
-        return -EINVAL;
+        ret = -EINVAL;
+        goto done;
     }
     type = atoi(dst[0]);
-    if (type != 1) {
-        syslog(LOG_ERR, "%s:parameter value is not supported currently", __func__);
-        return -1;
-    }
-    if (xpc_client_status) {
-        syslog(LOG_ERR, "xpc client is not ready");
-        return -1;
-    }
+    if (type == 0) {
+        call_info.phone_info = (tapi_cell_call_data_t*)calloc(1, sizeof(tapi_cell_call_data_t));
+        if (call_info.phone_info == NULL) {
+            syslog(LOG_ERR, "%s:calloc fail", __func__);
+            goto done;
+        }
+        call_info.phone_info->slot = 0;
+        call_info.phone_info->phone_number = dst[1];
+        call_info.phone_info->hide_callerid = atoi(dst[2]);
+        call_info.phone_info->call_id = NULL;
+        call_info.wtp_info = NULL;
 
-    int id = atoi(dst[1]);
-    wtp_data = linked_list_find(g_wtp_device_list, id);
-    if (wtp_data == NULL) {
-        syslog(LOG_ERR, "%s:no device found for dial", __func__);
-        return -1;
-    }
-    tapi_call_data_t call_info;
-    call_info.wtp_info = (tapi_wtp_call_data_t*)calloc(1, sizeof(tapi_wtp_call_data_t)); // need consider calloc other_info if exist
-    if (call_info.wtp_info == NULL) {
-        syslog(LOG_ERR, "%s:calloc fail", __func__);
-        return -1;
-    }
-    call_info.phone_info = NULL;
-    call_info.wtp_info->remote_bt_addr = bt_address_to_string(wtp_data->remote->addr);
-    if (call_info.wtp_info->remote_bt_addr == NULL) {
-        syslog(LOG_ERR, "%s: addr is not correct", __func__);
-        return -1;
-    }
-    call_info.wtp_info->other_info_len = 0;
+        ret = tapi_dial_call(call_info, dial_call_done, NULL);
+        free(call_info.phone_info);
 
-    ret = tapi_dial_call(call_info, dial_call_done, NULL);
-    if (call_info.wtp_info->remote_bt_addr != NULL) {
-        free(call_info.wtp_info->remote_bt_addr);
+    } else if (type == 1) {
+#ifdef CONFIG_PHONE_SERVICE_WTP
+        int id = atoi(dst[1]);
+        wtp_whole_data_t* wtp_data = linked_list_find(g_wtp_device_list, id);
+
+        if (wtp_data == NULL) {
+            syslog(LOG_ERR, "%s:no device found for dial", __func__);
+            goto done;
+        }
+
+        call_info.wtp_info = (tapi_wtp_call_data_t*)calloc(1, sizeof(tapi_wtp_call_data_t)); // need consider calloc other_info if exist
+        if (call_info.wtp_info == NULL) {
+            syslog(LOG_ERR, "%s:calloc fail", __func__);
+            goto done;
+        }
+        call_info.phone_info = NULL;
+        call_info.wtp_info->remote_bt_addr = bt_address_to_string(wtp_data->remote->addr);
+        if (call_info.wtp_info->remote_bt_addr == NULL) {
+            syslog(LOG_ERR, "%s: addr is not correct", __func__);
+            free(call_info.wtp_info);
+            goto done;
+        }
+        call_info.wtp_info->other_info_len = 0;
+
+        ret = tapi_dial_call(call_info, dial_call_done, NULL);
+        if (call_info.wtp_info->remote_bt_addr != NULL) {
+            free(call_info.wtp_info->remote_bt_addr);
+        }
+        if (call_info.wtp_info != NULL) {
+            free(call_info.wtp_info);
+        }
+#else
+        syslog(LOG_ERR, "%s: CONFIG_PHONE_SERVICE_WTP not supporrt", __func__);
+#endif
+    } else {
+        syslog(LOG_ERR, "%s:not supporrt", __func__);
     }
-    if (call_info.wtp_info != NULL) {
-        free(call_info.wtp_info);
-    }
+done:
     if (ret < 0) {
         syslog(LOG_ERR, "%s:dial call fail,ret=%d", __func__, ret);
     }
-
     return ret;
 }
 
+#ifdef CONFIG_PHONE_SERVICE_WTP
 static int telephonytool_cmd_modify_wtp_visibility(char* pargs)
 {
     char dst[1][MAX_INPUT_ARGS_LEN];
@@ -762,10 +989,7 @@ static int telephonytool_cmd_modify_wtp_visibility(char* pargs)
     }
     syslog(LOG_INFO, "%s,%s", __func__, dst[0]);
     enable = atoi(dst[0]);
-    if (xpc_client_status) {
-        syslog(LOG_ERR, "xpc client is not ready");
-        return -1;
-    }
+
     ret = tapi_wtp_modify_visibility(enable, modify_wtp_visibility_done, NULL);
     if (ret < 0) {
         syslog(LOG_ERR, "%s:modify wtp visibility fail,ret=%d", __func__, ret);
@@ -792,21 +1016,19 @@ static int telephonytool_cmd_modify_wtp_discovery(char* pargs)
     syslog(LOG_INFO, "%s,%s", __func__, dst[0]);
     enable = atoi(dst[0]);
     if (g_wtp_device_list != NULL) {
-        MListNode *current, *temp;
+        MListNode* entry = NULL;
 
-        SIMPLEQ_FOREACH_SAFE(current, &g_wtp_device_list->head, entries, temp)
-        {
-            free_wtp_call_data(current->data);
-            free(current);
+        while ((entry = SIMPLEQ_FIRST(&g_wtp_device_list->head)) != NULL) {
+            SIMPLEQ_REMOVE_HEAD(&g_wtp_device_list->head, entries);
+#ifdef CONFIG_PHONE_SERVICE_WTP
+            free_wtp_call_data(entry->data);
+#endif
+            free(entry);
         }
-        SIMPLEQ_INIT(&g_wtp_device_list->head); // 重置队列头
-        g_wtp_device_list->next_id = 1; // 重置ID计数器
     }
+    SIMPLEQ_INIT(&g_wtp_device_list->head); // 重置队列头
+    g_wtp_device_list->next_id = 1; // 重置ID计数器
 
-    if (xpc_client_status) {
-        syslog(LOG_ERR, "xpc client is not ready");
-        return -1;
-    }
     ret = tapi_wtp_modify_discovery(enable, modify_wtp_discovery_done, NULL);
     if (ret < 0) {
         syslog(LOG_ERR, "%s:modify wtp discovery fail,ret=%d", __func__, ret);
@@ -829,10 +1051,6 @@ static int telephonytool_cmd_set_wtp_local_info(char* pargs)
     if (cnt != 3) {
         syslog(LOG_ERR, "%s:parameter num is not correct", __func__);
         return -EINVAL;
-    }
-    if (xpc_client_status) {
-        syslog(LOG_ERR, "xpc client is not ready");
-        return -1;
     }
 
     local_info->name = (char*)malloc(strlen(dst[0]) * sizeof(char));
@@ -869,10 +1087,6 @@ static int telephonytool_cmd_unregister_wtp_callback(char* pargs)
     int ret = 0;
 
     printf("%s\n", __func__);
-    if (xpc_client_status) {
-        syslog(LOG_ERR, "xpc client is not ready");
-        return -1;
-    }
     ret = tapi_client_wtp_unregister_cb(unregister_wtp_callback_done, NULL);
     if (ret < 0) {
         syslog(LOG_ERR, "%s:unregister wtp callback fail,ret=%d", __func__, ret);
@@ -895,10 +1109,6 @@ static int telephonytool_cmd_register_wtp_callback(char* pargs)
     int ret = 0;
 
     printf("%s\n", __func__);
-    if (xpc_client_status) {
-        syslog(LOG_ERR, "xpc client is not ready");
-        return -1;
-    }
 
     ret = tapi_client_wtp_register_cb(&cb_info, register_wtp_callback_done, NULL);
     if (ret < 0) {
@@ -906,9 +1116,143 @@ static int telephonytool_cmd_register_wtp_callback(char* pargs)
     }
     return ret;
 }
+#endif
+
+static void esim_radio_state_change_cb(int radio_state)
+{
+    printf("%s,%d\n", __func__, radio_state);
+}
+
+static void esim_operator_status_changed_cb(int status)
+{
+    printf("%s,%d\n", __func__, status);
+}
+
+static void esim_operator_name_changed_cb(const char* name)
+{
+    printf("%s,%s\n", __func__, name);
+}
+
+static void esim_network_reg_state_changed_cb(int status)
+{
+    printf("%s,%d\n", __func__, status);
+}
+
+static void esim_network_strength_changed_cb(int strength)
+{
+    printf("%s,%d\n", __func__, strength);
+}
+
+static void esim_modem_status_changed_cb(int status)
+{
+    printf("%s,%d\n", __func__, status);
+}
+
+static void esim_radio_power_changed_cb(bool state)
+{
+    printf("%s,%d\n", __func__, state);
+}
+
+static void esim_call_state_changed_cb(tapi_call_info call_info)
+{
+    printf("%s\n", __func__);
+    syslog(LOG_DEBUG, "call changed call_id : %s\n", call_info.call_id);
+    syslog(LOG_DEBUG, "call state: %d \n", call_info.state);
+    syslog(LOG_DEBUG, "call LineIdentification: %s \n", call_info.lineIdentification);
+    syslog(LOG_DEBUG, "call IncomingLine: %s \n", call_info.incoming_line);
+    syslog(LOG_DEBUG, "call Name: %s \n", call_info.name);
+    syslog(LOG_DEBUG, "call StartTime: %s \n", call_info.start_time);
+    syslog(LOG_DEBUG, "call Multiparty: %d \n", call_info.multiparty);
+    syslog(LOG_DEBUG, "call RemoteHeld: %d \n", call_info.remote_held);
+    syslog(LOG_DEBUG, "call RemoteMultiparty: %d \n", call_info.remote_multiparty);
+    syslog(LOG_DEBUG, "call Information: %s \n", call_info.info);
+    syslog(LOG_DEBUG, "call Icon: %d \n", call_info.icon);
+    syslog(LOG_DEBUG, "call Emergency: %d \n", call_info.is_emergency_number);
+    syslog(LOG_DEBUG, "call disconnect_reason: %d \n\n", call_info.disconnect_reason);
+}
+
+static void register_esim_callback_done(tapi_async_result* result)
+{
+    printf("%s,%d\n", __func__, result->status);
+}
+
+static tele_callbacks_t esim_cb_info = {
+    .radio_state_change_cb = esim_radio_state_change_cb,
+    .operator_status_changed_cb = esim_operator_status_changed_cb,
+    .operator_name_changed_cb = esim_operator_name_changed_cb,
+    .network_reg_state_changed_cb = esim_network_reg_state_changed_cb,
+    .strength_changed_cb = esim_network_strength_changed_cb,
+    .modem_status_changed_cb = esim_modem_status_changed_cb,
+    .radio_power_changed_cb = esim_radio_power_changed_cb,
+    .call_state_changed_cb = esim_call_state_changed_cb,
+};
+
+static int telephonytool_cmd_register_esim_callback(char* pargs)
+{
+    int ret = 0;
+
+    printf("%s\n", __func__);
+
+    ret = tapi_client_register_callbacks(esim_cb_info, register_esim_callback_done, NULL);
+    if (ret < 0) {
+        syslog(LOG_ERR, "%s:register esim callback fail,ret=%d", __func__, ret);
+    }
+    return ret;
+}
+
+static void unregister_esim_callback_done(tapi_async_result* result)
+{
+    printf("%s,%d\n", __func__, result->status);
+}
+
+static int telephonytool_cmd_unregister_esim_callback(char* pargs)
+{
+    int ret = 0;
+
+    printf("%s\n", __func__);
+
+    ret = tapi_client_unregister_callbacks(unregister_esim_callback_done, NULL);
+    if (ret < 0) {
+        syslog(LOG_ERR, "%s:unregister esim callback fail,ret=%d", __func__, ret);
+    }
+    return ret;
+}
+
+static void esim_set_radio_power_done(tapi_async_result* result)
+{
+    printf("%s,%d\n", __func__, result->status);
+}
+
+static int telephonytool_cmd_set_esim_radio_power(char* pargs)
+{
+    char dst[3][MAX_INPUT_ARGS_LEN];
+    int cnt;
+    int ret = 0;
+    bool enable;
+
+    if (strlen(pargs) == 0) {
+        syslog(LOG_ERR, "%s:parameter num is not correct", __func__);
+        return -EINVAL;
+    }
+    cnt = split_input(dst, 1, pargs, " ");
+    if (cnt != 1) {
+        syslog(LOG_ERR, "%s:parameter num is not correct", __func__);
+        return -EINVAL;
+    }
+    enable = atoi(dst[0]);
+
+    printf("%s\n", __func__);
+
+    ret = tapi_client_set_radio_power(enable, esim_set_radio_power_done, NULL);
+    if (ret < 0) {
+        syslog(LOG_ERR, "%s:set esim radio power fail,ret=%d", __func__, ret);
+    }
+    return ret;
+}
 
 static struct phoneservicetool_cmd_s g_telephony_phoneservice_cmds[] = {
-    /*phone service command*/
+/*phone service command*/
+#ifdef CONFIG_PHONE_SERVICE_WTP
     { "phone-register-wtp", PHONE_SERVICE_CMD,
         telephonytool_cmd_register_wtp_callback,
         "register wtp cb function(enter example :phone-register-wtp)" },
@@ -926,6 +1270,11 @@ static struct phoneservicetool_cmd_s g_telephony_phoneservice_cmds[] = {
         telephonytool_cmd_modify_wtp_visibility,
         "enable/disable visibility(enter example :phone-modify-wtp-visibility 0"
         "[state:0-disable,1-enable" },
+    { "phone-set-audio-type", PHONE_SERVICE_CMD,
+        telephonytool_cmd_set_audio_type,
+        "set audio type for call(enter example :phone-set-audio-type 1"
+        "[audio type:0-speaker,1-headphones]" },
+#endif
     { "phone-dial-call", PHONE_SERVICE_CMD,
         telephonytool_cmd_dial_call,
         "dial a call(enter example :phone-dial-call 1 1"
@@ -934,18 +1283,45 @@ static struct phoneservicetool_cmd_s g_telephony_phoneservice_cmds[] = {
     { "phone-hangup-call", PHONE_SERVICE_CMD,
         telephonytool_cmd_hangup_call,
         "hangup a call(enter example :phone-hangup-call 1"
-        "[call type:0-esim/hf,1-wtp]" },
+        "[call type:0-esim/hf,1-wtp]"
+        "[call_id, /ril_0/voicecall01 it is used when type=0]" },
+    { "phone-hangup-all-call", PHONE_SERVICE_CMD,
+        telephonytool_cmd_hangup_all_call,
+        "hangup all call(enter example :phone-hangup-all-call 0"
+        "[call type:0-esim/hf]" },
     { "phone-answer-call", PHONE_SERVICE_CMD,
         telephonytool_cmd_answer_call, "answer a call(enter example :phone-answer-call 1"
-                                       "[call type:0-esim/hf,1-wtp]" },
+                                       "[call type:0-esim/hf,1-wtp]"
+                                       "[call_id, /ril_0/voicecall01 it is used when type=0]" },
     { "phone-reject-call", PHONE_SERVICE_CMD,
         telephonytool_cmd_reject_call,
         "reject a call(enter example :phone-reject-call 1"
-        "[call type:0-esim/hf,1-wtp]" },
-    { "phone-set-audio-type", PHONE_SERVICE_CMD,
-        telephonytool_cmd_set_audio_type,
-        "set audio type for call(enter example :phone-set-audio-type 1"
-        "[audio type:0-speaker,1-headphones]" },
+        "[call type:0-esim/hf,1-wtp]"
+        "[call_id, /ril_0/voicecall01 it is used when type=0]" },
+    { "phone-register-esim", PHONE_SERVICE_CMD,
+        telephonytool_cmd_register_esim_callback,
+        "register esim cb function(enter example :phone-register-esim)" },
+    { "phone-unregister-esim", PHONE_SERVICE_CMD,
+        telephonytool_cmd_unregister_esim_callback,
+        "unregister esim cb function(enter example :phone-unregister-esim)" },
+    { "phone-set-radio-power", PHONE_SERVICE_CMD,
+        telephonytool_cmd_set_esim_radio_power,
+        "set esim radio power function(enter example :phone-set-radio-power 0[state:0-disable,1-enable])" },
+    { "phone-release-and-answer", PHONE_SERVICE_CMD,
+        telephonytool_cmd_release_and_answer,
+        "release_and_answer esim call(enter example :phone-release-and-answer)" },
+    { "phone-hold-and-answer", PHONE_SERVICE_CMD,
+        telephonytool_cmd_hold_and_answer,
+        "hold_and_answer esim call(enter example :phone-hold-and-answer)" },
+    { "phone-hold-call", PHONE_SERVICE_CMD,
+        telephonytool_cmd_hold,
+        "hold esim call(enter example :phone-hold-call 0[hold/unhold:1-hold,0-unhold])" },
+    { "phone-merge-call", PHONE_SERVICE_CMD,
+        telephonytool_cmd_merge,
+        "merge esim call(enter example :phone-merge-call)" },
+    { "phone-send-tones", PHONE_SERVICE_CMD,
+        telephonytool_cmd_send_tones,
+        "send tones(enter example :phone-send-tones 11[dtmf])" },
     { 0 },
 };
 
@@ -988,7 +1364,7 @@ int phone_client_init(void)
         printf("%s:create linkedlist fail\n", __func__);
         return -errno;
     }
-    if (tapi_start_phone_service_client(uv_default_loop(), xpc_client_status_update, NULL) < 0) {
+    if (tapi_start_phone_service_client(uv_default_loop(), NULL, false) < 0) {
         printf("error:phone service client init fail\n");
         return -errno;
     }
@@ -999,17 +1375,22 @@ void phone_client_clean(void)
 {
     tapi_stop_phone_service_client();
     if (g_wtp_device_list) {
-        MListNode *current, *temp;
+        MListNode* entry = NULL;
 
-        SIMPLEQ_FOREACH_SAFE(current, &g_wtp_device_list->head, entries, temp)
-        {
-            free_wtp_call_data(current->data);
-            free(current);
+        while ((entry = SIMPLEQ_FIRST(&g_wtp_device_list->head)) != NULL) {
+            SIMPLEQ_REMOVE_HEAD(&g_wtp_device_list->head, entries);
+#ifdef CONFIG_PHONE_SERVICE_WTP
+            free_wtp_call_data(entry->data);
+#endif
+            free(entry);
         }
         free(g_wtp_device_list);
+        g_wtp_device_list = NULL;
     }
+#ifdef CONFIG_PHONE_SERVICE_WTP
     free_wtp_call_data(g_incoming_wtp_call);
     g_incoming_wtp_call = NULL;
     free_wtp_call_data(g_connected_wtp_call);
     g_connected_wtp_call = NULL;
+#endif
 }

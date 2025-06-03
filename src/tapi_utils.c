@@ -107,7 +107,8 @@ const char* get_env_interface_support_string(const char* interface)
         return "OFONO_IMS_INTERFACE_SUPPORT";
     else if (strcmp(interface, OFONO_PHONEBOOK_INTERFACE) == 0)
         return "OFONO_PHONEBOOK_INTERFACE_SUPPORT";
-
+    else if (strcmp(interface, OFONO_NETWORK_OPERATOR_INTERFACE) == 0)
+        return "OFONO_NETWORK_OPERATOR_INTERFACE_SUPPORT";
     return NULL;
 }
 
@@ -206,6 +207,22 @@ const char* tapi_utils_get_registration_status_string(int status)
     }
 
     return "";
+}
+
+tapi_network_operator_status tapi_utils_network_operator_status_from_string(const char* status)
+{
+    if (status == NULL)
+        return OPERATOR_STATUS_UNKNOWN;
+
+    if (strcmp(status, "current") == 0) {
+        return OPERATOR_STATUS_CURRENT;
+    } else if (strcmp(status, "available") == 0) {
+        return OPERATOR_STATUS_AVAILABLE;
+    } else if (strcmp(status, "forbidden") == 0) {
+        return OPERATOR_STATUS_FORBIDDEN;
+    }
+
+    return OPERATOR_STATUS_UNKNOWN;
 }
 
 tapi_registration_state tapi_utils_registration_status_from_string(const char* status)
@@ -666,6 +683,7 @@ tapi_service_module get_service_module_by_proxy_type(enum dbus_proxy_type type)
         TAPI_SERVICE_CALL_SETTING,
         TAPI_SERVICE_IMS,
         TAPI_SERVICE_PHONEBOOK,
+        TAPI_SERVICE_NETWORK_OPERATOR,
     };
 
     if (type >= DBUS_PROXY_MAX_COUNT)
@@ -693,6 +711,7 @@ const char* get_dbus_proxy_type_interface(enum dbus_proxy_type type)
         OFONO_CALL_SETTINGS_INTERFACE,
         OFONO_IMS_INTERFACE,
         OFONO_PHONEBOOK_INTERFACE,
+        OFONO_NETWORK_OPERATOR_INTERFACE,
     };
 
     if (type >= DBUS_PROXY_MAX_COUNT)

@@ -283,6 +283,9 @@ typedef enum {
 
     MSG_MODEM_ECC_LIST_CHANGE_IND,
 
+    MSG_NETWORK_OPERATOR_STATUS_CHANGE_IND,
+    MSG_NETWORK_OPERATOR_NAME_CHANGE_IND,
+
     // tapi indication msg value max.
     MSG_IND_MASK,
 
@@ -316,7 +319,8 @@ typedef enum {
     TAPI_SERVICE_CALL_SETTING = 0x2000,
     TAPI_SERVICE_IMS = 0x4000,
     TAPI_SERVICE_PHONEBOOK = 0x8000,
-    TAPI_SERVICE_FULL = 0xFFFF,
+    TAPI_SERVICE_NETWORK_OPERATOR = 0x10000,
+    TAPI_SERVICE_FULL = 0xFFFFF,
 } tapi_service_module;
 
 typedef struct {
@@ -358,5 +362,6 @@ tapi_cell_type tapi_utils_cell_type_from_string(const char* name);
 const char* tapi_utils_get_modem_path(int slot_id);
 int tapi_utils_get_slot_id(const char* modem_path);
 const char* tapi_sim_state_to_string(tapi_sim_state sim_state);
+tapi_network_operator_status tapi_utils_network_operator_status_from_string(const char* status);
 
 #endif /* __TELEPHONY_APIS_H */
