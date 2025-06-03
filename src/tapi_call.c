@@ -1045,8 +1045,8 @@ static int call_play_dtmf(tapi_context context, int slot_id, unsigned char digit
  * Public Functions
  ****************************************************************************/
 
-int tapi_call_dial(tapi_context context, int slot_id, char* number, int hide_callerid,
-    int event_id, tapi_async_function p_handle)
+int tapi_call_dial_async(tapi_context context, int slot_id, char* number, int hide_callerid,
+    int event_id, void* user_data, tapi_async_function p_handle)
 {
     tapi_async_handler* handler;
     dbus_context* ctx = context;
@@ -1092,6 +1092,7 @@ int tapi_call_dial(tapi_context context, int slot_id, char* number, int hide_cal
     ar->msg_id = event_id;
     ar->arg1 = slot_id;
     ar->data = param;
+    ar->user_obj = user_data;
 
     handler = malloc(sizeof(tapi_async_handler));
     if (handler == NULL) {
@@ -1114,6 +1115,12 @@ int tapi_call_dial(tapi_context context, int slot_id, char* number, int hide_cal
     }
 
     return OK;
+}
+
+int tapi_call_dial(tapi_context context, int slot_id, char* number, int hide_callerid,
+    int event_id, tapi_async_function p_handle)
+{
+    return tapi_call_dial_async(context, slot_id, number, hide_callerid, event_id, NULL, p_handle);
 }
 
 int tapi_call_release_and_swap(tapi_context context, int slot_id)
@@ -1245,8 +1252,7 @@ int tapi_call_get_all_calls(tapi_context context, int slot_id, int event_id,
     return OK;
 }
 
-int tapi_call_merge_call(tapi_context context,
-    int slot_id, int event_id, tapi_async_function p_handle)
+int tapi_call_merge_call_async(tapi_context context, int slot_id, int event_id, void* user_data, tapi_async_function p_handle)
 {
     dbus_context* ctx = context;
     tapi_async_handler* handler;
@@ -1280,6 +1286,7 @@ int tapi_call_merge_call(tapi_context context,
 
     ar->msg_id = event_id;
     ar->arg1 = slot_id;
+    ar->user_obj = user_data;
 
     handler = malloc(sizeof(tapi_async_handler));
     if (handler == NULL) {
@@ -1300,6 +1307,12 @@ int tapi_call_merge_call(tapi_context context,
     }
 
     return OK;
+}
+
+int tapi_call_merge_call(tapi_context context,
+    int slot_id, int event_id, tapi_async_function p_handle)
+{
+    return tapi_call_merge_call_async(context, slot_id, event_id, NULL, p_handle);
 }
 
 int tapi_call_separate_call(tapi_context context,

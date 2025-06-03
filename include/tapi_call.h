@@ -81,6 +81,7 @@ typedef struct {
     char info[MAX_CALL_INFO_LENGTH + 1];
     unsigned char icon;
     bool is_emergency_number;
+    bool is_incoming;
     tapi_call_disconnect_reason disconnect_reason;
 } tapi_call_info;
 
@@ -134,6 +135,19 @@ extern "C" {
 int tapi_call_dial(tapi_context context, int slot_id, char* number, int hide_callerid,
     int event_id, tapi_async_function p_handle);
 
+/**
+ * Make one outgoing call.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] number         Dialing number.
+ * @param[in] hide_callerid  Flag about whether to hide calling number.
+ * @param[in] event_id       Async event identifier.
+ * @param[in] user_obj       User data.
+ * @param[in] p_handle       Event callback.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_call_dial_async(tapi_context context, int slot_id, char* number, int hide_callerid,
+    int event_id, void* user_data, tapi_async_function p_handle);
 /**
  * Hangup all calls.
  * @param[in] context        Telephony api context.
@@ -200,6 +214,16 @@ int tapi_call_transfer(tapi_context context, int slot_id);
  */
 int tapi_call_merge_call(tapi_context context, int slot_id, int event_id, tapi_async_function p_handle);
 
+/**
+ * Merge multiple calls into one conference call.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] event_id       Async event identifier.
+ * @param[in] user_obj       User data.
+ * @param[in] p_handle       Event callback.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_call_merge_call_async(tapi_context context, int slot_id, int event_id, void* user_data, tapi_async_function p_handle);
 /**
  * Separate one call from one conference session.
  * @param[in] context        Telephony api context.

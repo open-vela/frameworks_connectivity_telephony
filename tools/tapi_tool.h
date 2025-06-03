@@ -22,6 +22,7 @@
 #define __TELEPHONY_TOOL_H
 
 #include "tapi.h"
+#include <sys/queue.h>
 #include <syslog.h>
 #include <uv.h>
 
@@ -77,6 +78,19 @@ typedef struct {
 } async_message_t;
 
 #ifdef CONFIG_PHONE_SERVICE
+typedef struct MListNode {
+    int id;
+    void* data;
+    SIMPLEQ_ENTRY(MListNode)
+    entries;
+} MListNode;
+
+typedef struct {
+    SIMPLEQ_HEAD(, MListNode)
+    head;
+    int next_id;
+} MLinkedList;
+
 void show_tapi_phoneservice_cmd(void);
 bool execute_phone_service_cmd(char* cmd, char* arg);
 int phone_client_init(void);

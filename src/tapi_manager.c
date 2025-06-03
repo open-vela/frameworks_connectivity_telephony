@@ -1737,8 +1737,8 @@ int tapi_get_phone_state(tapi_context context, int slot_id, tapi_phone_state* st
     return -EINVAL;
 }
 
-int tapi_set_radio_power(tapi_context context,
-    int slot_id, int event_id, bool state, tapi_async_function p_handle)
+int tapi_set_radio_power_async(tapi_context context,
+    int slot_id, int event_id, bool state, void* user_data, tapi_async_function p_handle)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
@@ -1783,6 +1783,7 @@ int tapi_set_radio_power(tapi_context context,
 
     ar->msg_id = event_id;
     ar->arg1 = slot_id;
+    ar->user_obj = user_data;
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_set_property_basic(proxy, "Online", DBUS_TYPE_BOOLEAN,
@@ -1793,6 +1794,12 @@ int tapi_set_radio_power(tapi_context context,
     }
 
     return OK;
+}
+
+int tapi_set_radio_power(tapi_context context,
+    int slot_id, int event_id, bool state, tapi_async_function p_handle)
+{
+    return tapi_set_radio_power_async(context, slot_id, event_id, state, NULL, p_handle);
 }
 
 int tapi_get_radio_power(tapi_context context, int slot_id, bool* out)

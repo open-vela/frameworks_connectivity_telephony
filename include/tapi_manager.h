@@ -99,6 +99,18 @@ int tapi_set_radio_power(tapi_context context,
     int slot_id, int event_id, bool state, tapi_async_function p_handle);
 
 /**
+ * Set radio power state.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] event_id       Async event identifier.
+ * @param[in] state          State passed to modem.
+ * @param[in] user_data      user data pointer
+ * @param[in] p_handle       Event callback.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_set_radio_power_async(tapi_context context,
+    int slot_id, int event_id, bool state, void* user_data, tapi_async_function p_handle);
+/**
  * Get radio power state.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.

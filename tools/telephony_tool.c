@@ -130,6 +130,7 @@ static void execute_telephonytool_exit(void)
 {
     g_should_exit = true;
     uv_close((uv_handle_t*)&g_uv_message.async, NULL);
+#ifdef CONFIG_TELEPHONY
     if (!g_context_is_null()) {
         tapi_clean();
         update_uv_exit_flag();
@@ -137,6 +138,10 @@ static void execute_telephonytool_exit(void)
         syslog(LOG_ERR, "tapi is already close, stop default loop");
         uv_stop(uv_default_loop());
     }
+#endif
+#ifdef CONFIG_PHONE_SERVICE
+    phone_client_clean();
+#endif
 }
 
 static void uv_async_callback(uv_async_t* handle)

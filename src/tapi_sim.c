@@ -218,9 +218,9 @@ done:
     cb(ar);
 }
 
-static void handle_error_code_message(const char *error_message, tapi_async_result *ar)
+static void handle_error_code_message(const char* error_message, tapi_async_result* ar)
 {
-    char *error_code_str = NULL;
+    char* error_code_str = NULL;
     long value;
 
     ar->status = ERROR;

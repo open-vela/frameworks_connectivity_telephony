@@ -21,7 +21,11 @@
 #ifndef __TAPI_XPC_H
 #define __TAPI_XPC_H
 
+#ifdef CONFIG_PHONE_SERVICE_WTP
 #include "bt_wtp.h"
+#endif
+#include "tapi.h"
+#include "tapi_phone.h"
 
 // module id
 enum phonesrv_module_type {
@@ -48,10 +52,33 @@ enum phonesrv_msg_type {
     PHONE_SERVICE_WTP_HANGUP,
     PHONE_SERVICE_WTP_ANSWER,
     PHONE_SERVICE_WTP_REJECT,
-
     PHONE_SERVICE_WTP_MAX,
+
+    PHONE_SERVICE_ESIM_REGISTER_CALLBACK = 50,
+    PHONE_SERVICE_ESIM_UNREGISTER_CALLBACK,
+    PHONE_SERVICE_ESIM_MODIFY_RADIO_POWER,
+    PHONE_SERVICE_ESIM_DIAL,
+    PHONE_SERVICE_ESIM_ANSWER,
+    PHONE_SERVICE_ESIM_REJECT,
+    PHONE_SERVICE_ESIM_HANGUP,
+    PHONE_SERVICE_ESIM_RELEASE_AND_ANSWER,
+    PHONE_SERVICE_ESIM_HOLD_AND_ANSWER,
+    PHONE_SERVICE_ESIM_HOLD_CALL,
+    PHONE_SERVICE_ESIM_MERGE_CALL,
+    PHONE_SERVICE_ESIM_SEND_TONES,
+    PHONE_SERVICE_ESIM_NETWORK_OPERATOR_STATUS_CHANGED,
+    PHONE_SERVICE_ESIM_NETWORK_OPERATOR_NAME_CHANGED,
+    PHONE_SERVICE_ESIM_NETWORK_REG_STATUS_CHANGED,
+    PHONE_SERVICE_ESIM_NETWORK_STRENGTH_CHANGED,
+    PHONE_SERVICE_ESIM_RADIO_POWER_CHANGED,
+    PHONE_SERVICE_ESIM_MODEM_STATUS_CHANGED,
+    PHONE_SERVICE_ESIM_RADIO_STATE_CHANGED,
+    PHONE_SERVICE_ESIM_CALL_STATE_CHANGED,
+
+    PHONE_SERVICE_MAX,
 };
 
+#ifdef CONFIG_PHONE_SERVICE_WTP
 typedef struct {
     uint8_t addr_type;
     uint8_t signal;
@@ -139,10 +166,109 @@ typedef struct {
     wtp_xpc_device_t device_info;
     wtp_remote_info_changed_callback func_cb;
 } wtp_remote_info_xpc_data_t;
+#endif
 
 typedef struct {
     int ret;
     void* aync_handler;
 } common_resp_t;
+
+typedef struct {
+    tele_callbacks_t tele_callback;
+    void* user_data;
+} xpc_tele_reg_callbacks_t;
+
+typedef struct {
+    void* user_data;
+} xpc_tele_unreg_callbacks_t;
+
+typedef struct {
+    bool enable;
+    void* user_data;
+} xpc_tele_radio_power_t;
+
+typedef struct {
+    int slot_id;
+    char number[81];
+    int hide_callerid;
+    void* user_data;
+} xpc_tele_dial_t;
+
+typedef struct {
+    int slot_id;
+    char call_id[MAX_CALL_ID_LENGTH + 1];
+    void* user_data;
+} xpc_tele_answer_t;
+
+typedef struct {
+    int slot_id;
+    int call_id_exist; // 0 means reject all,1 means reject by call id
+    char call_id[MAX_CALL_ID_LENGTH + 1];
+    void* user_data;
+} xpc_tele_reject_t;
+
+typedef struct {
+    int slot_id;
+    int call_id_exist; // 0 means hangup all,1 means hangup by call id
+    char call_id[MAX_CALL_ID_LENGTH + 1];
+    void* user_data;
+} xpc_tele_hangup_t;
+
+typedef struct {
+    int slot_id;
+    void* user_data;
+} xpc_tele_common_req_t;
+
+typedef struct {
+    int slot_id;
+    bool hold;
+    void* user_data;
+} xpc_tele_hold_unhold_req_t;
+
+typedef struct {
+    int slot_id;
+    char tone[MAX_TONE_LEN];
+    void* user_data;
+} xpc_tele_tones_t;
+
+typedef struct {
+    int radio_state;
+    radio_state_change_callback_t radio_state_change_cb;
+} xpc_tele_radio_state_change_cb_t;
+
+typedef struct {
+    int status;
+    network_operator_status_changed_callback_t operator_status_changed_cb;
+} xpc_tele_operator_status_change_cb_t;
+
+typedef struct {
+    char operator_name[MAX_OPERATOR_NAME_LENGTH + 1];
+    network_operator_name_changed_callback_t operator_name_changed_cb;
+} xpc_tele_operator_name_change_cb_t;
+
+typedef struct {
+    int status;
+    network_reg_state_changed_callback_t network_reg_state_changed_cb;
+} xpc_tele_reg_state_change_cb_t;
+
+typedef struct {
+    int strength;
+    network_strength_changed_callback_t strength_changed_cb;
+} xpc_tele_network_strength_change_cb_t;
+
+typedef struct {
+    int status;
+    modem_status_changed_callback_t modem_status_changed_cb;
+} xpc_tele_modem_status_change_cb_t;
+
+typedef struct {
+    bool state;
+    radio_power_changed_callback_t radio_power_changed_cb;
+} xpc_tele_radio_power_change_cb_t;
+
+typedef struct {
+    tapi_call_info call_info;
+    call_state_changed_callback_t call_state_changed_cb;
+} xpc_tele_call_state_change_cb_t;
 
 #endif

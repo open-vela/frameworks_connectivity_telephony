@@ -22,7 +22,6 @@
 #define __TELEPHONY_COMMON_H
 
 #include "tapi.h"
-#include <sys/queue.h>
 #include <syslog.h>
 /****************************************************************************
  * Pre-processor Definitions
@@ -41,20 +40,5 @@ typedef struct {
     tapi_async_result* result;
     tapi_async_function cb_function;
 } tapi_async_handler;
-
-#ifdef CONFIG_PHONE_SERVICE
-typedef struct MListNode {
-    int id;
-    void* data;
-    SIMPLEQ_ENTRY(MListNode)
-    entries;
-} MListNode;
-
-typedef struct {
-    SIMPLEQ_HEAD(, MListNode)
-    head;
-    int next_id;
-} MLinkedList;
-#endif
 
 #endif

@@ -778,6 +778,19 @@ static void network_event_callback(tapi_async_result* result)
     }
 }
 
+static void network_operator_change(tapi_async_result* result)
+{
+    int signal = result->msg_id;
+
+    switch (signal) {
+    case MSG_NETWORK_STATE_CHANGE_IND:
+        syslog(LOG_DEBUG, "case MSG_NETWORK_STATE_CHANGE_IND: \n");
+        break;
+    default:
+        break;
+    }
+}
+
 static void network_signal_change(tapi_async_result* result)
 {
     tapi_cell_identity** cell_list;
@@ -3461,6 +3474,34 @@ static int telephonytool_cmd_network_listen(tapi_context context, char* pargs)
     return watch_id;
 }
 
+static int telephonytool_cmd_network_operator_listen(tapi_context context, char* pargs)
+{
+    char dst[2][MAX_INPUT_ARGS_LEN];
+    char* slot_id;
+    char* target_state;
+    int watch_id;
+    int cnt;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    cnt = split_input(dst, 2, pargs, " ");
+    if (cnt != 2)
+        return -EINVAL;
+
+    slot_id = dst[0];
+    target_state = dst[1];
+    if (!is_valid_slot_id_str(slot_id))
+        return -EINVAL;
+
+    watch_id = tapi_network_register(context,
+        atoi(slot_id), atoi(target_state), NULL, network_operator_change);
+    syslog(LOG_DEBUG, "start to watch network operator event : %d , return watch_id : %d \n",
+        atoi(target_state), watch_id);
+
+    return watch_id;
+}
+
 static int telephonytool_cmd_network_unlisten(tapi_context context, char* pargs)
 {
     char* watch_id;
@@ -3639,6 +3680,63 @@ static int telephonytool_cmd_is_voice_registered(tapi_context context, char* par
     syslog(LOG_DEBUG, "%s, slotId : %s value :%d \n", __func__, slot_id, value);
 
     return 0;
+}
+
+static int telephonytool_cmd_get_network_operator_status(tapi_context context, char* pargs)
+{
+    int value = -1;
+    char* slot_id;
+    int ret = -1;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", NULL);
+    if (!is_valid_slot_id_str(slot_id))
+        return -EINVAL;
+
+    ret = tapi_network_get_operator_status(context, atoi(slot_id), &value);
+    syslog(LOG_DEBUG, "%s, slotId : %s,ret =%d network operator status :%d \n", __func__, slot_id, ret, value);
+
+    return ret;
+}
+
+static int telephonytool_cmd_get_network_reg_status(tapi_context context, char* pargs)
+{
+    tapi_registration_state value = 0;
+    char* slot_id;
+    int ret = -1;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", NULL);
+    if (!is_valid_slot_id_str(slot_id))
+        return -EINVAL;
+
+    ret = tapi_network_get_reg_state(context, atoi(slot_id), &value);
+    syslog(LOG_DEBUG, "%s, slotId : %s,ret =%d network regr status :%d \n", __func__, slot_id, ret, value);
+
+    return ret;
+}
+
+static int telephonytool_cmd_get_network_operator_name(tapi_context context, char* pargs)
+{
+    char* network_operator_name = NULL;
+    char* slot_id;
+    int ret = -1;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", NULL);
+    if (!is_valid_slot_id_str(slot_id))
+        return -EINVAL;
+
+    ret = tapi_network_get_operator_name(context, atoi(slot_id), &network_operator_name);
+    syslog(LOG_DEBUG, "%s, slotId : %s,ret=%d network operator name :%s \n", __func__, slot_id, ret, network_operator_name);
+
+    return ret;
 }
 
 static int telephonytool_cmd_is_voice_roaming(tapi_context context, char* pargs)
@@ -4905,6 +5003,10 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         telephonytool_cmd_network_unlisten,
         "Deregister network event (enter example : unlisten-network [watch_id] "
         "[watch_id, one uint value returned from \"listen-network\"])" },
+    { "listen-network-operator", NETWORK_CMD,
+        telephonytool_cmd_network_operator_listen,
+        "Register network event (enter example : listen-network-operator 0 64 "
+        "[slot_id][event_id, see Network Indication Message in tapi.h/tapi_indication_msg])" },
     { "register-auto", NETWORK_CMD,
         telephonytool_cmd_network_select_auto,
         "register auto (enter example : register-auto 0 [slot_id])" },
@@ -4927,6 +5029,15 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     { "get-voice-registered", NETWORK_CMD,
         telephonytool_cmd_is_voice_registered,
         "judge voice in service  (enter example : get-voice-registered 0 [slot_id])" },
+    { "get-network-operator-status", NETWORK_CMD,
+        telephonytool_cmd_get_network_operator_status,
+        "get network operator status  (enter example : get-network-operator-status 0 [slot_id])" },
+    { "get-network-reg-status", NETWORK_CMD,
+        telephonytool_cmd_get_network_reg_status,
+        "get network reg status  (enter example : get-network-reg-status 0 [slot_id])" },
+    { "get-network-operator-name", NETWORK_CMD,
+        telephonytool_cmd_get_network_operator_name,
+        "get network operator name  (enter example : get-network-operator-name 0 [slot_id])" },
     { "get-voice-roaming", NETWORK_CMD,
         telephonytool_cmd_is_voice_roaming,
         "judge voice roaming  (enter example : get-voice-roaming 0 [slot_id])" },
