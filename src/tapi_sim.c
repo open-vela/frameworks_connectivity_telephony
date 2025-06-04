@@ -641,42 +641,6 @@ int tapi_sim_get_sim_invalid(tapi_context context, int slot_id, int* out)
     return -EINVAL;
 }
 
-int tapi_sim_get_sim_invalid(tapi_context context, int slot_id, int* out)
-{
-    dbus_context* ctx = context;
-    GDBusProxy* proxy;
-    DBusMessageIter iter;
-
-    if (ctx == NULL) {
-        tapi_log_error("context in %s is null", __func__);
-        return -EINVAL;
-    }
-
-    if (!tapi_is_valid_slotid(slot_id)) {
-        tapi_log_error("invalid slot id in %s", __func__);
-        return -EINVAL;
-    }
-
-    if (!ctx->client_ready) {
-        tapi_log_error("client is not ready in %s", __func__);
-        return -EAGAIN;
-    }
-
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
-    if (proxy == NULL) {
-        tapi_log_error("no available proxy in %s", __func__);
-        return -EIO;
-    }
-
-    if (g_dbus_proxy_get_property(proxy, "SimInvalid", &iter)) {
-        dbus_message_iter_get_basic(&iter, out);
-        return OK;
-    }
-
-    tapi_log_error("get property failed in %s", __func__);
-    return -EINVAL;
-}
-
 int tapi_sim_get_sim_iccid(tapi_context context, int slot_id, char** out)
 {
     dbus_context* ctx = context;
