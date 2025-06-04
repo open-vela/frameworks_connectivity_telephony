@@ -1453,7 +1453,6 @@ int tapi_get_pref_net_mode(tapi_context context, int slot_id, tapi_pref_net_mode
     dbus_context* ctx = context;
     GDBusProxy* proxy;
     char* result;
-    DBusMessageIter iter;
 
     if (ctx == NULL) {
         tapi_log_error("context in %s is null", __func__);
@@ -1476,9 +1475,7 @@ int tapi_get_pref_net_mode(tapi_context context, int slot_id, tapi_pref_net_mode
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property(proxy, "TechnologyPreference", &iter)) {
-        dbus_message_iter_get_basic(&iter, &result);
-
+    if (g_dbus_proxy_get_property_basic(proxy, "TechnologyPreference", &result)) {
         *out = tapi_utils_network_mode_from_string(result);
         return OK;
     }
@@ -1527,7 +1524,6 @@ int tapi_get_imei(tapi_context context, int slot_id, char** out)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    DBusMessageIter iter;
 
     if (ctx == NULL) {
         tapi_log_error("context in %s is null", __func__);
@@ -1550,8 +1546,7 @@ int tapi_get_imei(tapi_context context, int slot_id, char** out)
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property(proxy, "Serial", &iter)) {
-        dbus_message_iter_get_basic(&iter, out);
+    if (g_dbus_proxy_get_property_basic(proxy, "Serial", out)) {
         return OK;
     }
 
@@ -1563,7 +1558,6 @@ int tapi_get_imeisv(tapi_context context, int slot_id, char** out)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    DBusMessageIter iter;
 
     if (ctx == NULL) {
         tapi_log_error("context in %s is null", __func__);
@@ -1586,8 +1580,7 @@ int tapi_get_imeisv(tapi_context context, int slot_id, char** out)
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property(proxy, "SoftwareVersionNumber", &iter)) {
-        dbus_message_iter_get_basic(&iter, out);
+    if (g_dbus_proxy_get_property_basic(proxy, "SoftwareVersionNumber", out)) {
         return OK;
     }
 
@@ -1599,7 +1592,6 @@ int tapi_get_modem_manufacturer(tapi_context context, int slot_id, char** out)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    DBusMessageIter iter;
 
     if (ctx == NULL) {
         tapi_log_error("context in %s is null", __func__);
@@ -1622,8 +1614,7 @@ int tapi_get_modem_manufacturer(tapi_context context, int slot_id, char** out)
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property(proxy, "Manufacturer", &iter)) {
-        dbus_message_iter_get_basic(&iter, out);
+    if (g_dbus_proxy_get_property_basic(proxy, "Manufacturer", out)) {
         return OK;
     }
 
@@ -1635,7 +1626,6 @@ int tapi_get_modem_model(tapi_context context, int slot_id, char** out)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    DBusMessageIter iter;
 
     if (ctx == NULL) {
         tapi_log_error("context in %s is null", __func__);
@@ -1658,8 +1648,7 @@ int tapi_get_modem_model(tapi_context context, int slot_id, char** out)
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property(proxy, "Model", &iter)) {
-        dbus_message_iter_get_basic(&iter, out);
+    if (g_dbus_proxy_get_property_basic(proxy, "Model", out)) {
         return OK;
     }
 
@@ -1671,7 +1660,6 @@ int tapi_get_modem_revision(tapi_context context, int slot_id, char** out)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    DBusMessageIter iter;
 
     if (ctx == NULL) {
         tapi_log_error("context in %s is null", __func__);
@@ -1694,8 +1682,7 @@ int tapi_get_modem_revision(tapi_context context, int slot_id, char** out)
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property(proxy, "Revision", &iter)) {
-        dbus_message_iter_get_basic(&iter, out);
+    if (g_dbus_proxy_get_property_basic(proxy, "Revision", out)) {
         return OK;
     }
 
@@ -1707,7 +1694,6 @@ int tapi_get_phone_state(tapi_context context, int slot_id, tapi_phone_state* st
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    DBusMessageIter iter;
     int new_state = 0;
 
     if (ctx == NULL) {
@@ -1731,8 +1717,7 @@ int tapi_get_phone_state(tapi_context context, int slot_id, tapi_phone_state* st
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property(proxy, "PhoneStatus", &iter)) {
-        dbus_message_iter_get_basic(&iter, &new_state);
+    if (g_dbus_proxy_get_property_basic(proxy, "PhoneStatus", &new_state)) {
         *state = new_state;
         return OK;
     }
@@ -1803,7 +1788,6 @@ int tapi_get_radio_power(tapi_context context, int slot_id, bool* out)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    DBusMessageIter iter;
     int result;
 
     if (ctx == NULL) {
@@ -1827,9 +1811,7 @@ int tapi_get_radio_power(tapi_context context, int slot_id, bool* out)
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property(proxy, "Online", &iter)) {
-        dbus_message_iter_get_basic(&iter, &result);
-
+    if (g_dbus_proxy_get_property_basic(proxy, "Online", &result)) {
         *out = result;
         return OK;
     }
@@ -1842,7 +1824,6 @@ int tapi_get_radio_state(tapi_context context, int slot_id, tapi_radio_state* ou
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    DBusMessageIter iter;
     int result;
 
     if (ctx == NULL) {
@@ -1866,21 +1847,35 @@ int tapi_get_radio_state(tapi_context context, int slot_id, tapi_radio_state* ou
         return -EIO;
     }
 
-    if (!g_dbus_proxy_get_property(proxy, "RadioState", &iter)) {
+    if (!g_dbus_proxy_get_property_basic(proxy, "RadioState", &result)) {
         tapi_log_error("get property failed in %s", __func__);
         return -EINVAL;
     }
 
-    dbus_message_iter_get_basic(&iter, &result);
     *out = result;
     return OK;
+}
+
+static void subscriber_numbers_prop_iter_cb(DBusMessageIter* iter, void* user_data)
+{
+    char** out = user_data;
+    DBusMessageIter var_elem;
+
+    if (dbus_message_iter_get_arg_type(iter) == DBUS_TYPE_ARRAY) {
+        dbus_message_iter_recurse(iter, &var_elem);
+        while (dbus_message_iter_get_arg_type(&var_elem) != DBUS_TYPE_INVALID) {
+            if (dbus_message_iter_get_arg_type(&var_elem) == DBUS_TYPE_STRING) {
+                dbus_message_iter_get_basic(&var_elem, out);
+                break;
+            }
+        }
+    }
 }
 
 int tapi_get_msisdn_number(tapi_context context, int slot_id, char** out)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    DBusMessageIter iter, var_elem;
 
     if (ctx == NULL || out == NULL) {
         tapi_log_error("context or out in %s is null", __func__);
@@ -1903,30 +1898,23 @@ int tapi_get_msisdn_number(tapi_context context, int slot_id, char** out)
         return -EIO;
     }
 
-    if (!g_dbus_proxy_get_property(proxy, "SubscriberNumbers", &iter)) {
-        tapi_log_error("get property iter failed in %s", __func__);
+    if (!g_dbus_proxy_get_property_iter_cb(proxy, "SubscriberNumbers", out,
+            subscriber_numbers_prop_iter_cb)) {
+        tapi_log_error("get property failed in %s", __func__);
         return -EIO;
     }
 
-    if (dbus_message_iter_get_arg_type(&iter) == DBUS_TYPE_ARRAY) {
-        dbus_message_iter_recurse(&iter, &var_elem);
-        while (dbus_message_iter_get_arg_type(&var_elem) != DBUS_TYPE_INVALID) {
-            if (dbus_message_iter_get_arg_type(&var_elem) == DBUS_TYPE_STRING) {
-                dbus_message_iter_get_basic(&var_elem, out);
-                break;
-            }
-        }
-
-        if (*out != NULL && **out == 0) {
-            tapi_log_error("%s: msisdn is empty", __func__);
-            return -EINVAL;
-        }
-
-        return OK;
+    if (*out == NULL) {
+        tapi_log_error("get prop value invalid in %s", __func__);
+        return -EINVAL;
     }
 
-    tapi_log_error("get property failed in %s", __func__);
-    return -EINVAL;
+    if (**out == 0) {
+        tapi_log_error("%s: msisdn is empty", __func__);
+        return -EINVAL;
+    }
+
+    return OK;
 }
 
 int tapi_get_modem_activity_info(tapi_context context, int slot_id,
@@ -2308,7 +2296,6 @@ int tapi_get_modem_status_sync(tapi_context context, int slot_id, tapi_modem_sta
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    DBusMessageIter iter;
     int state = 0;
 
     if (ctx == NULL) {
@@ -2332,8 +2319,7 @@ int tapi_get_modem_status_sync(tapi_context context, int slot_id, tapi_modem_sta
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property(proxy, "ModemState", &iter)) {
-        dbus_message_iter_get_basic(&iter, &state);
+    if (g_dbus_proxy_get_property_basic(proxy, "ModemState", &state)) {
         *out = state;
         return OK;
     }
@@ -3110,14 +3096,75 @@ int tapi_get_phone_number(tapi_context context, int slot_id, char** out)
 
     return OK;
 }
+struct carrier_config_key_value {
+    char* key;
+    void* value;
+    bool success;
+};
+
+static void carrier_config_prop_iter_cb(DBusMessageIter* iter, void* user_data)
+{
+    DBusMessageIter var_elem;
+    struct carrier_config_key_value* key_value = user_data;
+
+    if (dbus_message_iter_get_arg_type(iter) != DBUS_TYPE_ARRAY) {
+        tapi_log_error("get property failed in %s", __func__);
+        return;
+    }
+
+    dbus_message_iter_recurse(iter, &var_elem);
+
+    while (dbus_message_iter_get_arg_type(&var_elem) == DBUS_TYPE_DICT_ENTRY) {
+        DBusMessageIter entry, value;
+        const char* prop_name;
+
+        dbus_message_iter_recurse(&var_elem, &entry);
+        dbus_message_iter_get_basic(&entry, &prop_name);
+
+        dbus_message_iter_next(&entry);
+        dbus_message_iter_recurse(&entry, &value);
+
+        if (strcmp(prop_name, key_value->key) == 0) {
+            dbus_message_iter_get_basic(&value, key_value->value);
+            key_value->success = true;
+            return;
+        }
+
+        dbus_message_iter_next(&var_elem);
+    }
+}
+
+static int get_carrier_config_value(GDBusProxy* proxy, char* key, void* out)
+{
+    struct carrier_config_key_value* key_value = calloc(1, sizeof(struct carrier_config_key_value));
+    if (key_value == NULL) {
+        tapi_log_error("key_value in %s is null", __func__);
+        return -ENOMEM;
+    }
+    key_value->key = key;
+    key_value->value = out;
+
+    if (!g_dbus_proxy_get_property_iter_cb(proxy, "CarrierConfig", key_value,
+            carrier_config_prop_iter_cb)) {
+        tapi_log_error("get carrier key(%s) prop failed in %s", key, __func__);
+        free(key_value);
+        return -EINVAL;
+    }
+
+    if (!key_value->success) {
+        tapi_log_error("get carrier key(%s) value failed in %s", key, __func__);
+        free(key_value);
+        return -EINVAL;
+    }
+
+    free(key_value);
+    return OK;
+}
 
 int tapi_get_carrier_config_bool(tapi_context context, int slot_id, char* key, bool* out)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    DBusMessageIter iter;
-    DBusMessageIter var_elem;
-    int result = 0;
 
     if (ctx == NULL) {
         tapi_log_error("context in %s is null", __func__);
@@ -3145,49 +3192,13 @@ int tapi_get_carrier_config_bool(tapi_context context, int slot_id, char* key, b
         return -EIO;
     }
 
-    if (!g_dbus_proxy_get_property(proxy, "CarrierConfig", &iter)) {
-        tapi_log_error("get property failed in %s", __func__);
-        return -EINVAL;
-    }
-
-    if (dbus_message_iter_get_arg_type(&iter) != DBUS_TYPE_ARRAY) {
-        tapi_log_error("get property failed in %s", __func__);
-        return -EINVAL;
-    }
-
-    dbus_message_iter_recurse(&iter, &var_elem);
-
-    while (dbus_message_iter_get_arg_type(&var_elem) == DBUS_TYPE_DICT_ENTRY) {
-        DBusMessageIter entry, value;
-        const char* prop_name;
-
-        dbus_message_iter_recurse(&var_elem, &entry);
-        dbus_message_iter_get_basic(&entry, &prop_name);
-
-        dbus_message_iter_next(&entry);
-        dbus_message_iter_recurse(&entry, &value);
-
-        if (strcmp(prop_name, key) == 0) {
-            dbus_message_iter_get_basic(&value, &result);
-            *out = result;
-
-            return OK;
-        }
-
-        dbus_message_iter_next(&var_elem);
-    }
-
-    tapi_log_error("get property failed in %s", __func__);
-    return -EINVAL;
+    return get_carrier_config_value(proxy, key, out);
 }
 
 int tapi_get_carrier_config_int(tapi_context context, int slot_id, char* key, int* out)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    DBusMessageIter iter;
-    DBusMessageIter var_elem;
-    int result = 0;
 
     if (ctx == NULL) {
         tapi_log_error("context in %s is null", __func__);
@@ -3215,48 +3226,13 @@ int tapi_get_carrier_config_int(tapi_context context, int slot_id, char* key, in
         return -EIO;
     }
 
-    if (!g_dbus_proxy_get_property(proxy, "CarrierConfig", &iter)) {
-        tapi_log_error("get property iter failed in %s", __func__);
-        return -EINVAL;
-    }
-
-    if (dbus_message_iter_get_arg_type(&iter) != DBUS_TYPE_ARRAY) {
-        tapi_log_error("iter type in %s is invalid", __func__);
-        return -EINVAL;
-    }
-
-    dbus_message_iter_recurse(&iter, &var_elem);
-
-    while (dbus_message_iter_get_arg_type(&var_elem) == DBUS_TYPE_DICT_ENTRY) {
-        DBusMessageIter entry, value;
-        const char* prop_name;
-
-        dbus_message_iter_recurse(&var_elem, &entry);
-        dbus_message_iter_get_basic(&entry, &prop_name);
-
-        dbus_message_iter_next(&entry);
-        dbus_message_iter_recurse(&entry, &value);
-
-        if (strcmp(prop_name, key) == 0) {
-            dbus_message_iter_get_basic(&value, &result);
-            *out = result;
-
-            return OK;
-        }
-
-        dbus_message_iter_next(&var_elem);
-    }
-
-    tapi_log_error("get property failed in %s", __func__);
-    return -EINVAL;
+    return get_carrier_config_value(proxy, key, out);
 }
 
 int tapi_get_carrier_config_string(tapi_context context, int slot_id, char* key, char** out)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    DBusMessageIter iter;
-    DBusMessageIter var_elem;
 
     if (ctx == NULL) {
         tapi_log_error("context in %s is null", __func__);
@@ -3284,36 +3260,5 @@ int tapi_get_carrier_config_string(tapi_context context, int slot_id, char* key,
         return -EIO;
     }
 
-    if (!g_dbus_proxy_get_property(proxy, "CarrierConfig", &iter)) {
-        tapi_log_error("get property iter failed in %s", __func__);
-        return -EINVAL;
-    }
-
-    if (dbus_message_iter_get_arg_type(&iter) != DBUS_TYPE_ARRAY) {
-        tapi_log_error("iter type in %s is invalid", __func__);
-        return -EINVAL;
-    }
-
-    dbus_message_iter_recurse(&iter, &var_elem);
-
-    while (dbus_message_iter_get_arg_type(&var_elem) == DBUS_TYPE_DICT_ENTRY) {
-        DBusMessageIter entry, value;
-        const char* prop_name;
-
-        dbus_message_iter_recurse(&var_elem, &entry);
-        dbus_message_iter_get_basic(&entry, &prop_name);
-
-        dbus_message_iter_next(&entry);
-        dbus_message_iter_recurse(&entry, &value);
-
-        if (strcmp(prop_name, key) == 0) {
-            dbus_message_iter_get_basic(&value, out);
-            return OK;
-        }
-
-        dbus_message_iter_next(&var_elem);
-    }
-
-    tapi_log_error("get property failed in %s", __func__);
-    return -EINVAL;
+    return get_carrier_config_value(proxy, key, out);
 }

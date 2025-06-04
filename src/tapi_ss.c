@@ -1231,7 +1231,6 @@ int tapi_ss_set_call_barring_option(tapi_context context, int slot_id, int event
 int tapi_ss_get_call_barring_option(tapi_context context, int slot_id, const char* service_type, char** out)
 {
     dbus_context* ctx = context;
-    DBusMessageIter iter;
     GDBusProxy* proxy;
 
     if (ctx == NULL) {
@@ -1260,8 +1259,7 @@ int tapi_ss_get_call_barring_option(tapi_context context, int slot_id, const cha
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property(proxy, service_type, &iter)) {
-        dbus_message_iter_get_basic(&iter, out);
+    if (g_dbus_proxy_get_property_basic(proxy, service_type, out)) {
         return OK;
     }
 
@@ -1670,7 +1668,6 @@ int tapi_ss_set_call_forwarding_option(tapi_context context, int slot_id, int ev
 int tapi_get_ussd_state(tapi_context context, int slot_id, char** out)
 {
     dbus_context* ctx = context;
-    DBusMessageIter iter;
     GDBusProxy* proxy;
 
     report_data_logging_for_ss(ctx, "ss:ussd:get state", "NA");
@@ -1696,8 +1693,7 @@ int tapi_get_ussd_state(tapi_context context, int slot_id, char** out)
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property(proxy, "State", &iter)) {
-        dbus_message_iter_get_basic(&iter, out);
+    if (g_dbus_proxy_get_property_basic(proxy, "State", out)) {
         return OK;
     }
 
@@ -1949,7 +1945,6 @@ int tapi_ss_get_calling_line_presentation_info(tapi_context context, int slot_id
     char** out)
 {
     dbus_context* ctx = context;
-    DBusMessageIter iter;
     GDBusProxy* proxy;
 
     report_data_logging_for_ss(ctx, "ss:get clip", "NA");
@@ -1975,9 +1970,8 @@ int tapi_ss_get_calling_line_presentation_info(tapi_context context, int slot_id
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property(proxy, "CallingLinePresentation", &iter)) {
+    if (g_dbus_proxy_get_property_basic(proxy, "CallingLinePresentation", out)) {
         report_data_logging_for_ss(ctx, "ss:get clip", "dbus method fail");
-        dbus_message_iter_get_basic(&iter, out);
         return OK;
     }
 
