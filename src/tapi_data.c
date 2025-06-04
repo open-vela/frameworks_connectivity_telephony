@@ -1109,7 +1109,7 @@ int tapi_data_is_registered(tapi_context context, int slot_id, bool* out)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    DBusMessageIter iter;
+
     int result;
 
     if (ctx == NULL) {
@@ -1133,9 +1133,7 @@ int tapi_data_is_registered(tapi_context context, int slot_id, bool* out)
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property(proxy, "Status", &iter)) {
-        dbus_message_iter_get_basic(&iter, &result);
-
+    if (g_dbus_proxy_get_property_basic(proxy, "Status", &result)) {
         *out = (result == NETWORK_REGISTRATION_STATUS_REGISTERED
             || result == NETWORK_REGISTRATION_STATUS_ROAMING);
         return OK;
@@ -1149,7 +1147,6 @@ int tapi_data_is_data_emergency_only(tapi_context context, int slot_id, bool* ou
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    DBusMessageIter iter;
     int result;
 
     if (ctx == NULL) {
@@ -1173,9 +1170,7 @@ int tapi_data_is_data_emergency_only(tapi_context context, int slot_id, bool* ou
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property(proxy, "Status", &iter)) {
-        dbus_message_iter_get_basic(&iter, &result);
-
+    if (g_dbus_proxy_get_property_basic(proxy, "Status", &result)) {
         *out = (result == NETWORK_REGISTRATION_STATUS_NOT_REGISTERED_EM
             || result == NETWORK_REGISTRATION_STATUS_SEARCHING_EM
             || result == NETWORK_REGISTRATION_STATUS_DENIED_EM
@@ -1192,7 +1187,6 @@ int tapi_data_get_network_type(tapi_context context, int slot_id, tapi_network_t
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    DBusMessageIter iter;
     int result;
 
     if (ctx == NULL) {
@@ -1216,9 +1210,7 @@ int tapi_data_get_network_type(tapi_context context, int slot_id, tapi_network_t
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property(proxy, "Technology", &iter)) {
-        dbus_message_iter_get_basic(&iter, &result);
-
+    if (g_dbus_proxy_get_property_basic(proxy, "Technology", &result)) {
         *out = tapi_utils_network_type_from_ril_tech(result);
         return OK;
     }
@@ -1231,7 +1223,6 @@ int tapi_data_is_data_roaming(tapi_context context, int slot_id, bool* out)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    DBusMessageIter iter;
     int result;
 
     if (ctx == NULL) {
@@ -1255,9 +1246,7 @@ int tapi_data_is_data_roaming(tapi_context context, int slot_id, bool* out)
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property(proxy, "Status", &iter)) {
-        dbus_message_iter_get_basic(&iter, &result);
-
+    if (g_dbus_proxy_get_property_basic(proxy, "Status", &result)) {
         *out = (result == NETWORK_REGISTRATION_STATUS_ROAMING);
         return OK;
     }
@@ -1434,7 +1423,6 @@ int tapi_data_get_preferred_apn(tapi_context context, int slot_id, char** out)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    DBusMessageIter iter;
 
     if (ctx == NULL) {
         tapi_log_error("context in %s is null", __func__);
@@ -1457,8 +1445,7 @@ int tapi_data_get_preferred_apn(tapi_context context, int slot_id, char** out)
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property(proxy, "PreferredApn", &iter)) {
-        dbus_message_iter_get_basic(&iter, out);
+    if (g_dbus_proxy_get_property_basic(proxy, "PreferredApn", out)) {
         return OK;
     }
 
@@ -1505,7 +1492,6 @@ int tapi_data_get_enabled(tapi_context context, bool* out)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    DBusMessageIter iter;
     int result;
 
     if (ctx == NULL) {
@@ -1524,9 +1510,7 @@ int tapi_data_get_enabled(tapi_context context, bool* out)
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property(proxy, "DataOn", &iter)) {
-        dbus_message_iter_get_basic(&iter, &result);
-
+    if (g_dbus_proxy_get_property_basic(proxy, "DataOn", &result)) {
         *out = result;
         return OK;
     }
@@ -1574,7 +1558,6 @@ int tapi_data_get_roaming_enabled(tapi_context context, bool* out)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    DBusMessageIter iter;
     int result;
 
     if (ctx == NULL) {
@@ -1593,9 +1576,7 @@ int tapi_data_get_roaming_enabled(tapi_context context, bool* out)
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property(proxy, "RoamingAllowed", &iter)) {
-        dbus_message_iter_get_basic(&iter, &result);
-
+    if (g_dbus_proxy_get_property_basic(proxy, "RoamingAllowed", &result)) {
         *out = result;
         return OK;
     }
@@ -1640,7 +1621,6 @@ int tapi_data_get_default_slot(tapi_context context, int* out)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    DBusMessageIter iter;
     char* modem_path;
 
     proxy = ctx->dbus_proxy_manager;
@@ -1654,8 +1634,7 @@ int tapi_data_get_default_slot(tapi_context context, int* out)
         return -EAGAIN;
     }
 
-    if (g_dbus_proxy_get_property(proxy, "DataSlot", &iter)) {
-        dbus_message_iter_get_basic(&iter, &modem_path);
+    if (g_dbus_proxy_get_property_basic(proxy, "DataSlot", &modem_path)) {
         *out = tapi_utils_get_slot_id(modem_path);
         return OK;
     }

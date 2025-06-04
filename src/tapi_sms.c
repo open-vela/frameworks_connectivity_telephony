@@ -202,15 +202,13 @@ static void message_info_free(void* user_data)
 
 static char* proxy_get_string(GDBusProxy* proxy, const char* property)
 {
-    DBusMessageIter iter;
     char* str;
 
-    if (!g_dbus_proxy_get_property(proxy, property, &iter)) {
+    if (!g_dbus_proxy_get_property_basic(proxy, property, &str)) {
         tapi_log_error("failed to get property %s", property);
         return NULL;
     }
 
-    dbus_message_iter_get_basic(&iter, &str);
     return str;
 }
 
@@ -843,7 +841,6 @@ int tapi_sms_get_delivery_report_status(tapi_context context, int slot_id, bool*
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    DBusMessageIter iter;
     int result;
 
     if (ctx == NULL) {
@@ -862,9 +859,7 @@ int tapi_sms_get_delivery_report_status(tapi_context context, int slot_id, bool*
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property(proxy, "UseDeliveryReports", &iter)) {
-        dbus_message_iter_get_basic(&iter, &result);
-
+    if (g_dbus_proxy_get_property_basic(proxy, "UseDeliveryReports", &result)) {
         *out = result;
         return OK;
     }
@@ -1142,7 +1137,6 @@ int tapi_sms_get_default_slot(tapi_context context, int* out)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    DBusMessageIter iter;
     char* modem_path;
 
     proxy = ctx->dbus_proxy_manager;
@@ -1156,8 +1150,7 @@ int tapi_sms_get_default_slot(tapi_context context, int* out)
         return -EAGAIN;
     }
 
-    if (g_dbus_proxy_get_property(proxy, "SmsSlot", &iter)) {
-        dbus_message_iter_get_basic(&iter, &modem_path);
+    if (g_dbus_proxy_get_property_basic(proxy, "SmsSlot", &modem_path)) {
         *out = tapi_utils_get_slot_id(modem_path);
         return OK;
     }

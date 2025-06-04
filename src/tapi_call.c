@@ -1394,50 +1394,20 @@ int tapi_call_send_tones(void* context, int slot_id, char* tones)
     return OK;
 }
 
-int tapi_call_get_ecc_list(tapi_context context, int slot_id, ecc_info* out)
+struct ecc_info_list {
+    ecc_info* ecc_list;
+    int size;
+};
+
+static void ecc_number_prop_dbus_iter_cb(DBusMessageIter* list, void* data)
 {
-    dbus_context* ctx = context;
-    DBusMessageIter list;
-    GDBusProxy* proxy;
     int index = 0;
+    struct ecc_info_list* ecc_list = data;
+    ecc_info* out = ecc_list->ecc_list;
 
-    if (ctx == NULL) {
-        tapi_log_error("context is null in %s", __func__);
-        return -EINVAL;
-    }
-
-    if (!tapi_is_valid_slotid(slot_id)) {
-        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
-        return -EINVAL;
-    }
-
-    if (!ctx->client_ready) {
-        tapi_log_error("client is not ready in %s", __func__);
-        return -EAGAIN;
-    }
-
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
-    if (proxy == NULL) {
-        tapi_log_error("no available proxy in %s", __func__);
-        return -EIO;
-    }
-
-    if (!g_dbus_proxy_get_property(proxy, "EmergencyNumbers", &list)) {
-        syslog(LOG_DEBUG, "no EmergencyNumbers in CALL,use default");
-        proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
-        if (proxy == NULL) {
-            tapi_log_error("no available proxy in %s", __func__);
-            return -EIO;
-        }
-        if (!g_dbus_proxy_get_property(proxy, "EmergencyNumbers", &list)) {
-            tapi_log_error("no EmergencyNumbers in modem");
-            return -EINVAL;
-        }
-    }
-
-    if (dbus_message_iter_get_arg_type(&list) == DBUS_TYPE_ARRAY) {
+    if (dbus_message_iter_get_arg_type(list) == DBUS_TYPE_ARRAY) {
         DBusMessageIter var_elem;
-        dbus_message_iter_recurse(&list, &var_elem);
+        dbus_message_iter_recurse(list, &var_elem);
 
         while (dbus_message_iter_get_arg_type(&var_elem) != DBUS_TYPE_INVALID) {
             char* str;
@@ -1465,6 +1435,63 @@ int tapi_call_get_ecc_list(tapi_context context, int slot_id, ecc_info* out)
             dbus_message_iter_next(&var_elem);
         }
     }
+    ecc_list->size = index;
+}
+
+int tapi_call_get_ecc_list(tapi_context context, int slot_id, ecc_info* out)
+{
+    dbus_context* ctx = context;
+    // DBusMessageIter list;
+    GDBusProxy* proxy;
+    int index = 0;
+
+    if (ctx == NULL) {
+        tapi_log_error("context is null in %s", __func__);
+        return -EINVAL;
+    }
+
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
+        return -EINVAL;
+    }
+
+    if (!ctx->client_ready) {
+        tapi_log_error("client is not ready in %s", __func__);
+        return -EAGAIN;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy in %s", __func__);
+        return -EIO;
+    }
+
+    struct ecc_info_list* ecc_list = calloc(1, sizeof(struct ecc_info_list));
+    if (ecc_list == NULL) {
+        tapi_log_error("ecc_list in %s is null", __func__);
+        return -ENOMEM;
+    }
+    ecc_list->ecc_list = out;
+
+    if (!g_dbus_proxy_get_property_iter_cb(proxy, "EmergencyNumbers", ecc_list,
+            ecc_number_prop_dbus_iter_cb)) {
+        syslog(LOG_DEBUG, "no EmergencyNumbers in CALL,use default");
+        proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
+        if (proxy == NULL) {
+            tapi_log_error("no available proxy in %s", __func__);
+            free(ecc_list);
+            return -EIO;
+        }
+        if (!g_dbus_proxy_get_property_iter_cb(proxy, "EmergencyNumbers", ecc_list,
+                ecc_number_prop_dbus_iter_cb)) {
+            tapi_log_error("no EmergencyNumbers in modem");
+            free(ecc_list);
+            return -EINVAL;
+        }
+    }
+
+    index = ecc_list->size;
+    free(ecc_list);
 
     return index;
 }
@@ -1874,7 +1901,6 @@ int tapi_call_get_default_slot(tapi_context context, int* out)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    DBusMessageIter iter;
     char* modem_path;
 
     proxy = ctx->dbus_proxy_manager;
@@ -1888,8 +1914,7 @@ int tapi_call_get_default_slot(tapi_context context, int* out)
         return -EAGAIN;
     }
 
-    if (g_dbus_proxy_get_property(proxy, "VoiceCallSlot", &iter)) {
-        dbus_message_iter_get_basic(&iter, &modem_path);
+    if (g_dbus_proxy_get_property_basic(proxy, "VoiceCallSlot", &modem_path)) {
         *out = tapi_utils_get_slot_id(modem_path);
         return OK;
     }

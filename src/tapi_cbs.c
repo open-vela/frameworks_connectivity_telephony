@@ -21,29 +21,25 @@
 
 static bool proxy_get_bool(GDBusProxy* proxy, const char* property)
 {
-    DBusMessageIter iter;
     dbus_bool_t value;
 
-    if (!g_dbus_proxy_get_property(proxy, property, &iter)) {
+    if (!g_dbus_proxy_get_property_basic(proxy, property, &value)) {
         tapi_log_error("get property fail in %s", __func__);
         return false;
     }
 
-    dbus_message_iter_get_basic(&iter, &value);
     return value;
 }
 
 static char* proxy_get_string(GDBusProxy* proxy, const char* property)
 {
-    DBusMessageIter iter;
     char* str;
 
-    if (!g_dbus_proxy_get_property(proxy, property, &iter)) {
+    if (!g_dbus_proxy_get_property_basic(proxy, property, &str)) {
         tapi_log_error("get property fail in %s", __func__);
         return NULL;
     }
 
-    dbus_message_iter_get_basic(&iter, &str);
     return str;
 }
 

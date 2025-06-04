@@ -260,7 +260,6 @@ int tapi_ims_get_registration(tapi_context context, int slot_id,
     tapi_ims_registration_info* ims_reg)
 {
     dbus_context* ctx = context;
-    DBusMessageIter iter;
     GDBusProxy* proxy;
     int val = 0;
     int cap_value = 0;
@@ -291,21 +290,18 @@ int tapi_ims_get_registration(tapi_context context, int slot_id,
         return -EIO;
     }
 
-    if (!g_dbus_proxy_get_property(proxy, "Registered", &iter)) {
+    if (!g_dbus_proxy_get_property_basic(proxy, "Registered", &val)) {
         tapi_log_error("get property failed in %s", __func__);
         return -EIO;
     }
 
-    dbus_message_iter_get_basic(&iter, &val);
     ims_reg->reg_info = val;
 
-    if (g_dbus_proxy_get_property(proxy, "VoiceCapable", &iter)) {
-        dbus_message_iter_get_basic(&iter, &val);
+    if (g_dbus_proxy_get_property_basic(proxy, "VoiceCapable", &val)) {
         cap_value = tapi_ims_bitmask(cap_value, VOICE_CAPABLE_FLAG, val);
     }
 
-    if (g_dbus_proxy_get_property(proxy, "SmsCapable", &iter)) {
-        dbus_message_iter_get_basic(&iter, &val);
+    if (g_dbus_proxy_get_property_basic(proxy, "SmsCapable", &val)) {
         cap_value = tapi_ims_bitmask(cap_value, SMS_CAPABLE_FLAG, val);
     }
 
@@ -317,7 +313,6 @@ int tapi_ims_get_registration(tapi_context context, int slot_id,
 int tapi_ims_is_registered(tapi_context context, int slot_id, bool* out)
 {
     dbus_context* ctx = context;
-    DBusMessageIter iter;
     GDBusProxy* proxy;
     int val = 0;
 
@@ -342,12 +337,11 @@ int tapi_ims_is_registered(tapi_context context, int slot_id, bool* out)
         return -EIO;
     }
 
-    if (!g_dbus_proxy_get_property(proxy, "Registered", &iter)) {
+    if (!g_dbus_proxy_get_property_basic(proxy, "Registered", &val)) {
         tapi_log_error("get property failed in %s", __func__);
         return -EIO;
     }
 
-    dbus_message_iter_get_basic(&iter, &val);
     *out = val;
 
     return OK;
@@ -357,7 +351,6 @@ int tapi_ims_is_volte_available(tapi_context context, int slot_id, bool* out)
 {
     dbus_context* ctx = context;
     int reg = 0, cap = 0;
-    DBusMessageIter iter;
     GDBusProxy* proxy;
 
     if (ctx == NULL) {
@@ -381,19 +374,16 @@ int tapi_ims_is_volte_available(tapi_context context, int slot_id, bool* out)
         return -EIO;
     }
 
-    if (!g_dbus_proxy_get_property(proxy, "Registered", &iter)) {
+    if (!g_dbus_proxy_get_property_basic(proxy, "Registered", &reg)) {
         tapi_log_error("get property failed in %s", __func__);
         return -EIO;
     }
 
-    dbus_message_iter_get_basic(&iter, &reg);
-
-    if (!g_dbus_proxy_get_property(proxy, "VoiceCapable", &iter)) {
+    if (!g_dbus_proxy_get_property_basic(proxy, "VoiceCapable", &cap)) {
         tapi_log_error("get property failed in %s", __func__);
         return -EIO;
     }
 
-    dbus_message_iter_get_basic(&iter, &cap);
     *out = reg && cap;
 
     return OK;
@@ -402,7 +392,6 @@ int tapi_ims_is_volte_available(tapi_context context, int slot_id, bool* out)
 int tapi_ims_get_subscriber_uri_number(tapi_context context, int slot_id, char** out)
 {
     dbus_context* ctx = context;
-    DBusMessageIter iter;
     GDBusProxy* proxy;
 
     if (ctx == NULL) {
@@ -426,8 +415,7 @@ int tapi_ims_get_subscriber_uri_number(tapi_context context, int slot_id, char**
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property(proxy, "SubscriberUriNumber", &iter)) {
-        dbus_message_iter_get_basic(&iter, out);
+    if (g_dbus_proxy_get_property_basic(proxy, "SubscriberUriNumber", out)) {
         return OK;
     }
 
@@ -438,7 +426,6 @@ int tapi_ims_get_subscriber_uri_number(tapi_context context, int slot_id, char**
 int tapi_ims_get_enabled(tapi_context context, int slot_id, bool* out)
 {
     dbus_context* ctx = context;
-    DBusMessageIter iter;
     GDBusProxy* proxy;
     int is_enabled = 0;
 
@@ -463,9 +450,7 @@ int tapi_ims_get_enabled(tapi_context context, int slot_id, bool* out)
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property(proxy, "ImsSwitchStatus", &iter)) {
-        dbus_message_iter_get_basic(&iter, &is_enabled);
-
+    if (g_dbus_proxy_get_property_basic(proxy, "ImsSwitchStatus", &is_enabled)) {
         *out = is_enabled;
         return OK;
     }
