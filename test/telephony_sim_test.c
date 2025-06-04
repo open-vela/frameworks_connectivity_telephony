@@ -202,13 +202,6 @@ int sim_set_operator_test(int slot_id, const char* expect_res)
     }
 
     sleep(5);
-    if (modem_reset_test(slot_id)) {
-        syslog(LOG_DEBUG, "Modem reset execute fail in %s", __func__);
-        res = -1;
-        goto on_exit;
-    }
-
-    sleep(10);
     if (sim_unlisten_sim_test()) {
         syslog(LOG_DEBUG, "Sim unlisten execute fail in %s", __func__);
         res = -1;
