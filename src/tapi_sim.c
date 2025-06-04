@@ -541,7 +541,6 @@ int tapi_sim_has_icc_card(tapi_context context, int slot_id, bool* out)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    DBusMessageIter iter;
     int result;
 
     if (ctx == NULL) {
@@ -565,9 +564,7 @@ int tapi_sim_has_icc_card(tapi_context context, int slot_id, bool* out)
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property(proxy, "Present", &iter)) {
-        dbus_message_iter_get_basic(&iter, &result);
-
+    if (g_dbus_proxy_get_property_basic(proxy, "Present", &result)) {
         *out = result;
         return OK;
     }
@@ -580,7 +577,6 @@ int tapi_sim_get_sim_state(tapi_context context, int slot_id, int* out)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    DBusMessageIter iter;
 
     if (ctx == NULL) {
         tapi_log_error("context in %s is null", __func__);
@@ -603,8 +599,7 @@ int tapi_sim_get_sim_state(tapi_context context, int slot_id, int* out)
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property(proxy, "SimState", &iter)) {
-        dbus_message_iter_get_basic(&iter, out);
+    if (g_dbus_proxy_get_property_basic(proxy, "SimState", out)) {
         return OK;
     }
 
@@ -616,7 +611,6 @@ int tapi_sim_get_sim_invalid(tapi_context context, int slot_id, int* out)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    DBusMessageIter iter;
 
     if (ctx == NULL) {
         tapi_log_error("context in %s is null", __func__);
@@ -639,8 +633,7 @@ int tapi_sim_get_sim_invalid(tapi_context context, int slot_id, int* out)
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property(proxy, "SimInvalid", &iter)) {
-        dbus_message_iter_get_basic(&iter, out);
+    if (g_dbus_proxy_get_property_basic(proxy, "SimInvalid", out)) {
         return OK;
     }
 
@@ -652,7 +645,6 @@ int tapi_sim_get_sim_iccid(tapi_context context, int slot_id, char** out)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    DBusMessageIter iter;
     bool has_icc_card;
 
     if (ctx == NULL) {
@@ -684,8 +676,7 @@ int tapi_sim_get_sim_iccid(tapi_context context, int slot_id, char** out)
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property(proxy, "CardIdentifier", &iter)) {
-        dbus_message_iter_get_basic(&iter, out);
+    if (g_dbus_proxy_get_property_basic(proxy, "CardIdentifier", out)) {
         return OK;
     }
 
@@ -697,7 +688,6 @@ int tapi_sim_get_sim_operator(tapi_context context, int slot_id, int length, cha
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    DBusMessageIter iter;
     bool has_icc_card;
     char* mcc;
     char* mnc;
@@ -742,14 +732,10 @@ int tapi_sim_get_sim_operator(tapi_context context, int slot_id, int length, cha
     }
 
     mcc = NULL;
-    if (g_dbus_proxy_get_property(proxy, "MobileCountryCode", &iter)) {
-        dbus_message_iter_get_basic(&iter, &mcc);
-    }
+    g_dbus_proxy_get_property_basic(proxy, "MobileCountryCode", &mcc);
 
     mnc = NULL;
-    if (g_dbus_proxy_get_property(proxy, "MobileNetworkCode", &iter)) {
-        dbus_message_iter_get_basic(&iter, &mnc);
-    }
+    g_dbus_proxy_get_property_basic(proxy, "MobileNetworkCode", &mnc);
 
     if (mcc == NULL) {
         tapi_log_error("mcc is null in %s", __func__);
@@ -774,7 +760,6 @@ int tapi_sim_get_sim_operator_name(tapi_context context, int slot_id, char** out
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    DBusMessageIter iter;
     bool has_icc_card;
 
     if (ctx == NULL) {
@@ -806,8 +791,7 @@ int tapi_sim_get_sim_operator_name(tapi_context context, int slot_id, char** out
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property(proxy, "ServiceProviderName", &iter)) {
-        dbus_message_iter_get_basic(&iter, out);
+    if (g_dbus_proxy_get_property_basic(proxy, "ServiceProviderName", out)) {
         return OK;
     }
 
@@ -819,7 +803,6 @@ int tapi_sim_get_subscriber_id(tapi_context context, int slot_id, char** out)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    DBusMessageIter iter;
     bool has_icc_card;
 
     if (ctx == NULL) {
@@ -851,8 +834,7 @@ int tapi_sim_get_subscriber_id(tapi_context context, int slot_id, char** out)
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property(proxy, "SubscriberIdentity", &iter)) {
-        dbus_message_iter_get_basic(&iter, out);
+    if (g_dbus_proxy_get_property_basic(proxy, "SubscriberIdentity", out)) {
         return OK;
     }
 
@@ -1677,7 +1659,6 @@ int tapi_sim_get_uicc_enablement(tapi_context context, int slot_id, tapi_sim_uic
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    DBusMessageIter iter;
     bool has_icc_card;
     int result;
 
@@ -1710,12 +1691,11 @@ int tapi_sim_get_uicc_enablement(tapi_context context, int slot_id, tapi_sim_uic
         return -EIO;
     }
 
-    if (!g_dbus_proxy_get_property(proxy, "UiccActive", &iter)) {
+    if (!g_dbus_proxy_get_property_basic(proxy, "UiccActive", &result)) {
         tapi_log_error("get property failed in %s", __func__);
         return ERROR;
     }
 
-    dbus_message_iter_get_basic(&iter, &result);
     *out = result;
     return OK;
 }

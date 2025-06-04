@@ -1984,7 +1984,6 @@ int tapi_stk_get_idle_mode_text(tapi_context context, int slot_id, char** text)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    DBusMessageIter iter;
 
     if (ctx == NULL) {
         tapi_log_error("context in %s is null", __func__);
@@ -2007,8 +2006,7 @@ int tapi_stk_get_idle_mode_text(tapi_context context, int slot_id, char** text)
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property(proxy, "IdleModeText", &iter)) {
-        dbus_message_iter_get_basic(&iter, text);
+    if (g_dbus_proxy_get_property_basic(proxy, "IdleModeText", text)) {
         return OK;
     }
 
@@ -2020,7 +2018,6 @@ int tapi_stk_get_idle_mode_icon(tapi_context context, int slot_id, char** icon)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    DBusMessageIter iter;
 
     if (ctx == NULL) {
         tapi_log_error("context in %s is null", __func__);
@@ -2043,22 +2040,56 @@ int tapi_stk_get_idle_mode_icon(tapi_context context, int slot_id, char** icon)
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property(proxy, "IdleModeIcon", &iter)) {
-        dbus_message_iter_get_basic(&iter, icon);
+    if (g_dbus_proxy_get_property_basic(proxy, "IdleModeIcon", icon)) {
         return OK;
     }
 
     tapi_log_error("dbus get property fail in %s", __func__);
     return ERROR;
 }
+struct main_menu_iter_cb_data {
+    tapi_stk_menu_item* item;
+    int length;
+    int index;
+};
+
+static void main_menu_iter_cb(DBusMessageIter* iter, void* user_data)
+{
+    char* text;
+    DBusMessageIter entry;
+    unsigned char icon_id;
+    struct main_menu_iter_cb_data* menu = user_data;
+
+    if (dbus_message_iter_get_arg_type(iter) == DBUS_TYPE_ARRAY) {
+
+        dbus_message_iter_recurse(iter, &entry);
+
+        while (dbus_message_iter_get_arg_type(&entry) != DBUS_TYPE_INVALID) {
+
+            if (dbus_message_iter_get_arg_type(&entry) == DBUS_TYPE_STRUCT) {
+
+                dbus_message_iter_get_basic(&entry, &text);
+                dbus_message_iter_next(&entry);
+
+                dbus_message_iter_get_basic(&entry, &icon_id);
+
+                snprintf(menu->item[menu->index++].text, sizeof(menu->item[menu->index++].text), "%s", text);
+                menu->item[menu->index++].icon_id = icon_id;
+            }
+
+            if (menu->index >= menu->length || menu->index >= MAX_STK_MAIN_MENU_LENGTH)
+                break;
+
+            dbus_message_iter_next(iter);
+            dbus_message_iter_recurse(iter, &entry);
+        }
+    }
+}
 
 int tapi_stk_get_main_menu(tapi_context context, int slot_id, int length, tapi_stk_menu_item out[])
 {
     dbus_context* ctx = context;
-    DBusMessageIter array, entry;
     GDBusProxy* proxy;
-    unsigned char icon_id;
-    char* text;
     int index;
 
     if (ctx == NULL) {
@@ -2087,36 +2118,22 @@ int tapi_stk_get_main_menu(tapi_context context, int slot_id, int length, tapi_s
         return -EIO;
     }
 
-    if (!g_dbus_proxy_get_property(proxy, "MainMenu", &array)) {
+    struct main_menu_iter_cb_data* menu = calloc(1, sizeof(struct main_menu_iter_cb_data));
+    if (menu == NULL) {
+        tapi_log_error("malloc fail in %s", __func__);
+        return -ENOMEM;
+    }
+    menu->item = out;
+    menu->length = length;
+
+    if (!g_dbus_proxy_get_property_iter_cb(proxy, "MainMenu", menu, main_menu_iter_cb)) {
         tapi_log_error("dbus get property fail in %s", __func__);
+        free(menu);
         return -EIO;
     }
 
-    index = 0;
-    if (dbus_message_iter_get_arg_type(&array) == DBUS_TYPE_ARRAY) {
-
-        dbus_message_iter_recurse(&array, &entry);
-
-        while (dbus_message_iter_get_arg_type(&entry) != DBUS_TYPE_INVALID) {
-
-            if (dbus_message_iter_get_arg_type(&entry) == DBUS_TYPE_STRUCT) {
-
-                dbus_message_iter_get_basic(&entry, &text);
-                dbus_message_iter_next(&entry);
-
-                dbus_message_iter_get_basic(&entry, &icon_id);
-
-                snprintf(out[index++].text, sizeof(out[index++].text), "%s", text);
-                out[index++].icon_id = icon_id;
-            }
-
-            if (index >= length || index >= MAX_STK_MAIN_MENU_LENGTH)
-                break;
-
-            dbus_message_iter_next(&array);
-            dbus_message_iter_recurse(&array, &entry);
-        }
-    }
+    index = menu->index;
+    free(menu);
 
     return index;
 }
@@ -2125,7 +2142,6 @@ int tapi_stk_get_main_menu_title(tapi_context context, int slot_id, char** title
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    DBusMessageIter iter;
 
     if (ctx == NULL) {
         tapi_log_error("context in %s is null", __func__);
@@ -2148,8 +2164,7 @@ int tapi_stk_get_main_menu_title(tapi_context context, int slot_id, char** title
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property(proxy, "MainMenuTitle", &iter)) {
-        dbus_message_iter_get_basic(&iter, title);
+    if (g_dbus_proxy_get_property_basic(proxy, "MainMenuTitle", title)) {
         return OK;
     }
 
@@ -2161,7 +2176,6 @@ int tapi_stk_get_main_menu_icon(tapi_context context, int slot_id, char** icon)
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    DBusMessageIter iter;
 
     if (ctx == NULL) {
         tapi_log_error("context in %s is null", __func__);
@@ -2184,8 +2198,7 @@ int tapi_stk_get_main_menu_icon(tapi_context context, int slot_id, char** icon)
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property(proxy, "MainMenuIcon", &iter)) {
-        dbus_message_iter_get_basic(&iter, icon);
+    if (g_dbus_proxy_get_property_basic(proxy, "MainMenuIcon", icon)) {
         return OK;
     }
 
