@@ -1138,7 +1138,7 @@ int data_enable_and_get_roaming_test(void)
         goto on_exit;
     }
 
-    sleep(3);
+    sleep(5);
     ret = data_get_roaming_enabled_test(&result);
     if (ret) {
         syslog(LOG_ERR, "get data roaming failed in %s", __func__);
@@ -1168,7 +1168,7 @@ int data_disable_and_get_roaming_test(void)
         goto on_exit;
     }
 
-    sleep(3);
+    sleep(5);
     ret = data_get_roaming_enabled_test(&result);
     if (ret) {
         syslog(LOG_ERR, "get data roaming failed in %s", __func__);
