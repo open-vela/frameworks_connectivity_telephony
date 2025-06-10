@@ -704,7 +704,13 @@ static void radio_signal_change(tapi_async_result* result)
         syslog(LOG_DEBUG, "modem restart in slot[%d] \n", slot_id);
         break;
     case MSG_OEM_HOOK_RAW_IND:
-        syslog(LOG_DEBUG, "oem hook raw in slot[%d] \n", slot_id);
+        syslog(LOG_DEBUG, "unsol oem hook raw in slot[%d] \n", slot_id);
+        unsigned char* response = result->data;
+
+        syslog(LOG_DEBUG, "unsol raw data length : %d\n", param);
+        for (int i = 0; i < param; i++) {
+            syslog(LOG_DEBUG, "unsol raw data : %x\n", response[i]);
+        }
         break;
     case MSG_DEVICE_INFO_CHANGE_IND:
         syslog(LOG_DEBUG, "device info has changed in slot[%d] \n", slot_id);
