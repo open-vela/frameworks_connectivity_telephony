@@ -62,6 +62,13 @@ int remote_sim_set_sim_operator(int slot_id, const char* expect_mccmnc)
         EVENT_OEM_RIL_REQUEST_STRINGS_DONE, oem_req, 1, NULL);
 }
 
+int remote_sim_set_channel_error_code(int slot_id, int error_code)
+{
+    memset(remote_command_buf, 0, sizeof(remote_command_buf));
+    sprintf(remote_command_buf, "AT+REMOTELOGICALCHANNELERR=%d", error_code);
+    return modem_invoke_oem_ril_request_strings_test(slot_id, remote_command_buf, 1);
+}
+
 int remote_ss_operation_delay(int slot_id, int delay_sec)
 {
     char req_data[30] = { 0 };

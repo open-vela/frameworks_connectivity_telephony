@@ -172,6 +172,7 @@ void judge_data_init(void)
     judge_data.expect = INVALID_VALUE;
     judge_data.result = INVALID_VALUE;
     judge_data.phone_state_value = INVALID_VALUE;
+    judge_data.sim_channel_error_code = INVALID_VALUE;
 }
 
 static void TestTeleFunc_CI_SimListen(void** state)
@@ -320,6 +321,13 @@ static void TestTeleFunc_CI_SimOpenAndCloseLogicalChannel(void** state)
     ret = sim_close_logical_channel_test(0);
 }
 
+static void TestTeleFunc_CI_SimOpenLogicalChannelWithErrorCode(void** state)
+{
+    (void)state;
+    int ret = sim_open_logical_channel_with_error_code_test(0, 3);
+    assert_int_equal(ret, OK);
+}
+
 static void TestTeleFunc_SimLogicalChannelOpenCloseNumerous(void** state)
 {
     (void)state;
@@ -327,9 +335,22 @@ static void TestTeleFunc_SimLogicalChannelOpenCloseNumerous(void** state)
     assert_int_equal(ret, OK);
 }
 
+static void TestTeleFunc_SimLogicalChannelOpenCloseWithErrorCodeNumerous(void** state)
+{
+    (void)state;
+    int ret = sim_open_close_logical_channel_with_error_code_numerous(0);
+    assert_int_equal(ret, OK);
+}
+
 static void TestTeleFunc_CI_SimTransmitAPDUInLogicalChannel(void** state)
 {
     int ret = sim_transmit_apdu_by_logical_channel(0);
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_CI_SimTransmitAPDUInLogicalChannelWithErrorCode(void** state)
+{
+    int ret = sim_transmit_apdu_by_logical_channel_with_error_code(0, 0);
     assert_int_equal(ret, OK);
 }
 
@@ -351,6 +372,13 @@ static void TestTeleFunc_CI_SimTransmitAPDUBasicChannel(void** state)
 {
     (void)state;
     int ret = sim_transmit_apdu_basic_channel_test(0);
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_CI_SimTransmitAPDUBasicChannelWithErrorCode(void** state)
+{
+    (void)state;
+    int ret = sim_transmit_apdu_basic_channel_with_error_code_test(0, 0);
     assert_int_equal(ret, OK);
 }
 
@@ -3701,11 +3729,15 @@ int main(int argc, char* argv[])
         cmocka_unit_test(TestTeleFunc_SimGetMSISDNNumerousTimes),
         cmocka_unit_test(TestTeleFunc_CI_SimTransmitAPDUInBasicChannel),
         cmocka_unit_test(TestTeleFunc_CI_SimOpenAndCloseLogicalChannel),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_SimOpenLogicalChannelWithErrorCode, NULL, teardown_sim_channel),
         cmocka_unit_test(TestTeleFunc_SimLogicalChannelOpenCloseNumerous),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_SimLogicalChannelOpenCloseWithErrorCodeNumerous, NULL, teardown_sim_channel),
         cmocka_unit_test(TestTeleFunc_CI_SimTransmitAPDUInLogicalChannel),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_SimTransmitAPDUInLogicalChannelWithErrorCode, NULL, teardown_sim_channel),
         cmocka_unit_test(TestTeleFunc_SimSetUiccEnablement),
         cmocka_unit_test(TestTeleFunc_SimGetUiccEnablement),
         cmocka_unit_test(TestTeleFunc_CI_SimTransmitAPDUBasicChannel),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_SimTransmitAPDUBasicChannelWithErrorCode, NULL, teardown_sim_channel),
         cmocka_unit_test_setup_teardown(TestTeleFunc_SimRmoteAbsentInsertOperator, setup_sim, teardown_sim),
         cmocka_unit_test(TestTeleFunc_CI_SimGetState),
         cmocka_unit_test(TestTeleFunc_SimEnterPin),

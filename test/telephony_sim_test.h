@@ -6,6 +6,7 @@
 
 int setup_sim(void** state);
 int teardown_sim(void** state);
+int teardown_sim_channel(void** state);
 int phonebook_load_adn_entries_test(int slot_id);
 int phonebook_load_fdn_entries_test(int slot_id);
 int phonebook_insert_fdn_entry_test(int slot_id);
@@ -34,11 +35,15 @@ int sim_multi_get_ef_msisdn_test(int slot_id, const char* expect_res);
 int sim_listen_sim_test(int slot_id);
 int sim_lock_pin_test(int slot_id);
 int sim_open_close_logical_channel_numerous(int slot_id);
+int sim_open_close_logical_channel_with_error_code_numerous(int slot_id);
 int sim_open_logical_channel_test(int slot_id);
+int sim_open_logical_channel_with_error_code_test(int slot_id, int error_code);
 int sim_set_operator_test(int slot_id, const char* expect_res);
 int sim_set_uicc_enablement_test(int slot_id);
 int sim_transmit_apdu_by_logical_channel(int slot_id);
+int sim_transmit_apdu_by_logical_channel_with_error_code(int slot_id, int error_code);
 int sim_transmit_apdu_basic_channel_test(int slot_id);
+int sim_transmit_apdu_basic_channel_with_error_code_test(int slot_id, int error_code);
 int sim_transmit_apdu_logical_channel_test(int slot_id);
 int sim_unlisten_sim_test(void);
 int sim_unlock_pin_test(int slot_id);

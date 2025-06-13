@@ -14,6 +14,7 @@ int remote_call_clcc_with_data(int slot_id, int clcc_with_data);
 int remote_sim_absent_operation(int slot_id);
 int remote_sim_insert_operation(int slot_id);
 int remote_sim_set_sim_operator(int slot_id, const char* expect_mccmnc);
+int remote_sim_set_channel_error_code(int slot_id, int error_code);
 int remote_ss_operation_delay(int slot_id, int delay_sec);
 int remote_sms_delay(int slot_id, int delay_sec);
 int remote_sms_send_chinese_long_message(int slot_id);
