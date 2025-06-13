@@ -116,6 +116,7 @@ struct judge_type {
     int expect;
     int result;
     int phone_state_value;
+    int sim_channel_error_code;
 };
 
 #endif /* TELEPHONY_TEST_H_ */

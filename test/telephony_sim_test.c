@@ -25,6 +25,17 @@ int setup_sim(void** state)
     return sim_listen_sim_test(0);
 }
 
+int teardown_sim_channel(void** state)
+{
+    (void)state;
+    remote_sim_set_channel_error_code(0, -1);
+
+    if (global_data.sim_state_change_watch_id != -1) {
+        sim_close_logical_channel_test(0);
+    }
+    return 0;
+}
+
 int teardown_sim(void** state)
 {
     (void)state;
@@ -322,30 +333,34 @@ static void tele_sim_async_fun(tapi_async_result* result)
     syslog(LOG_DEBUG, "result->arg2 : %d\n", result->arg2);
 
     if (result->status != OK) {
-        syslog(LOG_DEBUG, "%s msg id : %d result err, return.\n", __func__, result->msg_id);
-        return;
+        judge_data.sim_channel_error_code = result->arg1;
+        syslog(LOG_DEBUG, "%s msg id : %d result is not ok, error code is %d.\n", __func__, result->msg_id, judge_data.sim_channel_error_code);
     }
 
     if (result->msg_id == EVENT_TRANSMIT_APDU_LOGICAL_CHANNEL_DONE
         || result->msg_id == EVENT_TRANSMIT_APDU_BASIC_CHANNEL_DONE) {
-        apdu_data = (unsigned char*)result->data;
-        for (i = 0; i < result->arg2; i++)
-            syslog(LOG_DEBUG, "apdu data %d : %d ", i, apdu_data[i]);
+        if (result->status == OK) {
+            apdu_data = (unsigned char*)result->data;
+            for (i = 0; i < result->arg2; i++)
+                syslog(LOG_DEBUG, "apdu data %d : %d ", i, apdu_data[i]);
+        }
 
         if (judge_data.expect == EVENT_TRANSMIT_APDU_BASIC_CHANNEL_DONE) {
-            judge_data.result = 0;
+            judge_data.result = result->status;
             judge_data.flag = EVENT_TRANSMIT_APDU_BASIC_CHANNEL_DONE;
         } else if (judge_data.expect == EVENT_TRANSMIT_APDU_LOGICAL_CHANNEL_DONE) {
-            judge_data.result = 0;
+            judge_data.result = result->status;
             judge_data.flag = EVENT_TRANSMIT_APDU_LOGICAL_CHANNEL_DONE;
         }
 
     } else if (result->msg_id == EVENT_OPEN_LOGICAL_CHANNEL_DONE) {
         syslog(LOG_DEBUG, "open logical channel respond session id : %d\n", result->arg2);
-        global_data.current_channel_session_id = result->arg2;
+        if (result->status == OK) {
+            global_data.current_channel_session_id = result->arg2;
+        }
 
         if (judge_data.expect == EVENT_OPEN_LOGICAL_CHANNEL_DONE) {
-            judge_data.result = 0;
+            judge_data.result = result->status;
             judge_data.flag = EVENT_OPEN_LOGICAL_CHANNEL_DONE;
         }
 
@@ -353,12 +368,12 @@ static void tele_sim_async_fun(tapi_async_result* result)
         syslog(LOG_DEBUG, "sim state change ind : %d \n", result->arg2);
         if (judge_data.expect == EVENT_SIM_ABSENT_SET_DONE) {
             if (result->arg2 == SIM_STATE_NOT_PRESENT) {
-                judge_data.result = 0;
+                judge_data.result = result->status;
                 judge_data.flag = EVENT_SIM_ABSENT_SET_DONE;
             }
         } else if (judge_data.expect == EVENT_SIM_INSERT_SET_DONE) {
             if (result->arg2 == SIM_STATE_INSERTED) {
-                judge_data.result = 0;
+                judge_data.result = result->status;
                 judge_data.flag = EVENT_SIM_INSERT_SET_DONE;
             }
         }
@@ -392,38 +407,38 @@ static void tele_sim_async_fun(tapi_async_result* result)
         }
     } else if (result->msg_id == EVENT_CLOSE_LOGICAL_CHANNEL_DONE) {
         if (judge_data.expect == EVENT_CLOSE_LOGICAL_CHANNEL_DONE) {
-            judge_data.result = 0;
+            judge_data.result = result->status;
             judge_data.flag = EVENT_CLOSE_LOGICAL_CHANNEL_DONE;
         }
     } else if (result->msg_id == EVENT_UICC_ENABLEMENT_SET_DONE) {
         if (judge_data.expect == EVENT_UICC_ENABLEMENT_SET_DONE) {
-            judge_data.result = 0;
+            judge_data.result = result->status;
             judge_data.flag = EVENT_UICC_ENABLEMENT_SET_DONE;
         }
     } else if (result->msg_id == EVENT_ENTER_SIM_PIN_DONE) {
         if (judge_data.expect == EVENT_ENTER_SIM_PIN_DONE) {
-            judge_data.result = 0;
+            judge_data.result = result->status;
             judge_data.flag = EVENT_ENTER_SIM_PIN_DONE;
         }
     } else if (result->msg_id == EVENT_CHANGE_SIM_PIN_DONE) {
         if (judge_data.expect == EVENT_CHANGE_SIM_PIN_DONE) {
-            judge_data.result = 0;
+            judge_data.result = result->status;
             judge_data.flag = EVENT_CHANGE_SIM_PIN_DONE;
         }
     } else if (result->msg_id == EVENT_LOCK_SIM_PIN_DONE) {
         if (judge_data.expect == EVENT_LOCK_SIM_PIN_DONE) {
-            judge_data.result = 0;
+            judge_data.result = result->status;
             judge_data.flag = EVENT_LOCK_SIM_PIN_DONE;
         }
     } else if (result->msg_id == EVENT_UNLOCK_SIM_PIN_DONE) {
         if (judge_data.expect == EVENT_UNLOCK_SIM_PIN_DONE) {
-            judge_data.result = 0;
+            judge_data.result = result->status;
             judge_data.flag = EVENT_UNLOCK_SIM_PIN_DONE;
         }
     } else if (result->msg_id == MSG_SIM_INVALID_CHANGE_IND) {
         syslog(LOG_DEBUG, "sim invalid change ind :\n");
         if (judge_data.expect == EVENT_SIM_INVALID_SET_DONE) {
-            judge_data.result = 0;
+            judge_data.result = result->status;
             judge_data.flag = EVENT_SIM_INVALID_SET_DONE;
         }
     }
@@ -616,6 +631,33 @@ on_exit:
     return res;
 }
 
+int sim_open_logical_channel_with_error_code_test(int slot_id, int error_code)
+{
+    int res = 0;
+
+    if (remote_sim_set_channel_error_code(slot_id, error_code) != 0) {
+        syslog(LOG_ERR, "remote sim set channel error code execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (sim_open_logical_channel_test(slot_id) != -1) {
+        syslog(LOG_ERR, "sim_open_logical_channel_with_error_code_test fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge_data.sim_channel_error_code != error_code) {
+        syslog(LOG_ERR, "sim channel error code is not equal in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+
+    return res;
+}
+
 int sim_close_logical_channel_test(int slot_id)
 {
     int res = 0;
@@ -746,6 +788,32 @@ on_exit:
     return res;
 }
 
+int sim_transmit_apdu_basic_channel_with_error_code_test(int slot_id, int error_code)
+{
+    int res = 0;
+
+    if (remote_sim_set_channel_error_code(slot_id, error_code)) {
+        syslog(LOG_ERR, "remote set sim channel error code execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (sim_transmit_apdu_basic_channel_test(slot_id) != -1) {
+        syslog(LOG_ERR, "sim_transmit_apdu_basic_channel_test execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge_data.sim_channel_error_code != error_code) {
+        syslog(LOG_ERR, "sim channel error code is invalid in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
 int sim_transmit_apdu_logical_channel_test(int slot_id)
 {
     int res = 0;
@@ -808,6 +876,32 @@ int sim_open_close_logical_channel_numerous(int slot_id)
     return 0;
 }
 
+int sim_open_close_logical_channel_with_error_code_numerous(int slot_id)
+{
+    for (int i = 0; i < 10; i++) {
+
+        if (remote_sim_set_channel_error_code(slot_id, i))
+            return -1;
+
+        if (sim_open_logical_channel_test(slot_id) != -1)
+            return -1;
+
+        if (judge_data.sim_channel_error_code != i)
+            return -1;
+
+        if (sim_transmit_apdu_logical_channel_test(slot_id) != -1)
+            return -1;
+
+        if (judge_data.sim_channel_error_code != i)
+            return -1;
+
+        if (sim_close_logical_channel_test(slot_id) != -1)
+            return -1;
+    }
+
+    return 0;
+}
+
 int sim_transmit_apdu_by_logical_channel(int slot_id)
 {
     int ret = -1;
@@ -829,6 +923,39 @@ int sim_transmit_apdu_by_logical_channel(int slot_id)
     ret = sim_close_logical_channel_test(slot_id);
     if (ret) {
         syslog(LOG_ERR, "sim_close_logical_channel_test execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
+int sim_transmit_apdu_by_logical_channel_with_error_code(int slot_id, int error_code)
+{
+    int ret = -1;
+    int res = 0;
+    ret = sim_open_logical_channel_test(slot_id);
+    if (ret) {
+        syslog(LOG_ERR, "sim_open_logical_channel_test execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (remote_sim_set_channel_error_code(slot_id, error_code)) {
+        syslog(LOG_ERR, "remote set sim channel error code execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (sim_transmit_apdu_logical_channel_test(slot_id) != -1) {
+        syslog(LOG_ERR, "sim_transmit_apdu_logical_channel_test execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge_data.sim_channel_error_code != error_code) {
+        syslog(LOG_ERR, "sim channel error code is not equal in %s", __func__);
         res = -1;
         goto on_exit;
     }
