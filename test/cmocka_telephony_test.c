@@ -502,6 +502,19 @@ static void TestTeleFunc_CallDialShotPhoneNumber(void** state)
     assert_int_equal(ret, OK);
 }
 
+static void TestTeleFunc_CallDialingAndHangupRepeat(void** state)
+{
+    int ret;
+    (void)state;
+
+    for (int i = 0; i < 200; i++) {
+        ret = call_dial_number_test(0);
+        assert_int_equal(ret, OK);
+        ret = call_hangup_all_test(0);
+        assert_int_equal(ret, OK);
+    }
+}
+
 static void TestTeleFunc_CallDialWithEnableHideCallId(void** state)
 {
     (void)state;
@@ -3844,6 +3857,7 @@ int main(int argc, char* argv[])
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialSecondCallAndActiveInRoming, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallTransfer, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialingThirdCall, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialingAndHangupRepeat, setup_call, teardown_call),
     };
 
     const struct CMUnitTest DataTestSuites[] = {
