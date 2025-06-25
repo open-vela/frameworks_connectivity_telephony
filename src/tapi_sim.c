@@ -964,7 +964,7 @@ int tapi_sim_register(tapi_context context, int slot_id,
     case MSG_SIM_UICC_APP_ENABLED_CHANGE_IND:
     case MSG_SIM_ICCID_CHANGE_IND:
     case MSG_SIM_INVALID_CHANGE_IND:
-        watch_id = g_dbus_add_signal_watch(ctx->connection,
+        watch_id = dbus_client_add_signal_watch(ctx->client,
             OFONO_SERVICE, modem_path, OFONO_SIM_MANAGER_INTERFACE,
             "PropertyChanged", sim_property_changed, handler, handler_free);
         break;
@@ -995,7 +995,7 @@ int tapi_sim_unregister(tapi_context context, int watch_id)
         return -EINVAL;
     }
 
-    if (!g_dbus_remove_watch(ctx->connection, watch_id)) {
+    if (!dbus_client_remove_watch(ctx->client, watch_id)) {
         tapi_log_error("remove signal watch failed in %s", __func__);
         return -EINVAL;
     }

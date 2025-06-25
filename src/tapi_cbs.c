@@ -323,12 +323,12 @@ int tapi_cbs_register(tapi_context context, int slot_id, tapi_indication_msg msg
 
     switch (msg) {
     case MSG_INCOMING_CBS_IND:
-        watch_id = g_dbus_add_signal_watch(ctx->connection, OFONO_SERVICE, path,
+        watch_id = dbus_client_add_signal_watch(ctx->client, OFONO_SERVICE, path,
             OFONO_CELL_BROADCAST_INTERFACE, "IncomingBroadcast",
             unsol_cbs_message, user_data, handler_free);
         break;
     case MSG_EMERGENCY_CBS_IND:
-        watch_id = g_dbus_add_signal_watch(ctx->connection, OFONO_SERVICE, path,
+        watch_id = dbus_client_add_signal_watch(ctx->client, OFONO_SERVICE, path,
             OFONO_CELL_BROADCAST_INTERFACE, "EmergencyBroadcast",
             unsol_cbs_message, user_data, handler_free);
         break;

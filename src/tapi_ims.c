@@ -243,7 +243,7 @@ int tapi_ims_register_registration_change(tapi_context context, int slot_id, voi
     ar->arg1 = slot_id;
     ar->user_obj = user_obj;
 
-    watch_id = g_dbus_add_signal_watch(ctx->connection,
+    watch_id = dbus_client_add_signal_watch(ctx->client,
         OFONO_SERVICE, path, OFONO_IMS_INTERFACE, "PropertyChanged",
         ims_registration_changed, handler, handler_free);
 

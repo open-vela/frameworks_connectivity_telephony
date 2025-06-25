@@ -1753,17 +1753,17 @@ int tapi_data_register(tapi_context context,
     case MSG_DATA_ENABLED_CHANGE_IND:
     case MSG_DATA_REGISTRATION_STATE_CHANGE_IND:
     case MSG_DATA_NETWORK_TYPE_CHANGE_IND:
-        watch_id = g_dbus_add_signal_watch(ctx->connection,
+        watch_id = dbus_client_add_signal_watch(ctx->client,
             OFONO_SERVICE, modem_path, OFONO_CONNECTION_MANAGER_INTERFACE,
             "PropertyChanged", data_property_changed, handler, handler_free);
         break;
     case MSG_DEFAULT_DATA_SLOT_CHANGE_IND:
-        watch_id = g_dbus_add_signal_watch(ctx->connection,
+        watch_id = dbus_client_add_signal_watch(ctx->client,
             OFONO_SERVICE, OFONO_MANAGER_PATH, OFONO_MANAGER_INTERFACE,
             "PropertyChanged", data_property_changed, handler, handler_free);
         break;
     case MSG_DATA_CONNECTION_STATE_CHANGE_IND:
-        watch_id = g_dbus_add_signal_watch(ctx->connection,
+        watch_id = dbus_client_add_signal_watch(ctx->client,
             OFONO_SERVICE, modem_path, OFONO_CONNECTION_MANAGER_INTERFACE,
             "ContextChanged", data_connection_changed, handler, handler_free);
         break;
@@ -1793,7 +1793,7 @@ int tapi_data_unregister(tapi_context context, int watch_id)
         return -EINVAL;
     }
 
-    if (!g_dbus_remove_watch(ctx->connection, watch_id)) {
+    if (!dbus_client_remove_watch(ctx->client, watch_id)) {
         tapi_log_error("remove signal watch failed in %s, watch_id: %d", __func__, watch_id);
         return -EINVAL;
     }

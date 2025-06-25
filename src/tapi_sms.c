@@ -1066,27 +1066,27 @@ int tapi_sms_register(tapi_context context, int slot_id,
 
     switch (msg_type) {
     case MSG_INCOMING_MESSAGE_IND:
-        watch_id = g_dbus_add_signal_watch(ctx->connection, OFONO_SERVICE, path,
+        watch_id = dbus_client_add_signal_watch(ctx->client, OFONO_SERVICE, path,
             OFONO_MESSAGE_MANAGER_INTERFACE, "IncomingMessage",
             unsol_sms_message, user_data, handler_free);
         break;
     case MSG_IMMEDIATE_MESSAGE_IND:
-        watch_id = g_dbus_add_signal_watch(ctx->connection, OFONO_SERVICE, path,
+        watch_id = dbus_client_add_signal_watch(ctx->client, OFONO_SERVICE, path,
             OFONO_MESSAGE_MANAGER_INTERFACE, "ImmediateMessage",
             unsol_sms_message, user_data, handler_free);
         break;
     case MSG_STATUS_REPORT_MESSAGE_IND:
-        watch_id = g_dbus_add_signal_watch(ctx->connection, OFONO_SERVICE, path,
+        watch_id = dbus_client_add_signal_watch(ctx->client, OFONO_SERVICE, path,
             OFONO_MESSAGE_MANAGER_INTERFACE, "StatusReportMessage",
             unsol_sms_message, user_data, handler_free);
         break;
     case MSG_DEFAULT_SMS_SLOT_CHANGED_IND:
-        watch_id = g_dbus_add_signal_watch(ctx->connection,
+        watch_id = dbus_client_add_signal_watch(ctx->client,
             OFONO_SERVICE, OFONO_MANAGER_PATH, OFONO_MANAGER_INTERFACE,
             "PropertyChanged", sms_property_changed, user_data, handler_free);
         break;
     case MSG_SMS_REPORT_SWITCH_CHANGED_IND:
-        watch_id = g_dbus_add_signal_watch(ctx->connection, OFONO_SERVICE, path,
+        watch_id = dbus_client_add_signal_watch(ctx->client, OFONO_SERVICE, path,
             OFONO_MESSAGE_MANAGER_INTERFACE, "PropertyChanged", sms_property_changed, user_data, handler_free);
     default:
         break;
@@ -1172,7 +1172,7 @@ int tapi_sms_unregister(tapi_context context, int watch_id)
         return -EINVAL;
     }
 
-    if (!g_dbus_remove_watch(ctx->connection, watch_id)) {
+    if (!dbus_client_remove_watch(ctx->client, watch_id)) {
         tapi_log_error("remove watch failed in %s", __func__);
         return -EINVAL;
     }

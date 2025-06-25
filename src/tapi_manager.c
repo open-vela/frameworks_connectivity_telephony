@@ -1142,42 +1142,42 @@ static int tapi_modem_register(tapi_context context,
 
     switch (msg) {
     case MSG_RADIO_STATE_CHANGE_IND:
-        watch_id = g_dbus_add_signal_watch(ctx->connection,
+        watch_id = dbus_client_add_signal_watch(ctx->client,
             OFONO_SERVICE, modem_path, OFONO_MODEM_INTERFACE,
             "PropertyChanged", radio_state_changed, handler, handler_free);
         break;
     case MSG_PHONE_STATE_CHANGE_IND:
-        watch_id = g_dbus_add_signal_watch(ctx->connection,
+        watch_id = dbus_client_add_signal_watch(ctx->client,
             OFONO_SERVICE, modem_path, OFONO_VOICECALL_MANAGER_INTERFACE,
             "PhoneStatusChanged", phone_state_changed, handler, handler_free);
         break;
     case MSG_OEM_HOOK_RAW_IND:
-        watch_id = g_dbus_add_signal_watch(ctx->connection,
+        watch_id = dbus_client_add_signal_watch(ctx->client,
             OFONO_SERVICE, modem_path, OFONO_MODEM_INTERFACE,
             "OemHookIndication", process_oem_hook_raw_indication, handler, handler_free);
         break;
     case MSG_MODEM_RESTART_IND:
-        watch_id = g_dbus_add_signal_watch(ctx->connection,
+        watch_id = dbus_client_add_signal_watch(ctx->client,
             OFONO_SERVICE, modem_path, OFONO_MODEM_INTERFACE,
             "ModemRestart", modem_restart, handler, handler_free);
         break;
     case MSG_AIRPLANE_MODE_CHANGE_IND:
-        watch_id = g_dbus_add_signal_watch(ctx->connection,
+        watch_id = dbus_client_add_signal_watch(ctx->client,
             OFONO_SERVICE, modem_path, OFONO_MODEM_INTERFACE,
             "PropertyChanged", airplane_mode_changed, handler, handler_free);
         break;
     case MSG_DEVICE_INFO_CHANGE_IND:
-        watch_id = g_dbus_add_signal_watch(ctx->connection,
+        watch_id = dbus_client_add_signal_watch(ctx->client,
             OFONO_SERVICE, modem_path, OFONO_MODEM_INTERFACE,
             "DeviceInfoChanged", device_info_changed, handler, handler_free);
         break;
     case MSG_MODEM_STATE_CHANGE_IND:
-        watch_id = g_dbus_add_signal_watch(ctx->connection,
+        watch_id = dbus_client_add_signal_watch(ctx->client,
             OFONO_SERVICE, modem_path, OFONO_MODEM_INTERFACE,
             "PropertyChanged", modem_state_changed, handler, handler_free);
         break;
     case MSG_MODEM_ECC_LIST_CHANGE_IND:
-        watch_id = g_dbus_add_signal_watch(ctx->connection,
+        watch_id = dbus_client_add_signal_watch(ctx->client,
             OFONO_SERVICE, modem_path, OFONO_MODEM_INTERFACE,
             "PropertyChanged", modem_ecc_list_change, handler, handler_free);
         break;
@@ -1249,8 +1249,6 @@ tapi_context tapi_open_service(const char* client_name,
             goto error;
         }
 
-        g_dbus_set_disconnect_function(connection, system_dbus_disconnected, callback, NULL);
-
         dbus_error_init(&err);
         dbus_request_name(connection, client_name, &err);
         if (dbus_error_is_set(&err)) {
@@ -1265,6 +1263,7 @@ tapi_context tapi_open_service(const char* client_name,
             goto error;
         }
 
+        dbus_client_add_disconnect_watch(client, system_dbus_disconnected, callback, NULL);
         break;
     }
 
@@ -2419,7 +2418,7 @@ static int tapi_manager_register_data_loging(tapi_context context,
     ar->arg1 = slot_id;
     ar->user_obj = user_obj;
 
-    watch_id = g_dbus_add_signal_watch(ctx->connection,
+    watch_id = dbus_client_add_signal_watch(ctx->client,
         OFONO_SERVICE, OFONO_MANAGER_PATH, OFONO_MANAGER_INTERFACE,
         "DataLogInd", tapi_data_log_ind, handler, handler_free);
 
@@ -2537,7 +2536,7 @@ int tapi_unregister(tapi_context context, int watch_id)
         return -EINVAL;
     }
 
-    if (!g_dbus_remove_watch(ctx->connection, watch_id)) {
+    if (!dbus_client_remove_watch(ctx->client, watch_id)) {
         tapi_log_error("remove watch failed in %s", __func__);
         return -EINVAL;
     }
