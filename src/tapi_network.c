@@ -1682,22 +1682,22 @@ int tapi_network_register(tapi_context context,
     switch (msg) {
     case MSG_NETWORK_STATE_CHANGE_IND:
     case MSG_VOICE_REGISTRATION_STATE_CHANGE_IND:
-        watch_id = g_dbus_add_signal_watch(ctx->connection,
+        watch_id = dbus_client_add_signal_watch(ctx->client,
             OFONO_SERVICE, modem_path, OFONO_NETWORK_REGISTRATION_INTERFACE,
             "PropertyChanged", network_state_changed, handler, handler_free);
         break;
     case MSG_CELLINFO_CHANGE_IND:
-        watch_id = g_dbus_add_signal_watch(ctx->connection,
+        watch_id = dbus_client_add_signal_watch(ctx->client,
             OFONO_SERVICE, modem_path, OFONO_NETMON_INTERFACE,
             "PropertyChanged", cellinfo_list_changed, handler, handler_free);
         break;
     case MSG_SIGNAL_STRENGTH_CHANGE_IND:
-        watch_id = g_dbus_add_signal_watch(ctx->connection,
+        watch_id = dbus_client_add_signal_watch(ctx->client,
             OFONO_SERVICE, modem_path, OFONO_NETWORK_REGISTRATION_INTERFACE,
             "PropertyChanged", signal_strength_changed, handler, handler_free);
         break;
     case MSG_NITZ_STATE_CHANGE_IND:
-        watch_id = g_dbus_add_signal_watch(ctx->connection,
+        watch_id = dbus_client_add_signal_watch(ctx->client,
             OFONO_SERVICE, modem_path, OFONO_NETWORK_REGISTRATION_INTERFACE,
             "PropertyChanged", nitz_state_changed, handler, handler_free);
         break;
@@ -1727,7 +1727,7 @@ int tapi_network_unregister(tapi_context context, int watch_id)
         return -EINVAL;
     }
 
-    if (!g_dbus_remove_watch(ctx->connection, watch_id)) {
+    if (!dbus_client_remove_watch(ctx->client, watch_id)) {
         tapi_log_error("remove signal watch failed in %s, watch_id: %d", __func__, watch_id);
         return -EINVAL;
     }

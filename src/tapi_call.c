@@ -833,12 +833,12 @@ static int tapi_register_manager_call_signal(tapi_context context, int slot_id, 
 
     switch (msg) {
     case MSG_DEFAULT_VOICECALL_SLOT_CHANGE_IND:
-        watch_id = g_dbus_add_signal_watch(ctx->connection,
+        watch_id = dbus_client_add_signal_watch(ctx->client,
             OFONO_SERVICE, OFONO_MANAGER_PATH, interface,
             member, function, handler, handler_free);
         break;
     default:
-        watch_id = g_dbus_add_signal_watch(ctx->connection,
+        watch_id = dbus_client_add_signal_watch(ctx->client,
             OFONO_SERVICE, modem_path, interface, member, function, handler, handler_free);
         break;
     }
@@ -1660,7 +1660,7 @@ int tapi_call_register_call_state_change(tapi_context context, int slot_id,
     ar->user_obj = user_obj;
     ar->msg_type = INDICATION;
 
-    watch_id = g_dbus_add_signal_watch(ctx->connection,
+    watch_id = dbus_client_add_signal_watch(ctx->client,
         OFONO_SERVICE, modem_path, OFONO_VOICECALL_MANAGER_INTERFACE,
         "CallChanged", call_state_changed, handler, handler_free);
 

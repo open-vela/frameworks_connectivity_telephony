@@ -2263,22 +2263,22 @@ int tapi_ss_register(tapi_context context,
 
     switch (msg) {
     case MSG_CALL_BARRING_PROPERTY_CHANGE_IND:
-        watch_id = g_dbus_add_signal_watch(ctx->connection,
+        watch_id = dbus_client_add_signal_watch(ctx->client,
             OFONO_SERVICE, modem_path, OFONO_CALL_BARRING_INTERFACE,
             "PropertyChanged", call_barring_property_changed, handler, handler_free);
         break;
     case MSG_USSD_PROPERTY_CHANGE_IND:
-        watch_id = g_dbus_add_signal_watch(ctx->connection,
+        watch_id = dbus_client_add_signal_watch(ctx->client,
             OFONO_SERVICE, modem_path, OFONO_SUPPLEMENTARY_SERVICES_INTERFACE,
             "PropertyChanged", ussd_state_changed, handler, handler_free);
         break;
     case MSG_USSD_NOTIFICATION_RECEIVED_IND:
-        watch_id = g_dbus_add_signal_watch(ctx->connection,
+        watch_id = dbus_client_add_signal_watch(ctx->client,
             OFONO_SERVICE, modem_path, OFONO_SUPPLEMENTARY_SERVICES_INTERFACE,
             "NotificationReceived", ussd_notification_received, handler, handler_free);
         break;
     case MSG_USSD_REQUEST_RECEIVED_IND:
-        watch_id = g_dbus_add_signal_watch(ctx->connection,
+        watch_id = dbus_client_add_signal_watch(ctx->client,
             OFONO_SERVICE, modem_path, OFONO_SUPPLEMENTARY_SERVICES_INTERFACE,
             "RequestReceived", ussd_request_received, handler, handler_free);
         break;
@@ -2308,7 +2308,7 @@ int tapi_ss_unregister(tapi_context context, int watch_id)
         return -EINVAL;
     }
 
-    if (!g_dbus_remove_watch(ctx->connection, watch_id)) {
+    if (!dbus_client_remove_watch(ctx->client, watch_id)) {
         tapi_log_error("remove signal watch fail in %s, watch_id: %d", __func__, watch_id);
         return -EINVAL;
     }
