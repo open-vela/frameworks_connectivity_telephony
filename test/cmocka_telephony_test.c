@@ -18,6 +18,7 @@
 #include "telephony_data_test.h"
 #include "telephony_ims_test.h"
 #include "telephony_network_test.h"
+#include "telephony_phone_service_test.h"
 #include "telephony_sim_test.h"
 #include "telephony_sms_test.h"
 #include "telephony_ss_test.h"
@@ -36,6 +37,9 @@ static int ready_done;
 tapi_context g_context = NULL;
 static int count = 0;
 
+#ifdef CONFIG_PHONE_SERVICE
+static async_message_t g_uv_message;
+#endif
 typedef enum {
     CASE_NORMAL_MODE = 0,
     CASE_AIRPLANE_MODE = 1,
@@ -77,6 +81,9 @@ char* long_chinese_text = "测试测试测试测试测试测试测试测试测�
 
 static void exit_async_cleanup(uv_async_t* handle)
 {
+#ifdef CONFIG_PHONE_SERVICE
+    tapi_stop_phone_service_client();
+#endif
     if (g_context) {
         g_uv_exit_flag = true;
         tapi_close(g_context);
@@ -3208,6 +3215,201 @@ static void on_tapi_client_ready(const char* client_name, void* user_data)
     }
 }
 
+#ifdef CONFIG_PHONE_SERVICE
+#ifdef CONFIG_PHONE_SERVICE_WTP
+static void TestTeleFunc_PhoneServiceRegisterWTPCB(void** state)
+{
+    (void)state;
+    int ret;
+
+    ret = phone_service_register_wtp_cb_test(&g_uv_message);
+    assert_int_equal(ret, -1); // mark -1 temp
+}
+
+static void TestTeleFunc_PhoneServiceUnRegisterWTPCB(void** state)
+{
+    (void)state;
+    int ret;
+
+    ret = phone_service_unregister_wtp_cb_test(&g_uv_message);
+    assert_int_equal(ret, -1); // mark -1 temp
+}
+
+static void TestTeleFunc_PhoneServiceUpdateLocalInfo(void** state)
+{
+    (void)state;
+    int ret;
+
+    ret = phone_service_update_local_info_test(&g_uv_message);
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_PhoneServiceSetDiscovery(void** state)
+{
+    (void)state;
+    int ret;
+
+    ret = phone_service_set_discovery_test(&g_uv_message, 1);
+    assert_int_equal(ret, OK);
+    ret = phone_service_set_discovery_test(&g_uv_message, 0);
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_PhoneServiceSetVisibility(void** state)
+{
+    (void)state;
+    int ret;
+
+    ret = phone_service_set_visibility_test(&g_uv_message, 1);
+    assert_int_equal(ret, OK);
+    ret = phone_service_set_visibility_test(&g_uv_message, 0);
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_PhoneServiceSetAudio(void** state)
+{
+    (void)state;
+    int ret;
+
+    ret = phone_service_set_audio_test(&g_uv_message, 0);
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_PhoneServiceDialWTP(void** state)
+{
+    (void)state;
+    int ret;
+
+    ret = phone_service_dial_wtp_test(&g_uv_message);
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_PhoneServiceHangupWTP(void** state)
+{
+    (void)state;
+    int ret;
+
+    ret = phone_service_hangup_wtp_test(&g_uv_message);
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_PhoneServiceAnswerWTP(void** state)
+{
+    (void)state;
+    int ret;
+
+    ret = phone_service_answer_wtp_test(&g_uv_message);
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_PhoneServiceRejectWTP(void** state)
+{
+    (void)state;
+    int ret;
+
+    ret = phone_service_reject_wtp_test(&g_uv_message);
+    assert_int_equal(ret, OK);
+}
+#endif
+
+static void TestTeleFunc_PhoneServiceSetRadioPowerOffAndOn(void** state)
+{
+    (void)state;
+    int ret = set_phone_radio_power_test(&g_uv_message, 0);
+    assert_int_equal(ret, OK);
+    sleep(1);
+    ret = set_phone_radio_power_test(&g_uv_message, 1);
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_PhoneServiceRegisterESIMCB(void** state)
+{
+    (void)state;
+    int ret;
+
+    ret = phone_service_register_esim_cb_test(&g_uv_message);
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_PhoneServiceUnRegisterESIMCB(void** state)
+{
+    (void)state;
+    int ret;
+
+    ret = phone_service_unregister_esim_cb_test(&g_uv_message);
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_PhoneServiceRegisterUnRegisterESIMCB(void** state)
+{
+    TestTeleFunc_PhoneServiceRegisterESIMCB(state);
+    TestTeleFunc_PhoneServiceUnRegisterESIMCB(state);
+}
+
+static void TestTeleFunc_PhoneServiceDialAndHangupESIM(void** state)
+{
+    (void)state;
+    int ret;
+
+    ret = phone_service_dial_and_hangup_esim_test(&g_uv_message, phone_num);
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_PhoneServiceIncomingAnswerAndHangupESIM(void** state)
+{
+    (void)state;
+    int ret;
+
+    ret = phone_service_incoming_answer_and_hangup_esim_test(&g_uv_message);
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_PhoneServiceIncomingAndRejectESIM(void** state)
+{
+    (void)state;
+    int ret;
+
+    ret = phone_service_incoming_and_reject_esim_test(&g_uv_message);
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_PhoneServiceReleaseAndAnswerESIM(void** state)
+{
+    (void)state;
+    int ret;
+
+    ret = phone_service_release_and_answer_esim_test(&g_uv_message);
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_PhoneServiceHoldAndUnholdESIM(void** state)
+{
+    (void)state;
+    int ret;
+
+    ret = phone_service_hold_and_unhold_esim_test(&g_uv_message);
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_PhoneServiceMergeESIM(void** state)
+{
+    (void)state;
+    int ret;
+
+    ret = phone_service_merge_esim_test(&g_uv_message);
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_PhoneServiceSendTonesESIM(void** state)
+{
+    (void)state;
+    int ret;
+
+    ret = phone_service_send_tones_esim_test(&g_uv_message);
+    assert_int_equal(ret, OK);
+}
+#endif
+
 static void* run_test_loop(void* args)
 {
     g_context = tapi_open(TAPI_TEST_DBUS_NAME, on_tapi_client_ready, NULL);
@@ -3215,6 +3417,11 @@ static void* run_test_loop(void* args)
         return NULL;
     }
 
+#ifdef CONFIG_PHONE_SERVICE
+    if (tapi_start_phone_service_client(uv_default_loop(), NULL, false) < 0) {
+        syslog(LOG_ERR, "error:phone service client init fail\n");
+    }
+#endif
     uv_run(uv_default_loop(), UV_RUN_DEFAULT);
     uv_loop_close(uv_default_loop());
 
@@ -3695,6 +3902,9 @@ int main(int argc, char* argv[])
     uv_async_init(uv_default_loop(), &g_uv_exit, exit_async_cleanup);
     uv_async_init(uv_default_loop(), &g_uv_cmd_tapi, async_cmd_tapi);
 
+#ifdef CONFIG_PHONE_SERVICE
+    uv_async_init(uv_default_loop(), &g_uv_message.async, uv_async_callback);
+#endif
     pthread_t thread;
     pthread_attr_t attr;
     struct sched_param param;
@@ -4103,7 +4313,31 @@ int main(int argc, char* argv[])
         cmocka_unit_test(TestTeleFunc_ModemEnableModemStationary),
         cmocka_unit_test(TestTeleFunc_ModemSetModemStationaryThreshold),
     };
-
+#ifdef CONFIG_PHONE_SERVICE
+    const struct CMUnitTest PhoneServiceTestSuites[] = {
+#ifdef CONFIG_PHONE_SERVICE_WTP
+        cmocka_unit_test(TestTeleFunc_PhoneServiceRegisterWTPCB),
+        cmocka_unit_test(TestTeleFunc_PhoneServiceUnRegisterWTPCB),
+        cmocka_unit_test(TestTeleFunc_PhoneServiceUpdateLocalInfo),
+        cmocka_unit_test(TestTeleFunc_PhoneServiceSetDiscovery),
+        cmocka_unit_test(TestTeleFunc_PhoneServiceSetVisibility),
+        cmocka_unit_test(TestTeleFunc_PhoneServiceSetAudio),
+        cmocka_unit_test(TestTeleFunc_PhoneServiceDialWTP),
+        cmocka_unit_test(TestTeleFunc_PhoneServiceHangupWTP),
+        cmocka_unit_test(TestTeleFunc_PhoneServiceAnswerWTP),
+        cmocka_unit_test(TestTeleFunc_PhoneServiceRejectWTP),
+#endif
+        cmocka_unit_test(TestTeleFunc_PhoneServiceSetRadioPowerOffAndOn),
+        cmocka_unit_test(TestTeleFunc_PhoneServiceRegisterUnRegisterESIMCB),
+        cmocka_unit_test(TestTeleFunc_PhoneServiceDialAndHangupESIM),
+        cmocka_unit_test(TestTeleFunc_PhoneServiceIncomingAnswerAndHangupESIM),
+        cmocka_unit_test(TestTeleFunc_PhoneServiceIncomingAndRejectESIM),
+        cmocka_unit_test(TestTeleFunc_PhoneServiceReleaseAndAnswerESIM),
+        cmocka_unit_test(TestTeleFunc_PhoneServiceHoldAndUnholdESIM),
+        cmocka_unit_test(TestTeleFunc_PhoneServiceMergeESIM),
+        cmocka_unit_test(TestTeleFunc_PhoneServiceSendTonesESIM),
+    };
+#endif
     sleep(5);
 
     cmocka_run_group_tests(SimTestSuites, NULL, NULL);
@@ -4121,7 +4355,9 @@ int main(int argc, char* argv[])
     cmocka_run_group_tests(SSTestSuits, NULL, NULL);
 
     cmocka_run_group_tests(CommonTestSuites, NULL, NULL);
-
+#ifdef CONFIG_PHONE_SERVICE
+    cmocka_run_group_tests(PhoneServiceTestSuites, NULL, NULL);
+#endif
 do_exit:
     tapi_enable_modem(get_tapi_ctx(), 0, 0, 0, NULL); // disable modem anyway
     uv_async_send(&g_uv_exit);
@@ -4129,5 +4365,8 @@ do_exit:
     pthread_join(thread, NULL);
     uv_close((uv_handle_t*)&g_uv_exit, NULL);
 
+#ifdef CONFIG_PHONE_SERVICE
+    uv_close((uv_handle_t*)&g_uv_message.async, NULL);
+#endif
     return 0;
 }
