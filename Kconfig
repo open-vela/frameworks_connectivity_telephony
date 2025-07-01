@@ -58,11 +58,6 @@ config TELEPHONY_TEST
 	default n
 	depends on TELEPHONY && TESTING_CMOCKA
 
-config TELEPHONY_TEST_CLCC_WITH_DATA
-	bool "enable telephony clcc with call info test"
-	default n
-	depends on TELEPHONY_TEST
-
 if TELEPHONY_TOOL
 
 config TELEPHONY_TOOL_STACKSIZE
