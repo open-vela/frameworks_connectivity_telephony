@@ -2282,7 +2282,7 @@ static void TestTeleFunc_ModemInvokeOemNormalRilRequestRaw(void** state)
 
 static void TestTeleFunc_ModemInvokeOemRilRequestATCmdStrings(void** state)
 {
-    char* req_data = "AT+CPIN?";
+    char req_data[] = "AT+CPIN?";
     int ret = modem_invoke_oem_ril_request_strings_test(0, req_data, 1);
     assert_int_equal(ret, OK);
 }
@@ -2290,14 +2290,14 @@ static void TestTeleFunc_ModemInvokeOemRilRequestATCmdStrings(void** state)
 static void TestTeleFunc_ModemInvokeOemRilRequestNotATCmdStrings(void** state)
 {
     // not AT cmd
-    char* req_data = "10|22";
+    char req_data[] = "10|22";
     int ret = modem_invoke_oem_ril_request_strings_test(0, req_data, 2);
     assert_int_equal(ret, OK);
 }
 
 static void TestTeleFunc_ModemInvokeOemRilRequestHexStrings(void** state)
 {
-    char* req_data = "0x10|0x01";
+    char req_data[] = "0x10|0x01";
     int ret = modem_invoke_oem_ril_request_strings_test(0, req_data, 2);
     assert_int_equal(ret, OK);
 }
