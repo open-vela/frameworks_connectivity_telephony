@@ -46,6 +46,9 @@ typedef struct {
     unsigned int len;
 } sim_transmit_apdu_param;
 
+#define ERROR_CODE_MIN 0
+#define ERROR_CODE_MAX 255
+
 /****************************************************************************
  * Private Function Prototypes
  ****************************************************************************/
@@ -221,25 +224,27 @@ static void handle_error_code_message(const char *error_message, tapi_async_resu
     long value;
 
     ar->status = ERROR;
+    ar->arg1 = -1;
 
     if (error_message == NULL || error_message[0] == '\0') {
-        ar->arg1 = -1;
         tapi_log_error("error message is null in %s", __func__);
         return;
     }
 
     value = strtol(error_message, &error_code_str, 10);
 
-    if (error_code_str == error_message || (*error_code_str != '\0')) {
-        ar->arg1 = -1;
-    } else {
-        if (value > INT_MAX || value < INT_MIN) {
-            ar->arg1 = -1;
-        } else {
-            ar->arg1 = (int)value;
-        }
+    if (error_code_str == error_message || *error_code_str != '\0') {
+        tapi_log_error("Invalid conversion in %s", __func__);
+        return;
     }
-    tapi_log_error("status is %d in %s", ar->arg1, __func__);
+
+    if (value > ERROR_CODE_MAX || value < ERROR_CODE_MIN) {
+        tapi_log_error("Value out of range in %s", __func__);
+        return;
+    }
+
+    ar->arg1 = (int)value;
+    tapi_log_info("status is %d in %s", ar->arg1, __func__);
 }
 
 static void open_logical_channel_cb(DBusMessage* message, void* user_data)
