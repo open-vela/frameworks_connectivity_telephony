@@ -1053,13 +1053,9 @@ static int telephonytool_cmd_set_wtp_local_info(char* pargs)
         return -EINVAL;
     }
 
-    local_info->name = (char*)malloc(strlen(dst[0]) * sizeof(char));
-    strncpy(local_info->name, dst[0], WTP_NAME_LEN_MAX);
-    local_info->number1 = (char*)malloc(strlen(dst[1]) * sizeof(char));
-    strncpy(local_info->number1, dst[1], WTP_PHONE_NUMBER_LEN_MAX);
-    local_info->number2 = (char*)malloc(strlen(dst[2]) * sizeof(char));
-    strncpy(local_info->number2, dst[2], WTP_PHONE_NUMBER_LEN_MAX);
-
+    local_info->name = strdup(dst[0]);
+    local_info->number1 = strdup(dst[1]);
+    local_info->number2 = strdup(dst[2]);
     local_info->position = (wtp_data_t*)malloc(sizeof(wtp_data_t) + sizeof(uint8_t) * 2);
 
     local_info->position->length = 2;
