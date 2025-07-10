@@ -35,6 +35,7 @@
 #define MAX_STK_MAIN_MENU_LENGTH 20
 #define STK_AGENT_DEFAULT_ID_0 "/stk_agent_default_0"
 #define STK_AGENT_DEFAULT_ID_1 "/stk_agent_default_1"
+#define STK_REQUEST_SELECTION_GOBACK -1
 
 /****************************************************************************
  * Public Types

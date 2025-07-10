@@ -1115,11 +1115,18 @@ done:
 
 static void client_request_selection_cb(tapi_async_result* ar)
 {
-    unsigned char selection = (unsigned char)ar->arg1;
     dbus_context* ctx = ar->data;
-    DBusMessage* reply = dbus_message_new_method_return(ctx->pending);
+    unsigned char selection = 0;
+    DBusMessage* reply;
 
-    dbus_message_append_args(reply, DBUS_TYPE_BYTE, &selection, DBUS_TYPE_INVALID);
+    if (ar->arg1 == STK_REQUEST_SELECTION_GOBACK) {
+        reply = stk_agent_error_go_back(ctx->pending);
+    } else {
+        selection = (unsigned char)ar->arg1;
+        reply = dbus_message_new_method_return(ctx->pending);
+        dbus_message_append_args(reply, DBUS_TYPE_BYTE, &selection, DBUS_TYPE_INVALID);
+    }
+
     stk_agent_dbus_pending_reply(ctx->connection, &ctx->pending, reply);
 }
 
