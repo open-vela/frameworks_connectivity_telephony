@@ -616,6 +616,31 @@ static int telephonytool_cmd_get_main_menu(tapi_context context, char* pargs)
     return 0;
 }
 
+static int telephonytool_cmd_get_main_menu_title(tapi_context context, char* pargs)
+{
+    char dst[1][MAX_INPUT_ARGS_LEN];
+    char* slot_id;
+    char* title;
+    int cnt, ret;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    cnt = split_input(dst, 1, pargs, " ");
+    if (cnt != 1)
+        return -EINVAL;
+
+    slot_id = dst[0];
+
+    if (!is_valid_slot_id_str(slot_id))
+        return -EINVAL;
+
+    ret = tapi_stk_get_main_menu_title(context, atoi(slot_id), &title);
+    syslog(LOG_DEBUG, "%s, ret: %d, slot_id: %s, title: %s", __func__, ret, slot_id, title);
+
+    return 0;
+}
+
 static void tele_phonebook_async_fun(tapi_async_result* result)
 {
     fdn_entry* entries;
@@ -5297,6 +5322,10 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
     { "get-main-menu", STK_CMD,
         telephonytool_cmd_get_main_menu,
         "get main menu (enter example : get-main-menu 0 "
+        "[slot_id])" },
+    { "get-main-menu-title", STK_CMD,
+        telephonytool_cmd_get_main_menu_title,
+        "get main menu title (enter example : get-main-menu-title 0 "
         "[slot_id])" },
 
     /* tapi open or close command */
