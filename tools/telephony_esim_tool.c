@@ -532,6 +532,15 @@ static void tele_sim_async_fun(tapi_async_result* result)
     }
 }
 
+static void tele_stk_register_interfaces_cb(tapi_async_result* result)
+{
+    syslog(LOG_DEBUG, "%s: ", __func__);
+    syslog(LOG_DEBUG, "result->msg_id: %d", result->msg_id);
+    syslog(LOG_DEBUG, "result->status: %d", result->status);
+    syslog(LOG_DEBUG, "result->arg1: %d", result->arg1);
+    syslog(LOG_DEBUG, "result->arg2: %d", result->arg2);
+}
+
 static void tele_phonebook_async_fun(tapi_async_result* result)
 {
     fdn_entry* entries;
@@ -4553,6 +4562,31 @@ static int telephonytool_cmd_delete_fdn_entry(tapi_context context, char* pargs)
         atoi(fdn_idx), pin2, tele_phonebook_async_fun);
 }
 
+static int telephonytool_cmd_register_agent_interface(tapi_context context, char* pargs)
+{
+    char dst[2][MAX_INPUT_ARGS_LEN];
+    char* slot_id;
+    char* agent_id;
+    int cnt;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    cnt = split_input(dst, 2, pargs, " ");
+    if (cnt != 2)
+        return -EINVAL;
+
+    slot_id = dst[0];
+    agent_id = dst[1];
+
+    if (!is_valid_slot_id_str(slot_id))
+        return -EINVAL;
+
+    syslog(LOG_DEBUG, "%s, slot_id: %s, agent_id: %s", __func__, slot_id, agent_id);
+
+    return tapi_stk_agent_interface_register(context, atoi(slot_id), agent_id, tele_stk_register_interfaces_cb);
+}
+
 static int telephonytool_cmd_close(tapi_context context, char* pargs)
 {
     if (context == NULL) {
@@ -5175,6 +5209,12 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         telephonytool_cmd_delete_fdn_entry,
         "delete fdn entry (enter example : delete-fdn 0 1 1234"
         "[slot_id][fdn_idx][pin2])" },
+
+    /* STK Command */
+    { "register-agent-interface", STK_CMD,
+        telephonytool_cmd_register_agent_interface,
+        "registers the interfaces for a agent (enter example : register-agent-interface 0 /stk_agent_default_0 "
+        "[slot_id][agent_id])" },
 
     /* tapi open or close command */
     { "tapi-open", TAPI_CMD,
