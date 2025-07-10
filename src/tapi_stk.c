@@ -2160,9 +2160,10 @@ int tapi_stk_get_main_menu_title(tapi_context context, int slot_id, char** title
     return ERROR;
 }
 
-int tapi_stk_get_main_menu_icon(tapi_context context, int slot_id, char** icon)
+int tapi_stk_get_main_menu_icon(tapi_context context, int slot_id, int* icon)
 {
     dbus_context* ctx = context;
+    unsigned char c;
     GDBusProxy* proxy;
 
     if (ctx == NULL) {
@@ -2186,7 +2187,8 @@ int tapi_stk_get_main_menu_icon(tapi_context context, int slot_id, char** icon)
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property_basic(proxy, "MainMenuIcon", icon)) {
+    if (g_dbus_proxy_get_property_basic(proxy, "MainMenuIcon", &c)) {
+        *icon = c;
         return OK;
     }
 
