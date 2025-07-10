@@ -579,6 +579,43 @@ static int telephonytool_cmd_register_stk_agent(tapi_context context, char* parg
         agent_id, tele_stk_async_func);
 }
 
+static int telephonytool_cmd_get_main_menu(tapi_context context, char* pargs)
+{
+    char dst[1][MAX_INPUT_ARGS_LEN];
+    tapi_stk_menu_item menu_item[MAX_STK_MAIN_MENU_LENGTH];
+    char* slot_id = NULL;
+    int length = 0;
+    int ret = -1;
+    int cnt;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    cnt = split_input(dst, 1, pargs, " ");
+    if (cnt != 1)
+        return -EINVAL;
+
+    slot_id = dst[0];
+
+    if (!is_valid_slot_id_str(slot_id))
+        return -EINVAL;
+
+    syslog(LOG_DEBUG, "%s, slot_id: %s", __func__, slot_id);
+
+    memset(menu_item, 0, sizeof(menu_item));
+    ret = tapi_stk_get_main_menu(context, atoi(slot_id), &length, menu_item);
+    if (ret) {
+        syslog(LOG_ERR, "%s: Failed to get main menu.", __func__);
+        return ret;
+    }
+
+    for (int i = 0; i < length; i++) {
+        syslog(LOG_INFO, "index: %d, text: %s, icon_id: %d", i, menu_item[i].text, menu_item[i].icon_id);
+    }
+
+    return 0;
+}
+
 static void tele_phonebook_async_fun(tapi_async_result* result)
 {
     fdn_entry* entries;
@@ -5257,6 +5294,10 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         telephonytool_cmd_register_stk_agent,
         "register stk agent (enter example : register-stk-agent 0 /stk_agent_default_0 "
         "[slot_id][agent_id])" },
+    { "get-main-menu", STK_CMD,
+        telephonytool_cmd_get_main_menu,
+        "get main menu (enter example : get-main-menu 0 "
+        "[slot_id])" },
 
     /* tapi open or close command */
     { "tapi-open", TAPI_CMD,

@@ -2056,41 +2056,35 @@ struct main_menu_iter_cb_data {
 static void main_menu_iter_cb(DBusMessageIter* iter, void* user_data)
 {
     char* text;
-    DBusMessageIter entry;
     unsigned char icon_id;
     struct main_menu_iter_cb_data* menu = user_data;
 
     if (dbus_message_iter_get_arg_type(iter) == DBUS_TYPE_ARRAY) {
-
-        dbus_message_iter_recurse(iter, &entry);
-
-        while (dbus_message_iter_get_arg_type(&entry) != DBUS_TYPE_INVALID) {
-
-            if (dbus_message_iter_get_arg_type(&entry) == DBUS_TYPE_STRUCT) {
-
+        DBusMessageIter var_elem, entry;
+        dbus_message_iter_recurse(iter, &var_elem);
+        while (dbus_message_iter_get_arg_type(&var_elem) != DBUS_TYPE_INVALID) {
+            if (dbus_message_iter_get_arg_type(&var_elem) == DBUS_TYPE_STRUCT) {
+                dbus_message_iter_recurse(&var_elem, &entry);
                 dbus_message_iter_get_basic(&entry, &text);
                 dbus_message_iter_next(&entry);
-
                 dbus_message_iter_get_basic(&entry, &icon_id);
-
-                snprintf(menu->item[menu->index++].text, sizeof(menu->item[menu->index++].text), "%s", text);
-                menu->item[menu->index++].icon_id = icon_id;
+                snprintf(menu->item[menu->index].text, sizeof(menu->item[menu->index].text), "%s", text);
+                menu->item[menu->index].icon_id = icon_id;
+                menu->index++;
             }
 
-            if (menu->index >= menu->length || menu->index >= MAX_STK_MAIN_MENU_LENGTH)
+            if (menu->index >= MAX_STK_MAIN_MENU_LENGTH)
                 break;
 
-            dbus_message_iter_next(iter);
-            dbus_message_iter_recurse(iter, &entry);
+            dbus_message_iter_next(&var_elem);
         }
     }
 }
 
-int tapi_stk_get_main_menu(tapi_context context, int slot_id, int length, tapi_stk_menu_item out[])
+int tapi_stk_get_main_menu(tapi_context context, int slot_id, int* length, tapi_stk_menu_item out[])
 {
     dbus_context* ctx = context;
     GDBusProxy* proxy;
-    int index;
 
     if (ctx == NULL) {
         tapi_log_error("context in %s is null", __func__);
@@ -2099,11 +2093,6 @@ int tapi_stk_get_main_menu(tapi_context context, int slot_id, int length, tapi_s
 
     if (!tapi_is_valid_slotid(slot_id)) {
         tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
-        return -EINVAL;
-    }
-
-    if (length <= 0) {
-        tapi_log_error("invalid length %d in %s", length, __func__);
         return -EINVAL;
     }
 
@@ -2124,7 +2113,6 @@ int tapi_stk_get_main_menu(tapi_context context, int slot_id, int length, tapi_s
         return -ENOMEM;
     }
     menu->item = out;
-    menu->length = length;
 
     if (!g_dbus_proxy_get_property_iter_cb(proxy, "MainMenu", menu, main_menu_iter_cb)) {
         tapi_log_error("dbus get property fail in %s", __func__);
@@ -2132,10 +2120,10 @@ int tapi_stk_get_main_menu(tapi_context context, int slot_id, int length, tapi_s
         return -EIO;
     }
 
-    index = menu->index;
+    *length = menu->index;
     free(menu);
 
-    return index;
+    return 0;
 }
 
 int tapi_stk_get_main_menu_title(tapi_context context, int slot_id, char** title)
