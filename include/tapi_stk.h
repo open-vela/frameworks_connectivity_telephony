@@ -256,6 +256,15 @@ int tapi_stk_get_main_menu_title(tapi_context context, int slot_id, char** title
 int tapi_stk_get_main_menu_icon(tapi_context context, int slot_id, int* icon);
 
 /**
+ * Generate a reply for request selection.
+ * The reply must be sent within the command's timeout period (typically 25 seconds).
+ * @param[in] context        Telephony api context.
+ * @param[in] index          Item index.
+ * @return  Zero on success; a negated errno value on failure.
+ */
+int tapi_stk_reply_request_selection(tapi_context context, int index);
+
+/**
  * Handle a request to select an item from the menu.
  * @param[in] context        Telephony api context.
  * @param[in] op             Operation code.
