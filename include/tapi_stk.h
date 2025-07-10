@@ -76,6 +76,7 @@ typedef struct {
     unsigned char icon_id;
     tapi_stk_menu_item items[MAX_STK_MAIN_MENU_LENGTH + 1];
     short default_item;
+    int length;
 } tapi_stk_request_selection_params;
 
 typedef struct {
@@ -234,8 +235,7 @@ int tapi_stk_get_idle_mode_icon(tapi_context context, int slot_id, char** icon);
  * @param[out] out           Items that make up the main menu.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_stk_get_main_menu(tapi_context context, int slot_id,
-    int length, tapi_stk_menu_item out[]);
+int tapi_stk_get_main_menu(tapi_context context, int slot_id, int* length, tapi_stk_menu_item out[]);
 
 /**
  * Contains the title of the main menu.
