@@ -1222,7 +1222,7 @@ tapi_context tapi_open_service(const char* client_name,
     int from_event_id = 0;
     int to_event_id = 0;
 
-    ctx = malloc(sizeof(dbus_context));
+    ctx = calloc(1, sizeof(dbus_context));
     if (ctx == NULL) {
         tapi_log_error("context malloc failed! \n");
         return NULL;
