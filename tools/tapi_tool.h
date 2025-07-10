@@ -40,6 +40,7 @@ enum cmd_type {
     SS_CMD,
     IMS_CMD,
     PHONEBOOK_CMD,
+    STK_CMD,
     TAPI_CMD,
     PHONE_SERVICE_CMD,
     QUIT_CMD,

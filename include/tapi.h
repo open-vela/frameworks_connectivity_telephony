@@ -341,6 +341,7 @@ typedef void* tapi_context;
 #include <tapi_sim.h>
 #include <tapi_sms.h>
 #include <tapi_ss.h>
+#include <tapi_stk.h>
 
 const char* tapi_utils_network_mode_to_string(tapi_pref_net_mode mode);
 tapi_pref_net_mode tapi_utils_network_mode_from_string(const char* mode);

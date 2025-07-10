@@ -65,11 +65,12 @@ static void telephonytool_menu(void)
     printf("***** 7: SS TAPI Instruction                 *****\n");
     printf("***** 8: IMS TAPI Instruction                *****\n");
     printf("***** 9: Phonebook TAPI Instruction          *****\n");
-    printf("***** 10: TAPI open&close Instruction        *****\n");
-    printf("***** 11: PHONE SERVICE TAPI Instruction     *****\n");
-    printf("***** 12: Quit                               *****\n");
-    printf("***** 13: Help                               *****\n");
-    printf("Please enter your choice: (1~13) \n");
+    printf("***** 10: STK TAPI Instruction               *****\n");
+    printf("***** 11: TAPI open&close Instruction        *****\n");
+    printf("***** 12: PHONE SERVICE TAPI Instruction     *****\n");
+    printf("***** 13: Quit                               *****\n");
+    printf("***** 14: Help                               *****\n");
+    printf("Please enter your choice: (1~14) \n");
 }
 
 static struct commontool_cmd_s common_cmds[] = {
