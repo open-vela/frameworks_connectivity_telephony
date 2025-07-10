@@ -253,7 +253,7 @@ int tapi_stk_get_main_menu_title(tapi_context context, int slot_id, char** title
  * @param[out] icon          Icon id of main menu.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_stk_get_main_menu_icon(tapi_context context, int slot_id, char** icon);
+int tapi_stk_get_main_menu_icon(tapi_context context, int slot_id, int* icon);
 
 /**
  * Handle a request to select an item from the menu.
