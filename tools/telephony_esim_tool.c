@@ -126,6 +126,7 @@
 
 // STK Callback Event
 #define EVENT_REGISTER_STK_AGENT_DONE 0x91
+#define EVENT_SELECT_STK_MENU_ITEM_DONE 0x92
 
 /****************************************************************************
  * Public Type Declarations
@@ -542,6 +543,29 @@ static void tele_stk_register_interfaces_cb(tapi_async_result* result)
     syslog(LOG_DEBUG, "result->status: %d", result->status);
     syslog(LOG_DEBUG, "result->arg1: %d", result->arg1);
     syslog(LOG_DEBUG, "result->arg2: %d", result->arg2);
+
+    if (result->msg_id == MSG_STK_AGENT_REQUEST_SELECTION_IND) {
+        tapi_stk_request_selection_params* params = result->user_obj;
+        int item_length = params->length;
+        syslog(LOG_INFO, "sub title: %s", params->alpha);
+        syslog(LOG_INFO, "sub icon: %d", (int)params->icon_id);
+        syslog(LOG_INFO, "items: ");
+        for (int i = 0; i < item_length; i++) {
+            syslog(LOG_INFO, "index: %d, text: %s, icon_id: %d",
+                i, params->items[i].text, params->items[i].icon_id);
+        }
+
+        syslog(LOG_INFO, "default item: %d", params->default_item);
+    } else if (result->msg_id == MSG_STK_AGENT_DISPLAY_TEXT_IND) {
+        char* text = (char*)result->user_obj;
+        int icon_id = result->arg1;
+        int priority = result->arg2;
+
+        syslog(LOG_INFO, "DISPLAY TEXT: text - %s, icon_id - %d, priority - %d",
+            text, icon_id, priority);
+    } else if (result->msg_id == MSG_STK_AGENT_CANCEL_IND) {
+        syslog(LOG_INFO, "%s, STK operation is canceled.", __func__);
+    }
 }
 
 static void tele_stk_async_func(tapi_async_result* result)
@@ -663,6 +687,33 @@ static int telephonytool_cmd_get_main_menu_icon(tapi_context context, char* parg
     syslog(LOG_DEBUG, "%s, ret: %d, slot_id: %s, icon: %d", __func__, ret, slot_id, icon);
 
     return 0;
+}
+
+static int telephonytool_cmd_select_item(tapi_context context, char* pargs)
+{
+    char dst[3][MAX_INPUT_ARGS_LEN];
+    char* slot_id;
+    char* agent_id;
+    char* item_id;
+    int cnt;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    cnt = split_input(dst, 3, pargs, " ");
+    if (cnt != 3)
+        return -EINVAL;
+
+    slot_id = dst[0];
+    agent_id = dst[1];
+    item_id = dst[2];
+
+    if (!is_valid_slot_id_str(slot_id))
+        return -EINVAL;
+
+    syslog(LOG_INFO, "%s, slot_id: %s, agent_id: %s, item_id: %s", __func__, slot_id, agent_id, item_id);
+    return tapi_stk_select_item(context, atoi(slot_id), EVENT_SELECT_STK_MENU_ITEM_DONE,
+        (unsigned char)atoi(item_id), agent_id, tele_stk_async_func);
 }
 
 static void tele_phonebook_async_fun(tapi_async_result* result)
@@ -4711,6 +4762,25 @@ static int telephonytool_cmd_register_agent_interface(tapi_context context, char
     return tapi_stk_agent_interface_register(context, atoi(slot_id), agent_id, tele_stk_register_interfaces_cb);
 }
 
+static int telephonytool_cmd_request_item(tapi_context context, char* pargs)
+{
+    char dst[1][MAX_INPUT_ARGS_LEN];
+    char* item_id;
+    int cnt;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    cnt = split_input(dst, 1, pargs, " ");
+    if (cnt != 1)
+        return -EINVAL;
+
+    item_id = dst[0];
+
+    syslog(LOG_INFO, "%s, item_id: %s", __func__, item_id);
+    return tapi_stk_reply_request_selection(context, atoi(item_id));
+}
+
 static int telephonytool_cmd_close(tapi_context context, char* pargs)
 {
     if (context == NULL) {
@@ -5355,6 +5425,14 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         telephonytool_cmd_get_main_menu_icon,
         "get main menu title (enter example : get-main-menu-icon 0 "
         "[slot_id])" },
+    { "select-item", STK_CMD,
+        telephonytool_cmd_select_item,
+        "select stk main menu item (enter example : select-item 0 /stk_agent_default_0 1 "
+        "[slot_id][agent_id][item_id])" },
+    { "request-item", STK_CMD,
+        telephonytool_cmd_request_item,
+        "request item index (enter example : request-item 1 "
+        "[item_index])" },
 
     /* tapi open or close command */
     { "tapi-open", TAPI_CMD,

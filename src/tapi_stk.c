@@ -67,6 +67,8 @@ static DBusMessage* stk_agent_handle_request_key(DBusConnection* conn,
     DBusMessage* msg, void* user_data);
 static DBusMessage* stk_agent_handle_request_confirmation(DBusConnection* conn,
     DBusMessage* msg, void* user_data);
+static DBusMessage* stk_agent_handle_display_text(DBusConnection* conn,
+    DBusMessage* msg, void* user_data);
 static DBusMessage* stk_agent_handle_request_input(DBusConnection* conn,
     DBusMessage* msg, void* user_data);
 static DBusMessage* stk_agent_handle_request_digits(DBusConnection* conn,
@@ -108,6 +110,9 @@ static const GDBusMethodTable agent_methods[] = {
     { GDBUS_ASYNC_METHOD("ConfirmRequest",
         GDBUS_ARGS({ "alpha", "s" }, { "icon_id", "y" }),
         GDBUS_ARGS({ "confirmation", "b" }), stk_agent_handle_request_confirmation) },
+    { GDBUS_METHOD("DisplayText",
+        GDBUS_ARGS({ "alpha", "s" }, { "icon_id", "y" }, { "confirmation", "b" }),
+        NULL, stk_agent_handle_display_text) },
     { GDBUS_ASYNC_METHOD("DisplayAction",
         GDBUS_ARGS({ "info", "s" }, { "icon_id", "y" }),
         NULL, stk_agent_display_action) },
@@ -404,13 +409,12 @@ static DBusMessage* stk_agent_cancel(DBusConnection* conn,
     }
 
     if (ctx->pending) {
-        tapi_log_error("context in %s is busy", __func__);
+        tapi_log_info("context in %s is busy, release pending.", __func__);
         dbus_message_unref(ctx->pending);
         ctx->pending = NULL;
     }
 
     ar->status = OK;
-    ar->data = NULL;
     ar->msg_id = MSG_STK_AGENT_CANCEL_IND;
 
 done:
@@ -720,6 +724,77 @@ done:
     if (params != NULL) {
         free(params);
     }
+
+    return reply;
+}
+
+static DBusMessage* stk_agent_handle_display_text(DBusConnection* conn,
+    DBusMessage* msg, void* user_data)
+{
+    tapi_async_handler* handler = user_data;
+    tapi_async_result* ar;
+    tapi_async_function cb;
+    dbus_context* ctx;
+    DBusMessage* reply;
+    DBusMessageIter iter;
+    DBusError err;
+    char* text;
+    unsigned char icon_id;
+    int priority;
+
+    tapi_log_info("stk agent display text is called.");
+
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
+        return stk_agent_error_not_implemented(msg);
+    }
+
+    if ((ar = handler->result) == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
+        return stk_agent_error_not_implemented(msg);
+    }
+
+    if ((cb = handler->cb_function) == NULL) {
+        tapi_log_error("callback in %s is null", __func__);
+        return stk_agent_error_not_implemented(msg);
+    }
+
+    ctx = ar->data;
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return stk_agent_error_failed(msg);
+    }
+
+    ar->msg_id = MSG_STK_AGENT_DISPLAY_TEXT_IND;
+    reply = NULL;
+
+    dbus_error_init(&err);
+    if (dbus_set_error_from_message(&err, msg) == true) {
+        tapi_log_error("error from message in %s, %s: %s", __func__, err.name, err.message);
+        dbus_error_free(&err);
+        return stk_agent_error_failed(msg);
+    }
+
+    if (dbus_message_iter_init(msg, &iter) == false) {
+        tapi_log_error("dbus message iter init failed in %s", __func__);
+        return stk_agent_error_invalid_args(msg);
+    }
+
+    dbus_message_iter_get_basic(&iter, &text);
+    dbus_message_iter_next(&iter);
+
+    dbus_message_iter_get_basic(&iter, &icon_id);
+    dbus_message_iter_next(&iter);
+
+    dbus_message_iter_get_basic(&iter, &priority);
+
+    ar->user_obj = text;
+    ar->arg1 = icon_id;
+    ar->arg2 = priority;
+    ar->status = OK;
+    cb(ar);
+
+    reply = dbus_message_new_method_return(msg);
 
     return reply;
 }
@@ -1038,15 +1113,24 @@ done:
     return reply;
 }
 
+static void client_request_selection_cb(tapi_async_result* ar)
+{
+    unsigned char selection = (unsigned char)ar->arg1;
+    dbus_context* ctx = ar->data;
+    DBusMessage* reply = dbus_message_new_method_return(ctx->pending);
+
+    dbus_message_append_args(reply, DBUS_TYPE_BYTE, &selection, DBUS_TYPE_INVALID);
+    stk_agent_dbus_pending_reply(ctx->connection, &ctx->pending, reply);
+}
+
 static DBusMessage* stk_agent_handle_request_selection(DBusConnection* conn,
     DBusMessage* msg, void* user_data)
 {
     tapi_stk_request_selection_params* params;
     tapi_async_handler* handler = user_data;
-    DBusMessageIter iter, array, entry;
-    tapi_async_function cb;
+    DBusMessageIter iter;
+    tapi_async_function client_func;
     tapi_async_result* ar;
-    DBusMessage* reply;
     dbus_context* ctx;
     DBusError err;
     unsigned char icon_id;
@@ -1065,52 +1149,41 @@ static DBusMessage* stk_agent_handle_request_selection(DBusConnection* conn,
         return stk_agent_error_not_implemented(msg);
     }
 
-    if ((cb = handler->cb_function) == NULL) {
+    if ((client_func = handler->cb_function) == NULL) {
         tapi_log_error("callback in %s is null", __func__);
         return stk_agent_error_not_implemented(msg);
-    }
-
-    ar->msg_id = MSG_STK_AGENT_REQUEST_SELECTION_IND;
-
-    params = NULL;
-    reply = NULL;
-    dbus_error_init(&err);
-    if (dbus_set_error_from_message(&err, msg) == true) {
-        tapi_log_error("error from message in %s, %s: %s", __func__, err.name, err.message);
-        dbus_error_free(&err);
-        ar->status = ERROR;
-        reply = stk_agent_error_failed(msg);
-        goto done;
-    }
-
-    if (dbus_message_iter_init(msg, &iter) == false) {
-        tapi_log_error("dbus message iter init failed in %s", __func__);
-        ar->status = ERROR;
-        reply = stk_agent_error_invalid_args(msg);
-        goto done;
     }
 
     ctx = ar->data;
     if (ctx == NULL) {
         tapi_log_error("context in %s is null", __func__);
-        ar->status = ERROR;
-        reply = stk_agent_error_failed(msg);
-        goto done;
+        return stk_agent_error_failed(msg);
+    }
+
+    ar->msg_id = MSG_STK_AGENT_REQUEST_SELECTION_IND;
+
+    params = NULL;
+    dbus_error_init(&err);
+    if (dbus_set_error_from_message(&err, msg) == true) {
+        tapi_log_error("error from message in %s, %s: %s", __func__, err.name, err.message);
+        dbus_error_free(&err);
+        return stk_agent_error_failed(msg);
+    }
+
+    if (dbus_message_iter_init(msg, &iter) == false) {
+        tapi_log_error("dbus message iter init failed in %s", __func__);
+        return stk_agent_error_invalid_args(msg);
     }
 
     if (ctx->pending) {
         tapi_log_error("context in %s is busy", __func__);
-        ar->status = ERROR;
-        reply = stk_agent_error_busy(msg);
-        goto done;
+        return stk_agent_error_busy(msg);
     }
 
-    params = malloc(sizeof(tapi_stk_request_selection_params));
+    params = calloc(1, sizeof(tapi_stk_request_selection_params));
     if (params == NULL) {
         tapi_log_error("params in %s is null", __func__);
-        ar->status = ERROR;
-        reply = stk_agent_error_not_implemented(msg);
-        goto done;
+        return stk_agent_error_not_implemented(msg);
     }
 
     dbus_message_iter_get_basic(&iter, &params->alpha);
@@ -1120,46 +1193,42 @@ static DBusMessage* stk_agent_handle_request_selection(DBusConnection* conn,
     dbus_message_iter_next(&iter);
 
     index = 0;
-    dbus_message_iter_recurse(&iter, &array);
-    if (dbus_message_iter_get_arg_type(&array) == DBUS_TYPE_ARRAY) {
-
-        dbus_message_iter_recurse(&array, &entry);
-
-        while (dbus_message_iter_get_arg_type(&entry) != DBUS_TYPE_INVALID) {
-
-            if (dbus_message_iter_get_arg_type(&entry) == DBUS_TYPE_STRUCT) {
-
+    if (dbus_message_iter_get_arg_type(&iter) == DBUS_TYPE_ARRAY) {
+        DBusMessageIter var_elem, entry;
+        dbus_message_iter_recurse(&iter, &var_elem);
+        while (dbus_message_iter_get_arg_type(&var_elem) != DBUS_TYPE_INVALID) {
+            if (dbus_message_iter_get_arg_type(&var_elem) == DBUS_TYPE_STRUCT) {
+                dbus_message_iter_recurse(&var_elem, &entry);
                 dbus_message_iter_get_basic(&entry, &text);
                 dbus_message_iter_next(&entry);
-
                 dbus_message_iter_get_basic(&entry, &icon_id);
-
-                snprintf(params->items[index++].text, sizeof(params->items[index++].text), "%s", text);
-                params->items[index++].icon_id = icon_id;
+                snprintf(params->items[index].text, sizeof(params->items[index].text), "%s", text);
+                params->items[index].icon_id = icon_id;
+                index++;
             }
 
             if (index >= MAX_STK_MAIN_MENU_LENGTH)
                 break;
 
-            dbus_message_iter_next(&array);
-            dbus_message_iter_recurse(&array, &entry);
+            dbus_message_iter_next(&var_elem);
         }
     }
-    dbus_message_iter_next(&iter);
 
+    params->length = index;
+    dbus_message_iter_next(&iter);
     dbus_message_iter_get_basic(&iter, &params->default_item);
 
     ctx->pending = dbus_message_ref(msg);
-    ar->data = params;
+    ar->user_obj = params;
     ar->status = OK;
+    ctx->stk_client_cb = client_request_selection_cb;
+    client_func(ar);
 
-done:
-    cb(ar);
     if (params != NULL) {
         free(params);
     }
 
-    return reply;
+    return NULL;
 }
 
 static DBusMessage* stk_agent_handle_request_quick_digit(DBusConnection* conn,
@@ -1980,6 +2049,20 @@ int tapi_stk_select_item(tapi_context context, int slot_id,
     return OK;
 }
 
+int tapi_stk_reply_request_selection(tapi_context context, int index)
+{
+    dbus_context* ctx = context;
+    tapi_async_function cb = ctx->stk_client_cb;
+    tapi_async_result ar;
+
+    ar.arg1 = index;
+    ar.data = context;
+    cb(&ar);
+    ctx->stk_client_cb = NULL;
+
+    return OK;
+}
+
 int tapi_stk_get_idle_mode_text(tapi_context context, int slot_id, char** text)
 {
     dbus_context* ctx = context;
@@ -2049,7 +2132,6 @@ int tapi_stk_get_idle_mode_icon(tapi_context context, int slot_id, char** icon)
 }
 struct main_menu_iter_cb_data {
     tapi_stk_menu_item* item;
-    int length;
     int index;
 };
 
