@@ -565,6 +565,12 @@ static void tele_stk_register_interfaces_cb(tapi_async_result* result)
             text, icon_id, priority);
     } else if (result->msg_id == MSG_STK_AGENT_CANCEL_IND) {
         syslog(LOG_INFO, "%s, STK operation is canceled.", __func__);
+    } else if (result->msg_id == MSG_STK_AGENT_REQUEST_INPUT_IND) {
+        tapi_stk_request_input_params* params = result->user_obj;
+        syslog(LOG_INFO, "GET_INPUT_TEXT, text: %s, id: %d, default_text: %s, min_val: %d, "
+                         "max_val: %d, hidden_val: %d",
+            params->alpha, params->icon_id, params->def_input,
+            params->min_len, params->max_len, params->hide_typing);
     }
 }
 
@@ -4781,6 +4787,27 @@ static int telephonytool_cmd_request_item(tapi_context context, char* pargs)
     return tapi_stk_reply_request_selection(context, atoi(item_id));
 }
 
+static int telephonytool_cmd_request_input(tapi_context context, char* pargs)
+{
+    char dst[2][MAX_INPUT_ARGS_LEN];
+    char* op;
+    char* text;
+    int cnt;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    cnt = split_input(dst, 2, pargs, " ");
+    if (cnt != 2)
+        return -EINVAL;
+
+    op = dst[0];
+    text = dst[1];
+
+    syslog(LOG_INFO, "%s, op: %s, text: %s", __func__, op, text);
+    return tapi_stk_handle_agent_request_input(context, (tapi_stk_agent_operator_code)atoi(op), text);
+}
+
 static int telephonytool_cmd_close(tapi_context context, char* pargs)
 {
     if (context == NULL) {
@@ -5433,6 +5460,10 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         telephonytool_cmd_request_item,
         "request item index (enter example : request-item 1 "
         "[item_index])" },
+    { "request-input", STK_CMD,
+        telephonytool_cmd_request_input,
+        "handles input string requests from the SIM (example : request-input 0 123456 "
+        "[op][text]" },
 
     /* tapi open or close command */
     { "tapi-open", TAPI_CMD,

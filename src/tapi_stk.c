@@ -140,7 +140,7 @@ static const GDBusMethodTable agent_methods[] = {
             { "default", "s" }, { "min_len", "y" },
             { "max_len", "y" }, { "hide_typing", "b" }),
         GDBUS_ARGS({ "digits", "s" }), stk_agent_handle_request_digits) },
-    { GDBUS_ASYNC_METHOD("RequestWithInput",
+    { GDBUS_ASYNC_METHOD("RequestInput",
         GDBUS_ARGS({ "alpha", "s" }, { "icon_id", "y" },
             { "default", "s" }, { "min_len", "y" },
             { "max_len", "y" }, { "hide_typing", "b" }),
@@ -806,7 +806,6 @@ static DBusMessage* stk_agent_handle_request_input(DBusConnection* conn,
     tapi_stk_request_input_params* params;
     tapi_async_function cb;
     tapi_async_result* ar;
-    DBusMessage* reply;
     dbus_context* ctx;
 
     tapi_log_info("stk agent request input method is called\n");
@@ -829,28 +828,27 @@ static DBusMessage* stk_agent_handle_request_input(DBusConnection* conn,
     ar->msg_id = MSG_STK_AGENT_REQUEST_INPUT_IND;
 
     params = NULL;
-    reply = NULL;
     ctx = ar->data;
     if (ctx == NULL) {
         tapi_log_error("context in %s is null", __func__);
         ar->status = ERROR;
-        reply = stk_agent_error_failed(msg);
-        goto done;
+        cb(ar);
+        return stk_agent_error_failed(msg);
     }
 
     if (ctx->pending) {
         tapi_log_error("context in %s is busy", __func__);
         ar->status = ERROR;
-        reply = stk_agent_error_busy(msg);
-        goto done;
+        cb(ar);
+        return stk_agent_error_busy(msg);
     }
 
-    params = malloc(sizeof(tapi_stk_request_input_params));
+    params = calloc(1, sizeof(tapi_stk_request_input_params));
     if (params == NULL) {
         tapi_log_error("params in %s is null", __func__);
         ar->status = ERROR;
-        reply = stk_agent_error_not_implemented(msg);
-        goto done;
+        cb(ar);
+        return stk_agent_error_invalid_args(msg);
     }
 
     if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_STRING, &params->alpha,
@@ -862,21 +860,20 @@ static DBusMessage* stk_agent_handle_request_input(DBusConnection* conn,
             DBUS_TYPE_INVALID)) {
         tapi_log_error("failed to get args in %s", __func__);
         ar->status = ERROR;
-        reply = stk_agent_error_invalid_args(msg);
-        goto done;
+        cb(ar);
+        return stk_agent_error_invalid_args(msg);
     }
 
     ctx->pending = dbus_message_ref(msg);
-    ar->data = params;
+    ar->user_obj = params;
     ar->status = OK;
-
-done:
     cb(ar);
+
     if (params != NULL) {
         free(params);
     }
 
-    return reply;
+    return NULL;
 }
 
 static DBusMessage* stk_agent_handle_request_digits(DBusConnection* conn,
