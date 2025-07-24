@@ -128,9 +128,12 @@ int tapi_ims_is_volte_available(tapi_context context, int slot_id, bool* out);
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[out] out           Subscriber Uri Number returned.
+ * @param[in] length         The length of Uri Number.
+ *                           The maximum valid length is 50 bytes.
+ *                           Note: The actual storage requires 51 bytes due to 1 byte '\0'.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_ims_get_subscriber_uri_number(tapi_context context, int slot_id, char** out);
+int tapi_ims_get_subscriber_uri_number(tapi_context context, int slot_id, char* out, int length);
 
 /**
  * Gets ims switch status.

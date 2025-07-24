@@ -32,6 +32,9 @@
  ****************************************************************************/
 
 #define MAX_SIM_PWD_TYPE 20
+#define MAX_SUBSCRIBER_ID_LENGTH 20
+#define MAX_OPERATOR_NAME_LENGTH 63
+#define MAX_SIM_ICCID_LENGTH 20
 
 /****************************************************************************
  * Public Types
@@ -105,24 +108,32 @@ int tapi_sim_get_sim_operator(tapi_context context, int slot_id, int length, cha
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[out] out           SimOperatorName returned from ICC.
+ * @param[in] length         The length of name.
+ *                           The maximum valid length is 63 bytes.
+ *                           Note: The actual storage requires 64 bytes due to 1 byte '\0'.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_sim_get_sim_operator_name(tapi_context context, int slot_id, char** out);
+int tapi_sim_get_sim_operator_name(tapi_context context, int slot_id, char* out, int length);
 
 /**
  * Get the sim serial number for the given subscription, if applicable.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[out] out           Sim serial number returned from ICC.
+ * @param[in] length         The length of iccid.
+ *                           The maximum valid length is 20 bytes.
+ *                           Note: The actual storage requires 21 bytes due to 1 byte '\0'.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_sim_get_sim_iccid(tapi_context context, int slot_id, char** out);
+int tapi_sim_get_sim_iccid(tapi_context context, int slot_id, char* out, int length);
 
 /**
  * Get the unique subscriber ID, for example, the IMSI of current sim.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[out] out           Subcriber id returned from ICC.
+ *                           Memory is dynamically allocated by the callee.
+ *                           Caller must free the buffer using `free(*out)`.
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_sim_get_subscriber_id(tapi_context context, int slot_id, char** out);

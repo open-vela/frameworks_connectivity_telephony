@@ -225,11 +225,11 @@ on_exit:
 
 int sim_get_sim_operator_name_test(int slot_id, const char* expect_res)
 {
-    char* spn = NULL;
-    int ret = tapi_sim_get_sim_operator_name(get_tapi_ctx(), slot_id, &spn);
+    char spn[MAX_OPERATOR_NAME_LENGTH + 1] = { 0 };
+    int ret = tapi_sim_get_sim_operator_name(get_tapi_ctx(), slot_id, spn, sizeof(spn));
     syslog(LOG_DEBUG, "%s, ret: %d, slot_id: %d, spn: %s\n", __func__, ret, slot_id, spn);
 
-    return ret || (spn == NULL) || strcmp(expect_res, spn);
+    return ret || strcmp(expect_res, spn);
 }
 
 int sim_get_sim_operator_name_numerous(int slot_id, const char* expect_res)
@@ -251,8 +251,10 @@ int sim_get_sim_subscriber_id_test(int slot_id, const char* expect_res)
     int ret = tapi_sim_get_subscriber_id(get_tapi_ctx(), slot_id, &result);
     syslog(LOG_DEBUG, "%s, ret: %d, slot_id: %d, subscriber_id: %s\n",
         __func__, ret, slot_id, result);
+    ret = ret || (!result) || strcmp(result, expect_res);
 
-    return ret || (!result) || strcmp(result, expect_res);
+    free(result);
+    return ret;
 }
 
 int sim_multi_get_sim_subscriber_id_test(int slot_id, const char* expect_res)
@@ -269,11 +271,11 @@ int sim_multi_get_sim_subscriber_id_test(int slot_id, const char* expect_res)
 
 int sim_get_sim_iccid_test(int slot_id, const char* expect_res)
 {
-    char* iccid = NULL;
-    int ret = tapi_sim_get_sim_iccid(get_tapi_ctx(), slot_id, &iccid);
+    char iccid[MAX_SIM_ICCID_LENGTH + 1] = { 0 };
+    int ret = tapi_sim_get_sim_iccid(get_tapi_ctx(), slot_id, iccid, sizeof(iccid));
     syslog(LOG_DEBUG, "%s, ret: %d, slot_id: %d, iccid: %s\n", __func__, ret, slot_id, iccid);
 
-    return ret || iccid == NULL || strcmp(expect_res, iccid);
+    return ret || strcmp(expect_res, iccid);
 }
 
 int sim_multi_get_sim_iccid_test(int slot_id, const char* expect_res)
@@ -290,11 +292,11 @@ int sim_multi_get_sim_iccid_test(int slot_id, const char* expect_res)
 
 int sim_get_ef_msisdn_test(int slot_id, const char* expect_res)
 {
-    char* number = NULL;
-    int ret = tapi_get_msisdn_number(get_tapi_ctx(), slot_id, &number);
+    char number[MAX_PHONE_NUMBER_LENGTH + 1] = { 0 };
+    int ret = tapi_get_msisdn_number(get_tapi_ctx(), slot_id, number, sizeof(number));
     syslog(LOG_DEBUG, "%s, ret: %d, slotId : %d  number : %s \n", __func__, ret, slot_id, number);
 
-    return ret || number == NULL || strcmp(expect_res, number);
+    return ret || strcmp(expect_res, number);
 }
 
 int sim_multi_get_ef_msisdn_test(int slot_id, const char* expect_res)

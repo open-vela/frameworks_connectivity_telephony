@@ -669,14 +669,15 @@ int tapi_sim_get_sim_invalid(tapi_context context, int slot_id, int* out)
     return -EINVAL;
 }
 
-int tapi_sim_get_sim_iccid(tapi_context context, int slot_id, char** out)
+int tapi_sim_get_sim_iccid(tapi_context context, int slot_id, char* out, int length)
 {
     dbus_context* ctx = context;
+    char* value = NULL;
     GDBusProxy* proxy;
     bool has_icc_card;
 
-    if (ctx == NULL) {
-        tapi_log_error("context in %s is null", __func__);
+    if (ctx == NULL || out == NULL || length <= 0) {
+        tapi_log_error("context or out is null or length <= 0 in %s", __func__);
         return -EINVAL;
     }
 
@@ -704,12 +705,18 @@ int tapi_sim_get_sim_iccid(tapi_context context, int slot_id, char** out)
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property_basic(proxy, "CardIdentifier", out)) {
-        return OK;
+    if (!g_dbus_proxy_get_property_basic(proxy, "CardIdentifier", &value)) {
+        tapi_log_error("get property failed in %s", __func__);
+        return -EINVAL;
     }
 
-    tapi_log_error("get property failed in %s", __func__);
-    return -EINVAL;
+    if (value != NULL) {
+        strlcpy(out, value, length);
+    } else {
+        out[0] = '\0';
+    }
+
+    return OK;
 }
 
 int tapi_sim_get_sim_operator(tapi_context context, int slot_id, int length, char* out)
@@ -784,14 +791,15 @@ int tapi_sim_get_sim_operator(tapi_context context, int slot_id, int length, cha
     return OK;
 }
 
-int tapi_sim_get_sim_operator_name(tapi_context context, int slot_id, char** out)
+int tapi_sim_get_sim_operator_name(tapi_context context, int slot_id, char* out, int length)
 {
     dbus_context* ctx = context;
+    char* value = NULL;
     GDBusProxy* proxy;
     bool has_icc_card;
 
-    if (ctx == NULL) {
-        tapi_log_error("context in %s is null", __func__);
+    if (ctx == NULL || out == NULL || length <= 0) {
+        tapi_log_error("context or out is null or length <= 0 in %s", __func__);
         return -EINVAL;
     }
 
@@ -819,22 +827,29 @@ int tapi_sim_get_sim_operator_name(tapi_context context, int slot_id, char** out
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property_basic(proxy, "ServiceProviderName", out)) {
-        return OK;
+    if (!g_dbus_proxy_get_property_basic(proxy, "ServiceProviderName", &value)) {
+        tapi_log_error("get property failed in %s", __func__);
+        return -EINVAL;
     }
 
-    tapi_log_error("get property failed in %s", __func__);
-    return -EINVAL;
+    if (value != NULL) {
+        strlcpy(out, value, length);
+    } else {
+        out[0] = '\0';
+    }
+
+    return OK;
 }
 
 int tapi_sim_get_subscriber_id(tapi_context context, int slot_id, char** out)
 {
     dbus_context* ctx = context;
+    char* value = NULL;
     GDBusProxy* proxy;
     bool has_icc_card;
 
-    if (ctx == NULL) {
-        tapi_log_error("context in %s is null", __func__);
+    if (ctx == NULL || out == NULL) {
+        tapi_log_error("context or out in %s is null", __func__);
         return -EINVAL;
     }
 
@@ -862,12 +877,20 @@ int tapi_sim_get_subscriber_id(tapi_context context, int slot_id, char** out)
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property_basic(proxy, "SubscriberIdentity", out)) {
-        return OK;
+    if (!g_dbus_proxy_get_property_basic(proxy, "SubscriberIdentity", &value)) {
+        tapi_log_error("get property failed in %s", __func__);
+        return -EINVAL;
     }
 
-    tapi_log_error("get property failed in %s", __func__);
-    return -EINVAL;
+    if (value != NULL) {
+        *out = strdup(value);
+        if (*out == NULL)
+            return -EINVAL;
+    } else {
+        *out = NULL;
+    }
+
+    return OK;
 }
 
 int tapi_sim_register(tapi_context context, int slot_id,

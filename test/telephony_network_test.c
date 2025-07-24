@@ -334,11 +334,12 @@ on_exit:
 
 int net_get_operator_name_test(int slot_id)
 {
-    char* operator_name = NULL;
-    int ret = tapi_network_get_display_name(get_tapi_ctx(), slot_id, &operator_name);
+    char operator_name[MAX_NETWORK_OPERATOR_NAME_LENGTH + 1] = { 0 };
+    int ret = tapi_network_get_display_name(get_tapi_ctx(), slot_id,
+        operator_name, sizeof(operator_name));
     syslog(LOG_DEBUG, "%s, slotId : %d value :%s \n", __func__, slot_id, operator_name);
 
-    return ret || operator_name == NULL;
+    return ret;
 }
 
 int net_query_signalstrength_test(int slot_id)

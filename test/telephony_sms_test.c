@@ -472,7 +472,7 @@ int sms_set_and_get_service_center_number_test(int slot_id)
 {
     int ret = 0;
     char* smsc_addr = "10086";
-    char* smsc_addr_rtn = NULL;
+    char smsc_addr_rtn[MAX_CENTER_ADDRESS_LENGTH + 1] = { 0 };
     if (tapi_sms_set_service_center_address(get_tapi_ctx(), slot_id, smsc_addr)) {
         syslog(LOG_ERR, "set service center address execute fail in %s", __func__);
         ret = -1;
@@ -480,14 +480,9 @@ int sms_set_and_get_service_center_number_test(int slot_id)
     }
 
     sleep(5);
-    if (tapi_sms_get_service_center_address(get_tapi_ctx(), slot_id, &smsc_addr_rtn)) {
+    if (tapi_sms_get_service_center_address(
+            get_tapi_ctx(), slot_id, smsc_addr_rtn, sizeof(smsc_addr_rtn))) {
         syslog(LOG_ERR, "get service center address execute fail in %s", __func__);
-        ret = -1;
-        goto on_exit;
-    }
-
-    if (smsc_addr_rtn == NULL) {
-        syslog(LOG_ERR, "smsc_addr_rtn is NULL execute fail in %s", __func__);
         ret = -1;
         goto on_exit;
     }
@@ -705,6 +700,7 @@ int sms_set_and_get_cell_broadcast_topics(int slot_id, char* topics)
     }
 
 on_exit:
+    free(result);
     return ret;
 }
 

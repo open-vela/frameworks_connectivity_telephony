@@ -662,16 +662,16 @@ static void get_covered_plmn(const char* mcc, const char* mnc, char* covered_plm
 
 void tapi_get_coverted_plmn(tapi_context context, int slot_id, char* covered_plmn)
 {
-    char* mcc = NULL;
-    char* mnc = NULL;
+    char mcc[MAX_MCC_LENGTH + 1] = { 0 };
+    char mnc[MAX_MNC_LENGTH + 1] = { 0 };
     int result;
 
-    result = tapi_network_get_mcc(context, slot_id, &mcc);
+    result = tapi_network_get_mcc(context, slot_id, mcc, sizeof(mcc));
     if (result != OK) {
         strncpy(covered_plmn, "unknow", MAX_MCC_LENGTH + MAX_MNC_LENGTH + 1);
         return;
     }
-    result = tapi_network_get_mnc(context, slot_id, &mnc);
+    result = tapi_network_get_mnc(context, slot_id, mnc, sizeof(mnc));
     if (result != OK) {
         strncpy(covered_plmn, "unknow", MAX_MCC_LENGTH + MAX_MNC_LENGTH + 1);
         return;

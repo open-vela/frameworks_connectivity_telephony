@@ -210,18 +210,6 @@ static void message_info_free(void* user_data)
     free(message_info);
 }
 
-static char* proxy_get_string(GDBusProxy* proxy, const char* property)
-{
-    char* str;
-
-    if (!g_dbus_proxy_get_property_basic(proxy, property, &str)) {
-        tapi_log_error("failed to get property %s", property);
-        return NULL;
-    }
-
-    return str;
-}
-
 static int unsol_sms_message(DBusConnection* connection,
     DBusMessage* message, void* user_data)
 {
@@ -514,15 +502,15 @@ done:
 
 int tapi_sms_get_op_code(tapi_context context, int slot_id)
 {
-    char* mcc = NULL;
-    char* mnc = NULL;
+    char mcc[MAX_MCC_LENGTH + 1] = { 0 };
+    char mnc[MAX_MNC_LENGTH + 1] = { 0 };
     int result;
 
-    result = tapi_network_get_mcc(context, slot_id, &mcc);
+    result = tapi_network_get_mcc(context, slot_id, mcc, sizeof(mcc));
     if (result != OK) {
         return OP_UNKNOW;
     }
-    result = tapi_network_get_mnc(context, slot_id, &mnc);
+    result = tapi_network_get_mnc(context, slot_id, mnc, sizeof(mnc));
     if (result != OK) {
         return OP_UNKNOW;
     }
@@ -765,13 +753,14 @@ bool tapi_sms_set_service_center_address(tapi_context context, int slot_id, char
     return OK;
 }
 
-int tapi_sms_get_service_center_address(tapi_context context, int slot_id, char** out)
+int tapi_sms_get_service_center_address(tapi_context context, int slot_id, char* out, int length)
 {
     dbus_context* ctx = context;
+    char* value = NULL;
     GDBusProxy* proxy;
 
-    if (ctx == NULL) {
-        tapi_log_error("context in %s is null", __func__);
+    if (ctx == NULL || out == NULL || length <= 0) {
+        tapi_log_error("context or out is null or length <= 0 in %s", __func__);
         return -EINVAL;
     }
 
@@ -786,7 +775,17 @@ int tapi_sms_get_service_center_address(tapi_context context, int slot_id, char*
         return -EIO;
     }
 
-    *out = proxy_get_string(proxy, "ServiceCenterAddress");
+    if (!g_dbus_proxy_get_property_basic(proxy, "ServiceCenterAddress", &value)) {
+        tapi_log_error("get property failed in %s", __func__);
+        return -EINVAL;
+    }
+
+    if (value != NULL) {
+        strlcpy(out, value, length);
+    } else {
+        out[0] = '\0';
+    }
+
     return OK;
 }
 

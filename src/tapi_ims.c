@@ -389,13 +389,14 @@ int tapi_ims_is_volte_available(tapi_context context, int slot_id, bool* out)
     return OK;
 }
 
-int tapi_ims_get_subscriber_uri_number(tapi_context context, int slot_id, char** out)
+int tapi_ims_get_subscriber_uri_number(tapi_context context, int slot_id, char* out, int length)
 {
     dbus_context* ctx = context;
+    char* value = NULL;
     GDBusProxy* proxy;
 
-    if (ctx == NULL) {
-        tapi_log_error("context in %s is null", __func__);
+    if (ctx == NULL || out == NULL || length <= 0) {
+        tapi_log_error("context or out is null or length <= 0 in %s", __func__);
         return -EINVAL;
     }
 
@@ -415,12 +416,18 @@ int tapi_ims_get_subscriber_uri_number(tapi_context context, int slot_id, char**
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property_basic(proxy, "SubscriberUriNumber", out)) {
-        return OK;
+    if (!g_dbus_proxy_get_property_basic(proxy, "SubscriberUriNumber", &value)) {
+        tapi_log_error("get property failed in %s", __func__);
+        return -EINVAL;
     }
 
-    tapi_log_error("get property failed in %s", __func__);
-    return -EINVAL;
+    if (value != NULL) {
+        strlcpy(out, value, length);
+    } else {
+        out[0] = '\0';
+    }
+
+    return OK;
 }
 
 int tapi_ims_get_enabled(tapi_context context, int slot_id, bool* out)

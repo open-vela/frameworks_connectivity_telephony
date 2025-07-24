@@ -31,18 +31,6 @@ static bool proxy_get_bool(GDBusProxy* proxy, const char* property)
     return value;
 }
 
-static char* proxy_get_string(GDBusProxy* proxy, const char* property)
-{
-    char* str;
-
-    if (!g_dbus_proxy_get_property_basic(proxy, property, &str)) {
-        tapi_log_error("get property fail in %s", __func__);
-        return NULL;
-    }
-
-    return str;
-}
-
 static int unsol_cbs_message(DBusConnection* connection,
     DBusMessage* message, void* user_data)
 {
@@ -250,10 +238,11 @@ int tapi_sms_set_cell_broadcast_topics(tapi_context context, int slot_id, char* 
 int tapi_sms_get_cell_broadcast_topics(tapi_context context, int slot_id, char** topics)
 {
     dbus_context* ctx = context;
+    char* value = NULL;
     GDBusProxy* proxy;
 
-    if (ctx == NULL) {
-        tapi_log_error("context in %s is null", __func__);
+    if (ctx == NULL || topics == NULL) {
+        tapi_log_error("context or topics in %s is null", __func__);
         return -EINVAL;
     }
 
@@ -268,7 +257,19 @@ int tapi_sms_get_cell_broadcast_topics(tapi_context context, int slot_id, char**
         return -EISCONN;
     }
 
-    *topics = proxy_get_string(proxy, "Topics");
+    if (!g_dbus_proxy_get_property_basic(proxy, "Topics", &value)) {
+        tapi_log_error("get property fail in %s", __func__);
+        return -EINVAL;
+    }
+
+    if (value != NULL) {
+        *topics = strdup(value);
+        if (*topics == NULL)
+            return -EINVAL;
+    } else {
+        *topics = NULL;
+    }
+
     return OK;
 }
 

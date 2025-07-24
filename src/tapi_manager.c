@@ -1595,13 +1595,14 @@ int tapi_send_modem_power(tapi_context context, int slot_id, bool state)
     return OK;
 }
 
-int tapi_get_imei(tapi_context context, int slot_id, char** out)
+int tapi_get_imei(tapi_context context, int slot_id, char* out, int length)
 {
     dbus_context* ctx = context;
+    char* value = NULL;
     GDBusProxy* proxy;
 
-    if (ctx == NULL) {
-        tapi_log_error("context in %s is null", __func__);
+    if (ctx == NULL || out == NULL || length <= 0) {
+        tapi_log_error("context or out is null or length <= 0 in %s", __func__);
         return -EINVAL;
     }
 
@@ -1621,21 +1622,28 @@ int tapi_get_imei(tapi_context context, int slot_id, char** out)
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property_basic(proxy, "Serial", out)) {
-        return OK;
+    if (!g_dbus_proxy_get_property_basic(proxy, "Serial", &value)) {
+        tapi_log_error("get property failed in %s", __func__);
+        return -EINVAL;
     }
 
-    tapi_log_error("get property failed in %s", __func__);
-    return -EINVAL;
+    if (value != NULL) {
+        strlcpy(out, value, length);
+    } else {
+        out[0] = '\0';
+    }
+
+    return OK;
 }
 
-int tapi_get_imeisv(tapi_context context, int slot_id, char** out)
+int tapi_get_imeisv(tapi_context context, int slot_id, char* out, int length)
 {
     dbus_context* ctx = context;
+    char* value = NULL;
     GDBusProxy* proxy;
 
-    if (ctx == NULL) {
-        tapi_log_error("context in %s is null", __func__);
+    if (ctx == NULL || out == NULL || length <= 0) {
+        tapi_log_error("context or out is null or length <= 0 in %s", __func__);
         return -EINVAL;
     }
 
@@ -1655,21 +1663,28 @@ int tapi_get_imeisv(tapi_context context, int slot_id, char** out)
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property_basic(proxy, "SoftwareVersionNumber", out)) {
-        return OK;
+    if (!g_dbus_proxy_get_property_basic(proxy, "SoftwareVersionNumber", &value)) {
+        tapi_log_error("get property failed in %s", __func__);
+        return -EINVAL;
     }
 
-    tapi_log_error("get property failed in %s", __func__);
-    return -EINVAL;
+    if (value != NULL) {
+        strlcpy(out, value, length);
+    } else {
+        out[0] = '\0';
+    }
+
+    return OK;
 }
 
 int tapi_get_modem_manufacturer(tapi_context context, int slot_id, char** out)
 {
     dbus_context* ctx = context;
+    char* value = NULL;
     GDBusProxy* proxy;
 
-    if (ctx == NULL) {
-        tapi_log_error("context in %s is null", __func__);
+    if (ctx == NULL || out == NULL) {
+        tapi_log_error("context or out in %s is null", __func__);
         return -EINVAL;
     }
 
@@ -1689,21 +1704,30 @@ int tapi_get_modem_manufacturer(tapi_context context, int slot_id, char** out)
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property_basic(proxy, "Manufacturer", out)) {
-        return OK;
+    if (!g_dbus_proxy_get_property_basic(proxy, "Manufacturer", &value)) {
+        tapi_log_error("get property failed in %s", __func__);
+        return -EINVAL;
     }
 
-    tapi_log_error("get property failed in %s", __func__);
-    return -EINVAL;
+    if (value != NULL) {
+        *out = strdup(value);
+        if (*out == NULL)
+            return -EINVAL;
+    } else {
+        *out = NULL;
+    }
+
+    return OK;
 }
 
 int tapi_get_modem_model(tapi_context context, int slot_id, char** out)
 {
     dbus_context* ctx = context;
+    char* value = NULL;
     GDBusProxy* proxy;
 
-    if (ctx == NULL) {
-        tapi_log_error("context in %s is null", __func__);
+    if (ctx == NULL || out == NULL) {
+        tapi_log_error("context or out in %s is null", __func__);
         return -EINVAL;
     }
 
@@ -1723,21 +1747,30 @@ int tapi_get_modem_model(tapi_context context, int slot_id, char** out)
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property_basic(proxy, "Model", out)) {
-        return OK;
+    if (!g_dbus_proxy_get_property_basic(proxy, "Model", &value)) {
+        tapi_log_error("get property failed in %s", __func__);
+        return -EINVAL;
     }
 
-    tapi_log_error("get property failed in %s", __func__);
-    return -EINVAL;
+    if (value != NULL) {
+        *out = strdup(value);
+        if (*out == NULL)
+            return -EINVAL;
+    } else {
+        *out = NULL;
+    }
+
+    return OK;
 }
 
 int tapi_get_modem_revision(tapi_context context, int slot_id, char** out)
 {
     dbus_context* ctx = context;
+    char* value = NULL;
     GDBusProxy* proxy;
 
-    if (ctx == NULL) {
-        tapi_log_error("context in %s is null", __func__);
+    if (ctx == NULL || out == NULL) {
+        tapi_log_error("context or out in %s is null", __func__);
         return -EINVAL;
     }
 
@@ -1757,12 +1790,20 @@ int tapi_get_modem_revision(tapi_context context, int slot_id, char** out)
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property_basic(proxy, "Revision", out)) {
-        return OK;
+    if (!g_dbus_proxy_get_property_basic(proxy, "Revision", &value)) {
+        tapi_log_error("get property failed in %s", __func__);
+        return -EINVAL;
     }
 
-    tapi_log_error("get property failed in %s", __func__);
-    return -EINVAL;
+    if (value != NULL) {
+        *out = strdup(value);
+        if (*out == NULL)
+            return -EINVAL;
+    } else {
+        *out = NULL;
+    }
+
+    return OK;
 }
 
 int tapi_get_phone_state(tapi_context context, int slot_id, tapi_phone_state* state)
@@ -1954,13 +1995,14 @@ static void subscriber_numbers_prop_iter_cb(DBusMessageIter* iter, void* user_da
     }
 }
 
-int tapi_get_msisdn_number(tapi_context context, int slot_id, char** out)
+int tapi_get_msisdn_number(tapi_context context, int slot_id, char* out, int length)
 {
     dbus_context* ctx = context;
+    char* value = NULL;
     GDBusProxy* proxy;
 
-    if (ctx == NULL || out == NULL) {
-        tapi_log_error("context or out in %s is null", __func__);
+    if (ctx == NULL || out == NULL || length <= 0) {
+        tapi_log_error("context or out is null or length <= 0 in %s", __func__);
         return -EINVAL;
     }
 
@@ -1980,20 +2022,21 @@ int tapi_get_msisdn_number(tapi_context context, int slot_id, char** out)
         return -EIO;
     }
 
-    if (!g_dbus_proxy_get_property_iter_cb(proxy, "SubscriberNumbers", out,
+    if (!g_dbus_proxy_get_property_iter_cb(proxy, "SubscriberNumbers", &value,
             subscriber_numbers_prop_iter_cb)) {
         tapi_log_error("get property failed in %s", __func__);
         return -EIO;
     }
 
-    if (*out == NULL) {
+    if (value == NULL || *value == '\0') {
         tapi_log_error("get prop value invalid in %s", __func__);
         return -EINVAL;
     }
 
-    if (**out == 0) {
-        tapi_log_error("%s: msisdn is empty", __func__);
-        return -EINVAL;
+    if (value != NULL) {
+        strlcpy(out, value, length);
+    } else {
+        out[0] = '\0';
     }
 
     return OK;
@@ -3173,21 +3216,19 @@ int tapi_set_modem_stationary_threshold(tapi_context context, int slot_id, int e
     return OK;
 }
 
-int tapi_get_phone_number(tapi_context context, int slot_id, char** out)
+int tapi_get_phone_number(tapi_context context, int slot_id, char* out, int length)
 {
     dbus_context* ctx = context;
-    char* msisdn_number = NULL;
-    char* subscriber_uri_number = NULL;
     int ret1, ret2;
 
-    ret1 = tapi_get_msisdn_number(ctx, slot_id, &msisdn_number);
-    if (ret1 == OK && msisdn_number != NULL) {
-        *out = msisdn_number;
+    ret1 = tapi_get_msisdn_number(ctx, slot_id, out, length);
+    if (ret1 == OK && out != NULL && out[0] != '\0') {
         tapi_log_info("get phone number from UICC.");
     } else {
-        ret2 = tapi_ims_get_subscriber_uri_number(ctx, slot_id, &subscriber_uri_number);
-        *out = (ret2 == OK && subscriber_uri_number != NULL) ? subscriber_uri_number : NULL;
-        tapi_log_info("get phone number from IMS.");
+        ret2 = tapi_ims_get_subscriber_uri_number(ctx, slot_id, out, length);
+        if (ret2 == OK && out != NULL && out[0] != '\0') {
+            tapi_log_info("get phone number from IMS.");
+        }
     }
 
     return OK;
@@ -3328,10 +3369,11 @@ int tapi_get_carrier_config_int(tapi_context context, int slot_id, char* key, in
 int tapi_get_carrier_config_string(tapi_context context, int slot_id, char* key, char** out)
 {
     dbus_context* ctx = context;
+    char* value = NULL;
     GDBusProxy* proxy;
 
-    if (ctx == NULL) {
-        tapi_log_error("context in %s is null", __func__);
+    if (ctx == NULL || out == NULL) {
+        tapi_log_error("context or out in %s is null", __func__);
         return -EINVAL;
     }
 
@@ -3356,7 +3398,20 @@ int tapi_get_carrier_config_string(tapi_context context, int slot_id, char* key,
         return -EIO;
     }
 
-    return get_carrier_config_value(proxy, key, out);
+    if (!get_carrier_config_value(proxy, key, &value)) {
+        tapi_log_error("get carrier key(%s) value failed in %s", key, __func__);
+        return -EINVAL;
+    }
+
+    if (value != NULL) {
+        *out = strdup(value);
+        if (*out == NULL)
+            return -EINVAL;
+    } else {
+        *out = NULL;
+    }
+
+    return OK;
 }
 
 static void check_modem_state_done(DBusMessage* message, void* user_data)

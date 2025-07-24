@@ -306,9 +306,9 @@ on_exit:
 
 int get_imei_test(int slot_id)
 {
-    char* imei = NULL;
+    char imei[MAX_IMEI_LENGTH + 1] = { 0 };
 
-    int ret = tapi_get_imei(get_tapi_ctx(), slot_id, &imei);
+    int ret = tapi_get_imei(get_tapi_ctx(), slot_id, imei, sizeof(imei));
     syslog(LOG_DEBUG, "%s, slotId : %d imei : %s \n", __func__, slot_id, imei);
 
     return ret;
@@ -320,8 +320,10 @@ int get_modem_revision_test(int slot_id)
 
     int ret = tapi_get_modem_revision(get_tapi_ctx(), slot_id, &version);
     syslog(LOG_DEBUG, "%s, slotId : %d version : %s \n", __func__, slot_id, version);
+    ret = ret || (!version);
 
-    return ret || (!version);
+    free(version);
+    return ret;
 }
 
 int get_pref_net_mode_test(int slot_id, tapi_pref_net_mode* value)

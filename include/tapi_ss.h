@@ -128,6 +128,8 @@ int tapi_ss_set_call_barring_option(tapi_context context, int slot_id, int event
  * @param[in] slot_id        Slot id of current sim.
  * @param[in] service_type   Different Call Barring services.
  * @param[out] out           The Call Barring service value.
+ *                           Memory is dynamically allocated by the callee.
+ *                           Caller must free the buffer using `free(*out)`.
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_ss_get_call_barring_option(tapi_context context, int slot_id, const char* service_type, char** out);
@@ -227,6 +229,8 @@ int tapi_ss_initiate_service(tapi_context context, int slot_id, int event_id,
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[out] out           The USSD state.
+ *                           Memory is dynamically allocated by the callee.
+ *                           Caller must free the buffer using `free(*out)`.
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_get_ussd_state(tapi_context context, int slot_id, char** out);
@@ -282,6 +286,8 @@ int tapi_ss_get_call_waiting(tapi_context context, int slot_id, int event_id,
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[out] out           The value of Calling Line Presentation service.
+ *                           Memory is dynamically allocated by the callee.
+ *                           Caller must free the buffer using `free(*out)`.
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_ss_get_calling_line_presentation_info(tapi_context context, int slot_id,

@@ -1998,10 +1998,11 @@ int tapi_stk_select_item(tapi_context context, int slot_id,
 int tapi_stk_get_idle_mode_text(tapi_context context, int slot_id, char** text)
 {
     dbus_context* ctx = context;
+    char* value = NULL;
     GDBusProxy* proxy;
 
-    if (ctx == NULL) {
-        tapi_log_error("context in %s is null", __func__);
+    if (ctx == NULL || text == NULL) {
+        tapi_log_error("context or text in %s is null", __func__);
         return -EINVAL;
     }
 
@@ -2021,21 +2022,30 @@ int tapi_stk_get_idle_mode_text(tapi_context context, int slot_id, char** text)
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property_basic(proxy, "IdleModeText", text)) {
-        return OK;
+    if (!g_dbus_proxy_get_property_basic(proxy, "IdleModeText", &value)) {
+        tapi_log_error("dbus get property fail in %s", __func__);
+        return ERROR;
     }
 
-    tapi_log_error("dbus get property fail in %s", __func__);
-    return ERROR;
+    if (value != NULL) {
+        *text = strdup(value);
+        if (*text == NULL)
+            return -EINVAL;
+    } else {
+        *text = NULL;
+    }
+
+    return OK;
 }
 
 int tapi_stk_get_idle_mode_icon(tapi_context context, int slot_id, char** icon)
 {
     dbus_context* ctx = context;
+    char* value = NULL;
     GDBusProxy* proxy;
 
-    if (ctx == NULL) {
-        tapi_log_error("context in %s is null", __func__);
+    if (ctx == NULL || icon == NULL) {
+        tapi_log_error("context or icon in %s is null", __func__);
         return -EINVAL;
     }
 
@@ -2055,13 +2065,22 @@ int tapi_stk_get_idle_mode_icon(tapi_context context, int slot_id, char** icon)
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property_basic(proxy, "IdleModeIcon", icon)) {
-        return OK;
+    if (!g_dbus_proxy_get_property_basic(proxy, "IdleModeIcon", &value)) {
+        tapi_log_error("dbus get property fail in %s", __func__);
+        return ERROR;
     }
 
-    tapi_log_error("dbus get property fail in %s", __func__);
-    return ERROR;
+    if (value != NULL) {
+        *icon = strdup(value);
+        if (*icon == NULL)
+            return -EINVAL;
+    } else {
+        *icon = NULL;
+    }
+
+    return OK;
 }
+
 struct main_menu_iter_cb_data {
     tapi_stk_menu_item* item;
     int index;
@@ -2143,10 +2162,11 @@ int tapi_stk_get_main_menu(tapi_context context, int slot_id, int* length, tapi_
 int tapi_stk_get_main_menu_title(tapi_context context, int slot_id, char** title)
 {
     dbus_context* ctx = context;
+    char* value = NULL;
     GDBusProxy* proxy;
 
-    if (ctx == NULL) {
-        tapi_log_error("context in %s is null", __func__);
+    if (ctx == NULL || title == NULL) {
+        tapi_log_error("context or title in %s is null", __func__);
         return -EINVAL;
     }
 
@@ -2166,12 +2186,20 @@ int tapi_stk_get_main_menu_title(tapi_context context, int slot_id, char** title
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property_basic(proxy, "MainMenuTitle", title)) {
-        return OK;
+    if (!g_dbus_proxy_get_property_basic(proxy, "MainMenuTitle", &value)) {
+        tapi_log_error("dbus get property fail in %s", __func__);
+        return ERROR;
     }
 
-    tapi_log_error("dbus get property fail in %s", __func__);
-    return ERROR;
+    if (value != NULL) {
+        *title = strdup(value);
+        if (*title == NULL)
+            return -EINVAL;
+    } else {
+        *title = NULL;
+    }
+
+    return OK;
 }
 
 int tapi_stk_get_main_menu_icon(tapi_context context, int slot_id, int* icon)

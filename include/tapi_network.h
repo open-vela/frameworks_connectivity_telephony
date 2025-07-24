@@ -34,6 +34,9 @@
 #define MAX_OPERATOR_INFO_LIST_SIZE 30
 #define MAX_CELL_INFO_LIST_SIZE 30
 #define MAX_NETWORK_INFO_LENGTH 100
+#define MAX_NETWORK_OPERATOR_NAME_LENGTH 63
+#define MAX_MCC_LENGTH 3
+#define MAX_MNC_LENGTH 3
 
 /****************************************************************************
  * Public Types
@@ -231,9 +234,12 @@ int tapi_network_is_voice_roaming(tapi_context context, int slot_id, bool* out);
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[out] out           display name returned from modem.
+ * @param[in] length         The length of display name.
+ *                           The maximum valid length is 63 bytes.
+ *                           Note: The actual storage requires 64 bytes due to 1 byte '\0'.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_network_get_display_name(tapi_context context, int slot_id, char** out);
+int tapi_network_get_display_name(tapi_context context, int slot_id, char* out, int length);
 
 /**
  * Get the current signal strength.
@@ -292,18 +298,24 @@ int tapi_network_unregister(tapi_context context, int watch_id);
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[out] mcc           mcc returned from modem.
+ * @param[in] length         The length of mcc.
+ *                           The maximum valid length is 3 bytes.
+ *                           Note: The actual storage requires 4 bytes due to 1 byte '\0'.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_network_get_mcc(tapi_context context, int slot_id, char** mcc);
+int tapi_network_get_mcc(tapi_context context, int slot_id, char* mcc, int length);
 
 /**
  * Get the display name of current registered operator.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[out] mnc           mnc returned from modem.
+ * @param[in] length         The length of mnc.
+ *                           The maximum valid length is 3 bytes.
+ *                           Note: The actual storage requires 4 bytes due to 1 byte '\0'.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_network_get_mnc(tapi_context context, int slot_id, char** mnc);
+int tapi_network_get_mnc(tapi_context context, int slot_id, char* mnc, int length);
 
 /**
  * Get the operator status.
@@ -319,9 +331,12 @@ int tapi_network_get_operator_status(tapi_context context, int slot_id, int* out
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[out] out           operator name returned from ofono.
+ * @param[in] length         The length of operator name.
+ *                           The maximum valid length is 63 bytes.
+ *                           Note: The actual storage requires 64 bytes due to 1 byte '\0'.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_network_get_operator_name(tapi_context context, int slot_id, char** out);
+int tapi_network_get_operator_name(tapi_context context, int slot_id, char* out, int length);
 
 /**
  * Get reg state infomation.

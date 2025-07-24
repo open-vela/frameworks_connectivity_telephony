@@ -84,6 +84,9 @@ int tapi_sms_set_cell_broadcast_topics(tapi_context context, int slot_id, char* 
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[in] p_handle       Event callback.
+ * @param[out] topics        CBS topics.
+ *                           Memory is dynamically allocated by the callee.
+ *                           Caller must free the buffer using `free(*topics)`.
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_sms_get_cell_broadcast_topics(tapi_context context, int slot_id, char** topics);

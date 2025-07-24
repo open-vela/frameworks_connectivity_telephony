@@ -1433,10 +1433,11 @@ int tapi_data_set_preferred_apn(tapi_context context,
 int tapi_data_get_preferred_apn(tapi_context context, int slot_id, char** out)
 {
     dbus_context* ctx = context;
+    char* value = NULL;
     GDBusProxy* proxy;
 
-    if (ctx == NULL) {
-        tapi_log_error("context in %s is null", __func__);
+    if (ctx == NULL || out == NULL) {
+        tapi_log_error("context or out in %s is null", __func__);
         return -EINVAL;
     }
 
@@ -1456,12 +1457,20 @@ int tapi_data_get_preferred_apn(tapi_context context, int slot_id, char** out)
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property_basic(proxy, "PreferredApn", out)) {
-        return OK;
+    if (!g_dbus_proxy_get_property_basic(proxy, "PreferredApn", &value)) {
+        tapi_log_error("get property failed in %s", __func__);
+        return -EINVAL;
     }
 
-    tapi_log_error("get property failed in %s", __func__);
-    return -EINVAL;
+    if (value != NULL) {
+        *out = strdup(value);
+        if (*out == NULL)
+            return -EINVAL;
+    } else {
+        *out = NULL;
+    }
+
+    return OK;
 }
 
 int tapi_data_enable_data(tapi_context context, bool enabled)

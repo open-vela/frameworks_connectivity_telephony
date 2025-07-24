@@ -259,6 +259,8 @@ int tapi_data_set_preferred_apn(tapi_context context, int slot_id, tapi_data_con
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[out] out           Pointer to Id of Preferred Apn item.
+ *                           Memory is dynamically allocated by the callee.
+ *                           Caller must free the buffer using `free(*out)`.
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_data_get_preferred_apn(tapi_context context, int slot_id, char** out);

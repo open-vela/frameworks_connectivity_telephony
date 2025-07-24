@@ -1315,13 +1315,14 @@ int tapi_network_get_operator_status(tapi_context context, int slot_id, int* out
     return OK;
 }
 
-int tapi_network_get_operator_name(tapi_context context, int slot_id, char** out)
+int tapi_network_get_operator_name(tapi_context context, int slot_id, char* out, int length)
 {
     dbus_context* ctx = context;
+    char* value = NULL;
     GDBusProxy* proxy;
 
-    if (ctx == NULL) {
-        tapi_log_error("contex in %s is null", __func__);
+    if (ctx == NULL || out == NULL || length <= 0) {
+        tapi_log_error("context or out is null or length <= 0 in %s", __func__);
         return -EINVAL;
     }
 
@@ -1341,9 +1342,15 @@ int tapi_network_get_operator_name(tapi_context context, int slot_id, char** out
         return -EIO;
     }
 
-    if (!g_dbus_proxy_get_property_basic(proxy, "Name", out)) {
+    if (!g_dbus_proxy_get_property_basic(proxy, "Name", &value)) {
         tapi_log_error("get property failed in %s", __func__);
         return -EINVAL;
+    }
+
+    if (value != NULL) {
+        strlcpy(out, value, length);
+    } else {
+        out[0] = '\0';
     }
 
     return OK;
@@ -1544,13 +1551,14 @@ int tapi_network_is_voice_roaming(tapi_context context, int slot_id, bool* out)
     return OK;
 }
 
-int tapi_network_get_mcc(tapi_context context, int slot_id, char** mcc)
+int tapi_network_get_mcc(tapi_context context, int slot_id, char* mcc, int length)
 {
     dbus_context* ctx = context;
+    char* value = NULL;
     GDBusProxy* proxy;
 
-    if (ctx == NULL) {
-        tapi_log_error("contex in %s is null", __func__);
+    if (ctx == NULL || mcc == NULL || length <= 0) {
+        tapi_log_error("context or out is null or length <= 0 in %s", __func__);
         return -EINVAL;
     }
 
@@ -1570,21 +1578,28 @@ int tapi_network_get_mcc(tapi_context context, int slot_id, char** mcc)
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property_basic(proxy, "MobileCountryCode", mcc)) {
-        return OK;
+    if (!g_dbus_proxy_get_property_basic(proxy, "MobileCountryCode", &value)) {
+        tapi_log_error("get property failed in %s", __func__);
+        return -EIO;
     }
 
-    tapi_log_error("get property failed in %s", __func__);
-    return -EIO;
+    if (value != NULL) {
+        strlcpy(mcc, value, length);
+    } else {
+        mcc[0] = '\0';
+    }
+
+    return OK;
 }
 
-int tapi_network_get_mnc(tapi_context context, int slot_id, char** mnc)
+int tapi_network_get_mnc(tapi_context context, int slot_id, char* mnc, int length)
 {
     dbus_context* ctx = context;
+    char* value = NULL;
     GDBusProxy* proxy;
 
-    if (ctx == NULL) {
-        tapi_log_error("contex in %s is null", __func__);
+    if (ctx == NULL || mnc == NULL || length <= 0) {
+        tapi_log_error("context or out is null or length <= 0 in %s", __func__);
         return -EINVAL;
     }
 
@@ -1604,21 +1619,28 @@ int tapi_network_get_mnc(tapi_context context, int slot_id, char** mnc)
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property_basic(proxy, "MobileNetworkCode", mnc)) {
-        return OK;
+    if (!g_dbus_proxy_get_property_basic(proxy, "MobileNetworkCode", &value)) {
+        tapi_log_error("get property failed in %s", __func__);
+        return -EIO;
     }
 
-    tapi_log_error("get property failed in %s", __func__);
-    return -EIO;
+    if (value != NULL) {
+        strlcpy(mnc, value, length);
+    } else {
+        mnc[0] = '\0';
+    }
+
+    return OK;
 }
 
-int tapi_network_get_display_name(tapi_context context, int slot_id, char** out)
+int tapi_network_get_display_name(tapi_context context, int slot_id, char* out, int length)
 {
     dbus_context* ctx = context;
+    char* value = NULL;
     GDBusProxy* proxy;
 
-    if (ctx == NULL) {
-        tapi_log_error("contex in %s is null", __func__);
+    if (ctx == NULL || out == NULL || length <= 0) {
+        tapi_log_error("context or out is null or length <= 0 in %s", __func__);
         return -EINVAL;
     }
 
@@ -1638,12 +1660,18 @@ int tapi_network_get_display_name(tapi_context context, int slot_id, char** out)
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property_basic(proxy, "Name", out)) {
-        return OK;
+    if (!g_dbus_proxy_get_property_basic(proxy, "Name", &value)) {
+        tapi_log_error("get property failed in %s", __func__);
+        return -EINVAL;
     }
 
-    tapi_log_error("get property failed in %s", __func__);
-    return -EINVAL;
+    if (value != NULL) {
+        strlcpy(out, value, length);
+    } else {
+        out[0] = '\0';
+    }
+
+    return OK;
 }
 
 static void signal_strength_prop_iter_cb(DBusMessageIter* iter, void* data)

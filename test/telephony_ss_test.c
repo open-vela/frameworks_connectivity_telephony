@@ -476,6 +476,7 @@ on_exit:
 #ifndef CONFIG_TELEPHONY_DFX
     tapi_unregister(get_tapi_ctx(), watch_id);
 #endif
+    free(result);
     return ret;
 }
 

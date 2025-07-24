@@ -28,6 +28,13 @@
 #include "tapi.h"
 
 /****************************************************************************
+ * Pre-processor Definitions
+ ****************************************************************************/
+
+#define MAX_IMEI_LENGTH 15
+#define MAX_IMEISV_LENGTH 20
+
+/****************************************************************************
  * Public Types
  ****************************************************************************/
 
@@ -154,24 +161,32 @@ int tapi_get_radio_state(tapi_context context, int slot_id, tapi_radio_state* ou
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[out] out           Imei returned from modem.
+ * @param[in] length         The length of imei.
+ *                           The maximum valid length is 15 bytes.
+ *                           Note: The actual storage requires 16 bytes due to 1 byte '\0'.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_get_imei(tapi_context context, int slot_id, char** out);
+int tapi_get_imei(tapi_context context, int slot_id, char* out, int length);
 
 /**
  * Get device imeisv.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[out] out           Imeisv returned from modem.
+ * @param[in] length         The length of imeisv.
+ *                           The maximum valid length is 20 bytes.
+ *                           Note: The actual storage requires 21 bytes due to 1 byte '\0'.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_get_imeisv(tapi_context context, int slot_id, char** out);
+int tapi_get_imeisv(tapi_context context, int slot_id, char* out, int length);
 
 /**
  * Get modem revision.
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[out] out           Revision returned from modem.
+ *                           Memory is dynamically allocated by the callee.
+ *                           Caller must free the buffer using `free(*out)`.
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_get_modem_revision(tapi_context context, int slot_id, char** out);
@@ -190,9 +205,12 @@ int tapi_get_phone_state(tapi_context context, int slot_id, tapi_phone_state* st
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[out] out           Msisdn number returned from modem.
+ * @param[in] length         The length of msisdn number.
+ *                           The maximum valid length is 80 bytes.
+ *                           Note: The actual storage requires 81 bytes due to 1 byte '\0'.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_get_msisdn_number(tapi_context context, int slot_id, char** out);
+int tapi_get_msisdn_number(tapi_context context, int slot_id, char* out, int length);
 
 /**
  * get modem activity info.
@@ -339,9 +357,12 @@ int tapi_set_fast_dormancy(tapi_context context,
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[out] out           Phone Number returned.
+ * @param[in] length         The length of phone number.
+ *                           The maximum valid length is 80 bytes.
+ *                           Note: The actual storage requires 81 bytes due to 1 byte '\0'.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_get_phone_number(tapi_context context, int slot_id, char** out);
+int tapi_get_phone_number(tapi_context context, int slot_id, char* out, int length);
 
 /**
  * Register radio event callback.
@@ -392,6 +413,8 @@ int tapi_get_carrier_config_int(tapi_context context, int slot_id, char* key, in
  * @param[in] slot_id        Slot id of current sim.
  * @param[in] key            Carrier Config Key.
  * @param[out] out           Carrier Config Value.
+ *                           Memory is dynamically allocated by the callee.
+ *                           Caller must free the buffer using `free(*out)`.
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_get_carrier_config_string(tapi_context context, int slot_id, char* key, char** out);

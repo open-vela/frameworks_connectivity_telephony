@@ -1195,10 +1195,11 @@ int tapi_ss_set_call_barring_option(tapi_context context, int slot_id, int event
 int tapi_ss_get_call_barring_option(tapi_context context, int slot_id, const char* service_type, char** out)
 {
     dbus_context* ctx = context;
+    char* value = NULL;
     GDBusProxy* proxy;
 
-    if (ctx == NULL) {
-        tapi_log_error("context in %s is null", __func__);
+    if (ctx == NULL || out == NULL) {
+        tapi_log_error("context or out in %s is null", __func__);
         return -EINVAL;
     }
 
@@ -1223,12 +1224,20 @@ int tapi_ss_get_call_barring_option(tapi_context context, int slot_id, const cha
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property_basic(proxy, service_type, out)) {
-        return OK;
+    if (!g_dbus_proxy_get_property_basic(proxy, service_type, &value)) {
+        tapi_log_error("get property failed in %s", __func__);
+        return -EINVAL;
     }
 
-    tapi_log_error("get property failed in %s", __func__);
-    return -EINVAL;
+    if (value != NULL) {
+        *out = strdup(value);
+        if (*out == NULL)
+            return -EINVAL;
+    } else {
+        *out = NULL;
+    }
+
+    return OK;
 }
 
 int tapi_ss_change_call_barring_password(tapi_context context, int slot_id, int event_id,
@@ -1632,12 +1641,13 @@ int tapi_ss_set_call_forwarding_option(tapi_context context, int slot_id, int ev
 int tapi_get_ussd_state(tapi_context context, int slot_id, char** out)
 {
     dbus_context* ctx = context;
+    char* value = NULL;
     GDBusProxy* proxy;
 
     report_data_logging_for_ss(ctx, "ss:ussd:get state", "NA");
 
-    if (ctx == NULL) {
-        tapi_log_error("context in %s is null", __func__);
+    if (ctx == NULL || out == NULL) {
+        tapi_log_error("context or out in %s is null", __func__);
         return -EINVAL;
     }
 
@@ -1657,13 +1667,21 @@ int tapi_get_ussd_state(tapi_context context, int slot_id, char** out)
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property_basic(proxy, "State", out)) {
-        return OK;
+    if (!g_dbus_proxy_get_property_basic(proxy, "State", &value)) {
+        tapi_log_error("get property fail in %s", __func__);
+        report_data_logging_for_ss(ctx, "ss:ussd:get state", "dbus method fail");
+        return -EINVAL;
     }
 
-    tapi_log_error("get property fail in %s", __func__);
-    report_data_logging_for_ss(ctx, "ss:ussd:get state", "dbus method fail");
-    return -EINVAL;
+    if (value != NULL) {
+        *out = strdup(value);
+        if (*out == NULL)
+            return -EINVAL;
+    } else {
+        *out = NULL;
+    }
+
+    return OK;
 }
 
 int tapi_ss_send_ussd(tapi_context context, int slot_id, int event_id, char* reply,
@@ -1909,12 +1927,13 @@ int tapi_ss_get_calling_line_presentation_info(tapi_context context, int slot_id
     char** out)
 {
     dbus_context* ctx = context;
+    char* value = NULL;
     GDBusProxy* proxy;
 
     report_data_logging_for_ss(ctx, "ss:get clip", "NA");
 
-    if (ctx == NULL) {
-        tapi_log_error("context in %s is null", __func__);
+    if (ctx == NULL || out == NULL) {
+        tapi_log_error("context or out in %s is null", __func__);
         return -EINVAL;
     }
 
@@ -1934,13 +1953,21 @@ int tapi_ss_get_calling_line_presentation_info(tapi_context context, int slot_id
         return -EIO;
     }
 
-    if (g_dbus_proxy_get_property_basic(proxy, "CallingLinePresentation", out)) {
-        return OK;
+    if (!g_dbus_proxy_get_property_basic(proxy, "CallingLinePresentation", &value)) {
+        report_data_logging_for_ss(ctx, "ss:get clip", "dbus method fail");
+        tapi_log_error("get property failed in %s", __func__);
+        return -EINVAL;
     }
 
-    report_data_logging_for_ss(ctx, "ss:get clip", "dbus method fail");
-    tapi_log_error("get property failed in %s", __func__);
-    return -EINVAL;
+    if (value != NULL) {
+        *out = strdup(value);
+        if (*out == NULL)
+            return -EINVAL;
+    } else {
+        *out = NULL;
+    }
+
+    return OK;
 }
 
 // Calling Line Restriction

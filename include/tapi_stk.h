@@ -209,6 +209,8 @@ int tapi_stk_select_item(tapi_context context, int slot_id,
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[out] text          Text content.
+ *                           Memory is dynamically allocated by the callee.
+ *                           Caller must free the buffer using `free(*out)`.
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_stk_get_idle_mode_text(tapi_context context, int slot_id, char** text);
@@ -219,6 +221,8 @@ int tapi_stk_get_idle_mode_text(tapi_context context, int slot_id, char** text);
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[out] icon          Identifier of the icon.
+ *                           Memory is dynamically allocated by the callee.
+ *                           Caller must free the buffer using `free(*out)`.
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_stk_get_idle_mode_icon(tapi_context context, int slot_id, char** icon);
@@ -242,6 +246,8 @@ int tapi_stk_get_main_menu(tapi_context context, int slot_id, int* length, tapi_
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[out] title         Title of main menu.
+ *                           Memory is dynamically allocated by the callee.
+ *                           Caller must free the buffer using `free(*out)`.
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_stk_get_main_menu_title(tapi_context context, int slot_id, char** title);

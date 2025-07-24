@@ -733,7 +733,10 @@ int data_get_preferred_apn_test(int slot_id)
     int ret = tapi_data_get_preferred_apn(get_tapi_ctx(), slot_id, &apn);
     syslog(LOG_DEBUG, "%s: %s", __func__, apn);
 
-    return ret || strcmp(apn, "/ril_0/context1") != 0;
+    ret = ret || (apn != NULL && strcmp(apn, "/ril_0/context1")) != 0;
+
+    free(apn);
+    return ret;
 }
 
 int data_set_and_get_preferred_apn_test(int slot_id, char* apn_id)

@@ -34,6 +34,7 @@
 #define MAX_TIME_LENGTH 32
 #define MAX_TEXT_LENGTH 480
 #define MAX_MESSAGE_LIST_COUNT 200
+#define MAX_CENTER_ADDRESS_LENGTH 30
 
 /****************************************************************************
  * Public Types
@@ -103,9 +104,12 @@ bool tapi_sms_set_service_center_address(tapi_context context, int slot_id, char
  * @param[in] context        Telephony api context.
  * @param[in] slot_id        Slot id of current sim.
  * @param[out] number        service center number.
+ * @param[in] length         The length of sms center address.
+ *                           The maximum valid length is 30 bytes.
+ *                           Note: The actual storage requires 31 bytes due to 1 byte '\0'.
  * @return Zero on success; a negated errno value on failure.
  */
-int tapi_sms_get_service_center_address(tapi_context context, int slot_id, char** number);
+int tapi_sms_get_service_center_address(tapi_context context, int slot_id, char* out, int length);
 
 /**
  * enable SMS delivery report.
