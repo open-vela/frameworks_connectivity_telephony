@@ -1286,7 +1286,7 @@ tapi_context tapi_open_service(const char* client_name,
     ctx->connection = connection;
     ctx->client = client;
     ctx->client_ready = false;
-    ctx->logging_over_miwear_cb = NULL;
+    ctx->logging_over_cb = NULL;
     snprintf(ctx->name, sizeof(ctx->name), "%s", client_name);
     get_persistent_dbus_proxy(ctx);
     get_mutable_dbus_proxy(ctx);
@@ -2434,7 +2434,7 @@ static int tapi_manager_register_data_loging(tapi_context context,
         handler_free(handler);
         return -EINVAL;
     }
-    ctx->logging_over_miwear_cb = p_handle;
+    ctx->logging_over_cb = p_handle;
 
     return watch_id;
 }

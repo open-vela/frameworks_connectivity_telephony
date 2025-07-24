@@ -1253,3 +1253,92 @@ int set_modem_stationary_threshold(int slot_id, int value)
 on_exit:
     return res;
 }
+
+#ifndef CONFIG_TELEPHONY_DFX
+static void test_data_logging_cb(tapi_async_result* result)
+{
+    char* token;
+    int index = 0;
+    int type_id = -1;
+    char type_id_str[50] = { 0 };
+    char* data = (char*)result->data;
+
+    if (result->status != OK) {
+        syslog(LOG_ERR, "test_data_logging_cb fail,status =%d", result->status);
+        judge_data.result = result->status;
+        judge_data.flag = EVENT_MODEM_CHECK_ABNORMAL_EVENT_REPORT_DONE;
+        return;
+    }
+    syslog(LOG_DEBUG, "data_logging_cb:%s", data);
+
+    if (strstr(data, "DATA_INTERRUPTION_INFO") != NULL) {
+        return;
+    }
+    token = strtok(data, ",");
+    while (token != NULL) {
+        if (index == 1) {
+            strncpy(type_id_str, token, 50);
+            break;
+        }
+        index++;
+        token = strtok(NULL, ",");
+    }
+    syslog(LOG_DEBUG, "type_id_str:%s", type_id_str);
+    index = 0;
+    token = strtok(type_id_str, "_");
+    while (token != NULL) {
+        if (index == 0) {
+            type_id = atoi(token);
+            break;
+        }
+        index++;
+        token = strtok(NULL, ",");
+    }
+    syslog(LOG_DEBUG, "type_id:%d", type_id);
+
+    if (type_id == *((int*)result->user_obj)) {
+        judge_data.result = 0;
+        judge_data.flag = EVENT_MODEM_CHECK_ABNORMAL_EVENT_REPORT_DONE;
+    } else {
+        judge_data.result = -1;
+        judge_data.flag = EVENT_MODEM_CHECK_ABNORMAL_EVENT_REPORT_DONE;
+    }
+}
+
+int check_abnormal_event_report(bool unexpected_data_flag, int abnormal_data_type_id)
+{
+    int res = 0;
+    int watch_id = 0;
+    int* type_id = (int*)malloc(sizeof(int));
+
+    judge_data_init();
+    judge_data.expect = EVENT_MODEM_CHECK_ABNORMAL_EVENT_REPORT_DONE;
+
+    *type_id = abnormal_data_type_id;
+    watch_id = tapi_register(get_tapi_ctx(), 0, MSG_DATA_LOGING_IND,
+        type_id, test_data_logging_cb);
+
+    if (unexpected_data_flag) {
+        remote_unexpected_abnormal_event_report();
+    } else {
+        remote_abnormal_event_report(*type_id);
+    }
+
+    if (judge()) {
+        syslog(LOG_DEBUG, "check_abnormal_event_report is not executed in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge_data.result) {
+        syslog(LOG_ERR, "async result is invalid in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    free(type_id);
+    tapi_unregister(get_tapi_ctx(), watch_id);
+    return res;
+}
+#endif

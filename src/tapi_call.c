@@ -855,27 +855,25 @@ static int tapi_register_manager_call_signal(tapi_context context, int slot_id, 
 static void report_data_logging_for_call(dbus_context* ctx, int type, int direction,
     int media, int fail_scenario, char* fail_reason)
 {
-#if defined(CONFIG_OFONO_DATA_LOG_OVER_MIWEAR) \
-    && (!defined(CONFIG_DFX_EVENT) || (!defined(CONFIG_DFX)))
-    tapi_async_result* temp_ar;
-    char out_data[MIWEAR_LOG_IND_BUF_SIZE] = { 0 };
+#ifdef CONFIG_TELEPHONY_DFX
+    OFONO_DFX_CALL_INFO(type, direction, media, fail_scenario, fail_reason);
+#else
+    tapi_async_result* ar;
+    char out_data[LOG_IND_BUF_SIZE] = { 0 };
 
-    if (ctx->logging_over_miwear_cb != NULL) {
-        temp_ar = calloc(1, sizeof(tapi_async_result));
-        if (temp_ar == NULL) {
+    if (ctx->logging_over_cb != NULL) {
+        ar = calloc(1, sizeof(tapi_async_result));
+        if (ar == NULL) {
             tapi_log_error("Memory allocation failed");
         } else {
-            snprintf(out_data, MIWEAR_LOG_IND_BUF_SIZE, "%s,%d,%d,%d,%d,%s", "CALL_INFO",
+            snprintf(out_data, LOG_IND_BUF_SIZE, "%s,%d,%d,%d,%d,%s", "CALL_INFO",
                 type, direction, media, fail_scenario, fail_reason);
-            temp_ar->status = OK;
-            temp_ar->data = out_data;
-            ctx->logging_over_miwear_cb(temp_ar);
-            free(temp_ar);
+            ar->status = OK;
+            ar->data = out_data;
+            ctx->logging_over_cb(ar);
+            free(ar);
         }
     }
-#else
-    OFONO_DFX_CALL_INFO(type, direction, media, fail_scenario, fail_reason);
-
 #endif
 }
 

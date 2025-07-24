@@ -22,3 +22,7 @@ int remote_sms_send_english_long_message(int slot_id);
 int remote_sms_send_message(int slot_id);
 int remote_radio_on_off_delay(int delay_sec);
 int remote_sim_invalid_operation(int slot_id);
+#ifndef CONFIG_TELEPHONY_DFX
+int remote_abnormal_event_report(int type_id);
+int remote_unexpected_abnormal_event_report(void);
+#endif

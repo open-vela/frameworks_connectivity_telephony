@@ -2192,6 +2192,61 @@ static void TestTeleFunc_ModemSetModemStationaryThreshold(void** state)
     assert_int_equal(ret, OK);
 }
 
+#ifndef CONFIG_TELEPHONY_DFX
+static void TestTeleFunc_AbnormalEventReport(void** state)
+{
+    int ret;
+
+    (void)state;
+    ret = check_abnormal_event_report(false, 2); // expect normal data
+    assert_int_equal(ret, OK);
+    ret = check_abnormal_event_report(false, 3); // expect normal data
+    assert_int_equal(ret, OK);
+    ret = check_abnormal_event_report(false, 5); // expect normal data
+    assert_int_equal(ret, OK);
+    ret = check_abnormal_event_report(false, 6); // expect normal data
+    assert_int_equal(ret, OK);
+    ret = check_abnormal_event_report(false, 7); // expect normal data
+    assert_int_equal(ret, OK);
+    ret = check_abnormal_event_report(false, 8); // expect normal data
+    assert_int_equal(ret, OK);
+    ret = check_abnormal_event_report(false, 9); // expect normal data
+    assert_int_equal(ret, OK);
+    ret = check_abnormal_event_report(false, 10); // expect normal data
+    assert_int_equal(ret, OK);
+    ret = check_abnormal_event_report(false, 11); // expect normal data
+    assert_int_equal(ret, OK);
+    ret = check_abnormal_event_report(false, 12); // expect normal data
+    assert_int_equal(ret, OK);
+    ret = check_abnormal_event_report(false, 13); // expect normal data
+    assert_int_equal(ret, OK);
+    ret = check_abnormal_event_report(false, 14); // expect normal data
+    assert_int_equal(ret, OK);
+    ret = check_abnormal_event_report(false, 15); // expect normal data
+    assert_int_equal(ret, OK);
+    ret = check_abnormal_event_report(false, 16); // expect normal data
+    assert_int_equal(ret, OK);
+    ret = check_abnormal_event_report(false, 17); // expect normal data
+    assert_int_equal(ret, OK);
+    ret = check_abnormal_event_report(false, 20); // expect normal data
+    assert_int_equal(ret, OK);
+    ret = check_abnormal_event_report(false, 21); // expect normal data
+    assert_int_equal(ret, OK);
+    ret = check_abnormal_event_report(false, 200); // expect normal data
+    assert_int_equal(ret, OK);
+    ret = check_abnormal_event_report(false, 201); // expect normal data
+    assert_int_equal(ret, OK);
+    ret = check_abnormal_event_report(false, 202); // expect normal data
+    assert_int_equal(ret, OK);
+    ret = check_abnormal_event_report(false, 203); // expect normal data
+    assert_int_equal(ret, OK);
+    ret = check_abnormal_event_report(false, 208); // expect normal data
+    assert_int_equal(ret, OK);
+    ret = check_abnormal_event_report(true, 208); // unexpected data
+    assert_int_equal(ret, OK);
+}
+#endif
+
 static void TestTeleFunc_ModemEnableDisableNTimesUnderDialingCall(void** state)
 {
     (void)state;
@@ -4312,6 +4367,9 @@ int main(int argc, char* argv[])
         cmocka_unit_test(TestTeleFunc_ModemSuppressMsgReport),
         cmocka_unit_test(TestTeleFunc_ModemEnableModemStationary),
         cmocka_unit_test(TestTeleFunc_ModemSetModemStationaryThreshold),
+#ifndef CONFIG_TELEPHONY_DFX
+        cmocka_unit_test(TestTeleFunc_AbnormalEventReport),
+#endif
     };
 #ifdef CONFIG_PHONE_SERVICE
     const struct CMUnitTest PhoneServiceTestSuites[] = {

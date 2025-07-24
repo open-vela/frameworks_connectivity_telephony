@@ -146,3 +146,25 @@ int remote_sim_invalid_operation(int slot_id)
     return tapi_invoke_oem_ril_request_strings(get_tapi_ctx(), 0,
         EVENT_OEM_RIL_REQUEST_STRINGS_DONE, oem_req, 1, NULL);
 }
+
+#ifndef CONFIG_TELEPHONY_DFX
+int remote_abnormal_event_report(int type_id)
+{
+    char req_data[30] = { 0 };
+    char* oem_req[1];
+    oem_req[0] = req_data;
+
+    sprintf(req_data, "AT+ABNORMAL=%d 1", type_id);
+    syslog(LOG_DEBUG, "%s, req_data: %s\n", __func__, req_data);
+    return tapi_invoke_oem_ril_request_strings(get_tapi_ctx(), 0,
+        EVENT_OEM_RIL_REQUEST_STRINGS_DONE, oem_req, 1, NULL);
+}
+
+int remote_unexpected_abnormal_event_report(void)
+{
+    char* oem_req[1];
+    oem_req[0] = "AT+ABNORMALWRONGDATA? 1";
+    return tapi_invoke_oem_ril_request_strings(get_tapi_ctx(), 0,
+        EVENT_OEM_RIL_REQUEST_STRINGS_DONE, oem_req, 1, NULL);
+}
+#endif
