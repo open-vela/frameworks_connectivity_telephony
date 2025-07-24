@@ -35,4 +35,7 @@ int set_signal_report_threshold_test(int slot_id, int type);
 int suppress_message_report(int slot_id, bool target_state);
 int enable_modem_stationary(int slot_id, bool target_state);
 int set_modem_stationary_threshold(int slot_id, int value);
+#ifndef CONFIG_TELEPHONY_DFX
+int check_abnormal_event_report(bool unexpected_data_flag, int abnormal_data_type);
+#endif
 #endif

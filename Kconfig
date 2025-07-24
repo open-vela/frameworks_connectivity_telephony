@@ -47,6 +47,12 @@ config SIGNAL_REPORT_THRESHOLD
 	default y
 	---help---
 		enable/disable signal report threshlod feature
+
+config TELEPHONY_DFX
+	bool "data tracking over dfx"
+        default n
+	---help---
+		data tracking way,over DFX when y,over callback when n
 endif
 
 config TELEPHONY_TOOL
