@@ -216,7 +216,7 @@ static void TestTeleFunc_CI_SimHasIccCard(void** state)
     assert_int_equal(ret, OK);
 }
 
-static void TestTeleFunc_SimHasIccCardNumerousTimes(void** state)
+static void TestTeleStab_SimHasIccCardNumerousTimes(void** state)
 {
     (void)state;
     int ret = sim_multi_has_icc_card_test(0);
@@ -240,14 +240,14 @@ static void TestTeleFunc_CI_SimGetOperator(void** state)
     assert_int_equal(ret, OK);
 }
 
-static void TestTeleFunc_SimGetOperatorNameNumerousTimes(void** state)
+static void TestTeleStab_SimGetOperatorNameNumerousTimes(void** state)
 {
     (void)state;
     int ret = sim_get_sim_operator_name_numerous(0, "T-Mobile");
     assert_int_equal(ret, OK);
 }
 
-static void TestTeleFunc_SimGetOperatorNumerousTimes(void** state)
+static void TestTeleStab_SimGetOperatorNumerousTimes(void** state)
 {
     (void)state;
     REPEAT_TEST_MORE_FOR
@@ -263,7 +263,7 @@ static void TestTeleFunc_CI_SimGetSubscriberId(void** state)
     assert_int_equal(ret, OK);
 }
 
-static void TestTeleFunc_SimGetSubscriberIdNumerousTimes(void** state)
+static void TestTeleStab_SimGetSubscriberIdNumerousTimes(void** state)
 {
     (void)state;
     int ret = sim_multi_get_sim_subscriber_id_test(0, "310260000000000");
@@ -277,7 +277,7 @@ static void TestTeleFunc_CI_SimGetIccId(void** state)
     assert_int_equal(ret, OK);
 }
 
-static void TestTeleFunc_SimGetIccIdNumerousTimes(void** state)
+static void TestTeleStab_SimGetIccIdNumerousTimes(void** state)
 {
     (void)state;
     int ret = sim_multi_get_sim_iccid_test(0, "89860318640220133897");
@@ -291,7 +291,7 @@ static void TestTeleFunc_CI_SimGetMSISDN(void** state)
     assert_int_equal(ret, OK);
 }
 
-static void TestTeleFunc_SimGetMSISDNNumerousTimes(void** state)
+static void TestTeleStab_SimGetMSISDNNumerousTimes(void** state)
 {
     (void)state;
     int ret = sim_multi_get_ef_msisdn_test(0, "+15551234567");
@@ -328,21 +328,21 @@ static void TestTeleFunc_CI_SimOpenAndCloseLogicalChannel(void** state)
     ret = sim_close_logical_channel_test(0);
 }
 
-static void TestTeleFunc_CI_SimOpenLogicalChannelWithErrorCode(void** state)
+static void TestTeleAbn_CI_SimOpenLogicalChannelWithErrorCode(void** state)
 {
     (void)state;
     int ret = sim_open_logical_channel_with_error_code_test(0, 3);
     assert_int_equal(ret, OK);
 }
 
-static void TestTeleFunc_SimLogicalChannelOpenCloseNumerous(void** state)
+static void TestTeleStab_SimLogicalChannelOpenCloseNumerous(void** state)
 {
     (void)state;
     int ret = sim_open_close_logical_channel_numerous(0);
     assert_int_equal(ret, OK);
 }
 
-static void TestTeleFunc_SimLogicalChannelOpenCloseWithErrorCodeNumerous(void** state)
+static void TestTeleStab_SimLogicalChannelOpenCloseWithErrorCodeNumerous(void** state)
 {
     (void)state;
     int ret = sim_open_close_logical_channel_with_error_code_numerous(0);
@@ -355,7 +355,7 @@ static void TestTeleFunc_CI_SimTransmitAPDUInLogicalChannel(void** state)
     assert_int_equal(ret, OK);
 }
 
-static void TestTeleFunc_CI_SimTransmitAPDUInLogicalChannelWithErrorCode(void** state)
+static void TestTeleAbn_CI_SimTransmitAPDUInLogicalChannelWithErrorCode(void** state)
 {
     int ret = sim_transmit_apdu_by_logical_channel_with_error_code(0, 0);
     assert_int_equal(ret, OK);
@@ -382,7 +382,7 @@ static void TestTeleFunc_CI_SimTransmitAPDUBasicChannel(void** state)
     assert_int_equal(ret, OK);
 }
 
-static void TestTeleFunc_CI_SimTransmitAPDUBasicChannelWithErrorCode(void** state)
+static void TestTeleAbn_CI_SimTransmitAPDUBasicChannelWithErrorCode(void** state)
 {
     (void)state;
     int ret = sim_transmit_apdu_basic_channel_with_error_code_test(0, 0);
@@ -453,14 +453,14 @@ static void TestTeleFunc_SimDeleteFdnEntry(void** state)
 }
 
 // call testcases
-static void TestTeleFunc_CallLoadAndCompareEccWithChinaSimCard(void** state)
+static void TestTeleFunc_CallPerformLoadAndCompareEccWithChinaSimCard(void** state)
 {
     (void)state;
     int ret = call_load_and_compare_ecclist_with_china_sim_card_test(0);
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleFunc_CallLoadAndCompareEccWithoutSimCard(void** state)
+static void TestTeleFunc_CallPerformLoadAndCompareEccWithoutSimCard(void** state)
 {
     (void)state;
     int ret = call_load_and_compare_ecclist_without_sim_card_test(0);
@@ -509,7 +509,7 @@ static void TestTeleFunc_CallDialShotPhoneNumber(void** state)
     assert_int_equal(ret, OK);
 }
 
-static void TestTeleFunc_CallDialingAndHangupRepeat(void** state)
+static void TestTeleStab_CallDialingAndHangupNTimes(void** state)
 {
     int ret;
     (void)state;
@@ -613,127 +613,127 @@ static void TestTeleFunc_CallIncomingAnswerAndRemoteHangup(void** state)
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleFunc_CallReleaseAndAnswer(void** state)
+static void TestTeleFunc_CallPerformReleaseAndAnswer(void** state)
 {
     (void)state;
     int ret = call_release_and_answer(0);
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleFunc_CallHoldAndAnswer(void** state)
+static void TestTeleFunc_CallPerformHoldAndAnswer(void** state)
 {
     (void)state;
     int ret = call_hold_first_call_and_answer_second_call(0);
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleFunc_CallMergeByUser(void** state)
+static void TestTeleFunc_CallPerformMergeByUser(void** state)
 {
     (void)state;
     int ret = call_merge_by_user(0);
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleFunc_CallSeparateByUser(void** state)
+static void TestTeleFunc_CallPerformSeparateByUser(void** state)
 {
     (void)state;
     int ret = call_separate_by_user(0);
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleFunc_CallReleaseAndSwap(void** state)
+static void TestTeleFunc_CallPerformReleaseAndSwap(void** state)
 {
     (void)state;
     int ret = call_release_and_swap_other_call(0);
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleFunc_CallSwapInTwoCalling(void** state)
+static void TestTeleFunc_CallPerformSwapInTwoCalling(void** state)
 {
     (void)state;
     int ret = call_swap_in_two_calling(0);
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleFunc_CallSwapTimesInTwoCalling(void** state)
+static void TestTeleStab_CallPerformSwapTimesInTwoCalling(void** state)
 {
     (void)state;
     int ret = call_swap_two_call_times_in_second_active(0);
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleFunc_CallRejectSecondCallInCallActive(void** state)
+static void TestTeleFunc_CallPerformRejectSecondCallInCallActive(void** state)
 {
     int ret = call_reject_second_call_in_call_active(0);
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleFunc_CallRemoteAnswerAndHangup(void** state)
+static void TestTeleFunc_CallPerformRemoteAnswerAndHangup(void** state)
 {
     int ret = call_outgoing_remote_answer_and_hangup(0);
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleFunc_CallRemoteAnswerAndNetworkHangup(void** state)
+static void TestTeleFunc_CallPerformRemoteAnswerAndNetworkHangup(void** state)
 {
     int ret = call_outgoing_remote_answer_and_network_hangup(0);
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleFunc_CallRemoteHoldAfterLocalhold(void** state)
+static void TestTeleFunc_CallPerformRemoteHoldAfterLocalhold(void** state)
 {
     int ret = call_remote_hold_after_local_hold_in_actve(0);
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleFunc_CallRemoteHoldAfterLocalUnhold(void** state)
+static void TestTeleFunc_CallPerformRemoteHoldAfterLocalUnhold(void** state)
 {
     int ret = call_remote_hold_after_local_unhold_in_actve(0);
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleFunc_CallRemoteHoldUnholdAfterAnswer(void** state)
+static void TestTeleFunc_CallPerformRemoteHoldUnholdAfterAnswer(void** state)
 {
     int ret = call_remote_hold_and_unhold_after_incoming_answer(0);
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleFunc_CallHoldAndHangup(void** state)
+static void TestTeleFunc_CallPerformHoldAndHangup(void** state)
 {
     (void)state;
     int ret = call_outgoing_hold_and_unhold_by_caller(0);
     assert_int_equal(ret, OK);
 }
 
-static void TestTeleFunc_CallHoldCallAndRejectNewCall(void** state)
+static void TestTeleFunc_CallPerformHoldCallAndRejectNewCall(void** state)
 {
     (void)state;
     int ret = call_hold_current_call_and_reject_new_incoming(0);
     assert_int_equal(ret, OK);
 }
 
-static void TestTeleFunc_CallUnHoldIncomingCallAfterHangupSecondCall(void** state)
+static void TestTeleFunc_CallPerformUnHoldIncomingCallAfterHangupSecondCall(void** state)
 {
     (void)state;
     int ret = call_unhold_first_incoming_call_after_hangup_second_call(0);
     assert_int_equal(ret, OK);
 }
 
-static void TestTeleFunc_CallHangupAndResumeCall(void** state)
+static void TestTeleFunc_CallPerformHangupAndResumeCall(void** state)
 {
     (void)state;
     int ret = call_hangup_current_call_and_resume_call(0);
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleFunc_CallHangupHoldCallInTwoCalls(void** state)
+static void TestTeleFunc_CallPerformHangupHoldCallInTwoCalls(void** state)
 {
     (void)state;
     int ret = call_hangup_hold_call_in_two_calls(0);
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleFunc_CallActiveAndSendtones(void** state)
+static void TestTeleFunc_CallPerformActiveAndSendtones(void** state)
 {
     (void)state;
     int ret = call_outgoing_active_and_send_tones(0);
@@ -752,7 +752,7 @@ static void TestTeleFunc_CallDialAndRemoteHangup(void** state)
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleFunc_CallDialAndRemoteHangupNTimes(void** state)
+static void TestTeleStab_CallDialAndRemoteHangupNTimes(void** state)
 {
     (void)state;
     REPEAT_TEST_MORE_FOR
@@ -784,14 +784,7 @@ static void TestTeleFunc_CallDialCheckStatusInCallActive(void** state)
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleFunc_CallCheckStatusInCallActive(void** state)
-{
-    (void)state;
-    int ret = call_check_status_in_call_active(0);
-    assert_int_equal(ret, 0);
-}
-
-static void TestTeleFunc_CallCheckDialingStausWithMultiCall(void** state)
+static void TestTeleFunc_CallPerformCheckDialingStausWithMultiCall(void** state)
 {
     (void)state;
     int ret = call_check_dialing_status_with_multi_call(0);
@@ -833,7 +826,7 @@ static void TestTeleFunc_CallIncomingandRemoteHangup(void** state)
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleFunc_CallIncomingandRemoteHangupNTimes(void** state)
+static void TestTeleStab_CallIncomingandRemoteHangupNTimes(void** state)
 {
     (void)state;
     int ret = call_incoming_and_remote_hangup_for_times(0);
@@ -868,21 +861,21 @@ static void TestTeleFunc_CallIncomingHoldAndResume(void** state)
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleFunc_CallSetVoicecallSlot(void** state)
+static void TestTeleFunc_CallPerformSetVoicecallSlot(void** state)
 {
     (void)state;
     int ret = call_set_voicecall_slot(0);
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleFunc_CallGetVoicecallSlot(void** state)
+static void TestTeleFunc_CallPerformGetVoicecallSlot(void** state)
 {
     (void)state;
     int ret = call_get_default_voicecall_slot_test();
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleFunc_CallClearVoicecallSlot(void** state)
+static void TestTeleFunc_CallPerformClearVoicecallSlot(void** state)
 {
     (void)state;
     int ret = call_clear_voicecall_slot();
@@ -992,7 +985,7 @@ static void TestTeleFunc_DataResetApnContexts(void** state)
     assert_int_equal(ret, OK);
 }
 
-static void TestTeleFunc_DataResetApnContextsNTimes(void** state)
+static void TestTeleStab_DataResetApnContextsNTimes(void** state)
 {
     (void)state;
     REPEAT_TEST_MORE_FOR
@@ -1107,7 +1100,7 @@ static void TestTeleFunc_CI_DataDisable(void** state)
     assert_int_equal(ret, OK);
 }
 
-static void TestTeleFunc_DataEnableNTimes(void** state)
+static void TestTeleStab_DataEnableNTimes(void** state)
 {
     (void)state;
     REPEAT_TEST_MORE_FOR
@@ -1127,7 +1120,7 @@ static void TestTeleFunc_CI_DataReleaseAndRequestNetworkInternet(void** state)
     assert_int_equal(ret, OK);
 }
 
-static void TestTeleFunc_DataReleaseAndRequestNetworkInternetNTimes(void** state)
+static void TestTeleStab_DataReleaseAndRequestNetworkInternetNTimes(void** state)
 {
     (void)state;
     REPEAT_TEST_MORE_FOR
@@ -1146,7 +1139,7 @@ static void TestTeleFunc_DataRequestAndReleaseNetworkIms(void** state)
     assert_int_equal(ret, OK);
 }
 
-static void TestTeleFunc_DataRequestAndReleaseNetworkImsNTimes(void** state)
+static void TestTeleStab_DataRequestAndReleaseNetworkImsNTimes(void** state)
 {
     (void)state;
     REPEAT_TEST_MORE_FOR
@@ -1235,7 +1228,7 @@ static void TestTeleFunc_CI_DataDisableRoaming(void** state)
     assert_true(ret == OK);
 }
 
-static void TestTeleFunc_DataToggleRoamingRepeatedly(void** state)
+static void TestTeleStab_DataToggleRoamingRepeatedly(void** state)
 {
     (void)state;
     REPEAT_TEST_MORE_FOR
@@ -1423,21 +1416,21 @@ static void TestTeleFunc_SmsSendLongDataMessageInChinese(void** state)
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleFunc_SmsSendMessageContinuous(void** state)
+static void TestTeleStab_SmsSendMessageContinuous(void** state)
 {
     (void)state;
     int ret = sms_send_short_sms_continuous(0, phone_num);
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleFunc_SmsSendDataMessageContinuous(void** state)
+static void TestTeleStab_SmsSendDataMessageContinuous(void** state)
 {
     (void)state;
     int ret = sms_send_short_data_sms_continuous(0, phone_num);
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleFunc_SmsSendDataMessageAndMessageContinuous(void** state)
+static void TestTeleStab_SmsSendDataMessageAndMessageContinuous(void** state)
 {
     (void)state;
     int ret = sms_send_short_mix_sms_continuous(0, phone_num);
@@ -1668,7 +1661,7 @@ static void TestTeleFunc_SmsSendLongChineseDataMessageInSmsVoiceCap(void** state
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleFunc_SmsSendMessageFailInAirplane(void** state)
+static void TestTeleAbn_SmsSendMessageFailInAirplane(void** state)
 {
     (void)state;
     int ret = sms_send_message_fail_in_airplane_test(0, phone_num, short_english_text);
@@ -1995,7 +1988,7 @@ static void TestTeleFunc_CI_ModemSetRadioPowerOn(void** state)
     sleep(5);
 }
 
-static void TestTeleFunc_ModemSetRadioPowerOnAndOffContinuous(void** state)
+static void TestTeleStab_ModemSetRadioPowerOnAndOffContinuous(void** state)
 {
     (void)state;
     int ret = radio_power_on_off_pending_test(0);
@@ -2096,7 +2089,7 @@ static void TestTeleFunc_CI_ModemDisable(void** state)
     assert_int_equal(ret, OK);
 }
 
-static void TestTeleFunc_ModemEnableAndDisableContinuous(void** state)
+static void TestTeleStab_ModemEnableAndDisableContinuous(void** state)
 {
     (void)state;
     int ret = modem_enable_disable_pending_test(0);
@@ -2116,7 +2109,7 @@ static void TestTeleFunc_CI_ModemEnableDisableNTimes(void** state)
     }
 }
 
-static void TestTeleFunc_ModemEnableDisableNTimesUnderRadioPowerOff(void** state)
+static void TestTeleStab_ModemEnableDisableNTimesUnderRadioPowerOff(void** state)
 {
     (void)state;
     TestTeleFunc_CI_ModemSetRadioPowerOff(state);
@@ -2247,7 +2240,7 @@ static void TestTeleFunc_AbnormalEventReport(void** state)
 }
 #endif
 
-static void TestTeleFunc_ModemEnableDisableNTimesUnderDialingCall(void** state)
+static void TestTeleStab_ModemEnableDisableNTimesUnderDialingCall(void** state)
 {
     (void)state;
 
@@ -2293,7 +2286,7 @@ static void TestTeleFunc_ModemSetRadioOffUnderOngoingCall(void** state)
     TestTeleFunc_CI_ModemSetRadioPowerOn(state);
 }
 
-static void TestTeleFunc_ModemEnableDisableNTimesUnderOngoingCall(void** state)
+static void TestTeleStab_ModemEnableDisableNTimesUnderOngoingCall(void** state)
 {
     (void)state;
     int ret = call_dial_and_keep_in_call_active(0, phone_num);
@@ -2763,7 +2756,7 @@ static void TestTeleFunc_CallIncomingAnswerInCallAfterRadioPowerOnOff(void** sta
 {
     TestTeleFunc_CI_ModemSetRadioPowerOff(state);
     TestTeleFunc_CI_ModemSetRadioPowerOn(state);
-    TestTeleFunc_CallHoldAndAnswer(state);
+    TestTeleFunc_CallPerformHoldAndAnswer(state);
 }
 
 static void TestTeleFunc_CallDialSecondCallAndActiveAfterRadioPowerOnOff(void** state)
@@ -2791,7 +2784,7 @@ static void TestTeleFunc_CallIncomingAnswerInCallAfterDataOnOff(void** state)
 {
     TestTeleFunc_CI_DataEnable(state);
     TestTeleFunc_CI_DataDisable(state);
-    TestTeleFunc_CallHoldAndAnswer(state);
+    TestTeleFunc_CallPerformHoldAndAnswer(state);
 }
 
 static void TestTeleFunc_CallDialSecondCallAndActiveAfterDataOnOff(void** state)
@@ -2823,7 +2816,7 @@ static void TestTeleFunc_CallIncomingAnswerInCallInRoming(void** state)
 {
     TestTeleFunc_CI_DataRegister(state);
     TestTeleFunc_CI_DataEnableRoaming(state);
-    TestTeleFunc_CallHoldAndAnswer(state);
+    TestTeleFunc_CallPerformHoldAndAnswer(state);
     TestTeleFunc_CI_DataDisableRoaming(state);
     TestTeleFunc_CI_DataUnregister(state);
 }
@@ -2837,7 +2830,7 @@ static void TestTeleFunc_CallDialSecondCallAndActiveInRoming(void** state)
     TestTeleFunc_CI_DataUnregister(state);
 }
 
-static void TestTeleFunc_CallTransfer(void** state)
+static void TestTeleFunc_CallPerformTransfer(void** state)
 {
     (void)state;
     int ret = call_transfer_in_active_and_hold_call(0);
@@ -2983,7 +2976,7 @@ static void TestTeleFunc_CI_SSSetAndGetCallForwardingUnConditional(void** state)
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleFunc_SSCallForwardingContinuous(void** state)
+static void TestTeleStab_SSCallForwardingContinuous(void** state)
 {
     (void)state;
     int ret = ss_call_forwarding_continuous_test(0, phone_num);
@@ -3202,7 +3195,7 @@ static void TestTeleFunc_ModemGetPhoneStateUnderDialingCallSms(void** state)
     assert_int_equal(ret, OK);
 }
 
-static void TestTeleFunc_SSCallWaitingContinuous(void** state)
+static void TestTeleStab_SSCallWaitingContinuous(void** state)
 {
     (void)state;
     int ret = ss_call_waiting_continuous_test(0);
@@ -3709,7 +3702,7 @@ static void TestTeleFunc_CallDialEccWithoutIms(void** state)
     assert_int_equal(ret, OK);
 }
 
-static void TestTeleFunc_CallSetRadioPowerOffUnderActiveECCCall(void** state)
+static void TestTeleFunc_CallPerformRadioPowerOffUnderActiveECCCall(void** state)
 {
     (void)state;
     bool get_value;
@@ -3736,7 +3729,7 @@ static void TestTeleFunc_CallSetRadioPowerOffUnderActiveECCCall(void** state)
     assert_int_equal(ret, OK);
 }
 
-static void TestTeleFunc_CallModemDisableUnderActiveECCCall(void** state)
+static void TestTeleFunc_CallPerformModemDisableUnderActiveECCCall(void** state)
 {
     (void)state;
     bool get_value;
@@ -3761,7 +3754,7 @@ static void TestTeleFunc_CallModemDisableUnderActiveECCCall(void** state)
     assert_int_equal(ret, OK);
 }
 
-static void TestTeleFunc_CallSetRadioPowerOffUnderDialECCCall(void** state)
+static void TestTeleFunc_CallPerformRadioPowerOffUnderDialECCCall(void** state)
 {
     (void)state;
     bool get_value;
@@ -3788,7 +3781,7 @@ static void TestTeleFunc_CallSetRadioPowerOffUnderDialECCCall(void** state)
     assert_int_equal(ret, OK);
 }
 
-static void TestTeleFunc_CallModemDisableUnderDialECCCall(void** state)
+static void TestTeleFunc_CallPerformModemDisableUnderDialECCCall(void** state)
 {
     (void)state;
     bool get_value;
@@ -3813,7 +3806,7 @@ static void TestTeleFunc_CallModemDisableUnderDialECCCall(void** state)
     assert_int_equal(ret, OK);
 }
 
-static void TestTeleFunc_CallSMSSendUnderDialECCCall(void** state)
+static void TestTeleFunc_CallDialECCCallAndSMSSend(void** state)
 {
     (void)state;
     int ret;
@@ -3840,7 +3833,7 @@ static void TestTeleFunc_CallSMSSendUnderDialECCCall(void** state)
     TestTeleFunc_CI_ModemSetRadioPowerOn(state);
 }
 
-static void TestTeleFunc_CallSMSReceiveUnderDialECCCall(void** state)
+static void TestTeleFunc_CallDialECCCallAndSMSReceive(void** state)
 {
     (void)state;
     int ret;
@@ -3867,7 +3860,7 @@ static void TestTeleFunc_CallSMSReceiveUnderDialECCCall(void** state)
     TestTeleFunc_CI_ModemSetRadioPowerOn(state);
 }
 
-static void TestTeleFunc_CallActiveECCCallNTimes(void** state)
+static void TestTeleStab_CallActiveECCCallNTimes(void** state)
 {
     (void)state;
     int ret;
@@ -3882,13 +3875,13 @@ static void TestTeleFunc_CallActiveECCCallNTimes(void** state)
     assert_int_equal(ret, OK);
 }
 
-static void TestTeleFunc_CallSetRadioPowerOffAfterECCCallNTimes(void** state)
+static void TestTeleStab_CallSetRadioPowerOffAfterECCCallNTimes(void** state)
 {
     (void)state;
     int ret;
     bool get_value;
 
-    TestTeleFunc_CallActiveECCCallNTimes(state);
+    TestTeleStab_CallActiveECCCallNTimes(state);
     TestTeleFunc_CI_ModemSetRadioPowerOff(state);
     ret = get_radio_power_test(0, &get_value);
     assert_int_equal(ret, OK);
@@ -3897,7 +3890,7 @@ static void TestTeleFunc_CallSetRadioPowerOffAfterECCCallNTimes(void** state)
     TestTeleFunc_CI_ModemSetRadioPowerOn(state);
 }
 
-static void TestTeleFunc_CallDialEccAfterResetModemNTimes(void** state)
+static void TestTeleStab_CallDialEccAfterResetModemNTimes(void** state)
 {
     (void)state;
     int ret;
@@ -3919,7 +3912,7 @@ static void TestTeleFunc_CallDialEccAfterResetModemNTimes(void** state)
     TestTeleFunc_CI_ModemSetRadioPowerOn(state);
 }
 
-static void TestTeleFunc_CallDialEccAfterResetRadioPowerNTimes(void** state)
+static void TestTeleStab_CallDialEccAfterResetRadioPowerNTimes(void** state)
 {
     (void)state;
 
@@ -3994,28 +3987,28 @@ int main(int argc, char* argv[])
     const struct CMUnitTest SimTestSuites[] = {
         cmocka_unit_test(TestTeleFunc_CI_SimListenAndUnListen),
         cmocka_unit_test(TestTeleFunc_CI_SimHasIccCard),
-        cmocka_unit_test(TestTeleFunc_SimHasIccCardNumerousTimes),
+        cmocka_unit_test(TestTeleStab_SimHasIccCardNumerousTimes),
         cmocka_unit_test(TestTeleFunc_CI_SimGetOperatorName),
-        cmocka_unit_test(TestTeleFunc_SimGetOperatorNameNumerousTimes),
+        cmocka_unit_test(TestTeleStab_SimGetOperatorNameNumerousTimes),
         cmocka_unit_test(TestTeleFunc_CI_SimGetOperator),
-        cmocka_unit_test(TestTeleFunc_SimGetOperatorNumerousTimes),
+        cmocka_unit_test(TestTeleStab_SimGetOperatorNumerousTimes),
         cmocka_unit_test(TestTeleFunc_CI_SimGetSubscriberId),
-        cmocka_unit_test(TestTeleFunc_SimGetSubscriberIdNumerousTimes),
+        cmocka_unit_test(TestTeleStab_SimGetSubscriberIdNumerousTimes),
         cmocka_unit_test(TestTeleFunc_CI_SimGetIccId),
-        cmocka_unit_test(TestTeleFunc_SimGetIccIdNumerousTimes),
+        cmocka_unit_test(TestTeleStab_SimGetIccIdNumerousTimes),
         cmocka_unit_test(TestTeleFunc_CI_SimGetMSISDN),
-        cmocka_unit_test(TestTeleFunc_SimGetMSISDNNumerousTimes),
+        cmocka_unit_test(TestTeleStab_SimGetMSISDNNumerousTimes),
         cmocka_unit_test(TestTeleFunc_CI_SimTransmitAPDUInBasicChannel),
         cmocka_unit_test(TestTeleFunc_CI_SimOpenAndCloseLogicalChannel),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_SimOpenLogicalChannelWithErrorCode, NULL, teardown_sim_channel),
-        cmocka_unit_test(TestTeleFunc_SimLogicalChannelOpenCloseNumerous),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_SimLogicalChannelOpenCloseWithErrorCodeNumerous, NULL, teardown_sim_channel),
+        cmocka_unit_test_setup_teardown(TestTeleAbn_CI_SimOpenLogicalChannelWithErrorCode, NULL, teardown_sim_channel),
+        cmocka_unit_test(TestTeleStab_SimLogicalChannelOpenCloseNumerous),
+        cmocka_unit_test_setup_teardown(TestTeleStab_SimLogicalChannelOpenCloseWithErrorCodeNumerous, NULL, teardown_sim_channel),
         cmocka_unit_test(TestTeleFunc_CI_SimTransmitAPDUInLogicalChannel),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_SimTransmitAPDUInLogicalChannelWithErrorCode, NULL, teardown_sim_channel),
+        cmocka_unit_test_setup_teardown(TestTeleAbn_CI_SimTransmitAPDUInLogicalChannelWithErrorCode, NULL, teardown_sim_channel),
         cmocka_unit_test(TestTeleFunc_SimSetUiccEnablement),
         cmocka_unit_test(TestTeleFunc_SimGetUiccEnablement),
         cmocka_unit_test(TestTeleFunc_CI_SimTransmitAPDUBasicChannel),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_SimTransmitAPDUBasicChannelWithErrorCode, NULL, teardown_sim_channel),
+        cmocka_unit_test_setup_teardown(TestTeleAbn_CI_SimTransmitAPDUBasicChannelWithErrorCode, NULL, teardown_sim_channel),
         cmocka_unit_test_setup_teardown(TestTeleFunc_SimRmoteAbsentInsertOperator, setup_sim, teardown_sim),
         cmocka_unit_test(TestTeleFunc_CI_SimGetState),
         cmocka_unit_test(TestTeleFunc_SimEnterPin),
@@ -4032,8 +4025,8 @@ int main(int argc, char* argv[])
 
     const struct CMUnitTest CallTestSuites[] = {
         cmocka_unit_test(TestTeleFunc_CI_CallListenAndUnlisten),
-        cmocka_unit_test(TestTeleFunc_CallLoadAndCompareEccWithChinaSimCard),
-        cmocka_unit_test(TestTeleFunc_CallLoadAndCompareEccWithoutSimCard),
+        cmocka_unit_test(TestTeleFunc_CallPerformLoadAndCompareEccWithChinaSimCard),
+        cmocka_unit_test(TestTeleFunc_CallPerformLoadAndCompareEccWithoutSimCard),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_CallDialNumber, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_CallDialNumberWithoutSimCard, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_CallDialEccNumber, setup_call, teardown_call),
@@ -4053,60 +4046,59 @@ int main(int argc, char* argv[])
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingAndCheckNumber, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingAndCheckNumberInCall, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingAnswerAndRemoteHangup, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CallReleaseAndAnswer, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CallHoldAndAnswer, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CallMergeByUser, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CallSeparateByUser, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CallReleaseAndSwap, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CallSwapInTwoCalling, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CallSwapTimesInTwoCalling, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CallRejectSecondCallInCallActive, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CallRemoteAnswerAndHangup, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CallRemoteAnswerAndNetworkHangup, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CallRemoteHoldAfterLocalhold, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CallRemoteHoldAfterLocalUnhold, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CallRemoteHoldUnholdAfterAnswer, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CallHoldAndHangup, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CallHoldCallAndRejectNewCall, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CallUnHoldIncomingCallAfterHangupSecondCall, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CallHangupAndResumeCall, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CallHangupHoldCallInTwoCalls, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CallActiveAndSendtones, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallPerformReleaseAndAnswer, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallPerformHoldAndAnswer, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallPerformMergeByUser, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallPerformSeparateByUser, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallPerformReleaseAndSwap, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallPerformSwapInTwoCalling, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleStab_CallPerformSwapTimesInTwoCalling, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallPerformRejectSecondCallInCallActive, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallPerformRemoteAnswerAndHangup, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallPerformRemoteAnswerAndNetworkHangup, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallPerformRemoteHoldAfterLocalhold, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallPerformRemoteHoldAfterLocalUnhold, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallPerformRemoteHoldUnholdAfterAnswer, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallPerformHoldAndHangup, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallPerformHoldCallAndRejectNewCall, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallPerformUnHoldIncomingCallAfterHangupSecondCall, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallPerformHangupAndResumeCall, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallPerformHangupHoldCallInTwoCalls, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallPerformActiveAndSendtones, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialAndRemoteActive, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CallCheckStatusInCallActive, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CallCheckDialingStausWithMultiCall, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallPerformCheckDialingStausWithMultiCall, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialAndKeepInActive, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialSecondCallAndRejectByCaller, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialSecondCallAndHangupByCaller, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialAndRemoteHangup, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialAndRemoteHangupNTimes, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleStab_CallDialAndRemoteHangupNTimes, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialAfterReject, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialCheckStatusInCallActive, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialOtherAfterReject, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingandLocalHangup, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingandRemoteHangup, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingandRemoteHangupNTimes, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleStab_CallIncomingandRemoteHangupNTimes, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingRejectandSendMessage, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingAfterRemoteHangup, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingAndHangupNewCall, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingHangupFirstAnswerCall, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingHoldAndResume, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CallSetVoicecallSlot, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CallGetVoicecallSlot, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CallClearVoicecallSlot, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallPerformSetVoicecallSlot, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallPerformGetVoicecallSlot, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallPerformClearVoicecallSlot, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleAbn_CallAnswerAgain, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialAndHangupEcc, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialEccWithoutIms, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CallSetRadioPowerOffUnderActiveECCCall, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CallModemDisableUnderActiveECCCall, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CallSetRadioPowerOffUnderDialECCCall, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CallModemDisableUnderDialECCCall, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CallSMSSendUnderDialECCCall, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CallSMSReceiveUnderDialECCCall, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CallActiveECCCallNTimes, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CallSetRadioPowerOffAfterECCCallNTimes, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialEccAfterResetModemNTimes, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialEccAfterResetRadioPowerNTimes, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallPerformRadioPowerOffUnderActiveECCCall, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallPerformModemDisableUnderActiveECCCall, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallPerformRadioPowerOffUnderDialECCCall, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallPerformModemDisableUnderDialECCCall, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialECCCallAndSMSSend, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialECCCallAndSMSReceive, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleStab_CallActiveECCCallNTimes, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleStab_CallSetRadioPowerOffAfterECCCallNTimes, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleStab_CallDialEccAfterResetModemNTimes, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleStab_CallDialEccAfterResetRadioPowerNTimes, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialInVolteReg, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialAndRemoteActiveAfterRadioPowerOnOff, setup_callAndRadio, teardown_callAndRadio),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingAnswerAfterRadioPowerOnOff, setup_callAndRadio, teardown_callAndRadio),
@@ -4120,9 +4112,9 @@ int main(int argc, char* argv[])
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingAnswerInRoming, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallIncomingAnswerInCallInRoming, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialSecondCallAndActiveInRoming, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CallTransfer, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallPerformTransfer, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialingThirdCall, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialingAndHangupRepeat, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleStab_CallDialingAndHangupNTimes, setup_call, teardown_call),
     };
 
     const struct CMUnitTest DataTestSuites[] = {
@@ -4130,7 +4122,7 @@ int main(int argc, char* argv[])
         cmocka_unit_test(TestTeleFunc_CI_DataLoadApnContexts),
         cmocka_unit_test_setup_teardown(TestTeleFunc_DataSaveApnContext, setup_data, teardown_data),
         cmocka_unit_test(TestTeleFunc_DataRemoveApnContext),
-        cmocka_unit_test(TestTeleFunc_DataResetApnContextsNTimes),
+        cmocka_unit_test(TestTeleStab_DataResetApnContextsNTimes),
         cmocka_unit_test_setup_teardown(TestTeleFunc_DataEditApnName, setup_data, teardown_data),
         cmocka_unit_test_setup_teardown(TestTeleFunc_DataEditApnType, setup_data, teardown_data),
         cmocka_unit_test_setup_teardown(TestTeleFunc_DataEditApnProto, setup_data, teardown_data),
@@ -4139,13 +4131,13 @@ int main(int argc, char* argv[])
         cmocka_unit_test_setup_teardown(TestTeleFunc_DataEditApnAndRemove, setup_data, teardown_data),
         cmocka_unit_test_setup_teardown(TestTeleFunc_DataEditApnAndReset, setup_data, teardown_data),
         cmocka_unit_test_setup_teardown(TestTeleFunc_DataEditApnRepeatedlyAndLoad, setup_data, teardown_data),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_DataEnableNTimes, setup_data, teardown_data),
+        cmocka_unit_test_setup_teardown(TestTeleStab_DataEnableNTimes, setup_data, teardown_data),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_DataEnable, setup_data_enable, teardown_data_enable),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_DataDisable, setup_data_enable, teardown_data_enable),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_DataReleaseAndRequestNetworkInternet, setup_data_enable, teardown_data_enable),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_DataReleaseAndRequestNetworkInternetNTimes, setup_data_enable, teardown_data_enable),
+        cmocka_unit_test_setup_teardown(TestTeleStab_DataReleaseAndRequestNetworkInternetNTimes, setup_data_enable, teardown_data_enable),
         cmocka_unit_test_setup_teardown(TestTeleFunc_DataRequestAndReleaseNetworkIms, setup_data_enable, teardown_data_enable),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_DataRequestAndReleaseNetworkImsNTimes, setup_data_enable, teardown_data_enable),
+        cmocka_unit_test_setup_teardown(TestTeleStab_DataRequestAndReleaseNetworkImsNTimes, setup_data_enable, teardown_data_enable),
         cmocka_unit_test_setup_teardown(TestTeleFunc_DataSaveApnContextSupl, setup_data, teardown_data),
         cmocka_unit_test_setup_teardown(TestTeleFunc_DataSaveApnContextEmergency, setup_data, teardown_data),
         cmocka_unit_test(TestTeleFunc_CI_DataSetAndGetPreferredApn),
@@ -4160,7 +4152,7 @@ int main(int argc, char* argv[])
         cmocka_unit_test(TestTeleFunc_CI_DataEnableRoaming),
         cmocka_unit_test(TestTeleFunc_CI_DataDisableRoaming),
         cmocka_unit_test(TestTeleFunc_DataSetRoamingWhenDataOff),
-        cmocka_unit_test(TestTeleFunc_DataToggleRoamingRepeatedly),
+        cmocka_unit_test(TestTeleStab_DataToggleRoamingRepeatedly),
         cmocka_unit_test_setup_teardown(TestTeleFunc_DataRequestNetworksAndCheck, setup_data_enable, teardown_data_enable),
         cmocka_unit_test_setup_teardown(TestTeleFunc_DataActivateAndCheckRAT, setup_data_enable, teardown_data_enable),
         cmocka_unit_test_setup_teardown(TestTeleFunc_DataAirplaneOffAutoReconnect, setup_data_enable, teardown_data_enable),
@@ -4216,7 +4208,7 @@ int main(int argc, char* argv[])
         cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendChineseDataMessageInSmsVoiceCap, setup_ims, teardown_ims),
         cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendLongEnglishDataMessageInSmsVoiceCap, setup_ims, teardown_ims),
         cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendLongChineseDataMessageInSmsVoiceCap, setup_ims, teardown_ims),
-        cmocka_unit_test(TestTeleFunc_SmsSendMessageFailInAirplane),
+        cmocka_unit_test(TestTeleAbn_SmsSendMessageFailInAirplane),
         cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendMessageAfterDataOnOff, setup_sms, teardown_sms),
         cmocka_unit_test_setup_teardown(TestTeleFunc_SmsSendMessageAfterRadioOnOff, setup_sms, teardown_sms),
         cmocka_unit_test_setup_teardown(TestTeleFunc_SmsReceiveMessage, setup_sms, teardown_sms),
@@ -4244,9 +4236,9 @@ int main(int argc, char* argv[])
         cmocka_unit_test(TestTeleFunc_SmsSetAndGetDefaultSlot),
         cmocka_unit_test(TestTeleFunc_SmsSetAndGetCellBroadcastPower),
         cmocka_unit_test(TestTeleFunc_SmsSetAndGetCellBroadcastTopics),
-        cmocka_unit_test(TestTeleFunc_SmsSendMessageContinuous),
-        cmocka_unit_test(TestTeleFunc_SmsSendDataMessageContinuous),
-        cmocka_unit_test(TestTeleFunc_SmsSendDataMessageAndMessageContinuous),
+        cmocka_unit_test(TestTeleStab_SmsSendMessageContinuous),
+        cmocka_unit_test(TestTeleStab_SmsSendDataMessageContinuous),
+        cmocka_unit_test(TestTeleStab_SmsSendDataMessageAndMessageContinuous),
     };
 
     const struct CMUnitTest NetTestSuites[] = {
@@ -4311,8 +4303,8 @@ int main(int argc, char* argv[])
         cmocka_unit_test(TestTeleFunc_CI_SSSetAndGetCallForwardingNotReachable),
         cmocka_unit_test(TestTeleFunc_CI_SSEnableAndDisableCallWaiting),
         cmocka_unit_test(TestTeleFunc_SSEnableAndDisableFdn),
-        cmocka_unit_test(TestTeleFunc_SSCallForwardingContinuous),
-        cmocka_unit_test(TestTeleFunc_SSCallWaitingContinuous),
+        cmocka_unit_test(TestTeleStab_SSCallForwardingContinuous),
+        cmocka_unit_test(TestTeleStab_SSCallWaitingContinuous),
         cmocka_unit_test(TestTeleAbn_SSListenAbnormalIdFail),
         cmocka_unit_test_setup_teardown(TestTeleFunc_SSCallForwardingAfterRadioOffOn, setup_ssAndRadio, teardown_ssAndRadio),
         cmocka_unit_test_setup_teardown(TestTeleFunc_SSCallWaitingAfterRadioOffOn, setup_ssAndRadio, teardown_ssAndRadio),
@@ -4342,16 +4334,16 @@ int main(int argc, char* argv[])
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ModemSetRadioPowerOff, setup_modem, teardown_modem),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ModemSetRadioPowerOnOffNTimes, setup_modem, teardown_modem),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ModemSetRadioPowerOn, setup_modem, teardown_modem),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_ModemEnableAndDisableContinuous, setup_modem, teardown_modem),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_ModemSetRadioPowerOnAndOffContinuous, setup_modem, teardown_modem),
+        cmocka_unit_test_setup_teardown(TestTeleStab_ModemEnableAndDisableContinuous, setup_modem, teardown_modem),
+        cmocka_unit_test_setup_teardown(TestTeleStab_ModemSetRadioPowerOnAndOffContinuous, setup_modem, teardown_modem),
         cmocka_unit_test_setup_teardown(TestTeleFunc_ModemSetRadioPowerOnAndModemDisable, setup_modem, teardown_modem),
         cmocka_unit_test_setup_teardown(TestTeleFunc_ModemSetRadioPowerOffOrModemDisableAfterotherAction, setup_modem, teardown_modem),
         cmocka_unit_test(TestTeleFunc_CI_ModemDefaultOpenTapi),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ModemBtTeleOpenTapi, NULL, TearDown_OpenDefaultTapi),
         cmocka_unit_test_setup_teardown(TestTeleFunc_ModemCloseTapi, NULL, TearDown_OpenDefaultTapi),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_ModemEnableDisableNTimesUnderRadioPowerOff, setup_modem, teardown_modem),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_ModemEnableDisableNTimesUnderDialingCall, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_ModemEnableDisableNTimesUnderOngoingCall, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleStab_ModemEnableDisableNTimesUnderRadioPowerOff, setup_modem, teardown_modem),
+        cmocka_unit_test_setup_teardown(TestTeleStab_ModemEnableDisableNTimesUnderDialingCall, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleStab_ModemEnableDisableNTimesUnderOngoingCall, setup_call, teardown_call),
         cmocka_unit_test(TestTeleFunc_CI_ModemVerifyPrefNetMode),
         cmocka_unit_test_setup_teardown(TestTeleFunc_ModemGetDefaultPhoneState, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_ModemGetPhoneState, setup_call, teardown_call),
