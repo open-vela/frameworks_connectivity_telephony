@@ -26,6 +26,11 @@
 #define EVENT_GENERIC_CALLBACK_STATUS 0x34
 #define CALL_NETWORK_HANGUP 0x35
 #define CALL_REMOTE_HOLD 0x36
+#define EVENT_DIAL_CALL_DFX_DONE 0x37
+#define EVENT_INCOMING_CALL_DFX_DONE 0x38
+#define EVENT_ANSWER_CALL_DFX_DONE 0x39
+#define EVENT_DIAL_ECC_CALL_DFX_DONE 0x40
+#define EVENT_HANGUP_CALL_DFX_DONE 0x41
 
 int setup_call(void** state);
 int setup_callAndData(void** state);

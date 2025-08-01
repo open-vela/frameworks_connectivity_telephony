@@ -11,6 +11,10 @@ extern char* phone_num;
 
 extern struct judge_type judge_data;
 
+#ifndef CONFIG_TELEPHONY_DFX
+extern struct dfx_judge_data dfx_data;
+#endif
+
 static struct
 {
     int call_state_watch_id;
@@ -203,6 +207,58 @@ static void tele_call_manager_call_async_fun(tapi_async_result* result)
     }
 }
 
+#ifndef CONFIG_TELEPHONY_DFX
+static void call_data_logging_cb(tapi_async_result* result)
+{
+    char* data = (char*)result->data;
+
+    if (result->status != OK) {
+        syslog(LOG_ERR, "call_data_logging_cb fail,status =%d", result->status);
+        return;
+    }
+    syslog(LOG_DEBUG, "data_logging:%s", data);
+
+    for (int i = 0; i < dfx_data.expected_dfx_count; i++) {
+        if (dfx_data.received_dfx_flag[i]) {
+            continue;
+        }
+        syslog(LOG_DEBUG, "expected_dfx_value:%d", dfx_data.expected_dfx_value[i]);
+        switch (dfx_data.expected_dfx_value[i]) {
+        case EVENT_DIAL_CALL_DFX_DONE:
+            if (!strcmp("CALL_INFO,1,1,1,0,NA", data)) {
+                dfx_data.received_dfx_flag[i] = true;
+            }
+            break;
+        case EVENT_INCOMING_CALL_DFX_DONE:
+            if (!strcmp("CALL_INFO,4,2,3,6,NA", data)) {
+                dfx_data.received_dfx_flag[i] = true;
+            }
+            break;
+        case EVENT_ANSWER_CALL_DFX_DONE:
+            if (!strcmp("CALL_INFO,1,2,1,0,NA", data)) {
+                dfx_data.received_dfx_flag[i] = true;
+            }
+            break;
+        case EVENT_DIAL_ECC_CALL_DFX_DONE:
+            if (strstr(data, "CALL_INFO,2,1,1,0,NA:status:")) {
+                dfx_data.received_dfx_flag[i] = true;
+            }
+            break;
+        case EVENT_HANGUP_CALL_DFX_DONE:
+            if (!strcmp("CALL_INFO,4,3,3,0,NA", data)) {
+                dfx_data.received_dfx_flag[i] = true;
+            }
+            break;
+        default:
+            syslog(LOG_ERR, "unexpected data logging info:%s", data);
+            break;
+        }
+        return;
+    }
+    syslog(LOG_ERR, "data logging more than expected:%s", data);
+}
+#endif
+
 int setup_call(void** state)
 {
     (void)state;
@@ -374,6 +430,7 @@ static void tele_call_async_fun(tapi_async_result* result)
 int call_dial_test(int slot_id, char* phone_number, int hide_caller_id)
 {
     int res = 0;
+
     test_case_data_init();
     judge_data_init();
     judge_data.expect = EVENT_REQUEST_DIAL_DONE;
@@ -398,7 +455,6 @@ int call_dial_test(int slot_id, char* phone_number, int hide_caller_id)
         res = -1;
         goto on_exit;
     }
-
 on_exit:
     return res;
 }
@@ -1879,26 +1935,65 @@ on_exit:
 int call_dial_number_test(int slot_id)
 {
     int res = 0;
+#ifndef CONFIG_TELEPHONY_DFX
+    int watch_id = 0;
+
+    watch_id = tapi_register(get_tapi_ctx(), 0, MSG_DATA_LOGING_IND,
+        NULL, call_data_logging_cb);
+
+    dfx_data_init();
+    dfx_data.expected_dfx_count = 1;
+    dfx_data.expected_dfx_value[0] = EVENT_DIAL_CALL_DFX_DONE;
+#endif
     if (call_dial_test(slot_id, phone_num, 0)) {
         syslog(LOG_ERR, "Dial call execute fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
-
+#ifndef CONFIG_TELEPHONY_DFX
+    if (!check_dfx_value()) {
+        syslog(LOG_ERR, "check_dfx_value fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+#endif
 on_exit:
+#ifndef CONFIG_TELEPHONY_DFX
+    tapi_unregister(get_tapi_ctx(), watch_id);
+#endif
     return res;
 }
 
 int call_dial_ecc_number_test(int slot_id)
 {
     int res = 0;
+#ifndef CONFIG_TELEPHONY_DFX
+    int watch_id = 0;
+
+    watch_id = tapi_register(get_tapi_ctx(), 0, MSG_DATA_LOGING_IND,
+        NULL, call_data_logging_cb);
+
+    dfx_data_init();
+    dfx_data.expected_dfx_count = 2;
+    dfx_data.expected_dfx_value[0] = EVENT_DIAL_CALL_DFX_DONE;
+    dfx_data.expected_dfx_value[1] = EVENT_DIAL_ECC_CALL_DFX_DONE;
+#endif
     if (call_dial_test(slot_id, "911", 0)) {
         syslog(LOG_ERR, "Dial call execute fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
-
+#ifndef CONFIG_TELEPHONY_DFX
+    if (!check_dfx_value()) {
+        syslog(LOG_ERR, "check_dfx_value for answer call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+#endif
 on_exit:
+#ifndef CONFIG_TELEPHONY_DFX
+    tapi_unregister(get_tapi_ctx(), watch_id);
+#endif
     return res;
 }
 
@@ -2303,19 +2398,49 @@ on_exit:
 int call_incoming_answer_and_hangup(int slot_id)
 {
     int res = 0;
+#ifndef CONFIG_TELEPHONY_DFX
+    int watch_id = 0;
+
+    watch_id = tapi_register(get_tapi_ctx(), 0, MSG_DATA_LOGING_IND,
+        NULL, call_data_logging_cb);
+
+    dfx_data_init();
+    dfx_data.expected_dfx_count = 1;
+    dfx_data.expected_dfx_value[0] = EVENT_INCOMING_CALL_DFX_DONE;
+#endif
     if (remote_operation_call_incoming_test(slot_id, phone_num)) {
         syslog(LOG_ERR, "Incoming call fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
+#ifndef CONFIG_TELEPHONY_DFX
+    if (!check_dfx_value()) {
+        syslog(LOG_ERR, "check_dfx_value fail for incoming call in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
 
+    dfx_data_init();
+    dfx_data.expected_dfx_count = 1;
+    dfx_data.expected_dfx_value[0] = EVENT_ANSWER_CALL_DFX_DONE;
+#endif
     sleep(3);
     if (call_answer_call_test(slot_id, test_case_data.call_id)) {
         syslog(LOG_ERR, "Answer call fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
+#ifndef CONFIG_TELEPHONY_DFX
+    if (!check_dfx_value()) {
+        syslog(LOG_ERR, "check_dfx_value for answer call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
 
+    dfx_data_init();
+    dfx_data.expected_dfx_count = 1;
+    dfx_data.expected_dfx_value[0] = EVENT_HANGUP_CALL_DFX_DONE;
+#endif
     sleep(3);
     if (call_hangup_current_call_test(slot_id)) {
         syslog(LOG_ERR, "Hangup call fail in %s", __func__);
@@ -2324,6 +2449,9 @@ int call_incoming_answer_and_hangup(int slot_id)
     }
 
 on_exit:
+#ifndef CONFIG_TELEPHONY_DFX
+    tapi_unregister(get_tapi_ctx(), watch_id);
+#endif
     return res;
 }
 
@@ -4253,3 +4381,35 @@ int call_dial_in_active_test(int slot_id)
 on_exit:
     return res;
 }
+
+#ifndef CONFIG_TELEPHONY_DFX
+int check_call_dial_ecc_number_dfx(int slot_id)
+{
+    int res = 0;
+    int watch_id = 0;
+
+    watch_id = tapi_register(get_tapi_ctx(), 0, MSG_DATA_LOGING_IND,
+        NULL, call_data_logging_cb);
+
+    dfx_data_init();
+    dfx_data.expected_dfx_count = 2;
+    dfx_data.expected_dfx_value[0] = EVENT_DIAL_CALL_DFX_DONE;
+    dfx_data.expected_dfx_value[1] = EVENT_DIAL_ECC_CALL_DFX_DONE;
+
+    if (call_dial_test(slot_id, "911", 0)) {
+        syslog(LOG_ERR, "Dial call execute fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (!check_dfx_value()) {
+        syslog(LOG_ERR, "check_dfx_value for answer call fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    tapi_unregister(get_tapi_ctx(), watch_id);
+    return res;
+}
+#endif

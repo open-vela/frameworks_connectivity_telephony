@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 enum REMOTE_CALL_COMMAND_TYPE {
     ACTIVE_CALL = 0,
     HOLD_CALL = 1,
@@ -25,4 +27,6 @@ int remote_sim_invalid_operation(int slot_id);
 #ifndef CONFIG_TELEPHONY_DFX
 int remote_abnormal_event_report(int type_id);
 int remote_unexpected_abnormal_event_report(void);
+int remote_data_block_operation(bool enable);
+int remote_trigger_oos(int type);
 #endif

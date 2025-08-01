@@ -9,6 +9,10 @@ extern struct judge_type judge_data;
 extern bool response_flag[MAX_MESSAGE_COUNT];
 extern int response_ret[MAX_MESSAGE_COUNT];
 
+#ifndef CONFIG_TELEPHONY_DFX
+extern struct dfx_judge_data dfx_data;
+#endif
+
 static struct {
     int call_barring_property_change_watch_id;
     int ussd_property_change_watch_id;
@@ -47,6 +51,63 @@ static void ss_signal_change(tapi_async_result* result)
         break;
     }
 }
+
+#ifndef CONFIG_TELEPHONY_DFX
+static void ss_data_logging_cb(tapi_async_result* result)
+{
+    char* data = (char*)result->data;
+
+    if (result->status != OK) {
+        syslog(LOG_ERR, "ss_data_logging_cb fail,status =%d", result->status);
+        return;
+    }
+    syslog(LOG_DEBUG, "data_logging:%s", data);
+
+    for (int i = 0; i < dfx_data.expected_dfx_count; i++) {
+        if (dfx_data.received_dfx_flag[i]) {
+            continue;
+        }
+        syslog(LOG_DEBUG, "expected_dfx_value:%d", dfx_data.expected_dfx_value[i]);
+        switch (dfx_data.expected_dfx_value[i]) {
+        case EVENT_SET_CALL_WAITING_DFX_DONE:
+            if (!strcmp("SS_INFO,ss:set call waiting,NA", data)) {
+                dfx_data.received_dfx_flag[i] = true;
+            }
+            break;
+        case EVENT_GET_CALL_WAITING_DFX_DONE:
+            if (!strcmp("SS_INFO,ss:get call waiting,NA", data)) {
+                dfx_data.received_dfx_flag[i] = true;
+            }
+            break;
+        case EVENT_QUERY_ALL_CALL_BARRING_DFX_DONE:
+            if (!strcmp("SS_INFO,ss:request callbarring,fail_reason:NA", data)) {
+                dfx_data.received_dfx_flag[i] = true;
+            }
+            break;
+        case EVENT_SET_CALL_BARRING_DFX_DONE:
+            if (!strcmp("SS_INFO,ss:set callbarring,NA", data)) {
+                dfx_data.received_dfx_flag[i] = true;
+            }
+            break;
+        case EVENT_SET_CALL_FORWARDING_DFX_DONE:
+            if (!strcmp("SS_INFO,ss:set call forwarding,NA", data)) {
+                dfx_data.received_dfx_flag[i] = true;
+            }
+            break;
+        case EVENT_QUERY_CALL_FORWARDING_DFX_DONE:
+            if (!strcmp("SS_INFO,ss:query call forwarding,NA", data)) {
+                dfx_data.received_dfx_flag[i] = true;
+            }
+            break;
+        default:
+            syslog(LOG_ERR, "unexpected data logging info:%s", data);
+            break;
+        }
+        return;
+    }
+    syslog(LOG_ERR, "data logging more than expected:%s", data);
+}
+#endif
 
 int setup_ss(void** state)
 {
@@ -292,6 +353,15 @@ static void tele_ss_event_response_continuous(tapi_async_result* result)
 int ss_request_call_barring_test(int slot_id)
 {
     int res = 0;
+#ifndef CONFIG_TELEPHONY_DFX
+    int watch_id = 0;
+
+    watch_id = tapi_register(get_tapi_ctx(), 0, MSG_DATA_LOGING_IND,
+        NULL, ss_data_logging_cb);
+    dfx_data_init();
+    dfx_data.expected_dfx_count = 1;
+    dfx_data.expected_dfx_value[0] = EVENT_QUERY_ALL_CALL_BARRING_DFX_DONE;
+#endif
     judge_data_init();
     judge_data.expect = EVENT_QUERY_ALL_CALL_BARRING_DONE;
     int ret = tapi_ss_request_call_barring(get_tapi_ctx(), slot_id,
@@ -314,8 +384,17 @@ int ss_request_call_barring_test(int slot_id)
         res = -1;
         goto on_exit;
     }
-
+#ifndef CONFIG_TELEPHONY_DFX
+    if (!check_dfx_value()) {
+        syslog(LOG_ERR, "check_dfx_value fail for query call barring in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+#endif
 on_exit:
+#ifndef CONFIG_TELEPHONY_DFX
+    tapi_unregister(get_tapi_ctx(), watch_id);
+#endif
     return res;
 }
 
@@ -353,6 +432,15 @@ int ss_set_and_get_call_barring_option_test(int slot_id, char* facility, char* p
 {
     int ret = 0;
     char* result = NULL;
+#ifndef CONFIG_TELEPHONY_DFX
+    int watch_id = 0;
+
+    watch_id = tapi_register(get_tapi_ctx(), 0, MSG_DATA_LOGING_IND,
+        NULL, ss_data_logging_cb);
+    dfx_data_init();
+    dfx_data.expected_dfx_count = 1;
+    dfx_data.expected_dfx_value[0] = EVENT_SET_CALL_BARRING_DFX_DONE;
+#endif
     if (ss_set_call_barring_option_test(slot_id, facility, pin2)) {
         syslog(LOG_ERR, "set call barring option_test fail in %s", __func__);
         ret = -1;
@@ -377,8 +465,17 @@ int ss_set_and_get_call_barring_option_test(int slot_id, char* facility, char* p
         ret = -1;
         goto on_exit;
     }
-
+#ifndef CONFIG_TELEPHONY_DFX
+    if (!check_dfx_value()) {
+        syslog(LOG_ERR, "check_dfx_value fail for get call waiting in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+#endif
 on_exit:
+#ifndef CONFIG_TELEPHONY_DFX
+    tapi_unregister(get_tapi_ctx(), watch_id);
+#endif
     return ret;
 }
 
@@ -599,27 +696,66 @@ int ss_clear_call_forwarding_option_test(int slot_id, int cf_type)
 int ss_set_and_get_call_forwarding_option_test(int slot_id, int cf_type, char* number)
 {
     int ret = 0;
+#ifndef CONFIG_TELEPHONY_DFX
+    int watch_id = 0;
+
+    watch_id = tapi_register(get_tapi_ctx(), 0, MSG_DATA_LOGING_IND,
+        NULL, ss_data_logging_cb);
+    dfx_data_init();
+    dfx_data.expected_dfx_count = 1;
+    dfx_data.expected_dfx_value[0] = EVENT_SET_CALL_FORWARDING_DFX_DONE;
+#endif
     if (ss_set_call_forwarding_option_test(slot_id, cf_type, number)) {
         syslog(LOG_ERR, "ss_set_call_forwarding_option_test fail");
         ret = -1;
         goto on_exit;
     }
 
+#ifndef CONFIG_TELEPHONY_DFX
+    if (!check_dfx_value()) {
+        syslog(LOG_ERR, "check_dfx_value fail for set call forwarding in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    dfx_data_init();
+    dfx_data.expected_dfx_count = 1;
+    dfx_data.expected_dfx_value[0] = EVENT_QUERY_CALL_FORWARDING_DFX_DONE;
+#endif
     sleep(3);
     if (ss_get_call_forwarding_option_test(slot_id, cf_type)) {
         syslog(LOG_ERR, "ss_get_call_forwarding_option_test fail");
         ret = -1;
         goto on_exit;
     }
+#ifndef CONFIG_TELEPHONY_DFX
+    if (!check_dfx_value()) {
+        syslog(LOG_ERR, "check_dfx_value fail for query call forwarding in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
 
+    dfx_data_init();
+    dfx_data.expected_dfx_count = 1;
+    dfx_data.expected_dfx_value[0] = EVENT_SET_CALL_FORWARDING_DFX_DONE;
+#endif
     sleep(3);
     if (ss_clear_call_forwarding_option_test(slot_id, cf_type)) {
         syslog(LOG_ERR, "ss_clear_call_forwarding_option_test fail");
         ret = -1;
         goto on_exit;
     }
-
+#ifndef CONFIG_TELEPHONY_DFX
+    if (!check_dfx_value()) {
+        syslog(LOG_ERR, "check_dfx_value fail for clear call forwarding in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+#endif
 on_exit:
+#ifndef CONFIG_TELEPHONY_DFX
+    tapi_unregister(get_tapi_ctx(), watch_id);
+#endif
     return ret;
 }
 
@@ -823,20 +959,49 @@ on_exit:
 int ss_set_and_get_call_waiting_test(int slot_id, bool enable)
 {
     int ret = 0;
+#ifndef CONFIG_TELEPHONY_DFX
+    int watch_id = 0;
+
+    watch_id = tapi_register(get_tapi_ctx(), 0, MSG_DATA_LOGING_IND,
+        NULL, ss_data_logging_cb);
+
+    dfx_data_init();
+    dfx_data.expected_dfx_count = 1;
+    dfx_data.expected_dfx_value[0] = EVENT_SET_CALL_WAITING_DFX_DONE;
+#endif
     if (ss_set_call_waiting_test(slot_id, enable)) {
         syslog(LOG_ERR, "set call waiting test fail");
         ret = -1;
         goto on_exit;
     }
+#ifndef CONFIG_TELEPHONY_DFX
+    if (!check_dfx_value()) {
+        syslog(LOG_ERR, "check_dfx_value fail for set call waiting in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
 
+    dfx_data_init();
+    dfx_data.expected_dfx_count = 1;
+    dfx_data.expected_dfx_value[0] = EVENT_GET_CALL_WAITING_DFX_DONE;
+#endif
     sleep(3);
     if (ss_get_call_waiting_test(slot_id, enable)) {
         syslog(LOG_ERR, "get call waiting test fail");
         ret = -1;
         goto on_exit;
     }
-
+#ifndef CONFIG_TELEPHONY_DFX
+    if (!check_dfx_value()) {
+        syslog(LOG_ERR, "check_dfx_value fail for get call waiting in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+#endif
 on_exit:
+#ifndef CONFIG_TELEPHONY_DFX
+    tapi_unregister(get_tapi_ctx(), watch_id);
+#endif
     return ret;
 }
 

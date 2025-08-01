@@ -1,8 +1,12 @@
 #include "telephony_data_test.h"
+#include "remote_operation.h"
 #include "telephony_common_test.h"
 #include "telephony_sim_test.h"
 
 extern struct judge_type judge_data;
+#ifndef CONFIG_TELEPHONY_DFX
+extern struct dfx_judge_data dfx_data;
+#endif
 static struct
 {
     int data_enabled_watch_id;
@@ -1022,7 +1026,7 @@ static void data_signal_change(tapi_async_result* result)
     syslog(LOG_DEBUG, "result->arg1 : %d\n", result->arg1);
     syslog(LOG_DEBUG, "result->arg2 : %d\n", result->arg2);
 
-    if (result->status != OK) {
+    if (result->status != OK && judge_data.expect != EVENT_DATA_ENABLED_CHANGE_FAIL_IND) {
         syslog(LOG_DEBUG, "%s msg id : %d result err, return.\n", __func__, result->msg_id);
         return;
     }
@@ -1185,3 +1189,107 @@ int data_disable_and_get_roaming_test(void)
 on_exit:
     return res;
 }
+
+#ifndef CONFIG_TELEPHONY_DFX
+static void data_data_logging_cb(tapi_async_result* result)
+{
+    char* data = (char*)result->data;
+
+    if (result->status != OK) {
+        syslog(LOG_ERR, "data_data_logging_cb fail,status =%d", result->status);
+        return;
+    }
+    syslog(LOG_DEBUG, "data_logging:%s", data);
+
+    for (int i = 0; i < dfx_data.expected_dfx_count; i++) {
+        if (dfx_data.received_dfx_flag[i]) {
+            continue;
+        }
+        syslog(LOG_DEBUG, "expected_dfx_value:%d", dfx_data.expected_dfx_value[i]);
+        switch (dfx_data.expected_dfx_value[i]) {
+        case EVENT_DATA_FAIL_DFX_DONE:
+            if (!strcmp("DATA_ACTIVE_FAIL,915000002,modem fail", data)) {
+                dfx_data.received_dfx_flag[i] = true;
+                judge_data.result = 0;
+                judge_data.flag = EVENT_DATA_ENABLED_CHANGE_FAIL_IND;
+            }
+            break;
+        default:
+            syslog(LOG_ERR, "unexpected data logging info:%s", data);
+            break;
+        }
+        return;
+    }
+    syslog(LOG_ERR, "data logging more than expected:%s", data);
+}
+
+int data_enabled_fail_test(void)
+{
+    int ret = 0;
+    int watch_id = 0;
+    bool target = false;
+
+    if (data_get_enabled_test(&target)) {
+        syslog(LOG_ERR, "get data enabled fail in %s", __func__);
+        ret = -1;
+        return ret;
+    }
+    if (target) {
+        if (data_enable_data_test(0)) {
+            syslog(LOG_ERR, "enable data fail in %s", __func__);
+            ret = -1;
+            goto on_exit;
+        }
+    }
+    watch_id = tapi_register(get_tapi_ctx(), 0, MSG_DATA_LOGING_IND,
+        NULL, data_data_logging_cb);
+
+    dfx_data_init();
+    dfx_data.expected_dfx_count = 1;
+    dfx_data.expected_dfx_value[0] = EVENT_DATA_FAIL_DFX_DONE;
+    judge_data_init();
+    judge_data.expect = EVENT_DATA_ENABLED_CHANGE_FAIL_IND;
+    global_data.data_on = -1;
+
+    if (remote_data_block_operation(true)) {
+        syslog(LOG_ERR, "Remote data operation fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    ret = tapi_data_enable_data(get_tapi_ctx(), 1);
+    if (ret) {
+        syslog(LOG_ERR, "tapi_data_enable_data execute fail in %s, ret: %d",
+            __func__, ret);
+        ret = -1;
+        goto on_exit;
+    }
+
+    if (judge()) {
+        syslog(LOG_ERR, "the callback function of data_enable is not executed in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    if (judge_data.result) {
+        syslog(LOG_ERR, "async result in %s is invalid", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    if (!check_dfx_value()) {
+        syslog(LOG_ERR, "check_dfx_value fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    if (remote_data_block_operation(false)) {
+        syslog(LOG_ERR, "Remote data operation fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+on_exit:
+    tapi_unregister(get_tapi_ctx(), watch_id);
+    return ret;
+}
+#endif

@@ -25,6 +25,8 @@
 #define EVENT_MODEM_ENABLE_MODEM_STATIONARY_DONE 0x0D
 #define EVENT_MODEM_SET_MODEM_STATIONARY_THRESHOLD_DONE 0x0F
 #define EVENT_MODEM_CHECK_ABNORMAL_EVENT_REPORT_DONE 0x10
+#define EVENT_OOS_DFX_DONE 0x11
+#define EVENT_DISABLE_MODEM_DFX_DONE 0x12
 
 // Data Callback Event
 #define EVENT_APN_LOADED_DONE 0x1009
@@ -35,6 +37,8 @@
 #define EVENT_DATA_ALLOWED_DONE 0x101D
 #define EVENT_DATA_CALL_LIST_QUERY_DONE 0x101E
 #define EVENT_REQUEST_SCREEN_STATE_DONE 0x101F
+#define EVENT_DATA_ENABLED_CHANGE_FAIL_IND 0x1020
+#define EVENT_DATA_FAIL_DFX_DONE 0x1021
 
 // SIM Callback Event
 #define EVENT_CHANGE_SIM_PIN_DONE 0x21
@@ -80,6 +84,12 @@
 #define EVENT_QUERY_ALL_CALL_SETTING_DONE 0x51
 #define EVENT_QUERY_CALL_FORWARDING_DONE 0x52
 #define EVENT_QUERY_CALL_WAITING_DONE 0x53
+#define EVENT_SET_CALL_WAITING_DFX_DONE 0x54
+#define EVENT_GET_CALL_WAITING_DFX_DONE 0x55
+#define EVENT_QUERY_ALL_CALL_BARRING_DFX_DONE 0x56
+#define EVENT_SET_CALL_BARRING_DFX_DONE 0x57
+#define EVENT_SET_CALL_FORWARDING_DFX_DONE 0x58
+#define EVENT_QUERY_CALL_FORWARDING_DFX_DONE 0x59
 
 // PhoneBook Callback Event
 #define EVENT_LOAD_ADN_ENTRIES_DONE 0x61
@@ -94,6 +104,8 @@
 // Sms CallBack Event
 #define EVENT_SEND_MESSAGE_DONE 0x81
 #define EVENT_SEND_DATA_MESSAGE_DONE 0x82
+#define EVENT_SEND_MESSAGE_DFX_DONE 0x83
+#define EVENT_RECEIVE_MESSAGE_DFX_DONE 0x84
 
 #define TIMEOUT 20
 #define INVALID_VALUE -1
@@ -119,5 +131,18 @@ struct judge_type {
     int phone_state_value;
     int sim_channel_error_code;
 };
+
+#ifndef CONFIG_TELEPHONY_DFX
+#define MAX_DFX_COUNT 10
+
+struct dfx_judge_data {
+    int expected_dfx_count;
+    int expected_dfx_value[MAX_DFX_COUNT];
+    bool received_dfx_flag[MAX_DFX_COUNT];
+};
+
+void dfx_data_init(void);
+bool check_dfx_value(void);
+#endif
 
 #endif /* TELEPHONY_TEST_H_ */
