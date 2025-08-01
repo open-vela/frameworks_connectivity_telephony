@@ -79,6 +79,28 @@ char* long_chinese_text = "测试测试测试测试测试测试测试测试测�
                           "测试测试测试测试测试测试测试测试测试测试"
                           "测试测试测试测试测试测试测试测试测试测试";
 
+#ifndef CONFIG_TELEPHONY_DFX
+struct dfx_judge_data dfx_data;
+
+void dfx_data_init(void)
+{
+    memset(&dfx_data, 0, sizeof(dfx_data));
+}
+
+bool check_dfx_value(void)
+{
+    bool res = true;
+
+    for (int i = 0; i < dfx_data.expected_dfx_count; i++) {
+        if (!dfx_data.received_dfx_flag[i]) {
+            res = false;
+            break;
+        }
+    }
+    return res;
+}
+#endif
+
 static void exit_async_cleanup(uv_async_t* handle)
 {
 #ifdef CONFIG_PHONE_SERVICE
@@ -2186,7 +2208,7 @@ static void TestTeleFunc_ModemSetModemStationaryThreshold(void** state)
 }
 
 #ifndef CONFIG_TELEPHONY_DFX
-static void TestTeleFunc_AbnormalEventReport(void** state)
+static void TestTeleFunc_ModemAbnormalEventReport(void** state)
 {
     int ret;
 
@@ -2236,6 +2258,30 @@ static void TestTeleFunc_AbnormalEventReport(void** state)
     ret = check_abnormal_event_report(false, 208); // expect normal data
     assert_int_equal(ret, OK);
     ret = check_abnormal_event_report(true, 208); // unexpected data
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_ModemEnableDataFailDFX(void** state)
+{
+    (void)state;
+
+    int ret = data_enabled_fail_test();
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_ModemOOSDFX(void** state)
+{
+    (void)state;
+
+    int ret = check_oos_dfx();
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_ModemDisableDFX(void** state)
+{
+    (void)state;
+
+    int ret = check_disable_modem_duration_dfx();
     assert_int_equal(ret, OK);
 }
 #endif
@@ -4360,7 +4406,10 @@ int main(int argc, char* argv[])
         cmocka_unit_test(TestTeleFunc_ModemEnableModemStationary),
         cmocka_unit_test(TestTeleFunc_ModemSetModemStationaryThreshold),
 #ifndef CONFIG_TELEPHONY_DFX
-        cmocka_unit_test(TestTeleFunc_AbnormalEventReport),
+        cmocka_unit_test(TestTeleFunc_ModemAbnormalEventReport),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_ModemEnableDataFailDFX, setup_data, teardown_data),
+        cmocka_unit_test(TestTeleFunc_ModemOOSDFX),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_ModemDisableDFX, setup_modem, NULL)
 #endif
     };
 #ifdef CONFIG_PHONE_SERVICE

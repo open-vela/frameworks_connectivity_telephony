@@ -167,4 +167,28 @@ int remote_unexpected_abnormal_event_report(void)
     return tapi_invoke_oem_ril_request_strings(get_tapi_ctx(), 0,
         EVENT_OEM_RIL_REQUEST_STRINGS_DONE, oem_req, 1, NULL);
 }
+
+int remote_data_block_operation(bool enable)
+{
+    char req_data[30] = { 0 };
+    char* oem_req[1];
+    oem_req[0] = req_data;
+
+    sprintf(req_data, "AT+REMOTEBLOCKDATA=%d 1", enable ? 1 : 0);
+    syslog(LOG_DEBUG, "%s, req_data: %s\n", __func__, req_data);
+    return tapi_invoke_oem_ril_request_strings(get_tapi_ctx(), 0,
+        EVENT_OEM_RIL_REQUEST_STRINGS_DONE, oem_req, 1, NULL);
+}
+
+int remote_trigger_oos(int type)
+{
+    char* oem_req[1];
+    if (type == 0) {
+        oem_req[0] = "AT+REMOTEDATAREG=0 1";
+    } else {
+        oem_req[0] = "AT+REMOTEVOICEREG=0 1";
+    }
+    return tapi_invoke_oem_ril_request_strings(get_tapi_ctx(), 0,
+        EVENT_OEM_RIL_REQUEST_STRINGS_DONE, oem_req, 1, NULL);
+}
 #endif

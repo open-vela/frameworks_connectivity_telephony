@@ -41,5 +41,7 @@ int data_apn_after_flight_mode_test(int slot_id);
 int data_load_carrier_apn_test(int slot_id, char* imsi);
 int data_set_data_allow_test(int slot_id);
 int data_unlisten_data_test(void);
-
+#ifndef CONFIG_TELEPHONY_DFX
+int data_enabled_fail_test(void);
+#endif
 #endif /* TELEPHONY_DATA_TEST_H_ */

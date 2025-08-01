@@ -30,6 +30,10 @@ extern struct judge_type judge_data;
 extern bool response_flag[MAX_MESSAGE_COUNT];
 extern int response_ret[MAX_MESSAGE_COUNT];
 
+#ifndef CONFIG_TELEPHONY_DFX
+extern struct dfx_judge_data dfx_data;
+#endif
+
 static void radio_signal_change(tapi_async_result* result);
 static int hex_string_to_byte_array(char* hex_str, unsigned char* byte_arr, int arr_len);
 
@@ -1255,21 +1259,12 @@ on_exit:
 }
 
 #ifndef CONFIG_TELEPHONY_DFX
-static void test_data_logging_cb(tapi_async_result* result)
+static void deal_with_abnormal_data(char* data, int id)
 {
     char* token;
     int index = 0;
     int type_id = -1;
     char type_id_str[50] = { 0 };
-    char* data = (char*)result->data;
-
-    if (result->status != OK) {
-        syslog(LOG_ERR, "test_data_logging_cb fail,status =%d", result->status);
-        judge_data.result = result->status;
-        judge_data.flag = EVENT_MODEM_CHECK_ABNORMAL_EVENT_REPORT_DONE;
-        return;
-    }
-    syslog(LOG_DEBUG, "data_logging_cb:%s", data);
 
     if (strstr(data, "DATA_INTERRUPTION_INFO") != NULL) {
         return;
@@ -1296,12 +1291,58 @@ static void test_data_logging_cb(tapi_async_result* result)
     }
     syslog(LOG_DEBUG, "type_id:%d", type_id);
 
-    if (type_id == *((int*)result->user_obj)) {
+    if (type_id == id) {
         judge_data.result = 0;
         judge_data.flag = EVENT_MODEM_CHECK_ABNORMAL_EVENT_REPORT_DONE;
     } else {
         judge_data.result = -1;
         judge_data.flag = EVENT_MODEM_CHECK_ABNORMAL_EVENT_REPORT_DONE;
+    }
+}
+
+static void common_data_logging_cb(tapi_async_result* result)
+{
+    char* data = (char*)result->data;
+
+    if (result->status != OK) {
+        syslog(LOG_ERR, "common_data_logging_cb fail,status =%d", result->status);
+        return;
+    }
+    syslog(LOG_DEBUG, "data_logging:%s", data);
+
+    for (int i = 0; i < dfx_data.expected_dfx_count; i++) {
+        if (dfx_data.received_dfx_flag[i]) {
+            continue;
+        }
+        syslog(LOG_DEBUG, "expected_dfx_value:%d", dfx_data.expected_dfx_value[i]);
+        switch (dfx_data.expected_dfx_value[i]) {
+        case EVENT_MODEM_CHECK_ABNORMAL_EVENT_REPORT_DONE:
+            deal_with_abnormal_data(data, *((int*)result->user_obj));
+            break;
+        case EVENT_OOS_DFX_DONE:
+            if (!strcmp("OOS_INFO,915300004,0", data)) {
+                dfx_data.received_dfx_flag[i] = true;
+                judge_data.result = 0;
+                judge_data.flag = EVENT_OOS_DFX_DONE;
+            }
+            break;
+        case EVENT_DISABLE_MODEM_DFX_DONE:
+            if (strstr(data, "RAT_DURATION") || strstr(data, "DATA_ACTIVE_DURATION")
+                || strstr(data, "SIGNAL_LEVEL_DURATION") || strstr(data, "IMS_DURATION")
+                || strstr(data, "IMS_STATE_CHANGED_COUNT") || strstr(data, "CELLINFO_CHANGED_COUNT")
+                || strstr(data, "NETWORK_SIGNAL_CHANGED_COUNT")) {
+                dfx_data.received_dfx_flag[i] = true;
+                if (dfx_data.expected_dfx_count == i + 1) {
+                    judge_data.result = 0;
+                    judge_data.flag = EVENT_DISABLE_MODEM_DFX_DONE;
+                }
+            }
+            break;
+        default:
+            syslog(LOG_ERR, "unexpected data logging info:%s", data);
+            break;
+        }
+        return;
     }
 }
 
@@ -1316,8 +1357,11 @@ int check_abnormal_event_report(bool unexpected_data_flag, int abnormal_data_typ
 
     *type_id = abnormal_data_type_id;
     watch_id = tapi_register(get_tapi_ctx(), 0, MSG_DATA_LOGING_IND,
-        type_id, test_data_logging_cb);
+        type_id, common_data_logging_cb);
 
+    dfx_data_init();
+    dfx_data.expected_dfx_count = 1;
+    dfx_data.expected_dfx_value[0] = EVENT_MODEM_CHECK_ABNORMAL_EVENT_REPORT_DONE;
     if (unexpected_data_flag) {
         remote_unexpected_abnormal_event_report();
     } else {
@@ -1340,5 +1384,100 @@ on_exit:
     free(type_id);
     tapi_unregister(get_tapi_ctx(), watch_id);
     return res;
+}
+
+int check_oos_dfx(void)
+{
+    int ret = 0;
+    int watch_id = 0;
+
+    dfx_data_init();
+    dfx_data.expected_dfx_count = 1;
+    dfx_data.expected_dfx_value[0] = EVENT_OOS_DFX_DONE;
+    judge_data_init();
+    judge_data.expect = EVENT_OOS_DFX_DONE;
+
+    watch_id = tapi_register(get_tapi_ctx(), 0, MSG_DATA_LOGING_IND,
+        NULL, common_data_logging_cb);
+
+    if (remote_trigger_oos(0)) {
+        syslog(LOG_ERR, "Remote trigger oos fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+    if (remote_trigger_oos(1)) {
+        syslog(LOG_ERR, "Remote trigger oos fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    if (judge()) {
+        syslog(LOG_ERR, "the callback function not executed in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    if (judge_data.result) {
+        syslog(LOG_ERR, "async result in %s is invalid", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    if (!check_dfx_value()) {
+        syslog(LOG_ERR, "check_dfx_value fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    tapi_unregister(get_tapi_ctx(), watch_id);
+    return ret;
+}
+
+int check_disable_modem_duration_dfx(void)
+{
+    int ret = 0;
+    int watch_id = 0;
+
+    dfx_data_init();
+    dfx_data.expected_dfx_count = 7;
+    for (int i = 0; i < 7; i++) {
+        dfx_data.expected_dfx_value[i] = EVENT_DISABLE_MODEM_DFX_DONE;
+    }
+    judge_data_init();
+    judge_data.expect = EVENT_DISABLE_MODEM_DFX_DONE;
+
+    watch_id = tapi_register(get_tapi_ctx(), 0, MSG_DATA_LOGING_IND,
+        NULL, common_data_logging_cb);
+
+    sleep(10);
+
+    if (enable_modem_test(0, 0)) {
+        syslog(LOG_DEBUG, "Modem disable execute fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    if (judge()) {
+        syslog(LOG_ERR, "the callback function is not executed in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    if (judge_data.result) {
+        syslog(LOG_ERR, "async result in %s is invalid", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+    if (!check_dfx_value()) {
+        syslog(LOG_ERR, "check_dfx_value fail in %s", __func__);
+        ret = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    tapi_unregister(get_tapi_ctx(), watch_id);
+    return ret;
 }
 #endif
