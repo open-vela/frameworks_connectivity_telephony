@@ -770,6 +770,9 @@ static int decode_voice_call_info(DBusMessageIter* iter, tapi_call_info* call_in
         } else if (strcmp(key, "DisconnectReason") == 0) {
             dbus_message_iter_get_basic(&value, &ret);
             call_info->disconnect_reason = ret;
+        } else if (strcmp(key, "isMT") == 0) {
+            dbus_message_iter_get_basic(&value, &ret);
+            call_info->is_incoming = ret;
         }
 
         dbus_message_iter_next(&subArrayIter);

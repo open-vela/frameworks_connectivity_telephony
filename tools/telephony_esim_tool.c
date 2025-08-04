@@ -374,7 +374,8 @@ static void call_state_change_cb(tapi_async_result* result)
     syslog(LOG_DEBUG, "call Information: %s \n", call_info->info);
     syslog(LOG_DEBUG, "call Icon: %d \n", call_info->icon);
     syslog(LOG_DEBUG, "call Emergency: %d \n", call_info->is_emergency_number);
-    syslog(LOG_DEBUG, "call disconnect_reason: %d \n\n", call_info->disconnect_reason);
+    syslog(LOG_DEBUG, "call disconnect_reason: %d \n", call_info->disconnect_reason);
+    syslog(LOG_DEBUG, "call isIncoming: %d \n\n", call_info->is_incoming);
 }
 
 static void tele_call_ecc_list_async_fun(tapi_async_result* result)
@@ -854,7 +855,8 @@ static void call_list_query_complete(tapi_async_result* result)
         printf("call RemoteMultiparty: %d \n", call_info[i].remote_multiparty);
         printf("call Information: %s \n", call_info[i].info);
         printf("call Icon: %d \n", call_info[i].icon);
-        printf("call Emergency: %d \n\n", call_info[i].is_emergency_number);
+        printf("call Emergency: %d \n", call_info[i].is_emergency_number);
+        printf("call isIncoming: %d\n\n", call_info[i].is_incoming);
     }
 }
 
