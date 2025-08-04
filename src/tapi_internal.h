@@ -68,7 +68,6 @@ typedef struct {
     tapi_modem_state modem_state[CONFIG_MODEM_ACTIVE_COUNT];
     tapi_service_module service_module;
     tapi_async_function logging_over_cb;
-    tapi_async_function stk_client_cb;
     bool client_ready;
 } dbus_context;
 
