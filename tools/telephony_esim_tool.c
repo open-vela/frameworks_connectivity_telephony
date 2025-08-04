@@ -4772,21 +4772,24 @@ static int telephonytool_cmd_register_agent_interface(tapi_context context, char
 
 static int telephonytool_cmd_request_item(tapi_context context, char* pargs)
 {
-    char dst[1][MAX_INPUT_ARGS_LEN];
-    char* item_id;
+    char dst[2][MAX_INPUT_ARGS_LEN];
+    char* op;
+    char* selection;
     int cnt;
 
     if (strlen(pargs) == 0)
         return -EINVAL;
 
-    cnt = split_input(dst, 1, pargs, " ");
-    if (cnt != 1)
+    cnt = split_input(dst, 2, pargs, " ");
+    if (cnt != 2)
         return -EINVAL;
 
-    item_id = dst[0];
+    op = dst[0];
+    selection = dst[1];
 
-    syslog(LOG_INFO, "%s, item_id: %s", __func__, item_id);
-    return tapi_stk_reply_request_selection(context, atoi(item_id));
+    syslog(LOG_INFO, "%s, op: %s, item_id: %s", __func__, op, selection);
+    return tapi_stk_handle_agent_request_selection(context, (tapi_stk_agent_operator_code)atoi(op),
+        (unsigned char)atoi(selection));
 }
 
 static int telephonytool_cmd_request_input(tapi_context context, char* pargs)
@@ -5460,8 +5463,8 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         "[slot_id][agent_id][item_id])" },
     { "request-item", STK_CMD,
         telephonytool_cmd_request_item,
-        "request item index (enter example : request-item 1 "
-        "[item_index])" },
+        "request item index (enter example : request-item 0 1 "
+        "[op][item_index])" },
     { "request-input", STK_CMD,
         telephonytool_cmd_request_input,
         "handles input string requests from the SIM (example : request-input 0 123456 "

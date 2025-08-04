@@ -1110,23 +1110,6 @@ done:
     return reply;
 }
 
-static void client_request_selection_cb(tapi_async_result* ar)
-{
-    dbus_context* ctx = ar->data;
-    unsigned char selection = 0;
-    DBusMessage* reply;
-
-    if (ar->arg1 == STK_REQUEST_SELECTION_GOBACK) {
-        reply = stk_agent_error_go_back(ctx->pending);
-    } else {
-        selection = (unsigned char)ar->arg1;
-        reply = dbus_message_new_method_return(ctx->pending);
-        dbus_message_append_args(reply, DBUS_TYPE_BYTE, &selection, DBUS_TYPE_INVALID);
-    }
-
-    stk_agent_dbus_pending_reply(ctx->connection, &ctx->pending, reply);
-}
-
 static DBusMessage* stk_agent_handle_request_selection(DBusConnection* conn,
     DBusMessage* msg, void* user_data)
 {
@@ -1225,7 +1208,6 @@ static DBusMessage* stk_agent_handle_request_selection(DBusConnection* conn,
     ctx->pending = dbus_message_ref(msg);
     ar->user_obj = params;
     ar->status = OK;
-    ctx->stk_client_cb = client_request_selection_cb;
     client_func(ar);
 
     if (params != NULL) {
@@ -2049,20 +2031,6 @@ int tapi_stk_select_item(tapi_context context, int slot_id,
         stk_event_data_free(user_data);
         return -EINVAL;
     }
-
-    return OK;
-}
-
-int tapi_stk_reply_request_selection(tapi_context context, int index)
-{
-    dbus_context* ctx = context;
-    tapi_async_function cb = ctx->stk_client_cb;
-    tapi_async_result ar;
-
-    ar.arg1 = index;
-    ar.data = context;
-    cb(&ar);
-    ctx->stk_client_cb = NULL;
 
     return OK;
 }

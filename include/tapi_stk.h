@@ -35,7 +35,6 @@
 #define MAX_STK_MAIN_MENU_LENGTH 20
 #define STK_AGENT_DEFAULT_ID_0 "/stk_agent_default_0"
 #define STK_AGENT_DEFAULT_ID_1 "/stk_agent_default_1"
-#define STK_REQUEST_SELECTION_GOBACK -1
 
 /****************************************************************************
  * Public Types
@@ -255,15 +254,6 @@ int tapi_stk_get_main_menu_title(tapi_context context, int slot_id, char** title
  * @return Zero on success; a negated errno value on failure.
  */
 int tapi_stk_get_main_menu_icon(tapi_context context, int slot_id, int* icon);
-
-/**
- * Generate a reply for request selection.
- * The reply must be sent within the command's timeout period (typically 25 seconds).
- * @param[in] context        Telephony api context.
- * @param[in] index          Item index.
- * @return  Zero on success; a negated errno value on failure.
- */
-int tapi_stk_reply_request_selection(tapi_context context, int index);
 
 /**
  * Handle a request to select an item from the menu.
