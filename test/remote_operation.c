@@ -83,7 +83,7 @@ int remote_ss_operation_delay(int slot_id, int delay_sec)
 
 int remote_sms_send_message(int slot_id)
 {
-    char req_data[60] = "AT+REMOTESMS=00110005810180F60000A705E8329BFD06";
+    char req_data[75] = "AT+REMOTESMS=0891683110305005F0200BA15157069026F90000528002517054230133";
     char* oem_req[1];
     oem_req[0] = req_data;
 
