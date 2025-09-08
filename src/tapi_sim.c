@@ -901,7 +901,7 @@ int tapi_sim_register(tapi_context context, int slot_id,
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -1032,7 +1032,7 @@ int tapi_sim_change_pin(tapi_context context, int slot_id,
     ar->arg1 = slot_id;
     ar->data = change_pin_param;
 
-    user_data = malloc(sizeof(tapi_async_handler));
+    user_data = calloc(1, sizeof(tapi_async_handler));
     if (user_data == NULL) {
         tapi_log_error("user data in %s is null", __func__);
         free(change_pin_param);
@@ -1114,7 +1114,7 @@ int tapi_sim_enter_pin(tapi_context context, int slot_id,
     ar->arg1 = slot_id;
     ar->data = enter_pin_param;
 
-    user_data = malloc(sizeof(tapi_async_handler));
+    user_data = calloc(1, sizeof(tapi_async_handler));
     if (user_data == NULL) {
         tapi_log_error("user data in %s is null", __func__);
         free(enter_pin_param);
@@ -1202,7 +1202,7 @@ int tapi_sim_reset_pin(tapi_context context, int slot_id,
     ar->arg1 = slot_id;
     ar->data = reset_pin_param;
 
-    user_data = malloc(sizeof(tapi_async_handler));
+    user_data = calloc(1, sizeof(tapi_async_handler));
     if (user_data == NULL) {
         tapi_log_error("user data in %s is null", __func__);
         free(reset_pin_param);
@@ -1284,7 +1284,7 @@ int tapi_sim_lock_pin(tapi_context context, int slot_id,
     ar->arg1 = slot_id;
     ar->data = lock_pin_param;
 
-    user_data = malloc(sizeof(tapi_async_handler));
+    user_data = calloc(1, sizeof(tapi_async_handler));
     if (user_data == NULL) {
         tapi_log_error("user data in %s is null", __func__);
         free(lock_pin_param);
@@ -1366,7 +1366,7 @@ int tapi_sim_unlock_pin(tapi_context context, int slot_id,
     ar->arg1 = slot_id;
     ar->data = unlock_pin_param;
 
-    user_data = malloc(sizeof(tapi_async_handler));
+    user_data = calloc(1, sizeof(tapi_async_handler));
     if (user_data == NULL) {
         tapi_log_error("user data in %s is null", __func__);
         free(unlock_pin_param);
@@ -1443,7 +1443,7 @@ int tapi_sim_open_logical_channel(tapi_context context, int slot_id,
     ar->arg1 = slot_id;
     ar->data = open_channel_param;
 
-    user_data = malloc(sizeof(tapi_async_handler));
+    user_data = calloc(1, sizeof(tapi_async_handler));
     if (user_data == NULL) {
         tapi_log_error("user data in %s is null", __func__);
         free(open_channel_param);
@@ -1506,7 +1506,7 @@ int tapi_sim_close_logical_channel(tapi_context context, int slot_id,
     ar->arg1 = slot_id;
     ar->arg2 = session_id;
 
-    user_data = malloc(sizeof(tapi_async_handler));
+    user_data = calloc(1, sizeof(tapi_async_handler));
     if (user_data == NULL) {
         tapi_log_error("user data in %s is null", __func__);
         free(ar);
@@ -1584,7 +1584,7 @@ int tapi_sim_transmit_apdu_logical_channel(tapi_context context, int slot_id,
     ar->arg1 = slot_id;
     ar->data = transmit_apdu_param;
 
-    user_data = malloc(sizeof(tapi_async_handler));
+    user_data = calloc(1, sizeof(tapi_async_handler));
     if (user_data == NULL) {
         tapi_log_error("user data in %s is null", __func__);
         free(transmit_apdu_param);
@@ -1662,7 +1662,7 @@ int tapi_sim_transmit_apdu_basic_channel(tapi_context context, int slot_id,
     ar->arg1 = slot_id;
     ar->data = transmit_apdu_param;
 
-    user_data = malloc(sizeof(tapi_async_handler));
+    user_data = calloc(1, sizeof(tapi_async_handler));
     if (user_data == NULL) {
         tapi_log_error("user data in %s is null", __func__);
         free(transmit_apdu_param);
@@ -1768,7 +1768,7 @@ int tapi_sim_set_uicc_enablement(tapi_context context,
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
