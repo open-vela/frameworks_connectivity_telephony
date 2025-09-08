@@ -331,35 +331,33 @@ static void enable_or_disable_modem_done(DBusMessage* message, void* user_data)
     tapi_async_result* ar;
     tapi_async_function cb;
     DBusError err;
-
-    if (handler == NULL) {
-        tapi_log_error("handler in %s is null", __func__);
-        return;
-    }
-
-    ar = handler->result;
-    if (ar == NULL) {
-        tapi_log_error("async result in %s is null", __func__);
-        return;
-    }
-
-    cb = handler->cb_function;
-    if (cb == NULL) {
-        tapi_log_error("callback in %s is null", __func__);
-        return;
-    }
+    int status = OK;
 
     dbus_error_init(&err);
     if (dbus_set_error_from_message(&err, message) == true) {
         tapi_log_error("%s: %s\n", err.name, err.message);
         dbus_error_free(&err);
-        ar->status = ERROR;
-        goto done;
+        status = ERROR;
     }
 
-    ar->status = OK;
+    if (handler == NULL) {
+        tapi_log_debug("handler in %s is null", __func__);
+        return;
+    }
 
-done:
+    ar = handler->result;
+    if (ar == NULL) {
+        tapi_log_debug("async result in %s is null", __func__);
+        return;
+    }
+
+    cb = handler->cb_function;
+    if (cb == NULL) {
+        tapi_log_debug("callback in %s is null", __func__);
+        return;
+    }
+
+    ar->status = status;
     cb(ar);
 }
 
@@ -382,6 +380,12 @@ static void enable_modem_abnormal_event_done(DBusMessage* message, void* user_da
         return;
     }
 
+    cb = handler->cb_function;
+    if (cb == NULL) {
+        tapi_log_error("callback in %s is null", __func__);
+        return;
+    }
+
     ar->status = OK;
     dbus_error_init(&err);
     if (dbus_set_error_from_message(&err, message) == true) {
@@ -398,10 +402,7 @@ static void enable_modem_abnormal_event_done(DBusMessage* message, void* user_da
         tapi_log_info("%s:%d", __func__, ar->arg2);
     }
 
-    cb = handler->cb_function;
-    if (cb != NULL) {
-        cb(ar);
-    }
+    cb(ar);
 }
 
 static void modem_status_query_done(DBusMessage* message, void* user_data)
@@ -1123,7 +1124,7 @@ static int tapi_modem_register(tapi_context context,
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("no memory for handler in %s", __func__);
         return -ENOMEM;
@@ -1355,7 +1356,7 @@ int tapi_query_modem_list(tapi_context context, int event_id, tapi_async_functio
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -1430,7 +1431,7 @@ int tapi_set_pref_net_mode(tapi_context context,
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -1769,7 +1770,7 @@ int tapi_set_radio_power_async(tapi_context context,
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -1961,7 +1962,7 @@ int tapi_get_modem_activity_info(tapi_context context, int slot_id,
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -2025,7 +2026,7 @@ int tapi_invoke_oem_ril_request_raw(tapi_context context, int slot_id, int event
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -2100,7 +2101,7 @@ int tapi_invoke_oem_ril_request_strings(tapi_context context, int slot_id, int e
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -2164,7 +2165,7 @@ int tapi_enable_modem(tapi_context context, int slot_id,
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -2217,7 +2218,7 @@ int tapi_enable_modem_abnormal_event(tapi_context context, int slot_id, bool ena
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -2284,7 +2285,7 @@ int tapi_get_modem_status(tapi_context context, int slot_id,
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -2408,7 +2409,7 @@ static int tapi_manager_register_data_loging(tapi_context context,
         return -EINVAL;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -2576,7 +2577,7 @@ int tapi_handle_command(tapi_context context, int slot_id, int atom, int command
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -2633,7 +2634,7 @@ int tapi_set_fast_dormancy(tapi_context context,
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -2686,30 +2687,33 @@ static void suppress_message_report_cb(DBusMessage* message, void* user_data)
     tapi_async_result* ar;
     tapi_async_function cb;
     DBusError err;
+    int status = OK;
+
+    dbus_error_init(&err);
+    if (dbus_set_error_from_message(&err, message) == true) {
+        tapi_log_error("%s: %s\n", err.name, err.message);
+        dbus_error_free(&err);
+        status = ERROR;
+    }
 
     if (handler == NULL) {
-        tapi_log_error("handler in %s is null", __func__);
+        tapi_log_debug("handler in %s is null", __func__);
         return;
     }
 
     ar = handler->result;
     if (ar == NULL) {
-        tapi_log_error("async result in %s is null", __func__);
+        tapi_log_debug("async result in %s is null", __func__);
         return;
     }
 
-    ar->status = OK;
-    dbus_error_init(&err);
-    if (dbus_set_error_from_message(&err, message) == true) {
-        tapi_log_error("%s: %s\n", err.name, err.message);
-        dbus_error_free(&err);
-        ar->status = ERROR;
-    }
     cb = handler->cb_function;
     if (cb == NULL) {
-        tapi_log_debug("callback is null");
+        tapi_log_debug("callback in %s is null", __func__);
         return;
     }
+
+    ar->status = status;
     cb(ar);
 }
 
@@ -2741,7 +2745,7 @@ int tapi_suppress_message_report(tapi_context context, int slot_id, int event_id
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -2795,30 +2799,33 @@ static void set_signal_report_threshold_cb(DBusMessage* message, void* user_data
     tapi_async_result* ar;
     tapi_async_function cb;
     DBusError err;
+    int status = OK;
+
+    dbus_error_init(&err);
+    if (dbus_set_error_from_message(&err, message) == true) {
+        tapi_log_error("%s: %s\n", err.name, err.message);
+        dbus_error_free(&err);
+        status = ERROR;
+    }
 
     if (handler == NULL) {
-        tapi_log_error("handler in %s is null", __func__);
+        tapi_log_debug("handler in %s is null", __func__);
         return;
     }
 
     ar = handler->result;
     if (ar == NULL) {
-        tapi_log_error("async result in %s is null", __func__);
+        tapi_log_debug("async result in %s is null", __func__);
         return;
     }
 
-    ar->status = OK;
-    dbus_error_init(&err);
-    if (dbus_set_error_from_message(&err, message) == true) {
-        tapi_log_error("%s: %s\n", err.name, err.message);
-        dbus_error_free(&err);
-        ar->status = ERROR;
-    }
     cb = handler->cb_function;
     if (cb == NULL) {
-        tapi_log_debug("callback is null");
+        tapi_log_debug("callback in %s is null", __func__);
         return;
     }
+
+    ar->status = status;
     cb(ar);
 }
 
@@ -2850,7 +2857,7 @@ int tapi_set_signal_report_threshold(tapi_context context, int slot_id, int even
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -2904,30 +2911,33 @@ static void enable_modem_stationary_cb(DBusMessage* message, void* user_data)
     tapi_async_result* ar;
     tapi_async_function cb;
     DBusError err;
+    int status = OK;
+
+    dbus_error_init(&err);
+    if (dbus_set_error_from_message(&err, message) == true) {
+        tapi_log_error("%s: %s\n", err.name, err.message);
+        dbus_error_free(&err);
+        status = ERROR;
+    }
 
     if (handler == NULL) {
-        tapi_log_error("handler in %s is null", __func__);
+        tapi_log_debug("handler in %s is null", __func__);
         return;
     }
 
     ar = handler->result;
     if (ar == NULL) {
-        tapi_log_error("async result in %s is null", __func__);
+        tapi_log_debug("async result in %s is null", __func__);
         return;
     }
 
-    ar->status = OK;
-    dbus_error_init(&err);
-    if (dbus_set_error_from_message(&err, message) == true) {
-        tapi_log_error("%s: %s\n", err.name, err.message);
-        dbus_error_free(&err);
-        ar->status = ERROR;
-    }
     cb = handler->cb_function;
     if (cb == NULL) {
-        tapi_log_debug("callback is null");
+        tapi_log_debug("callback in %s is null", __func__);
         return;
     }
+
+    ar->status = status;
     cb(ar);
 }
 
@@ -2959,7 +2969,7 @@ int tapi_enable_modem_stationary(tapi_context context, int slot_id, int event_id
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -3013,30 +3023,33 @@ static void set_modem_stationary_threshold_cb(DBusMessage* message, void* user_d
     tapi_async_result* ar;
     tapi_async_function cb;
     DBusError err;
+    int status = OK;
+
+    dbus_error_init(&err);
+    if (dbus_set_error_from_message(&err, message) == true) {
+        tapi_log_error("%s: %s\n", err.name, err.message);
+        dbus_error_free(&err);
+        status = ERROR;
+    }
 
     if (handler == NULL) {
-        tapi_log_error("handler in %s is null", __func__);
+        tapi_log_debug("handler in %s is null", __func__);
         return;
     }
 
     ar = handler->result;
     if (ar == NULL) {
-        tapi_log_error("async result in %s is null", __func__);
+        tapi_log_debug("async result in %s is null", __func__);
         return;
     }
 
-    ar->status = OK;
-    dbus_error_init(&err);
-    if (dbus_set_error_from_message(&err, message) == true) {
-        tapi_log_error("%s: %s\n", err.name, err.message);
-        dbus_error_free(&err);
-        ar->status = ERROR;
-    }
     cb = handler->cb_function;
     if (cb == NULL) {
-        tapi_log_debug("callback is null");
+        tapi_log_debug("callback in %s is null", __func__);
         return;
     }
+
+    ar->status = status;
     cb(ar);
 }
 
@@ -3068,7 +3081,7 @@ int tapi_set_modem_stationary_threshold(tapi_context context, int slot_id, int e
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
