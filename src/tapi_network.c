@@ -649,33 +649,33 @@ static void network_register_cb(DBusMessage* message, void* user_data)
     tapi_async_result* ar;
     tapi_async_function cb;
     DBusError err;
-
-    if (handler == NULL) {
-        tapi_log_error("handler in %s is null", __func__);
-        return;
-    }
-
-    ar = handler->result;
-    if (ar == NULL) {
-        tapi_log_error("async result in %s is null", __func__);
-        return;
-    }
-
-    cb = handler->cb_function;
-    if (cb == NULL) {
-        tapi_log_error("callback in %s is null", __func__);
-        return;
-    }
-
-    ar->status = OK;
+    int status = OK;
 
     dbus_error_init(&err);
     if (dbus_set_error_from_message(&err, message) == true) {
         tapi_log_error("error from message in %s, %s: %s", __func__, err.name, err.message);
         dbus_error_free(&err);
-        ar->status = ERROR;
+        status = ERROR;
     }
 
+    if (handler == NULL) {
+        tapi_log_debug("handler in %s is null", __func__);
+        return;
+    }
+
+    ar = handler->result;
+    if (ar == NULL) {
+        tapi_log_debug("async result in %s is null", __func__);
+        return;
+    }
+
+    cb = handler->cb_function;
+    if (cb == NULL) {
+        tapi_log_debug("callback in %s is null", __func__);
+        return;
+    }
+
+    ar->status = status;
     cb(ar);
 }
 
@@ -1029,7 +1029,7 @@ int tapi_network_select_auto(tapi_context context,
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -1086,7 +1086,7 @@ int tapi_network_select_manual(tapi_context context,
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -1145,7 +1145,7 @@ int tapi_network_scan(tapi_context context,
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -1197,7 +1197,7 @@ int tapi_network_get_serving_cellinfos(tapi_context context,
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -1249,7 +1249,7 @@ int tapi_network_get_neighbouring_cellinfos(tapi_context context,
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -1745,7 +1745,7 @@ int tapi_network_get_registration_info(tapi_context context,
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -1798,7 +1798,7 @@ int tapi_network_set_cell_info_list_rate(tapi_context context, int slot_id,
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -1819,7 +1819,7 @@ int tapi_network_set_cell_info_list_rate(tapi_context context, int slot_id,
 
     if (!g_dbus_proxy_method_call(proxy,
             "CellInfoUpdateRate", cell_info_list_rate_param_append,
-            NULL, handler, handler_free)) {
+            no_operate_callback, handler, handler_free)) {
         tapi_log_error("method call failed in %s", __func__);
         handler_free(handler);
         return -EINVAL;
@@ -1858,7 +1858,7 @@ int tapi_network_register(tapi_context context,
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
