@@ -58,19 +58,19 @@ static int unsol_cbs_message(DBusConnection* connection,
     tapi_cbs_message* cbs_message;
 
     if (NULL == handler) {
-        tapi_log_error("handler in %s is null", __func__);
+        tapi_log_debug("handler in %s is null", __func__);
         return 0;
     }
 
     ar = handler->result;
     if (ar == NULL) {
-        tapi_log_error("async result in %s is null", __func__);
+        tapi_log_debug("async result in %s is null", __func__);
         return 0;
     }
 
     cb = handler->cb_function;
     if (cb == NULL) {
-        tapi_log_error("callback in %s is null", __func__);
+        tapi_log_debug("callback in %s is null", __func__);
         return 0;
     }
 
@@ -302,7 +302,7 @@ int tapi_cbs_register(tapi_context context, int slot_id, tapi_indication_msg msg
         return -EIO;
     }
 
-    user_data = malloc(sizeof(tapi_async_handler));
+    user_data = calloc(1, sizeof(tapi_async_handler));
     if (user_data == NULL) {
         tapi_log_error("user_data in %s is null", __func__);
         return -ENOMEM;
