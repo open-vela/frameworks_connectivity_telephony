@@ -1320,10 +1320,12 @@ static void common_data_logging_cb(tapi_async_result* result)
             deal_with_abnormal_data(data, *((int*)result->user_obj));
             break;
         case EVENT_OOS_DFX_DONE:
-            if (!strcmp("OOS_INFO,915300004,0", data)) {
+            if (strstr(data, "OOS_INFO,915300004")) {
                 dfx_data.received_dfx_flag[i] = true;
-                judge_data.result = 0;
-                judge_data.flag = EVENT_OOS_DFX_DONE;
+                if (dfx_data.expected_dfx_count == i + 1) {
+                    judge_data.result = 0;
+                    judge_data.flag = EVENT_OOS_DFX_DONE;
+                }
             }
             break;
         case EVENT_DISABLE_MODEM_DFX_DONE:
@@ -1392,8 +1394,9 @@ int check_oos_dfx(void)
     int watch_id = 0;
 
     dfx_data_init();
-    dfx_data.expected_dfx_count = 1;
+    dfx_data.expected_dfx_count = 2;
     dfx_data.expected_dfx_value[0] = EVENT_OOS_DFX_DONE;
+    dfx_data.expected_dfx_value[1] = EVENT_OOS_DFX_DONE;
     judge_data_init();
     judge_data.expect = EVENT_OOS_DFX_DONE;
 
