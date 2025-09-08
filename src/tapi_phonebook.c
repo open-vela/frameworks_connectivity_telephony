@@ -361,7 +361,7 @@ int tapi_phonebook_load_adn_entries(tapi_context context,
     ar->msg_id = event_id;
     ar->arg1 = slot_id;
 
-    user_data = malloc(sizeof(tapi_async_handler));
+    user_data = calloc(1, sizeof(tapi_async_handler));
     if (user_data == NULL) {
         tapi_log_error("user data in %s is null", __func__);
         free(ar);
@@ -414,7 +414,7 @@ int tapi_phonebook_load_fdn_entries(tapi_context context,
     ar->arg2 = 0;
     ar->data = NULL;
 
-    user_data = malloc(sizeof(tapi_async_handler));
+    user_data = calloc(1, sizeof(tapi_async_handler));
     if (user_data == NULL) {
         tapi_log_error("user data in %s is null", __func__);
         free(ar);
@@ -492,7 +492,7 @@ int tapi_phonebook_insert_fdn_entry(tapi_context context, int slot_id,
     ar->arg1 = slot_id;
     ar->data = fdn_record;
 
-    user_data = malloc(sizeof(tapi_async_handler));
+    user_data = calloc(1, sizeof(tapi_async_handler));
     if (user_data == NULL) {
         tapi_log_error("user data in %s is null", __func__);
         free(fdn_record);
@@ -565,7 +565,7 @@ int tapi_phonebook_delete_fdn_entry(tapi_context context, int slot_id,
     ar->arg1 = slot_id;
     ar->data = fdn_record;
 
-    user_data = malloc(sizeof(tapi_async_handler));
+    user_data = calloc(1, sizeof(tapi_async_handler));
     if (user_data == NULL) {
         tapi_log_error("user data in %s is null", __func__);
         free(fdn_record);
@@ -650,7 +650,7 @@ int tapi_phonebook_update_fdn_entry(tapi_context context, int slot_id, int event
     ar->arg1 = slot_id;
     ar->data = fdn_record;
 
-    user_data = malloc(sizeof(tapi_async_handler));
+    user_data = calloc(1, sizeof(tapi_async_handler));
     if (user_data == NULL) {
         tapi_log_error("user data in %s is null", __func__);
         free(fdn_record);
