@@ -537,32 +537,33 @@ static void apn_list_changed(DBusMessage* message, void* user_data)
     tapi_async_result* ar;
     tapi_async_function cb;
     DBusError err;
-
-    if (handler == NULL) {
-        tapi_log_error("handler in %s is null", __func__);
-        return;
-    }
-
-    ar = handler->result;
-    if (ar == NULL) {
-        tapi_log_error("async result in %s is null", __func__);
-        return;
-    }
-
-    cb = handler->cb_function;
-    if (cb == NULL) {
-        tapi_log_error("callback in %s is null", __func__);
-        return;
-    }
-    ar->status = OK;
+    int status = OK;
 
     dbus_error_init(&err);
     if (dbus_set_error_from_message(&err, message) == true) {
         tapi_log_error("error from message in %s, %s: %s", __func__, err.name, err.message);
         dbus_error_free(&err);
-        ar->status = ERROR;
+        status = ERROR;
     }
 
+    if (handler == NULL) {
+        tapi_log_debug("handler in %s is null", __func__);
+        return;
+    }
+
+    ar = handler->result;
+    if (ar == NULL) {
+        tapi_log_debug("async result in %s is null", __func__);
+        return;
+    }
+
+    cb = handler->cb_function;
+    if (cb == NULL) {
+        tapi_log_debug("callback in %s is null", __func__);
+        return;
+    }
+
+    ar->status = status;
     cb(ar);
 }
 
@@ -841,7 +842,7 @@ int tapi_data_load_apn_contexts(tapi_context context,
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -903,7 +904,7 @@ int tapi_data_add_apn_context(tapi_context context,
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -961,7 +962,7 @@ int tapi_data_remove_apn_context(tapi_context context,
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -1024,7 +1025,7 @@ int tapi_data_edit_apn_context(tapi_context context,
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -1077,7 +1078,7 @@ int tapi_data_reset_apn_contexts(tapi_context context,
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -1349,7 +1350,7 @@ int tapi_data_get_data_connection_list(tapi_context context, int slot_id, int ev
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -1673,7 +1674,7 @@ int tapi_data_set_data_allow(tapi_context context, int slot_id,
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -1730,7 +1731,7 @@ int tapi_data_register(tapi_context context,
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
