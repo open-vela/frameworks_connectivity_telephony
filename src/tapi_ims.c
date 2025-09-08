@@ -228,7 +228,7 @@ int tapi_ims_register_registration_change(tapi_context context, int slot_id, voi
         return -ENOMEM;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("async handler in %s is null", __func__);
         free(ar);
