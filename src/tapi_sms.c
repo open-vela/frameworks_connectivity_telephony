@@ -628,7 +628,7 @@ int tapi_sms_send_message(tapi_context context, int slot_id, int sms_id,
     ar->arg2 = sms_id;
     ar->data = message;
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         message_free(message);
@@ -711,7 +711,7 @@ int tapi_sms_send_data_message(tapi_context context, int slot_id, int sms_id,
     ar->arg2 = sms_id;
     ar->data = data_message;
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         data_message_free(data_message);
@@ -891,7 +891,7 @@ int tapi_sms_get_all_messages_from_sim(tapi_context context, int slot_id,
         return -EIO;
     }
 
-    user_data = malloc(sizeof(tapi_async_handler));
+    user_data = calloc(1, sizeof(tapi_async_handler));
     if (user_data == NULL) {
         tapi_log_error("user data in %s is null", __func__);
         return -ENOMEM;
@@ -969,7 +969,7 @@ int tapi_sms_copy_message_to_sim(tapi_context context, int slot_id,
     message_info->sms_type = type;
 
     if (!g_dbus_proxy_method_call(proxy, "InsertMessageToSim", copy_message_param_append,
-            NULL, message_info, message_info_free)) {
+            no_operate_callback, message_info, message_info_free)) {
         tapi_log_error("method call failed in %s", __func__);
         message_info_free(message_info);
         return -EINVAL;
@@ -1043,7 +1043,7 @@ int tapi_sms_register(tapi_context context, int slot_id,
         return -EIO;
     }
 
-    user_data = malloc(sizeof(tapi_async_handler));
+    user_data = calloc(1, sizeof(tapi_async_handler));
     if (user_data == NULL) {
         tapi_log_error("user data in %s is null", __func__);
         return -ENOMEM;
