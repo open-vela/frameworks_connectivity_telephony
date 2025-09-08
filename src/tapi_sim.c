@@ -56,7 +56,6 @@ typedef struct {
 /* This method should be called if the data field needs to be recycled. */
 static void sim_event_data_free(void* user_data);
 static void change_pin_param_append(DBusMessageIter* iter, void* user_data);
-static void method_call_complete(DBusMessage* message, void* user_data);
 static void enter_pin_param_append(DBusMessageIter* iter, void* user_data);
 static void reset_pin_param_append(DBusMessageIter* iter, void* user_data);
 static void lock_pin_param_append(DBusMessageIter* iter, void* user_data);
@@ -178,44 +177,6 @@ static void change_pin_param_append(DBusMessageIter* iter, void* user_data)
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &pin_type);
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &old_pin);
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &new_pin);
-}
-
-static void method_call_complete(DBusMessage* message, void* user_data)
-{
-    tapi_async_handler* handler = user_data;
-    tapi_async_result* ar;
-    tapi_async_function cb;
-    DBusError err;
-
-    if (handler == NULL) {
-        tapi_log_error("handler in %s is null", __func__);
-        return;
-    }
-
-    ar = handler->result;
-    if (ar == NULL) {
-        tapi_log_error("async result in %s is null", __func__);
-        return;
-    }
-
-    cb = handler->cb_function;
-    if (cb == NULL) {
-        tapi_log_error("callback in %s is null", __func__);
-        return;
-    }
-
-    dbus_error_init(&err);
-    if (dbus_set_error_from_message(&err, message) == true) {
-        tapi_log_error("error from message in %s, %s: %s", __func__, err.name, err.message);
-        dbus_error_free(&err);
-        ar->status = ERROR;
-        goto done;
-    }
-
-    ar->status = OK;
-
-done:
-    cb(ar);
 }
 
 static void handle_error_code_message(const char* error_message, tapi_async_result* ar)

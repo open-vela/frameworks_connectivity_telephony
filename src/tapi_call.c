@@ -207,7 +207,7 @@ static void dtmf_param_append(DBusMessageIter* iter, void* user_data)
     free(param);
 }
 
-static void deflect_param_append_0(DBusMessageIter* iter, void* user_data)
+static void deflect_param_append(DBusMessageIter* iter, void* user_data)
 {
     call_deflect_param* param = user_data;
     char *path, *number;
@@ -469,32 +469,33 @@ static void play_dtmf_callback(DBusMessage* message, void* user_data)
     tapi_async_function cb;
     tapi_async_result* ar;
     DBusError err;
+    int status = OK;
+
+    dbus_error_init(&err);
+    if (dbus_set_error_from_message(&err, message) == true) {
+        tapi_log_error("error from message in %s, %s: %s", __func__, err.name, err.message);
+        dbus_error_free(&err);
+        status = ERROR;
+    }
 
     if (handler == NULL) {
-        tapi_log_error("handler in %s is null", __func__);
+        tapi_log_debug("handler in %s is null", __func__);
         return;
     }
 
     ar = handler->result;
     if (ar == NULL) {
-        tapi_log_error("async result in %s is null", __func__);
+        tapi_log_debug("async result in %s is null", __func__);
         return;
     }
 
     cb = handler->cb_function;
     if (cb == NULL) {
-        tapi_log_error("callback in %s is null", __func__);
+        tapi_log_debug("callback in %s is null", __func__);
         return;
     }
 
-    ar->status = OK;
-    dbus_error_init(&err);
-    if (dbus_set_error_from_message(&err, message) == true) {
-        tapi_log_error("error from message in %s, %s: %s", __func__, err.name, err.message);
-        dbus_error_free(&err);
-        ar->status = ERROR;
-    }
-
+    ar->status = status;
     cb(ar);
 }
 
@@ -825,7 +826,7 @@ static int tapi_register_manager_call_signal(tapi_context context, int slot_id, 
     ar->arg1 = slot_id;
     ar->user_obj = user_obj;
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         free(ar);
         tapi_log_error("handler in %s is null", __func__);
@@ -1021,7 +1022,7 @@ static int call_play_dtmf(tapi_context context, int slot_id, unsigned char digit
     ar->arg1 = slot_id;
     ar->data = param;
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         free(param);
@@ -1095,7 +1096,7 @@ int tapi_call_dial_async(tapi_context context, int slot_id, char* number, int hi
     ar->data = param;
     ar->user_obj = user_data;
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         free(param);
@@ -1233,7 +1234,7 @@ int tapi_call_get_all_calls(tapi_context context, int slot_id, int event_id,
     ar->msg_id = event_id;
     ar->arg1 = slot_id;
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         free(ar);
@@ -1289,7 +1290,7 @@ int tapi_call_merge_call_async(tapi_context context, int slot_id, int event_id, 
     ar->arg1 = slot_id;
     ar->user_obj = user_data;
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         free(ar);
@@ -1354,7 +1355,7 @@ int tapi_call_separate_call(tapi_context context,
     ar->arg1 = slot_id;
     ar->data = call_id;
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         free(ar);
@@ -1732,7 +1733,7 @@ int tapi_call_answer_by_id_async(tapi_context context, int slot_id, char* call_i
     ar->data = call_id;
     ar->user_obj = user_obj;
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         free(ar);
@@ -1742,7 +1743,7 @@ int tapi_call_answer_by_id_async(tapi_context context, int slot_id, char* call_i
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy, "Answer", answer_hangup_param_append,
-            generic_callback, handler, handler_free)) {
+            method_call_complete, handler, handler_free)) {
         tapi_log_error("dbus method call failed in %s", __func__);
         report_data_logging_for_call(ctx, OFONO_NORMAL_CALL, OFONO_TERMINATE,
             OFONO_VOICE, OFONO_ANSWER_FAIL, "dbus method call fail");
@@ -1799,7 +1800,7 @@ int tapi_call_hangup_by_id(tapi_context context, int slot_id, char* call_id)
     ar->arg1 = slot_id;
     ar->data = call_id;
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         free(ar);
@@ -1861,7 +1862,7 @@ int tapi_call_deflect_by_id(tapi_context context, int slot_id, char* call_id, ch
     param->path = call_id;
     param->number = number;
 
-    if (!g_dbus_proxy_method_call(proxy, "Deflect", deflect_param_append_0,
+    if (!g_dbus_proxy_method_call(proxy, "Deflect", deflect_param_append,
             no_operate_callback, param, free)) {
         tapi_log_error("dbus method call failed in %s", __func__);
         free(param);

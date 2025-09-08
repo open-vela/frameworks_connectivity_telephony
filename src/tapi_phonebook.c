@@ -46,7 +46,6 @@ static void insert_fdn_record_append(DBusMessageIter* iter, void* user_data);
 static void insert_fdn_record_cb(DBusMessage* message, void* user_data);
 static void delete_fdn_record_append(DBusMessageIter* iter, void* user_data);
 static void update_fdn_record_append(DBusMessageIter* iter, void* user_data);
-static void method_call_complete(DBusMessage* message, void* user_data);
 
 /****************************************************************************
  * Private Functions
@@ -324,44 +323,6 @@ static void update_fdn_record_append(DBusMessageIter* iter, void* user_data)
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &new_number);
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &pin2);
     dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &fdn_idx);
-}
-
-static void method_call_complete(DBusMessage* message, void* user_data)
-{
-    tapi_async_handler* handler = user_data;
-    tapi_async_result* ar;
-    tapi_async_function cb;
-    DBusError err;
-
-    if (handler == NULL) {
-        tapi_log_error("handler in %s is null", __func__);
-        return;
-    }
-
-    ar = handler->result;
-    if (ar == NULL) {
-        tapi_log_error("async result in %s is null", __func__);
-        return;
-    }
-
-    cb = handler->cb_function;
-    if (cb == NULL) {
-        tapi_log_error("callback in %s is null", __func__);
-        return;
-    }
-
-    dbus_error_init(&err);
-    if (dbus_set_error_from_message(&err, message) == true) {
-        tapi_log_error("error from message in %s, %s: %s", __func__, err.name, err.message);
-        dbus_error_free(&err);
-        ar->status = ERROR;
-        goto done;
-    }
-
-    ar->status = OK;
-
-done:
-    cb(ar);
 }
 
 /****************************************************************************

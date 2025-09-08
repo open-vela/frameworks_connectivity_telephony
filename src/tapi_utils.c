@@ -52,11 +52,20 @@
 
 void no_operate_callback(DBusMessage* message, void* user_data)
 {
+    DBusError err;
+
+    dbus_error_init(&err);
+    if (dbus_set_error_from_message(&err, message) == true) {
+        tapi_log_error("error from message in %s, %s: %s", __func__, err.name, err.message);
+        dbus_error_free(&err);
+    }
 }
 
-void generic_callback(DBusMessage* message, void* user_data)
+void method_call_complete(DBusMessage* message, void* user_data)
 {
     tapi_async_handler* handler = user_data;
+    tapi_async_function cb;
+    tapi_async_result* ar;
     DBusError err;
     int status = OK;
 
@@ -67,10 +76,25 @@ void generic_callback(DBusMessage* message, void* user_data)
         dbus_error_free(&err);
     }
 
-    if (handler != NULL && handler->result != NULL && handler->cb_function != NULL) {
-        handler->result->status = status;
-        handler->cb_function(handler->result);
+    if (handler == NULL) {
+        tapi_log_debug("handler in %s is null", __func__);
+        return;
     }
+
+    ar = handler->result;
+    if (ar == NULL) {
+        tapi_log_debug("async result in %s is null", __func__);
+        return;
+    }
+
+    cb = handler->cb_function;
+    if (cb == NULL) {
+        tapi_log_debug("callback in %s is null", __func__);
+        return;
+    }
+
+    ar->status = status;
+    cb(ar);
 }
 
 const char* get_env_interface_support_string(const char* interface)

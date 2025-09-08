@@ -44,7 +44,6 @@ typedef struct {
 
 /* This method should be called if the data field needs to be recycled. */
 static void stk_event_data_free(void* user_data);
-static void method_call_complete(DBusMessage* message, void* user_data);
 static bool stk_agent_dbus_pending_reply(DBusConnection* conn,
     DBusMessage** msg, DBusMessage* reply);
 static void stk_agent_register_param_append(DBusMessageIter* iter, void* user_data);
@@ -178,43 +177,6 @@ static void stk_event_data_free(void* user_data)
 
         free(handler);
     }
-}
-
-static void method_call_complete(DBusMessage* message, void* user_data)
-{
-    tapi_async_handler* handler = user_data;
-    tapi_async_result* ar;
-    tapi_async_function cb;
-    DBusError err;
-
-    if (handler == NULL) {
-        tapi_log_error("handler in %s is null", __func__);
-        return;
-    }
-
-    if ((ar = handler->result) == NULL) {
-        tapi_log_error("async result in %s is null", __func__);
-        return;
-    }
-
-    if ((cb = handler->cb_function) == NULL) {
-        tapi_log_error("callback in %s is null", __func__);
-        return;
-    }
-
-    dbus_error_init(&err);
-    if (dbus_set_error_from_message(&err, message) == true) {
-        tapi_log_error("error from message in %s, error %s: %s",
-            __func__, err.name, err.message);
-        dbus_error_free(&err);
-        ar->status = ERROR;
-        goto done;
-    }
-
-    ar->status = OK;
-
-done:
-    cb(ar);
 }
 
 static bool stk_agent_dbus_pending_reply(DBusConnection* conn,
