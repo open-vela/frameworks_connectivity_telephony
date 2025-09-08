@@ -1000,7 +1000,7 @@ int tapi_ss_initiate_service(tapi_context context, int slot_id, int event_id,
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -1057,7 +1057,7 @@ int tapi_ss_request_call_barring(tapi_context context, int slot_id, int event_id
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -1126,7 +1126,7 @@ int tapi_ss_set_call_barring_option(tapi_context context, int slot_id, int event
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -1265,7 +1265,7 @@ int tapi_ss_change_call_barring_password(tapi_context context, int slot_id, int 
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -1337,7 +1337,7 @@ int tapi_ss_disable_all_call_barrings(tapi_context context, int slot_id, int eve
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -1398,7 +1398,7 @@ int tapi_ss_disable_all_incoming(tapi_context context, int slot_id,
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -1459,7 +1459,7 @@ int tapi_ss_disable_all_outgoing(tapi_context context, int slot_id,
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -1521,7 +1521,7 @@ int tapi_ss_query_call_forwarding_option(tapi_context context, int slot_id, int 
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -1594,7 +1594,7 @@ int tapi_ss_set_call_forwarding_option(tapi_context context, int slot_id, int ev
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -1694,7 +1694,7 @@ int tapi_ss_send_ussd(tapi_context context, int slot_id, int event_id, char* rep
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -1750,7 +1750,7 @@ int tapi_ss_cancel_ussd(tapi_context context, int slot_id, int event_id,
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -1811,7 +1811,7 @@ int tapi_ss_set_call_waiting(tapi_context context, int slot_id, int event_id, bo
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -1872,7 +1872,7 @@ int tapi_ss_get_call_waiting(tapi_context context, int slot_id, int event_id,
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -1972,7 +1972,7 @@ int tapi_ss_set_calling_line_restriction(tapi_context context, int slot_id, int 
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -2033,7 +2033,7 @@ int tapi_ss_get_calling_line_restriction_info(tapi_context context, int slot_id,
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -2091,7 +2091,7 @@ int tapi_ss_enable_fdn(tapi_context context, int slot_id, int event_id,
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -2144,7 +2144,7 @@ int tapi_ss_query_fdn(tapi_context context, int slot_id, int event_id,
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -2202,7 +2202,7 @@ int tapi_ss_register(tapi_context context,
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
