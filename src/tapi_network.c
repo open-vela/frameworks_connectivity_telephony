@@ -709,7 +709,7 @@ static void registration_info_query_done(DBusMessage* message, void* user_data)
         return;
     }
 
-    registration_info = malloc(sizeof(tapi_registration_info));
+    registration_info = calloc(1, sizeof(tapi_registration_info));
     if (registration_info == NULL) {
         tapi_log_error("registration_info in %s is null", __func__);
         return;
