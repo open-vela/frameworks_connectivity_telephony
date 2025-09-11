@@ -13,6 +13,7 @@
 
 #include "telephony_test.h"
 
+#include "remote_operation.h"
 #include "telephony_call_test.h"
 #include "telephony_common_test.h"
 #include "telephony_data_test.h"
@@ -191,7 +192,6 @@ int judge(void)
     }
 
     syslog(LOG_ERR, "judge expect(%d) timeout\n", judge_data.expect);
-    assert_true(false);
     return -ETIME;
 }
 
@@ -929,6 +929,52 @@ static void TestTeleAbn_CallAnswerAgain(void** state)
     (void)state;
     int ret = call_abnormal_answer_again_test(0);
     assert_int_equal(ret, 0);
+}
+
+static void TestTeleAbn_CallDialError(void** state)
+{
+    (void)state;
+    remote_command_response_fail(0, 1);
+    int ret = call_dial_test(0, phone_num, 0);
+    remote_command_response_fail(0, 0);
+    assert_int_equal(ret, -1);
+}
+
+static void TestTeleAbn_CallAnswerError(void** state)
+{
+    (void)state;
+    int ret = call_answer_error(0);
+    assert_int_equal(ret, -1);
+}
+
+static void TestTeleAbn_CallRejectError(void** state)
+{
+    (void)state;
+    remote_operation_call_incoming_test(0, "10086");
+    remote_command_response_fail(0, 1);
+    int ret = call_hangup_all_test(0);
+    remote_command_response_fail(0, 0);
+    assert_int_equal(ret, -1);
+}
+
+static void TestTeleAbn_CallHangupError(void** state)
+{
+    (void)state;
+    int ret = call_dial_test(0, phone_num, 0);
+    assert_int_equal(ret, 0);
+    remote_command_response_fail(0, 1);
+    ret = call_hangup_all_test(0);
+    remote_command_response_fail(0, 0);
+    assert_int_equal(ret, -1);
+}
+
+static void TestTeleAbn_CallConferenceError(void** state)
+{
+    (void)state;
+    remote_command_response_fail(0, 1);
+    int ret = call_dial_conference_test(0);
+    remote_command_response_fail(0, 0);
+    assert_int_equal(ret, -1);
 }
 
 // data testcases
@@ -4161,6 +4207,11 @@ int main(int argc, char* argv[])
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallPerformTransfer, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialingThirdCall, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleStab_CallDialingAndHangupNTimes, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleAbn_CallDialError, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleAbn_CallAnswerError, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleAbn_CallRejectError, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleAbn_CallHangupError, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleAbn_CallConferenceError, setup_call, teardown_call),
     };
 
     const struct CMUnitTest DataTestSuites[] = {

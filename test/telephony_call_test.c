@@ -288,6 +288,11 @@ int teardown_call(void** state)
 {
     (void)state;
     int res = 0;
+    if (remote_command_response_fail(0, 0)) {
+        syslog(LOG_ERR, "Remote command response fail in %s", __func__);
+        res = -1;
+    }
+
     if (call_get_call_count(0)) {
         sleep(3);
         if (call_hangup_all_test(0)) {
@@ -1307,6 +1312,44 @@ int call_answer_call_test(int slot_id, char* call_id)
 
     if (judge_data.result) {
         syslog(LOG_ERR, "Async result is invalid in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
+int call_answer_error(int slot_id)
+{
+    int res = 0;
+
+    if (remote_operation_call_incoming_test(slot_id, phone_num)) {
+        syslog(LOG_ERR, "Remote call incoming fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (remote_command_response_fail(slot_id, 1)) {
+        syslog(LOG_ERR, "Remote command response fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (call_answer_call_test(slot_id, test_case_data.call_id)) {
+        syslog(LOG_ERR, "Call answer fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (remote_command_response_fail(slot_id, 0)) {
+        syslog(LOG_ERR, "Remote command response fail in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (call_hangup_all_test(slot_id)) {
+        syslog(LOG_ERR, "Hangup fail in %s", __func__);
         res = -1;
         goto on_exit;
     }
