@@ -39,6 +39,7 @@ int teardown_call(void** state);
 int teardown_callAndData(void** state);
 int teardown_callAndRadio(void** state);
 int call_abnormal_answer_again_test(int slot_id);
+int call_answer_error(int slot_id);
 int call_answer_call_test(int slot_id, char* call_id);
 int call_answer_call_aysnc_test(int slot_id, char* call_id);
 int call_check_dialing_status_with_multi_call(int slot);
