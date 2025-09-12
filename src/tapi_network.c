@@ -720,6 +720,8 @@ static void registration_info_query_done(DBusMessage* message, void* user_data)
     registration_info->mnc[0] = '\0';
     registration_info->station[0] = '\0';
 
+    ar->data = registration_info;
+
     dbus_error_init(&err);
     if (dbus_set_error_from_message(&err, message) == true) {
         tapi_log_error("error from message in %s, %s: %s", __func__, err.name, err.message);
@@ -782,7 +784,6 @@ static void registration_info_query_done(DBusMessage* message, void* user_data)
     }
 
     ar->status = OK;
-    ar->data = registration_info;
 
 done:
     cb(ar);
