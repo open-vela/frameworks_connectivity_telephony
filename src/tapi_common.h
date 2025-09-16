@@ -26,11 +26,12 @@
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
+#define TAPI_TAG "[tapi]"
 
-#define tapi_log_info(format, ...) syslog(LOG_INFO, format, ##__VA_ARGS__)
-#define tapi_log_warn(format, ...) syslog(LOG_WARN, format, ##__VA_ARGS__)
-#define tapi_log_error(format, ...) syslog(LOG_ERR, format, ##__VA_ARGS__)
-#define tapi_log_debug(format, ...) syslog(LOG_DEBUG, format, ##__VA_ARGS__)
+#define tapi_log_info(format, ...) syslog(LOG_INFO, TAPI_TAG format, ##__VA_ARGS__)
+#define tapi_log_warn(format, ...) syslog(LOG_WARN, TAPI_TAG format, ##__VA_ARGS__)
+#define tapi_log_error(format, ...) syslog(LOG_ERR, TAPI_TAG format, ##__VA_ARGS__)
+#define tapi_log_debug(format, ...) syslog(LOG_DEBUG, TAPI_TAG format, ##__VA_ARGS__)
 
 #define MAX_CONTEXT_NAME_LENGTH 256
 #define MAX_VOICE_CALL_PROXY_COUNT 99
