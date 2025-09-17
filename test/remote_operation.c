@@ -199,3 +199,13 @@ int remote_trigger_oos(int type)
         EVENT_OEM_RIL_REQUEST_STRINGS_DONE, oem_req, 1, NULL);
 }
 #endif
+
+int remote_incoming_call_state_change(int slot_id, const char* phone_number, int target_status)
+{
+    char* oem_req[1];
+    oem_req[0] = remote_command_buf;
+    memset(remote_command_buf, 0, sizeof(remote_command_buf));
+    sprintf(remote_command_buf, "AT+REMOTEERRORSTATEREPORT=%d,%s", target_status, phone_number);
+    return tapi_invoke_oem_ril_request_strings(get_tapi_ctx(), slot_id,
+        EVENT_OEM_RIL_REQUEST_STRINGS_DONE, oem_req, 1, NULL);
+}

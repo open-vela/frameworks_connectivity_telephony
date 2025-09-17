@@ -496,6 +496,12 @@ static void TestTeleFunc_CI_CallDialNumber(void** state)
     assert_int_equal(ret, OK);
 }
 
+static void TestTeleFunc_CallStatusError(void** state)
+{
+    int ret = incoming_call_with_unexpected_status(6);
+    assert_int_equal(ret, OK);
+}
+
 static void TestTeleFunc_CI_CallDialNumberWithoutSimCard(void** state)
 {
     (void)state;
@@ -4212,6 +4218,7 @@ int main(int argc, char* argv[])
         cmocka_unit_test_setup_teardown(TestTeleAbn_CallRejectError, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleAbn_CallHangupError, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleAbn_CallConferenceError, setup_call, teardown_call),
+        cmocka_unit_test_setup_teardown(TestTeleFunc_CallStatusError, setup_call, teardown_call),
     };
 
     const struct CMUnitTest DataTestSuites[] = {

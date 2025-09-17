@@ -4425,6 +4425,19 @@ on_exit:
     return res;
 }
 
+int incoming_call_with_unexpected_status(int target_status)
+{
+    int res = 0;
+
+    remote_incoming_call_state_change(0, phone_num, target_status);
+    sleep(3);
+    if (call_get_call_count(0) != 0) {
+        res = -1;
+    }
+
+    return res;
+}
+
 #ifndef CONFIG_TELEPHONY_DFX
 int check_call_dial_ecc_number_dfx(int slot_id)
 {

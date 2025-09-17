@@ -31,3 +31,4 @@ int remote_unexpected_abnormal_event_report(void);
 int remote_data_block_operation(bool enable);
 int remote_trigger_oos(int type);
 #endif
+int remote_incoming_call_state_change(int slot_id, const char* phone_number, int target_status);
