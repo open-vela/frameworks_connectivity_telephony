@@ -963,7 +963,7 @@ static void oem_ril_request_strings_param_append(DBusMessageIter* iter, void* us
         return;
     }
 
-    oem_ril_req_strings_param = param->result->data;
+    oem_ril_req_strings_param = param->result->user_obj;
     oem_req = (char**)oem_ril_req_strings_param->oem_req;
 
     dbus_message_iter_open_container(iter, DBUS_TYPE_ARRAY, DBUS_TYPE_STRING_AS_STRING, &array);
@@ -973,8 +973,6 @@ static void oem_ril_request_strings_param_append(DBusMessageIter* iter, void* us
     }
 
     dbus_message_iter_close_container(iter, &array);
-
-    free(oem_ril_req_strings_param);
 }
 
 static void oem_ril_request_strings_cb(DBusMessage* message, void* user_data)
@@ -1000,6 +998,8 @@ static void oem_ril_request_strings_cb(DBusMessage* message, void* user_data)
 
     if ((cb = handler->cb_function) == NULL) {
         tapi_log_error("callback in %s is null", __func__);
+        if (ar->user_obj != NULL)
+            free(ar->user_obj);
         return;
     }
 
@@ -1036,6 +1036,8 @@ static void oem_ril_request_strings_cb(DBusMessage* message, void* user_data)
 
 done:
     cb(ar);
+    if (ar->user_obj != NULL)
+        free(ar->user_obj);
 }
 
 static void on_dbus_client_ready(GDBusClient* client, void* user_data)
@@ -2124,7 +2126,7 @@ int tapi_invoke_oem_ril_request_strings(tapi_context context, int slot_id, int e
 
     ar->arg1 = slot_id;
     ar->msg_id = event_id;
-    ar->data = oem_ril_req_param;
+    ar->user_obj = oem_ril_req_param;
     handler->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy, "OemRequestStrings", oem_ril_request_strings_param_append,
