@@ -396,6 +396,27 @@ int tapi_get_carrier_config_int(tapi_context context, int slot_id, char* key, in
  */
 int tapi_get_carrier_config_string(tapi_context context, int slot_id, char* key, char** out);
 
+/**
+ * check modem upgrade state.
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] event_id       Async event identifier.
+ * @param[in] p_handle       Event callback.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_check_modem_upgrade_state(tapi_context context, int slot_id, int event_id, tapi_async_function p_handle);
+
+/**
+ * control modem upgrade action
+ * @param[in] context        Telephony api context.
+ * @param[in] slot_id        Slot id of current sim.
+ * @param[in] event_id       Async event identifier.
+ * @param[in] cmd_id         command value.
+ * @param[in] p_handle       Event callback.
+ * @return Zero on success; a negated errno value on failure.
+ */
+int tapi_modem_upgrade_cmd(tapi_context context, int slot_id, int event_id, int cmd_id, tapi_async_function p_handle);
+
 #ifdef __cplusplus
 }
 #endif

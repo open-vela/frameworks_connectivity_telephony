@@ -589,6 +589,61 @@ done:
     return true;
 }
 
+static int modem_upgrade_state_changed(DBusConnection* connection,
+    DBusMessage* message, void* user_data)
+{
+    tapi_async_handler* handler = user_data;
+    tapi_async_result* ar;
+    tapi_async_function cb;
+    DBusMessageIter iter;
+    int* ext_info = NULL;
+    int info = 0;
+
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
+        return false;
+    }
+
+    ar = handler->result;
+    if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
+        return false;
+    }
+
+    cb = handler->cb_function;
+    if (cb == NULL) {
+        tapi_log_error("callback in %s is null", __func__);
+        return false;
+    }
+
+    if (dbus_message_iter_init(message, &iter) == false) {
+        tapi_log_error("message iter init failed in %s", __func__);
+        ar->status = ERROR;
+        goto done;
+    }
+
+    ar->status = OK;
+    dbus_message_iter_get_basic(&iter, &ar->arg2);
+    if (ar->arg2 == 2 || ar->arg2 == 3) {
+        dbus_message_iter_next(&iter);
+        dbus_message_iter_get_basic(&iter, &info);
+        ext_info = malloc(sizeof(int));
+        if (ext_info == NULL) {
+            tapi_log_error("malloc failed in %s", __func__);
+            goto done;
+        }
+        *ext_info = info;
+        ar->data = ext_info;
+    }
+
+done:
+    cb(ar);
+    if (ext_info != NULL) {
+        free(ext_info);
+    }
+    return true;
+}
+
 static int process_oem_hook_raw_indication(DBusConnection* connection,
     DBusMessage* message, void* user_data)
 {
@@ -1183,6 +1238,11 @@ static int tapi_modem_register(tapi_context context,
         watch_id = dbus_client_add_signal_watch(ctx->client,
             OFONO_SERVICE, modem_path, OFONO_MODEM_INTERFACE,
             "PropertyChanged", modem_ecc_list_change, handler, handler_free);
+        break;
+    case MSG_MODEM_UPGRADE_STATE_IND:
+        watch_id = dbus_client_add_signal_watch(ctx->client,
+            OFONO_SERVICE, modem_path, OFONO_MODEM_INTERFACE,
+            "ModemUpgradeStateChanged", modem_upgrade_state_changed, handler, handler_free);
         break;
     default:
         handler_free(handler);
@@ -2522,6 +2582,7 @@ int tapi_register(tapi_context context,
     case MSG_AIRPLANE_MODE_CHANGE_IND:
     case MSG_DEVICE_INFO_CHANGE_IND:
     case MSG_MODEM_STATE_CHANGE_IND:
+    case MSG_MODEM_UPGRADE_STATE_IND:
         return tapi_modem_register(context, slot_id, msg, user_obj, p_handle);
     case MSG_IMS_REGISTRATION_MESSAGE_IND:
         return tapi_ims_register_registration_change(context, slot_id, user_obj, p_handle);
@@ -2669,12 +2730,12 @@ static void suppress_message_report_param_append(DBusMessageIter* iter, void* da
     int enable;
 
     if (param == NULL) {
-        tapi_log_error("suppress message data in %s is null", __func__);
+        tapi_log_error("data in %s is null", __func__);
         return;
     }
 
     if (param->result == NULL) {
-        tapi_log_error("invalid call waiting value in %s!!", __func__);
+        tapi_log_error("invalid value in %s!!", __func__);
         return;
     }
 
@@ -2781,12 +2842,12 @@ static void set_signal_report_threshold_param_append(DBusMessageIter* iter, void
     int type;
 
     if (param == NULL) {
-        tapi_log_error("suppress message data in %s is null", __func__);
+        tapi_log_error("data in %s is null", __func__);
         return;
     }
 
     if (param->result == NULL) {
-        tapi_log_error("invalid call waiting value in %s!!", __func__);
+        tapi_log_error("invalid value in %s!!", __func__);
         return;
     }
 
@@ -2893,12 +2954,12 @@ static void enable_modem_stationary_param_append(DBusMessageIter* iter, void* da
     int enable;
 
     if (param == NULL) {
-        tapi_log_error("suppress message data in %s is null", __func__);
+        tapi_log_error("data in %s is null", __func__);
         return;
     }
 
     if (param->result == NULL) {
-        tapi_log_error("invalid call waiting value in %s!!", __func__);
+        tapi_log_error("invalid value in %s!!", __func__);
         return;
     }
 
@@ -3005,12 +3066,12 @@ static void set_modem_stationary_threshold_param_append(DBusMessageIter* iter, v
     int value;
 
     if (param == NULL) {
-        tapi_log_error("suppress message data in %s is null", __func__);
+        tapi_log_error("data in %s is null", __func__);
         return;
     }
 
     if (param->result == NULL) {
-        tapi_log_error("invalid call waiting value in %s!!", __func__);
+        tapi_log_error("invalid value in %s!!", __func__);
         return;
     }
 
@@ -3295,4 +3356,204 @@ int tapi_get_carrier_config_string(tapi_context context, int slot_id, char* key,
     }
 
     return get_carrier_config_value(proxy, key, out);
+}
+
+static void check_modem_state_done(DBusMessage* message, void* user_data)
+{
+    tapi_async_handler* handler = user_data;
+    tapi_async_result* ar;
+    tapi_async_function cb;
+    DBusError err;
+    DBusMessageIter iter;
+
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
+        return;
+    }
+
+    ar = handler->result;
+    if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
+        return;
+    }
+
+    cb = handler->cb_function;
+    if (cb == NULL) {
+        tapi_log_error("callback in %s is null", __func__);
+        return;
+    }
+
+    ar->status = OK;
+    dbus_error_init(&err);
+    if (dbus_set_error_from_message(&err, message) == true) {
+        tapi_log_error("%s: %s\n", err.name, err.message);
+        dbus_error_free(&err);
+        ar->status = ERROR;
+    } else {
+        if (dbus_message_iter_init(message, &iter) == false) {
+            tapi_log_error("message iter init failed in %s", __func__);
+            ar->status = ERROR;
+        } else {
+            dbus_message_iter_get_basic(&iter, &ar->arg2);
+        }
+    }
+
+    cb(ar);
+}
+
+int tapi_check_modem_upgrade_state(tapi_context context, int slot_id, int event_id, tapi_async_function p_handle)
+{
+    dbus_context* ctx = context;
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
+    GDBusProxy* proxy;
+
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
+        return -EINVAL;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy in %s", __func__);
+        return -EIO;
+    }
+
+    handler = malloc(sizeof(tapi_async_handler));
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
+        return -ENOMEM;
+    }
+
+    ar = calloc(1, sizeof(tapi_async_result));
+    if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
+        free(handler);
+        return -ENOMEM;
+    }
+
+    ar->msg_id = event_id;
+    ar->arg1 = slot_id;
+    handler->result = ar;
+    handler->cb_function = p_handle;
+
+    if (!g_dbus_proxy_method_call(proxy, "CheckModemUpgradeState",
+            NULL, check_modem_state_done, handler, handler_free)) {
+        tapi_log_error("method call failed in %s", __func__);
+        handler_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
+}
+
+static void modem_upgrade_cmd_done(DBusMessage* message, void* user_data)
+{
+    tapi_async_handler* handler = user_data;
+    tapi_async_result* ar;
+    tapi_async_function cb;
+    DBusError err;
+
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
+        return;
+    }
+
+    ar = handler->result;
+    if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
+        return;
+    }
+
+    cb = handler->cb_function;
+    if (cb == NULL) {
+        tapi_log_error("callback in %s is null", __func__);
+        return;
+    }
+
+    ar->status = OK;
+    dbus_error_init(&err);
+    if (dbus_set_error_from_message(&err, message) == true) {
+        tapi_log_error("%s: %s\n", err.name, err.message);
+        dbus_error_free(&err);
+        ar->status = ERROR;
+    }
+
+    cb(ar);
+}
+
+static void modem_upgrade_cmd_param_append(DBusMessageIter* iter, void* data)
+{
+    tapi_async_handler* param = data;
+    int cmd_id;
+
+    if (param == NULL) {
+        tapi_log_error("data in %s is null", __func__);
+        return;
+    }
+
+    if (param->result == NULL) {
+        tapi_log_error("invalid value in %s!!", __func__);
+        return;
+    }
+
+    cmd_id = param->result->arg2;
+    dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &cmd_id);
+}
+
+int tapi_modem_upgrade_cmd(tapi_context context, int slot_id, int event_id, int cmd_id, tapi_async_function p_handle)
+{
+    dbus_context* ctx = context;
+    tapi_async_handler* handler;
+    tapi_async_result* ar;
+    GDBusProxy* proxy;
+
+    if (ctx == NULL) {
+        tapi_log_error("context in %s is null", __func__);
+        return -EINVAL;
+    }
+
+    if (!tapi_is_valid_slotid(slot_id)) {
+        tapi_log_error("invalid slot id %d in %s", slot_id, __func__);
+        return -EINVAL;
+    }
+
+    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_MODEM];
+    if (proxy == NULL) {
+        tapi_log_error("no available proxy in %s", __func__);
+        return -EIO;
+    }
+
+    handler = malloc(sizeof(tapi_async_handler));
+    if (handler == NULL) {
+        tapi_log_error("handler in %s is null", __func__);
+        return -ENOMEM;
+    }
+
+    ar = calloc(1, sizeof(tapi_async_result));
+    if (ar == NULL) {
+        tapi_log_error("async result in %s is null", __func__);
+        free(handler);
+        return -ENOMEM;
+    }
+
+    ar->msg_id = event_id;
+    ar->arg1 = slot_id;
+    ar->arg2 = cmd_id;
+    handler->result = ar;
+    handler->cb_function = p_handle;
+
+    if (!g_dbus_proxy_method_call(proxy, "ModemUpgradeCmd",
+            modem_upgrade_cmd_param_append, modem_upgrade_cmd_done, handler, handler_free)) {
+        tapi_log_error("method call failed in %s", __func__);
+        handler_free(handler);
+        return -EINVAL;
+    }
+
+    return OK;
 }

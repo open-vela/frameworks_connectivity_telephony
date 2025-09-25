@@ -286,6 +286,7 @@ typedef enum {
     MSG_NETWORK_OPERATOR_STATUS_CHANGE_IND,
     MSG_NETWORK_OPERATOR_NAME_CHANGE_IND,
 
+    MSG_MODEM_UPGRADE_STATE_IND,
     // tapi indication msg value max.
     MSG_IND_MASK,
 

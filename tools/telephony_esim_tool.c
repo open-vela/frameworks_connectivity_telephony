@@ -52,7 +52,9 @@
 #define EVENT_MODEM_SUPPRESS_MESSAGE_REPORT_DONE 0x0B
 #define EVENT_MODEM_SET_SIGNAL_REPORT_THRESHOLD_DONE 0x0C
 #define EVENT_MODEM_ENABLE_MODEM_STATIONARY_DONE 0x0D
+#define EVENT_CHECK_MODEM_UPGRADE_STATUS_DONE 0x0E
 #define EVENT_MODEM_SET_MODEM_STATIONARY_THRESHOLD_DONE 0x0F
+#define EVENT_MODEM_UPGRADE_CMD_DONE 0x10
 
 // Data Callback Event
 #define EVENT_APN_LOADED_DONE 0x11
@@ -338,6 +340,10 @@ static void tele_call_async_fun(tapi_async_result* result)
     } else if (result->msg_id == EVENT_MODEM_ENABLE_DONE) {
         syslog(LOG_DEBUG, "%s modem %s.", result->arg2 ? "enable" : "disable",
             result->status ? "failed" : "succeeded");
+    } else if (result->msg_id == EVENT_CHECK_MODEM_UPGRADE_STATUS_DONE) {
+        syslog(LOG_DEBUG, "check modem upgrade status done");
+    } else if (result->msg_id == EVENT_MODEM_UPGRADE_CMD_DONE) {
+        syslog(LOG_DEBUG, "modem upgrade cmd done");
     }
 }
 
@@ -950,6 +956,14 @@ static void radio_signal_change(tapi_async_result* result)
     case MSG_ECC_LIST_CHANGE_IND:
         syslog(LOG_DEBUG, "MSG_ECC_LIST_CHANGE_IND");
         tele_call_ecc_list_async_fun(result);
+        break;
+    case MSG_MODEM_UPGRADE_STATE_IND:
+        syslog(LOG_DEBUG, "MSG_MODEM_UPGRADE_STATE_IND,state_value:%d", param);
+        if (result->data != NULL) {
+            int ext_info = *((int*)result->data);
+            syslog(LOG_DEBUG, "MSG_MODEM_UPGRADE_STATE_IND,ext_info:%d", ext_info);
+        }
+        break;
     default:
         break;
     }
@@ -2204,6 +2218,47 @@ static int telephonytool_cmd_get_modem_status(tapi_context context, char* pargs)
     syslog(LOG_DEBUG, "%s, slotId : %s  \n", __func__, slot_id);
     return tapi_get_modem_status(context, atoi(slot_id),
         EVENT_MODEM_STATUS_QUERY_DONE, tele_call_async_fun);
+}
+
+static int telephonytool_cmd_check_modem_upgrade_status(tapi_context context, char* pargs)
+{
+    char* slot_id;
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    slot_id = strtok_r(pargs, " ", NULL);
+    if (!is_valid_slot_id_str(slot_id))
+        return -EINVAL;
+
+    syslog(LOG_DEBUG, "%s, slotId : %s  \n", __func__, slot_id);
+    return tapi_check_modem_upgrade_state(context, atoi(slot_id),
+        EVENT_CHECK_MODEM_UPGRADE_STATUS_DONE, tele_call_async_fun);
+}
+
+static int telephonytool_cmd_modem_upgrade_cmd(tapi_context context, char* pargs)
+{
+    char* slot_id;
+    int cnt;
+    int cmd_id;
+    char dst[2][MAX_INPUT_ARGS_LEN];
+
+    if (strlen(pargs) == 0)
+        return -EINVAL;
+
+    cnt = split_input(dst, 2, pargs, " ");
+
+    if (cnt != 2)
+        return -EINVAL;
+
+    slot_id = dst[0];
+    cmd_id = atoi(dst[1]);
+    if (!is_valid_slot_id_str(slot_id))
+        return -EINVAL;
+
+    syslog(LOG_DEBUG, "%s, slotId : %s  \n", __func__, slot_id);
+    return tapi_modem_upgrade_cmd(context, atoi(slot_id),
+        EVENT_MODEM_UPGRADE_CMD_DONE, cmd_id, tele_call_async_fun);
 }
 
 static int telephonytool_cmd_oem_ril_req_raw(tapi_context context, char* pargs)
@@ -5005,6 +5060,12 @@ static struct telephonytool_cmd_s g_telephonytool_cmds[] = {
         telephonytool_cmd_set_modem_stationary_threshold,
         "configure modem stationary judge threshold(enter example :set-modem-stationary-threshold 0 3"
         "[slot_id][threshold_value(db)])" },
+    { "check-modem-upgrade-status", RADIO_CMD,
+        telephonytool_cmd_check_modem_upgrade_status,
+        "check modem upgrade status (enter example : check-modem-upgrade-status 0 [slot_id])" },
+    { "modem-upgrade-cmd", RADIO_CMD,
+        telephonytool_cmd_modem_upgrade_cmd,
+        "modem upgrade cmd (enter example : modem-upgrade-cmd 0 0 [slot_id][cmd, 0:start 1:stop])" },
 
     /* Call Command */
     { "listen-call", CALL_CMD,
