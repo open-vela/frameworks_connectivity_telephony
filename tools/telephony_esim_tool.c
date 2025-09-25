@@ -334,6 +334,9 @@ static void tele_call_async_fun(tapi_async_result* result)
         syslog(LOG_DEBUG, "set modem stationary, state : %d\n", result->status);
     } else if (result->msg_id == EVENT_MODEM_SET_MODEM_STATIONARY_THRESHOLD_DONE) {
         syslog(LOG_DEBUG, "set modem stationary threshold, state : %d\n", result->status);
+    } else if (result->msg_id == EVENT_MODEM_ENABLE_DONE) {
+        syslog(LOG_DEBUG, "%s modem %s.", result->arg2 ? "enable" : "disable",
+            result->status ? "failed" : "succeeded");
     }
 }
 

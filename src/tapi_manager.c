@@ -19,8 +19,8 @@
  ****************************************************************************/
 
 #include <ofono/dfx.h>
-#include <unistd.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #include "tapi_internal.h"
 #include "tapi_manager.h"
@@ -2180,6 +2180,7 @@ int tapi_enable_modem(tapi_context context, int slot_id,
 
     ar->msg_id = event_id;
     ar->arg1 = slot_id;
+    ar->arg2 = enable;
     handler->result = ar;
     handler->cb_function = p_handle;
 
