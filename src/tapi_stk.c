@@ -1802,14 +1802,14 @@ int tapi_stk_agent_register(tapi_context context, int slot_id,
 
     ar->msg_id = event_id;
     ar->arg1 = slot_id;
-    ar->data = agent_id;
+    ar->data = strdup(agent_id);
     user_data->result = ar;
     user_data->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy, "RegisterAgent", stk_agent_register_param_append,
-            method_call_complete, user_data, handler_free)) {
+            method_call_complete, user_data, stk_event_data_free)) {
         tapi_log_error("dbus method call fail in %s", __func__);
-        handler_free(user_data);
+        stk_event_data_free(user_data);
         return -EINVAL;
     }
 
@@ -1860,14 +1860,14 @@ int tapi_stk_agent_unregister(tapi_context context, int slot_id,
 
     ar->msg_id = event_id;
     ar->arg1 = slot_id;
-    ar->data = agent_id;
+    ar->data = strdup(agent_id);
     user_data->result = ar;
     user_data->cb_function = p_handle;
 
     if (!g_dbus_proxy_method_call(proxy, "UnregisterAgent", stk_agent_register_param_append,
-            method_call_complete, user_data, handler_free)) {
+            method_call_complete, user_data, stk_event_data_free)) {
         tapi_log_error("dbus method call fail in %s", __func__);
-        handler_free(user_data);
+        stk_event_data_free(user_data);
         return -EINVAL;
     }
 
