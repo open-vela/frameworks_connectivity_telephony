@@ -200,6 +200,18 @@ int remote_trigger_oos(int type)
 }
 #endif
 
+int remote_modem_upgrade_state_report(int slot_id, int report_state)
+{
+    char req_data[30] = { 0 };
+    char* oem_req[1];
+    oem_req[0] = req_data;
+
+    sprintf(req_data, "AT+MDUPGRADESTATECHANGE=%d 1", report_state);
+    syslog(LOG_DEBUG, "%s, req_data: %s\n", __func__, req_data);
+    return tapi_invoke_oem_ril_request_strings(get_tapi_ctx(), 0,
+        EVENT_OEM_RIL_REQUEST_STRINGS_DONE, oem_req, 1, NULL);
+}
+
 int remote_incoming_call_state_change(int slot_id, const char* phone_number, int target_status)
 {
     char* oem_req[1];

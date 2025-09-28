@@ -2259,6 +2259,35 @@ static void TestTeleFunc_ModemSetModemStationaryThreshold(void** state)
     assert_int_equal(ret, OK);
 }
 
+static void TestTeleFunc_ModemUpgradeIndication(void** state)
+{
+    int ret;
+
+    (void)state;
+    ret = trigger_modem_upgrade_state_test(0, 0);
+    assert_int_equal(ret, OK);
+    ret = trigger_modem_upgrade_state_test(0, 2);
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_ModemUpgradeStateCheck(void** state)
+{
+    int ret;
+
+    (void)state;
+    ret = check_modem_upgrade_state_test(0);
+    assert_int_equal(ret, OK);
+}
+
+static void TestTeleFunc_ModemUpgradeCMD(void** state)
+{
+    int ret;
+
+    (void)state;
+    ret = send_modem_upgrade_cmd_test(0, 0);
+    assert_int_equal(ret, OK);
+}
+
 #ifndef CONFIG_TELEPHONY_DFX
 static void TestTeleFunc_ModemAbnormalEventReport(void** state)
 {
@@ -4467,8 +4496,11 @@ int main(int argc, char* argv[])
         cmocka_unit_test(TestTeleFunc_ModemAbnormalEventReport),
         cmocka_unit_test_setup_teardown(TestTeleFunc_ModemEnableDataFailDFX, setup_data, teardown_data),
         cmocka_unit_test(TestTeleFunc_ModemOOSDFX),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_ModemDisableDFX, setup_modem, NULL)
+        cmocka_unit_test_setup_teardown(TestTeleFunc_ModemDisableDFX, setup_modem, NULL),
 #endif
+        cmocka_unit_test(TestTeleFunc_ModemUpgradeIndication),
+        cmocka_unit_test(TestTeleFunc_ModemUpgradeStateCheck),
+        cmocka_unit_test(TestTeleFunc_ModemUpgradeCMD),
     };
 #ifdef CONFIG_PHONE_SERVICE
     const struct CMUnitTest PhoneServiceTestSuites[] = {

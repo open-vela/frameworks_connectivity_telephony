@@ -40,4 +40,7 @@ int check_abnormal_event_report(bool unexpected_data_flag, int abnormal_data_typ
 int check_oos_dfx(void);
 int check_disable_modem_duration_dfx(void);
 #endif
+int trigger_modem_upgrade_state_test(int slot_id, int report_state);
+int check_modem_upgrade_state_test(int slot_id);
+int send_modem_upgrade_cmd_test(int slot_id, int cmd_id);
 #endif

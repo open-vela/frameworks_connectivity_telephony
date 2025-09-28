@@ -1484,3 +1484,164 @@ on_exit:
     return ret;
 }
 #endif
+
+static void modem_upgrade_action_cb(tapi_async_result* result)
+{
+    int signal = result->msg_id;
+    int slot_id = result->arg1;
+    int param = result->arg2;
+    int status = result->status;
+
+    switch (signal) {
+    case MSG_MODEM_UPGRADE_STATE_IND:
+        syslog(LOG_DEBUG, "modem_upgrade_state_cb arg2=%d in slot[%d] \n", param, slot_id);
+        if (judge_data.expect == EVENT_MODEM_UPGRADE_STATE_TWO_PARM_IND) {
+            int param2 = *((int*)result->data);
+            syslog(LOG_DEBUG, "modem_upgrade_state_cb ext_info=%d", param2);
+            if (param2 == -1) {
+                judge_data.result = OK;
+                judge_data.flag = EVENT_MODEM_UPGRADE_STATE_TWO_PARM_IND;
+            } else {
+                judge_data.result = ERROR;
+            }
+        } else if (judge_data.expect == EVENT_MODEM_UPGRADE_STATE_ONE_PARM_IND) {
+            judge_data.result = OK;
+            judge_data.flag = EVENT_MODEM_UPGRADE_STATE_ONE_PARM_IND;
+        } else {
+            syslog(LOG_DEBUG, "unexpected event in %s", __func__);
+            judge_data.result = ERROR;
+        }
+        break;
+    case EVENT_CHECK_MODEM_UPGRADE_STATE_DONE:
+        syslog(LOG_DEBUG, "modem_upgrade_state_cb arg2= %d in slot[%d],status=%d \n", param, slot_id, status);
+        if (judge_data.expect == EVENT_CHECK_MODEM_UPGRADE_STATE_DONE) {
+            judge_data.result = OK;
+            judge_data.flag = EVENT_CHECK_MODEM_UPGRADE_STATE_DONE;
+        }
+        break;
+    case EVENT_SEND_MODEM_UPGRADE_CMD_DONE:
+        syslog(LOG_DEBUG, "modem_upgrade_state_cb arg2=%d in slot[%d],status=%d \n", param, slot_id, status);
+        if (judge_data.expect == EVENT_SEND_MODEM_UPGRADE_CMD_DONE) {
+            judge_data.result = OK;
+            judge_data.flag = EVENT_SEND_MODEM_UPGRADE_CMD_DONE;
+        }
+        break;
+    default:
+        syslog(LOG_DEBUG, "unexpected event in %s", __func__);
+        break;
+    }
+}
+
+int trigger_modem_upgrade_state_test(int slot_id, int report_state)
+{
+    int modem_upgrade_state_watch_id = -1;
+    int res = 0;
+    int ret = 0;
+
+    judge_data_init();
+    if (report_state == 2 || report_state == 3) {
+        judge_data.expect = EVENT_MODEM_UPGRADE_STATE_TWO_PARM_IND;
+    } else {
+        judge_data.expect = EVENT_MODEM_UPGRADE_STATE_ONE_PARM_IND;
+    }
+
+    modem_upgrade_state_watch_id = tapi_register(get_tapi_ctx(), slot_id, MSG_MODEM_UPGRADE_STATE_IND,
+        NULL, modem_upgrade_action_cb);
+    if (ret) {
+        syslog(LOG_ERR, "register modem upgrade state fail in %s, ret: %d", __func__, ret);
+        res = -1;
+        goto on_exit;
+    }
+
+    remote_modem_upgrade_state_report(slot_id, report_state);
+
+    if (judge()) {
+        syslog(LOG_DEBUG, "trigger_modem_upgrade_state_test is not executed in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge_data.result) {
+        syslog(LOG_ERR, "async result is invalid in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    ret = tapi_unregister(get_tapi_ctx(), modem_upgrade_state_watch_id);
+    if (ret) {
+        syslog(LOG_ERR, "unregister modem upgrade state fail in %s, ret: %d", __func__, ret);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
+int check_modem_upgrade_state_test(int slot_id)
+{
+    int ret = 0;
+    int res = 0;
+
+    judge_data_init();
+    judge_data.expect = EVENT_CHECK_MODEM_UPGRADE_STATE_DONE;
+
+    ret = tapi_check_modem_upgrade_state(get_tapi_ctx(), slot_id,
+        EVENT_CHECK_MODEM_UPGRADE_STATE_DONE, modem_upgrade_action_cb);
+
+    if (ret) {
+        syslog(LOG_ERR, "check_modem_upgrade_state_test execute fail in %s, ret: %d",
+            __func__, ret);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge()) {
+        syslog(LOG_DEBUG, "check_modem_upgrade_state_test is not executed in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge_data.result) {
+        syslog(LOG_ERR, "async result is invalid in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
+
+int send_modem_upgrade_cmd_test(int slot_id, int cmd_id)
+{
+    int ret = 0;
+    int res = 0;
+
+    judge_data_init();
+    judge_data.expect = EVENT_SEND_MODEM_UPGRADE_CMD_DONE;
+
+    ret = tapi_modem_upgrade_cmd(get_tapi_ctx(), slot_id,
+        EVENT_SEND_MODEM_UPGRADE_CMD_DONE, cmd_id, modem_upgrade_action_cb);
+
+    if (ret) {
+        syslog(LOG_ERR, "send_modem_upgrade_cmd_test execute fail in %s, ret: %d",
+            __func__, ret);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge()) {
+        syslog(LOG_DEBUG, "send_modem_upgrade_cmd_test is not executed in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+    if (judge_data.result) {
+        syslog(LOG_ERR, "async result is invalid in %s", __func__);
+        res = -1;
+        goto on_exit;
+    }
+
+on_exit:
+    return res;
+}
