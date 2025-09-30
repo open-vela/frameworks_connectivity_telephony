@@ -37,8 +37,6 @@
  * Public Types
  ****************************************************************************/
 
-#define LOG_IND_BUF_SIZE 200
-
 enum dbus_proxy_type {
     DBUS_PROXY_MODEM = 0,
     DBUS_PROXY_RADIO,
