@@ -221,9 +221,9 @@ static void* read_stdin(pthread_addr_t pvarg)
         arg[arg_len] = '\0';
 
         memset(g_uv_message.cmd, '\0', sizeof(g_uv_message.cmd));
-        strcpy(g_uv_message.cmd, cmd);
+        snprintf(g_uv_message.cmd, sizeof(g_uv_message.cmd), "%s", cmd);
         memset(g_uv_message.param, '\0', sizeof(g_uv_message.param));
-        strcpy(g_uv_message.param, arg);
+        snprintf(g_uv_message.param, sizeof(g_uv_message.param), "%s", arg);
         g_uv_message.async.data = (void*)&g_uv_message;
         uv_async_send(&g_uv_message.async);
     }
