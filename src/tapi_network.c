@@ -1903,10 +1903,12 @@ int tapi_network_register(tapi_context context,
         watch_id = dbus_client_add_signal_watch(ctx->client,
             OFONO_SERVICE, modem_path, OFONO_NETWORK_OPERATOR_INTERFACE,
             "PropertyChanged", network_operator_status_changed, handler, handler_free);
+        break;
     case MSG_NETWORK_OPERATOR_NAME_CHANGE_IND:
         watch_id = dbus_client_add_signal_watch(ctx->client,
             OFONO_SERVICE, modem_path, OFONO_NETWORK_OPERATOR_INTERFACE,
             "PropertyChanged", network_operator_name_changed, handler, handler_free);
+        break;
     default:
         break;
     }
