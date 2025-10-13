@@ -861,6 +861,7 @@ static DBusMessage* stk_agent_handle_request_input(DBusConnection* conn,
         tapi_log_error("failed to get args in %s", __func__);
         ar->status = ERROR;
         cb(ar);
+        free(params);
         return stk_agent_error_invalid_args(msg);
     }
 
@@ -868,10 +869,7 @@ static DBusMessage* stk_agent_handle_request_input(DBusConnection* conn,
     ar->user_obj = params;
     ar->status = OK;
     cb(ar);
-
-    if (params != NULL) {
-        free(params);
-    }
+    free(params);
 
     return NULL;
 }
