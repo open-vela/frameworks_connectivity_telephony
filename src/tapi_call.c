@@ -145,8 +145,6 @@ static void call_param_append(DBusMessageIter* iter, void* user_data)
     number = param->number;
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &number);
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &hide_callerid_str);
-
-    free(param);
 }
 
 static void answer_hangup_param_append(DBusMessageIter* iter, void* user_data)
@@ -203,8 +201,6 @@ static void dtmf_param_append(DBusMessageIter* iter, void* user_data)
 
     dbus_message_iter_append_basic(iter, DBUS_TYPE_BYTE, &digit);
     dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &flag);
-
-    free(param);
 }
 
 static void deflect_param_append(DBusMessageIter* iter, void* user_data)
@@ -436,10 +432,12 @@ static void dial_call_callback(DBusMessage* message, void* user_data)
     cb = handler->cb_function;
     if (cb == NULL) {
         tapi_log_error("callback in %s is null", __func__);
+        free(ar->data);
         return;
     }
 
     dbus_error_init(&err);
+    free(ar->data);
     if (dbus_set_error_from_message(&err, message) == true) {
         tapi_log_error("error from message in %s, %s: %s", __func__, err.name, err.message);
         dbus_error_free(&err);
@@ -492,11 +490,13 @@ static void play_dtmf_callback(DBusMessage* message, void* user_data)
     cb = handler->cb_function;
     if (cb == NULL) {
         tapi_log_debug("callback in %s is null", __func__);
+        free(ar->data);
         return;
     }
 
     ar->status = status;
     cb(ar);
+    free(ar->data);
 }
 
 static void merge_call_complete(DBusMessage* message, void* user_data)
@@ -1003,7 +1003,7 @@ static int call_play_dtmf(tapi_context context, int slot_id, unsigned char digit
         return -EIO;
     }
 
-    param = malloc(sizeof(call_dtmf_param));
+    param = calloc(1, sizeof(call_dtmf_param));
     if (param == NULL) {
         tapi_log_error("param in %s is null", __func__);
         return -ENOMEM;
@@ -1075,7 +1075,7 @@ int tapi_call_dial_async(tapi_context context, int slot_id, char* number, int hi
         return -EIO;
     }
 
-    param = malloc(sizeof(call_param));
+    param = calloc(1, sizeof(call_param));
     if (param == NULL) {
         tapi_log_error("param in %s is null", __func__);
         return -ENOMEM;
@@ -1588,9 +1588,9 @@ int tapi_call_dial_conferece(tapi_context context, int slot_id, char* participan
 
     report_data_logging_for_call(context, OFONO_CONFERENCE_CALL, OFONO_ORIGINATE, OFONO_VOICE,
         OFONO_NORMAL, "NA");
-    ims_conference_participants_param = malloc(sizeof(ims_conference_param));
+    ims_conference_participants_param = calloc(1, sizeof(ims_conference_param));
     if (ims_conference_participants_param == NULL) {
-        tapi_log_error("malloc failed in %s", __func__);
+        tapi_log_error("calloc failed in %s", __func__);
         return -ENOMEM;
     }
 
@@ -1613,9 +1613,9 @@ int tapi_call_invite_participants(tapi_context context, int slot_id,
     ims_conference_param* ims_conference_participants_param;
     int ret;
 
-    ims_conference_participants_param = malloc(sizeof(ims_conference_param));
+    ims_conference_participants_param = calloc(1, sizeof(ims_conference_param));
     if (ims_conference_participants_param == NULL) {
-        tapi_log_error("malloc failed in %s", __func__);
+        tapi_log_error("calloc failed in %s", __func__);
         return -ENOMEM;
     }
 
@@ -1657,9 +1657,9 @@ int tapi_call_register_call_state_change(tapi_context context, int slot_id,
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
-        tapi_log_error("malloc failed in %s", __func__);
+        tapi_log_error("calloc failed in %s", __func__);
         return -ENOMEM;
     }
 
@@ -1853,7 +1853,7 @@ int tapi_call_deflect_by_id(tapi_context context, int slot_id, char* call_id, ch
         return -EIO;
     }
 
-    param = malloc(sizeof(call_deflect_param));
+    param = calloc(1, sizeof(call_deflect_param));
     if (param == NULL) {
         tapi_log_error("param in %s is null", __func__);
         return -ENOMEM;
