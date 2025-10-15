@@ -229,6 +229,7 @@ static void open_logical_channel_cb(DBusMessage* message, void* user_data)
 
     if ((cb = handler->cb_function) == NULL) {
         tapi_log_error("callback in %s is null", __func__);
+        free(ar->data);
         return;
     }
 
@@ -251,6 +252,7 @@ static void open_logical_channel_cb(DBusMessage* message, void* user_data)
 
 done:
     cb(ar);
+    free(ar->data);
 }
 
 static void close_logical_channel_cb(DBusMessage* message, void* user_data)
@@ -313,10 +315,12 @@ static void transmit_apdu_cb(DBusMessage* message, void* user_data)
 
     if ((cb = handler->cb_function) == NULL) {
         tapi_log_error("callback in %s is null", __func__);
+        free(ar->data);
         return;
     }
 
     dbus_error_init(&err);
+    free(ar->data);
     if (dbus_set_error_from_message(&err, message) == true) {
         handle_error_code_message(err.message, ar);
         dbus_error_free(&err);
@@ -471,8 +475,6 @@ static void open_channel_param_append(DBusMessageIter* iter, void* user_data)
         dbus_message_iter_append_basic(&array, DBUS_TYPE_BYTE, &aid[i]);
     }
     dbus_message_iter_close_container(iter, &array);
-
-    free(open_channel_param);
 }
 
 static void close_channel_param_append(DBusMessageIter* iter, void* user_data)
@@ -526,8 +528,6 @@ static void transmit_apdu_param_append(DBusMessageIter* iter, void* user_data)
         dbus_message_iter_append_basic(&array, DBUS_TYPE_BYTE, &pdu[i]);
     }
     dbus_message_iter_close_container(iter, &array);
-
-    free(transmit_apdu_param);
 }
 
 static void transmit_apdu_basic_channel_param_append(DBusMessageIter* iter, void* user_data)
@@ -558,8 +558,6 @@ static void transmit_apdu_basic_channel_param_append(DBusMessageIter* iter, void
         dbus_message_iter_append_basic(&array, DBUS_TYPE_BYTE, &pdu[i]);
     }
     dbus_message_iter_close_container(iter, &array);
-
-    free(transmit_apdu_param);
 }
 
 /****************************************************************************
@@ -1013,7 +1011,7 @@ int tapi_sim_change_pin(tapi_context context, int slot_id,
         return -EIO;
     }
 
-    change_pin_param = malloc(sizeof(sim_pin_param));
+    change_pin_param = calloc(1, sizeof(sim_pin_param));
     if (change_pin_param == NULL) {
         tapi_log_error("change_pin_param in %s is null", __func__);
         return -ENOMEM;
@@ -1096,7 +1094,7 @@ int tapi_sim_enter_pin(tapi_context context, int slot_id,
         return -EIO;
     }
 
-    enter_pin_param = malloc(sizeof(sim_pin_param));
+    enter_pin_param = calloc(1, sizeof(sim_pin_param));
     if (enter_pin_param == NULL) {
         tapi_log_error("enter_pin_param in %s is null", __func__);
         return -ENOMEM;
@@ -1183,7 +1181,7 @@ int tapi_sim_reset_pin(tapi_context context, int slot_id,
         return -EIO;
     }
 
-    reset_pin_param = malloc(sizeof(sim_pin_param));
+    reset_pin_param = calloc(1, sizeof(sim_pin_param));
     if (reset_pin_param == NULL) {
         tapi_log_error("reset_pin_param in %s is null", __func__);
         return -ENOMEM;
@@ -1266,7 +1264,7 @@ int tapi_sim_lock_pin(tapi_context context, int slot_id,
         return -EIO;
     }
 
-    lock_pin_param = malloc(sizeof(sim_pin_param));
+    lock_pin_param = calloc(1, sizeof(sim_pin_param));
     if (lock_pin_param == NULL) {
         tapi_log_error("lock_pin_param in %s is null", __func__);
         return -ENOMEM;
@@ -1348,7 +1346,7 @@ int tapi_sim_unlock_pin(tapi_context context, int slot_id,
         return -EIO;
     }
 
-    unlock_pin_param = malloc(sizeof(sim_pin_param));
+    unlock_pin_param = calloc(1, sizeof(sim_pin_param));
     if (unlock_pin_param == NULL) {
         tapi_log_error("unlock_pin_param in %s is null", __func__);
         return -ENOMEM;
@@ -1425,7 +1423,7 @@ int tapi_sim_open_logical_channel(tapi_context context, int slot_id,
         return -EIO;
     }
 
-    open_channel_param = malloc(sizeof(sim_transmit_apdu_param));
+    open_channel_param = calloc(1, sizeof(sim_transmit_apdu_param));
     if (open_channel_param == NULL) {
         tapi_log_error("open_channel_param in %s is null", __func__);
         return -ENOMEM;
@@ -1565,7 +1563,7 @@ int tapi_sim_transmit_apdu_logical_channel(tapi_context context, int slot_id,
         return -EIO;
     }
 
-    transmit_apdu_param = malloc(sizeof(sim_transmit_apdu_param));
+    transmit_apdu_param = calloc(1, sizeof(sim_transmit_apdu_param));
     if (transmit_apdu_param == NULL) {
         tapi_log_error("transmit_apdu_param in %s is null", __func__);
         return -ENOMEM;
@@ -1644,7 +1642,7 @@ int tapi_sim_transmit_apdu_basic_channel(tapi_context context, int slot_id,
         return -EIO;
     }
 
-    transmit_apdu_param = malloc(sizeof(sim_transmit_apdu_param));
+    transmit_apdu_param = calloc(1, sizeof(sim_transmit_apdu_param));
     if (transmit_apdu_param == NULL) {
         tapi_log_error("transmit_apdu_param in %s is null", __func__);
         return -ENOMEM;
