@@ -473,7 +473,7 @@ int tapi_phonebook_insert_fdn_entry(tapi_context context, int slot_id,
         return -EIO;
     }
 
-    fdn_record = malloc(sizeof(fdn_record_param));
+    fdn_record = calloc(1, sizeof(fdn_record_param));
     if (fdn_record == NULL) {
         tapi_log_error("fdn record in %s is null", __func__);
         return -ENOMEM;
@@ -547,7 +547,7 @@ int tapi_phonebook_delete_fdn_entry(tapi_context context, int slot_id,
         return -EIO;
     }
 
-    fdn_record = malloc(sizeof(fdn_record_param));
+    fdn_record = calloc(1, sizeof(fdn_record_param));
     if (fdn_record == NULL) {
         tapi_log_error("fdn record in %s is null", __func__);
         return -ENOMEM;
@@ -630,7 +630,7 @@ int tapi_phonebook_update_fdn_entry(tapi_context context, int slot_id, int event
         return -EIO;
     }
 
-    fdn_record = malloc(sizeof(fdn_record_param));
+    fdn_record = calloc(1, sizeof(fdn_record_param));
     if (fdn_record == NULL) {
         tapi_log_error("fdn record in %s is null", __func__);
         return -ENOMEM;
