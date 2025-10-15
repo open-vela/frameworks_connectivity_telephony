@@ -278,7 +278,7 @@ static void modem_activity_info_query_done(DBusMessage* message, void* user_data
         return;
     }
 
-    info = malloc(sizeof(modem_activity_info));
+    info = calloc(1, sizeof(modem_activity_info));
     if (info == NULL) {
         tapi_log_error("info in %s is null", __func__);
         return;
@@ -383,6 +383,7 @@ static void enable_modem_abnormal_event_done(DBusMessage* message, void* user_da
     cb = handler->cb_function;
     if (cb == NULL) {
         tapi_log_error("callback in %s is null", __func__);
+        free(ar->data);
         return;
     }
 
@@ -403,6 +404,7 @@ static void enable_modem_abnormal_event_done(DBusMessage* message, void* user_da
     }
 
     cb(ar);
+    free(ar->data);
 }
 
 static void modem_status_query_done(DBusMessage* message, void* user_data)
@@ -627,9 +629,9 @@ static int modem_upgrade_state_changed(DBusConnection* connection,
     if (ar->arg2 == 2 || ar->arg2 == 3) {
         dbus_message_iter_next(&iter);
         dbus_message_iter_get_basic(&iter, &info);
-        ext_info = malloc(sizeof(int));
+        ext_info = calloc(1, sizeof(int));
         if (ext_info == NULL) {
-            tapi_log_error("malloc failed in %s", __func__);
+            tapi_log_error("calloc failed in %s", __func__);
             goto done;
         }
         *ext_info = info;
@@ -902,8 +904,6 @@ static void enable_modem_abnormal_event_param_append(DBusMessageIter* iter, void
     dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &module_mask);
     dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &from_event_id);
     dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &to_event_id);
-
-    free(abnormal_event_param);
 }
 
 static void oem_ril_request_raw_param_append(DBusMessageIter* iter, void* user_data)
@@ -935,8 +935,6 @@ static void oem_ril_request_raw_param_append(DBusMessageIter* iter, void* user_d
     }
 
     dbus_message_iter_close_container(iter, &array);
-
-    free(oem_ril_req_raw_param);
 }
 
 static void atom_command_param_append(DBusMessageIter* iter, void* user_data)
@@ -972,10 +970,12 @@ static void oem_ril_request_raw_cb(DBusMessage* message, void* user_data)
 
     if ((cb = handler->cb_function) == NULL) {
         tapi_log_error("callback in %s is null", __func__);
+        free(ar->data);
         return;
     }
 
     dbus_error_init(&err);
+    free(ar->data);
     if (dbus_set_error_from_message(&err, message) == true) {
         tapi_log_error("%s: %s\n", err.name, err.message);
         dbus_error_free(&err);
@@ -1287,13 +1287,13 @@ tapi_context tapi_open_service(const char* client_name,
 
     ctx = calloc(1, sizeof(dbus_context));
     if (ctx == NULL) {
-        tapi_log_error("context malloc failed! \n");
+        tapi_log_error("context calloc failed! \n");
         return NULL;
     }
 
-    client_ready_cb_data* cbd = malloc(sizeof(client_ready_cb_data));
+    client_ready_cb_data* cbd = calloc(1, sizeof(client_ready_cb_data));
     if (cbd == NULL) {
-        tapi_log_error("client callback malloc failed! \n");
+        tapi_log_error("client callback calloc failed! \n");
         free(ctx);
         return NULL;
     }
@@ -2100,7 +2100,7 @@ int tapi_invoke_oem_ril_request_raw(tapi_context context, int slot_id, int event
     }
     handler->result = ar;
 
-    oem_ril_req = malloc(sizeof(oem_ril_request_data));
+    oem_ril_req = calloc(1, sizeof(oem_ril_request_data));
     if (oem_ril_req == NULL) {
         tapi_log_error("oem_ril_req in %s is null", __func__);
         free(handler);
@@ -2175,7 +2175,7 @@ int tapi_invoke_oem_ril_request_strings(tapi_context context, int slot_id, int e
     }
     handler->result = ar;
 
-    oem_ril_req_param = malloc(sizeof(oem_ril_request_data));
+    oem_ril_req_param = calloc(1, sizeof(oem_ril_request_data));
     if (oem_ril_req_param == NULL) {
         tapi_log_error("oem_ril_req_param in %s is null", __func__);
         free(handler);
@@ -2292,7 +2292,7 @@ int tapi_enable_modem_abnormal_event(tapi_context context, int slot_id, bool ena
         return -ENOMEM;
     }
 
-    user_data = malloc(sizeof(abnormal_event_data));
+    user_data = calloc(1, sizeof(abnormal_event_data));
     if (user_data == NULL) {
         tapi_log_error("user_data in %s is null", __func__);
         free(handler);
@@ -3424,7 +3424,7 @@ int tapi_check_modem_upgrade_state(tapi_context context, int slot_id, int event_
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
@@ -3529,7 +3529,7 @@ int tapi_modem_upgrade_cmd(tapi_context context, int slot_id, int event_id, int 
         return -EIO;
     }
 
-    handler = malloc(sizeof(tapi_async_handler));
+    handler = calloc(1, sizeof(tapi_async_handler));
     if (handler == NULL) {
         tapi_log_error("handler in %s is null", __func__);
         return -ENOMEM;
