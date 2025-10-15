@@ -35,7 +35,12 @@ static void parse_ipv4_properties(DBusMessageIter* iter, tapi_data_context* dc)
     char* value_str;
     int dns_index;
 
-    dc->ip_settings->ipv4 = malloc(sizeof(tapi_ipv4_settings));
+    if (dc == NULL || dc->ip_settings == NULL) {
+        tapi_log_error("dc or ip_settings is null in %s", __func__);
+        return;
+    }
+
+    dc->ip_settings->ipv4 = calloc(1, sizeof(tapi_ipv4_settings));
     if (dc->ip_settings->ipv4 == NULL)
         return;
 
@@ -117,7 +122,12 @@ static void parse_ipv6_properties(DBusMessageIter* iter, tapi_data_context* dc)
     char* value_str;
     int dns_index;
 
-    dc->ip_settings->ipv6 = malloc(sizeof(tapi_ipv6_settings));
+    if (dc == NULL || dc->ip_settings == NULL) {
+        tapi_log_error("dc or ip_settings is null in %s", __func__);
+        return;
+    }
+
+    dc->ip_settings->ipv6 = calloc(1, sizeof(tapi_ipv6_settings));
     if (dc->ip_settings->ipv6 == NULL)
         return;
 
@@ -292,13 +302,13 @@ static int data_connection_changed(DBusConnection* connection,
         return false;
     }
 
-    dc = malloc(sizeof(tapi_data_context));
+    dc = calloc(1, sizeof(tapi_data_context));
     if (dc == NULL) {
         tapi_log_error("dc in %s is null", __func__);
         return false;
     }
 
-    dc->ip_settings = malloc(sizeof(tapi_ip_settings));
+    dc->ip_settings = calloc(1, sizeof(tapi_ip_settings));
     if (dc->ip_settings == NULL) {
         tapi_log_error("ip settings in %s is null", __func__);
         free(dc);
@@ -500,7 +510,7 @@ static void apn_list_loaded(DBusMessage* message, void* user_data)
 
     while (dbus_message_iter_get_arg_type(&list) == DBUS_TYPE_STRUCT) {
         DBusMessageIter entry, dict;
-        tapi_data_context* dc = malloc(sizeof(tapi_data_context));
+        tapi_data_context* dc = calloc(1, sizeof(tapi_data_context));
         if (dc == NULL) {
             tapi_log_error("dc in %s is null", __func__);
             break;
@@ -757,11 +767,11 @@ static void data_connection_list_query_done(DBusMessage* message, void* user_dat
 
     while (dbus_message_iter_get_arg_type(&list) == DBUS_TYPE_STRUCT) {
         DBusMessageIter entry, dict;
-        tapi_data_context* dc = malloc(sizeof(tapi_data_context));
+        tapi_data_context* dc = calloc(1, sizeof(tapi_data_context));
         if (dc == NULL)
             break;
 
-        dc->ip_settings = malloc(sizeof(tapi_ip_settings));
+        dc->ip_settings = calloc(1, sizeof(tapi_ip_settings));
         if (dc->ip_settings == NULL) {
             tapi_log_error("ip_settings in %s is null", __func__);
             free(dc);
