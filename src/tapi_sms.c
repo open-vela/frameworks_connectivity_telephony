@@ -60,18 +60,26 @@ static char* strdup0(const char* str)
 static void message_free(void* user_data)
 {
     message_param* message = user_data;
+    if (message == NULL)
+        return;
 
     free(message->number);
+    message->number = NULL;
     free(message->text);
+    message->text = NULL;
     free(message);
 }
 
 static void data_message_free(void* user_data)
 {
     data_message_param* message = user_data;
+    if (message == NULL)
+        return;
 
     free(message->dest_addr);
+    message->dest_addr = NULL;
     free(message->data);
+    message->data = NULL;
     free(message);
 }
 
@@ -97,6 +105,7 @@ static void send_message_param_append(DBusMessageIter* iter, void* user_data)
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &msg_param->text);
 
     message_free(msg_param);
+    param->result->data = NULL;
 }
 
 static void send_data_message_param_append(DBusMessageIter* iter, void* user_data)
@@ -122,6 +131,7 @@ static void send_data_message_param_append(DBusMessageIter* iter, void* user_dat
     dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &message->data);
 
     data_message_free(message);
+    param->result->data = NULL;
 }
 
 static void copy_message_param_append(DBusMessageIter* iter, void* user_data)
@@ -275,7 +285,7 @@ static int unsol_sms_message(DBusConnection* connection,
         dbus_message_iter_next(&iter);
         dbus_message_iter_recurse(&iter, &list);
 
-        message_info = malloc(sizeof(tapi_message_info));
+        message_info = calloc(1, sizeof(tapi_message_info));
         if (message_info == NULL) {
             tapi_log_error("message_info in %s is null", __func__);
             ar->status = ERROR;
@@ -643,8 +653,8 @@ int tapi_sms_send_message(tapi_context context, int slot_id, int sms_id,
         tapi_log_error("method call failed in %s", __func__);
         report_data_logging_for_sms(ctx, slot_id, OFONO_CS_SMS,
             OFONO_SMS_SEND, OFONO_SMS_FAIL);
-        handler_free(handler);
         message_free(message);
+        handler_free(handler);
         return -EINVAL;
     }
 
@@ -727,8 +737,8 @@ int tapi_sms_send_data_message(tapi_context context, int slot_id, int sms_id,
         tapi_log_error("method call failed in %s", __func__);
         report_data_logging_for_sms(ctx, slot_id, OFONO_IMS_SMS,
             OFONO_SMS_SEND, OFONO_SMS_FAIL);
-        handler_free(handler);
         data_message_free(data_message);
+        handler_free(handler);
         return -EINVAL;
     }
 
