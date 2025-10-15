@@ -461,7 +461,7 @@ static int cellinfo_list_changed(DBusConnection* connection,
     while (dbus_message_iter_get_arg_type(&list) == DBUS_TYPE_STRUCT) {
         DBusMessageIter entry, dict;
 
-        cell_identity = malloc(sizeof(tapi_cell_identity));
+        cell_identity = calloc(1, sizeof(tapi_cell_identity));
         if (cell_identity == NULL)
             break;
 
@@ -539,7 +539,7 @@ static int signal_strength_changed(DBusConnection* connection,
     if (strcmp(property, "SignalStrength") == 0) {
         dbus_message_iter_recurse(&var, &dict);
 
-        ss = malloc(sizeof(tapi_signal_strength));
+        ss = calloc(1, sizeof(tapi_signal_strength));
         if (ss == NULL) {
             tapi_log_error("ss in %s is null", __func__);
             return 0;
@@ -625,7 +625,7 @@ static int nitz_state_changed(DBusConnection* connection,
     dbus_message_iter_recurse(&iter, &var);
     if (strcmp(property, "NITZ") == 0) {
         dbus_message_iter_get_basic(&var, &result);
-        nitz_time = malloc(sizeof(tapi_network_time));
+        nitz_time = calloc(1, sizeof(tapi_network_time));
         if (nitz_time == NULL) {
             tapi_log_error("nitz_time in %s is null", __func__);
             return 0;
@@ -740,7 +740,7 @@ static void cell_list_request_complete(DBusMessage* message, void* user_data)
     while (dbus_message_iter_get_arg_type(&list) == DBUS_TYPE_STRUCT) {
         DBusMessageIter entry, dict;
 
-        cell_identity = malloc(sizeof(tapi_cell_identity));
+        cell_identity = calloc(1, sizeof(tapi_cell_identity));
         if (cell_identity == NULL)
             break;
 
@@ -942,7 +942,7 @@ static void operator_scan_complete(DBusMessage* message, void* user_data)
         DBusMessageIter entry, dict;
         char* path;
 
-        operator= malloc(sizeof(tapi_operator_info));
+        operator= calloc(1, sizeof(tapi_operator_info));
         if (operator== NULL)
             break;
 
