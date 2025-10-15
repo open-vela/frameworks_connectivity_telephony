@@ -2263,7 +2263,7 @@ static void TestTeleFunc_ModemUpgradeIndication(void** state)
 {
     int ret;
 
-    (void)state;
+    TestTeleFunc_CI_ModemEnable(state);
     ret = trigger_modem_upgrade_state_test(0, 0);
     assert_int_equal(ret, OK);
     ret = trigger_modem_upgrade_state_test(0, 2);
