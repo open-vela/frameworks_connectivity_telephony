@@ -354,7 +354,7 @@ static void call_forwarding_query_complete(DBusMessage* message, void* user_data
         return;
     }
 
-    cf_condition = malloc(sizeof(tapi_call_forward_info));
+    cf_condition = calloc(1, sizeof(tapi_call_forward_info));
     if (cf_condition == NULL) {
         tapi_log_error("cf_condition in %s is null", __func__);
         return;
@@ -439,7 +439,7 @@ static void ss_initiate_complete(DBusMessage* message, void* user_data)
         goto done;
     }
 
-    info = malloc(sizeof(tapi_ss_initiate_info));
+    info = calloc(1, sizeof(tapi_ss_initiate_info));
     if (info == NULL) {
         tapi_log_error("info in %s is null", __func__);
         ar->status = ERROR;
@@ -745,7 +745,7 @@ static int call_barring_property_changed(DBusConnection* connection,
 
     dbus_message_iter_recurse(&iter, &list);
 
-    cb_value = malloc(sizeof(tapi_call_barring_info));
+    cb_value = calloc(1, sizeof(tapi_call_barring_info));
     if (cb_value == NULL) {
         tapi_log_error("cb_value in %s is null", __func__);
         ar->status = ERROR;
@@ -1140,7 +1140,7 @@ int tapi_ss_set_call_barring_option(tapi_context context, int slot_id, int event
     }
     handler->result = ar;
 
-    param = malloc(sizeof(cb_request_param));
+    param = calloc(1, sizeof(cb_request_param));
     if (param == NULL) {
         tapi_log_error("param in %s is null", __func__);
         free(handler);
@@ -1279,7 +1279,7 @@ int tapi_ss_change_call_barring_password(tapi_context context, int slot_id, int 
     }
     handler->result = ar;
 
-    param = malloc(sizeof(cb_change_passwd_param));
+    param = calloc(1, sizeof(cb_change_passwd_param));
     if (param == NULL) {
         tapi_log_error("param in %s is null", __func__);
         free(handler);
