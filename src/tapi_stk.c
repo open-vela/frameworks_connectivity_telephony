@@ -431,7 +431,7 @@ static DBusMessage* stk_agent_show_information(DBusConnection* conn,
         goto done;
     }
 
-    params = malloc(sizeof(tapi_stk_display_info_params));
+    params = calloc(1, sizeof(tapi_stk_display_info_params));
     if (params == NULL) {
         tapi_log_error("params in %s is null", __func__);
         ar->status = ERROR;
@@ -508,7 +508,7 @@ static DBusMessage* stk_agent_handle_request_digit(DBusConnection* conn,
         goto done;
     }
 
-    params = malloc(sizeof(tapi_stk_request_key_params));
+    params = calloc(1, sizeof(tapi_stk_request_key_params));
     if (params == NULL) {
         tapi_log_error("params in %s is null", __func__);
         ar->status = ERROR;
@@ -584,7 +584,7 @@ static DBusMessage* stk_agent_handle_request_key(DBusConnection* conn,
         goto done;
     }
 
-    params = malloc(sizeof(tapi_stk_request_key_params));
+    params = calloc(1, sizeof(tapi_stk_request_key_params));
     if (params == NULL) {
         tapi_log_error("params in %s is null", __func__);
         ar->status = ERROR;
@@ -660,7 +660,7 @@ static DBusMessage* stk_agent_handle_request_confirmation(DBusConnection* conn,
         goto done;
     }
 
-    params = malloc(sizeof(tapi_stk_request_key_params));
+    params = calloc(1, sizeof(tapi_stk_request_key_params));
     if (params == NULL) {
         tapi_log_error("params in %s is null", __func__);
         ar->status = ERROR;
@@ -882,7 +882,7 @@ static DBusMessage* stk_agent_handle_request_digits(DBusConnection* conn,
         goto done;
     }
 
-    params = malloc(sizeof(tapi_stk_request_input_params));
+    params = calloc(1, sizeof(tapi_stk_request_input_params));
     if (params == NULL) {
         tapi_log_error("params in %s is null", __func__);
         ar->status = ERROR;
@@ -962,7 +962,7 @@ static DBusMessage* stk_agent_handle_play_tone(DBusConnection* conn,
         goto done;
     }
 
-    params = malloc(sizeof(tapi_stk_play_tone_params));
+    params = calloc(1, sizeof(tapi_stk_play_tone_params));
     if (params == NULL) {
         tapi_log_error("params in %s is null", __func__);
         ar->status = ERROR;
@@ -1039,7 +1039,7 @@ static DBusMessage* stk_agent_handle_loop_tone(DBusConnection* conn,
         goto done;
     }
 
-    params = malloc(sizeof(tapi_stk_play_tone_params));
+    params = calloc(1, sizeof(tapi_stk_play_tone_params));
     if (params == NULL) {
         tapi_log_error("params in %s is null", __func__);
         ar->status = ERROR;
@@ -1223,7 +1223,7 @@ static DBusMessage* stk_agent_handle_request_quick_digit(DBusConnection* conn,
         goto done;
     }
 
-    params = malloc(sizeof(tapi_stk_request_key_params));
+    params = calloc(1, sizeof(tapi_stk_request_key_params));
     if (params == NULL) {
         tapi_log_error("params in %s is null", __func__);
         ar->status = ERROR;
@@ -1299,7 +1299,7 @@ static DBusMessage* stk_agent_confirm_call_setup(DBusConnection* conn,
         goto done;
     }
 
-    params = malloc(sizeof(tapi_stk_request_key_params));
+    params = calloc(1, sizeof(tapi_stk_request_key_params));
     if (params == NULL) {
         tapi_log_error("params in %s is null", __func__);
         ar->status = ERROR;
@@ -1375,7 +1375,7 @@ static DBusMessage* stk_agent_display_action_information(DBusConnection* conn,
         goto done;
     }
 
-    params = malloc(sizeof(tapi_stk_display_info_params));
+    params = calloc(1, sizeof(tapi_stk_display_info_params));
     if (params == NULL) {
         tapi_log_error("params in %s is null", __func__);
         ar->status = ERROR;
@@ -1451,7 +1451,7 @@ static DBusMessage* stk_agent_confirm_launch_browser(DBusConnection* conn,
         goto done;
     }
 
-    params = malloc(sizeof(tapi_stk_confirm_launch_browser_params));
+    params = calloc(1, sizeof(tapi_stk_confirm_launch_browser_params));
     if (params == NULL) {
         tapi_log_error("params in %s is null", __func__);
         ar->status = ERROR;
@@ -1528,7 +1528,7 @@ static DBusMessage* stk_agent_display_action(DBusConnection* conn,
         goto done;
     }
 
-    params = malloc(sizeof(tapi_stk_display_info_params));
+    params = calloc(1, sizeof(tapi_stk_display_info_params));
     if (params == NULL) {
         tapi_log_error("params in %s is null", __func__);
         ar->status = ERROR;
@@ -1604,7 +1604,7 @@ static DBusMessage* stk_agent_confirm_open_channel(DBusConnection* conn,
         goto done;
     }
 
-    params = malloc(sizeof(tapi_stk_request_key_params));
+    params = calloc(1, sizeof(tapi_stk_request_key_params));
     if (params == NULL) {
         tapi_log_error("params in %s is null", __func__);
         ar->status = ERROR;
@@ -1956,7 +1956,7 @@ int tapi_stk_select_item(tapi_context context, int slot_id,
         return -EIO;
     }
 
-    select_item_param = malloc(sizeof(stk_select_item_param));
+    select_item_param = calloc(1, sizeof(stk_select_item_param));
     if (select_item_param == NULL) {
         tapi_log_error("select_item_param in %s is null", __func__);
         return -ENOMEM;
@@ -2123,7 +2123,7 @@ int tapi_stk_get_main_menu(tapi_context context, int slot_id, int* length, tapi_
 
     struct main_menu_iter_cb_data* menu = calloc(1, sizeof(struct main_menu_iter_cb_data));
     if (menu == NULL) {
-        tapi_log_error("malloc fail in %s", __func__);
+        tapi_log_error("calloc fail in %s", __func__);
         return -ENOMEM;
     }
     menu->item = out;
