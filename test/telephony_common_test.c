@@ -1371,8 +1371,10 @@ int check_abnormal_event_report(bool unexpected_data_flag, int abnormal_data_typ
     }
 
     if (judge()) {
-        syslog(LOG_DEBUG, "check_abnormal_event_report is not executed in %s", __func__);
-        res = -1;
+        if (!unexpected_data_flag) {
+            syslog(LOG_DEBUG, "check_abnormal_event_report is not executed in %s", __func__);
+            res = -1;
+        }
         goto on_exit;
     }
 
