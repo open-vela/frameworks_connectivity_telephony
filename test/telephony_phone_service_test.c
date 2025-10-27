@@ -774,26 +774,26 @@ static void esim_radio_power_changed_cb(bool state)
     printf("%s,%d\n", __func__, state);
 }
 
-static void esim_call_state_changed_cb(tapi_call_info call_info)
+static void esim_call_state_changed_cb(tapi_call_info* call_info)
 {
     printf("%s\n", __func__);
-    syslog(LOG_DEBUG, "call changed call_id : %s\n", call_info.call_id);
-    syslog(LOG_DEBUG, "call state: %d \n", call_info.state);
-    syslog(LOG_DEBUG, "call LineIdentification: %s \n", call_info.lineIdentification);
-    syslog(LOG_DEBUG, "call IncomingLine: %s \n", call_info.incoming_line);
-    syslog(LOG_DEBUG, "call Name: %s \n", call_info.name);
-    syslog(LOG_DEBUG, "call StartTime: %s \n", call_info.start_time);
-    syslog(LOG_DEBUG, "call Multiparty: %d \n", call_info.multiparty);
-    syslog(LOG_DEBUG, "call RemoteHeld: %d \n", call_info.remote_held);
-    syslog(LOG_DEBUG, "call RemoteMultiparty: %d \n", call_info.remote_multiparty);
-    syslog(LOG_DEBUG, "call Information: %s \n", call_info.info);
-    syslog(LOG_DEBUG, "call Icon: %d \n", call_info.icon);
-    syslog(LOG_DEBUG, "call Emergency: %d \n", call_info.is_emergency_number);
-    syslog(LOG_DEBUG, "call disconnect_reason: %d \n\n", call_info.disconnect_reason);
+    syslog(LOG_DEBUG, "call changed call_id : %s\n", call_info->call_id);
+    syslog(LOG_DEBUG, "call state: %d \n", call_info->state);
+    syslog(LOG_DEBUG, "call LineIdentification: %s \n", call_info->lineIdentification);
+    syslog(LOG_DEBUG, "call IncomingLine: %s \n", call_info->incoming_line);
+    syslog(LOG_DEBUG, "call Name: %s \n", call_info->name);
+    syslog(LOG_DEBUG, "call StartTime: %s \n", call_info->start_time);
+    syslog(LOG_DEBUG, "call Multiparty: %d \n", call_info->multiparty);
+    syslog(LOG_DEBUG, "call RemoteHeld: %d \n", call_info->remote_held);
+    syslog(LOG_DEBUG, "call RemoteMultiparty: %d \n", call_info->remote_multiparty);
+    syslog(LOG_DEBUG, "call Information: %s \n", call_info->info);
+    syslog(LOG_DEBUG, "call Icon: %d \n", call_info->icon);
+    syslog(LOG_DEBUG, "call Emergency: %d \n", call_info->is_emergency_number);
+    syslog(LOG_DEBUG, "call disconnect_reason: %d \n\n", call_info->disconnect_reason);
 
-    if ((call_info.state == CALL_STATUS_INCOMING || call_info.state == CALL_STATUS_WAITING) && incoming_call_id[0] == '\0') {
-        syslog(LOG_DEBUG, "incoming call,call_id: %s,save call id\n", call_info.call_id);
-        memcpy(incoming_call_id, call_info.call_id, strlen(call_info.call_id));
+    if ((call_info->state == CALL_STATUS_INCOMING || call_info->state == CALL_STATUS_WAITING) && incoming_call_id[0] == '\0') {
+        syslog(LOG_DEBUG, "incoming call,call_id: %s,save call id\n", call_info->call_id);
+        memcpy(incoming_call_id, call_info->call_id, strlen(call_info->call_id));
         if (judge_data.expect == PHONE_SERVICE_ESIM_INCOMING) {
             judge_data.result = 0;
             judge_data.flag = PHONE_SERVICE_ESIM_INCOMING;

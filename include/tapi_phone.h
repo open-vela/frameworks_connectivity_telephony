@@ -111,7 +111,7 @@ typedef void (*radio_power_changed_callback_t)(bool state);
  * This callback is triggered when call state changed
  * @param[out] call_info - call state info.
  */
-typedef void (*call_state_changed_callback_t)(tapi_call_info call_info);
+typedef void (*call_state_changed_callback_t)(tapi_call_info* call_info);
 
 typedef struct {
     radio_state_change_callback_t radio_state_change_cb;
