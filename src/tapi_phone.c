@@ -736,6 +736,7 @@ int tapi_reject_call(tapi_call_data_t call_data, tapi_async_function async_cb, v
             PHONE_SERVICE_WTP_REJECT, sizeof(wtp_xpc_data_t) + sizeof(uint8_t) * xpc_data->other_info_len);
         if (!module_msg) {
             tapi_log_error("malloc module msg fail");
+            free_handler_in_client(xpc_data->user_data);
             free(xpc_data);
             return -1;
         }
@@ -1051,7 +1052,8 @@ int tapi_client_register_callbacks(tele_callbacks_t tele_cbs, tapi_async_functio
     handler = create_aync_handler(PHONE_SERVICE_ESIM_REGISTER_CALLBACK, async_cb, user_obj);
     if (handler == NULL) {
         tapi_log_error("%s:aync handler create fail", __func__);
-        return -1;
+        ret = -1;
+        goto end;
     }
     xpc_cbs.user_data = handler;
     memcpy(module_msg->xpc_msg.value, &xpc_cbs, sizeof(xpc_tele_reg_callbacks_t));
@@ -1059,6 +1061,10 @@ int tapi_client_register_callbacks(tele_callbacks_t tele_cbs, tapi_async_functio
     if (ret != 0) {
         tapi_log_error("%s:send xpc message fail", __func__);
         free_handler_in_client(xpc_cbs.user_data);
+    }
+end:
+    if (module_msg != NULL) {
+        conn_xpc_module_msg_free(module_msg);
     }
     return ret;
 }
@@ -1078,12 +1084,21 @@ int tapi_client_unregister_callbacks(tapi_async_function async_cb, void* user_ob
     }
 
     handler = create_aync_handler(PHONE_SERVICE_ESIM_UNREGISTER_CALLBACK, async_cb, user_obj);
+    if (handler == NULL) {
+        tapi_log_error("%s:aync handler create fail", __func__);
+        ret = -1;
+        goto end;
+    }
     xpc_cbs.user_data = handler;
     memcpy(module_msg->xpc_msg.value, &xpc_cbs, sizeof(xpc_tele_unreg_callbacks_t));
     ret = conn_xpc_client_send(module_msg);
     if (ret != 0) {
         tapi_log_error("%s:send xpc message fail", __func__);
         free_handler_in_client(xpc_cbs.user_data);
+    }
+end:
+    if (module_msg != NULL) {
+        conn_xpc_module_msg_free(module_msg);
     }
     return ret;
 }
@@ -1103,6 +1118,11 @@ int tapi_client_set_radio_power(bool poweron, tapi_async_function async_cb, void
     }
 
     handler = create_aync_handler(PHONE_SERVICE_ESIM_MODIFY_RADIO_POWER, async_cb, user_obj);
+    if (handler == NULL) {
+        tapi_log_error("%s:aync handler create fail", __func__);
+        ret = -1;
+        goto end;
+    }
     xpc_cbs.user_data = handler;
     xpc_cbs.enable = poweron;
     memcpy(module_msg->xpc_msg.value, &xpc_cbs, sizeof(xpc_tele_radio_power_t));
@@ -1110,6 +1130,10 @@ int tapi_client_set_radio_power(bool poweron, tapi_async_function async_cb, void
     if (ret != 0) {
         tapi_log_error("%s:send xpc message fail", __func__);
         free_handler_in_client(xpc_cbs.user_data);
+    }
+end:
+    if (module_msg != NULL) {
+        conn_xpc_module_msg_free(module_msg);
     }
     return ret;
 }
@@ -1199,7 +1223,7 @@ void esim_deal_call_state_changed(xpc_tele_call_state_change_cb_t* data)
         tapi_log_error("%s:func_cb == NULL", __func__);
         return;
     }
-    data->call_state_changed_cb(data->call_info);
+    data->call_state_changed_cb(&data->call_info);
 }
 
 void esim_deal_common_resp(common_resp_t* resp)
