@@ -2444,41 +2444,6 @@ static void TestTeleFunc_CI_ModemGetRevision(void** state)
     assert_int_equal(ret, OK);
 }
 
-// static void TestTeleImsServiceStatus(void** state)
-// {
-//     case_type* mode = *state;
-//     // device default info.reg_info is 1, info.ext_info is 5
-//     REPEAT_TEST_LESS_FOR
-//     {
-//         tapi_ims_registration_info info;
-//         int ret = ims_set_service_status_test(0, 1);
-//         if (*mode == CASE_NORMAL_MODE || *mode == CASE_AIRPLANE_MODE
-//             || *mode == CASE_CALL_DIALING) {
-//             assert_int_equal(ret, OK);
-//             ret = ims_get_registration_test(0, &info);
-//             assert_int_equal(ret, OK);
-//             assert_int_equal(info.reg_info, 1);
-//             assert_int_equal(info.ext_info, 1);
-//         } else {
-//             assert_int_equal(ret, -5);
-//         }
-//         sleep(1);
-
-//         ret = ims_set_service_status_test(0, 5);
-//         if (*mode == CASE_NORMAL_MODE || *mode == CASE_AIRPLANE_MODE
-//             || *mode == CASE_CALL_DIALING) {
-//             assert_int_equal(ret, OK);
-//             ret = ims_get_registration_test(0, &info);
-//             assert_int_equal(ret, OK);
-//             assert_int_equal(info.reg_info, 1);
-//             assert_int_equal(info.ext_info, 5);
-//             sleep(1);
-//         } else {
-//             assert_int_equal(ret, -5);
-//         }
-//     }
-// }
-
 static void TestTeleFunc_ModemInvokeOemShotRilRequestRaw(void** state)
 {
     int ret = modem_invoke_oem_ril_request_raw_test(0, "01A0B023", 4);
@@ -2564,24 +2529,10 @@ static void TestTeleFunc_CI_ImsListenAndUnlisten(void** state)
     TestTeleFunc_CI_ImsUnlisten(state);
 }
 
-static void TestTeleFunc_CI_ImsTurnOn(void** state)
-{
-    (void)state;
-    int ret = ims_keep_turn_on_test(0);
-    assert_int_equal(ret, 0);
-}
-
 static void TestTeleFunc_CI_ImsGetRegistration(void** state)
 {
     (void)state;
     int ret = ims_get_registration_test(0, 1);
-    assert_int_equal(ret, 0);
-}
-
-static void TestTeleFunc_CI_ImsGetEnabled(void** state)
-{
-    (void)state;
-    int ret = ims_get_enabled_test(0, true);
     assert_int_equal(ret, 0);
 }
 
@@ -2615,36 +2566,10 @@ static void TestTeleFunc_CI_ImsResetImsCap(void** state)
     sleep(10);
 }
 
-static void TestTeleFunc_CI_ImsTurnOff(void** state)
-{
-    (void)state;
-    int ret = ims_keep_turn_off_test(0);
-    assert_int_equal(ret, 0);
-}
-
-static void TestTeleFunc_CI_ImsTurnOnOff(void** state)
-{
-    (void)state;
-    REPEAT_TEST_LESS_FOR
-    {
-        TestTeleFunc_CI_ImsTurnOn(state);
-        TestTeleFunc_CI_ImsGetEnabled(state);
-        TestTeleFunc_CI_ImsGetRegistration(state);
-        TestTeleFunc_CI_ImsTurnOff(state);
-    }
-}
-
 static void TestTeleFunc_ImsKeepRegOnAfterRadioOffOn(void** state)
 {
     (void)state;
     int ret = ims_is_reg_after_radio_off_on_test(0, true);
-    assert_int_equal(ret, 0);
-}
-
-static void TestTeleFunc_ImsKeepRegOffAfterRadioOffOn(void** state)
-{
-    (void)state;
-    int ret = ims_is_reg_after_radio_off_on_test(0, false);
     assert_int_equal(ret, 0);
 }
 
@@ -2653,33 +2578,6 @@ static void TestTeleFunc_ImsKeepVolteAvailAfterRadioOffOn(void** state)
     (void)state;
     int ret = ims_is_volte_available_after_radio_off_on_test(0, true);
     assert_int_equal(ret, 0);
-}
-
-static void TestTeleFunc_ImsKeepVolteUnavailAfterRadioOffOn(void** state)
-{
-    (void)state;
-    int ret = ims_is_volte_available_after_radio_off_on_test(0, false);
-    assert_int_equal(ret, 0);
-}
-
-static void TestTeleAbn_ImsTurnOnAfterModemOff(void** state)
-{
-    TestTeleFunc_CI_ModemDisable(state);
-    int ret = ims_turn_on_test(0);
-    assert_int_equal(ret, -EIO);
-    ret = ims_is_reg_as_expect_test(0, false);
-    assert_int_equal(ret, -EIO);
-    TestTeleFunc_CI_ModemEnable(state);
-}
-
-static void TestTeleAbn_ImsTurnOffAfterModemOff(void** state)
-{
-    TestTeleFunc_CI_ModemDisable(state);
-    int ret = ims_turn_off_test(0);
-    assert_int_equal(ret, -EIO);
-    ret = ims_is_reg_as_expect_test(0, false);
-    assert_int_equal(ret, -EIO);
-    TestTeleFunc_CI_ModemEnable(state);
 }
 
 static void TestTeleAbn_ImsVolteAvailAfterModemOff(void** state)
@@ -2692,49 +2590,12 @@ static void TestTeleAbn_ImsVolteAvailAfterModemOff(void** state)
     TestTeleFunc_CI_ModemEnable(state);
 }
 
-static void TestTeleAbn_ImsTurnOnAfterRadioOff(void** state)
-{
-    TestTeleFunc_CI_ModemSetRadioPowerOff(state);
-    TestTeleFunc_CI_ImsTurnOn(state);
-    int ret = ims_is_reg_as_expect_test(0, false);
-    assert_int_equal(ret, 0);
-}
-
-static void TestTeleAbn_ImsTurnOffAfterRadioOff(void** state)
-{
-    TestTeleFunc_CI_ModemSetRadioPowerOff(state);
-    int ret = tapi_ims_turn_off(get_tapi_ctx(), 0);
-    assert_int_equal(ret, 0);
-    ret = ims_is_reg_as_expect_test(0, false);
-    assert_int_equal(ret, 0);
-}
-
 static void TestTeleAbn_ImsVolteAvailAfterRadioOff(void** state)
 {
     TestTeleFunc_CI_ModemSetRadioPowerOff(state);
     int ret = ims_set_service_status_test(0, 5);
     assert_int_equal(ret, 0);
     ret = ims_is_volte_available_as_expect_test(0, false);
-    assert_int_equal(ret, 0);
-}
-
-static void TestTeleAbn_ImsTurnOnWithSimAbsent(void** state)
-{
-    int ret = remote_sim_absent_operation_test(0);
-    assert_int_equal(ret, 0);
-    ret = tapi_ims_turn_on(get_tapi_ctx(), 0);
-    assert_int_equal(ret, 0);
-    ret = ims_is_reg_as_expect_test(0, false);
-    assert_int_equal(ret, 0);
-}
-
-static void TestTeleAbn_ImsTurnOffWithSimAbsent(void** state)
-{
-    int ret = remote_sim_absent_operation_test(0);
-    assert_int_equal(ret, 0);
-    ret = tapi_ims_turn_off(get_tapi_ctx(), 0);
-    assert_int_equal(ret, 0);
-    ret = ims_is_reg_as_expect_test(0, false);
     assert_int_equal(ret, 0);
 }
 
@@ -2745,36 +2606,6 @@ static void TestTeleAbn_ImsVolteAvailWithSimAbsent(void** state)
     ret = ims_set_service_status_test(0, 5);
     assert_int_equal(ret, 0);
     ret = ims_is_volte_available_as_expect_test(0, false);
-    assert_int_equal(ret, 0);
-}
-
-static void TestTeleAbn_ImsTurnOnWhenCallDialing(void** state)
-{
-    int ret = 0;
-
-    TestTeleFunc_CI_CallDialNumber(state);
-    /* in calling already ims on, set again by tapi */
-    ret = tapi_ims_turn_on(get_tapi_ctx(), 0);
-    assert_int_equal(ret, 0);
-    ret = get_current_call_state_test(0);
-    assert_int_equal(ret, CALL_STATUS_DIALING);
-    ret = ims_is_reg_as_expect_test(0, true);
-    assert_int_equal(ret, 0);
-    ret = call_hangup_all_test(0);
-    assert_int_equal(ret, 0);
-}
-
-static void TestTeleAbn_ImsTurnOffWhenCallDialing(void** state)
-{
-    int ret = 0;
-
-    TestTeleFunc_CI_CallDialNumber(state);
-    TestTeleFunc_CI_ImsTurnOff(state);
-    ret = get_current_call_state_test(0);
-    assert_int_equal(ret, CALL_STATUS_DIALING);
-    ret = ims_is_reg_as_expect_test(0, false);
-    assert_int_equal(ret, 0);
-    ret = call_hangup_all_test(0);
     assert_int_equal(ret, 0);
 }
 
@@ -2793,46 +2624,6 @@ static void TestTeleAbn_ImsVolteAvailWhenCallDialing(void** state)
     assert_int_equal(ret, 0);
 }
 
-static void TestTeleAbn_ImsVolteCapOffWhenCallDialing(void** state)
-{
-    int ret = 0;
-
-    TestTeleFunc_CI_CallDialNumber(state);
-    TestTeleFunc_CI_ImsTurnOff(state);
-    ret = ims_set_service_status_test(0, 0);
-    assert_int_equal(ret, 0);
-    ret = get_current_call_state_test(0);
-    assert_int_equal(ret, CALL_STATUS_DIALING);
-    ret = ims_is_volte_available_as_expect_test(0, false);
-    assert_int_equal(ret, 0);
-    ret = call_hangup_all_test(0);
-    assert_int_equal(ret, 0);
-}
-
-static void TestTeleAbn_ImsTurnOnWhenCallActive(void** state)
-{
-    int ret = call_dial_in_active_test(0);
-    assert_int_equal(ret, 0);
-    /* in calling already ims on, set again by tapi */
-    ret = tapi_ims_turn_on(get_tapi_ctx(), 0);
-    assert_int_equal(ret, 0);
-    ret = ims_is_reg_as_expect_test(0, true);
-    assert_int_equal(ret, 0);
-    ret = call_hangup_all_test(0);
-    assert_int_equal(ret, 0);
-}
-
-static void TestTeleAbn_ImsTurnOffWhenCallActive(void** state)
-{
-    int ret = call_dial_in_active_test(0);
-    assert_int_equal(ret, 0);
-    TestTeleFunc_CI_ImsTurnOff(state);
-    ret = ims_is_reg_as_expect_test(0, false);
-    assert_int_equal(ret, 0);
-    ret = call_hangup_all_test(0);
-    assert_int_equal(ret, 0);
-}
-
 static void TestTeleAbn_ImsVolteAvailWhenCallActive(void** state)
 {
     int ret = call_dial_in_active_test(0);
@@ -2840,19 +2631,6 @@ static void TestTeleAbn_ImsVolteAvailWhenCallActive(void** state)
     ret = ims_set_service_status_test(0, 5);
     assert_int_equal(ret, 0);
     ret = ims_is_volte_available_as_expect_test(0, true);
-    assert_int_equal(ret, 0);
-    ret = call_hangup_all_test(0);
-    assert_int_equal(ret, 0);
-}
-
-static void TestTeleAbn_ImsVolteCapOffWhenCallActive(void** state)
-{
-    int ret = call_dial_in_active_test(0);
-    assert_int_equal(ret, 0);
-    TestTeleFunc_CI_ImsTurnOff(state);
-    ret = ims_set_service_status_test(0, 0);
-    assert_int_equal(ret, 0);
-    ret = ims_is_volte_available_as_expect_test(0, false);
     assert_int_equal(ret, 0);
     ret = call_hangup_all_test(0);
     assert_int_equal(ret, 0);
@@ -3803,32 +3581,6 @@ static void TestTeleFunc_CallDialAndHangupEcc(void** state)
     assert_int_equal(ret, OK);
 }
 
-static void TestTeleFunc_CallDialEccWithoutIms(void** state)
-{
-    (void)state;
-    bool get_value;
-    int ret;
-
-    ret = sim_set_operator_test(0, "46000");
-    assert_int_equal(ret, OK);
-    ret = ims_listen_ims_test(0);
-    assert_int_equal(ret, OK);
-    TestTeleFunc_CI_ImsTurnOff(state);
-    ret = call_dial_and_remote_active(0, "120");
-    assert_int_equal(ret, OK);
-    TestTeleFunc_CI_ModemSetRadioPowerOff(state);
-    ret = get_radio_power_test(0, &get_value);
-    assert_int_equal(ret, OK);
-    assert_false(get_value);
-
-    TestTeleFunc_CI_ModemSetRadioPowerOn(state);
-    TestTeleFunc_CI_ImsTurnOn(state);
-    ret = ims_unlisten_ims_test();
-    assert_int_equal(ret, OK);
-    ret = sim_set_operator_test(0, "000");
-    assert_int_equal(ret, OK);
-}
-
 static void TestTeleFunc_CallPerformRadioPowerOffUnderActiveECCCall(void** state)
 {
     (void)state;
@@ -4215,7 +3967,6 @@ int main(int argc, char* argv[])
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallPerformClearVoicecallSlot, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleAbn_CallAnswerAgain, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialAndHangupEcc, setup_call, teardown_call),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CallDialEccWithoutIms, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallPerformRadioPowerOffUnderActiveECCCall, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallPerformModemDisableUnderActiveECCCall, setup_call, teardown_call),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CallPerformRadioPowerOffUnderDialECCCall, setup_call, teardown_call),
@@ -4390,36 +4141,18 @@ int main(int argc, char* argv[])
 
     const struct CMUnitTest ImsTestSuits[] = {
         cmocka_unit_test(TestTeleFunc_CI_ImsListenAndUnlisten),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ImsTurnOn, setup_ims, teardown_ims),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ImsGetRegistration, setup_ims, teardown_ims),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ImsGetEnabled, setup_ims, teardown_ims),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ImsSetVoiceCap, setup_ims, teardown_ims),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ImsTurnOff, setup_ims, teardown_ims),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ImsTurnOnOff, setup_ims, teardown_ims),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ImsResetImsCap, setup_ims, teardown_ims),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ImsSetSmsVoiceCap, setup_ims, teardown_ims),
         cmocka_unit_test_setup_teardown(TestTeleFunc_CI_ImsSetSmsCap, setup_ims, teardown_ims),
         cmocka_unit_test_setup_teardown(TestTeleFunc_ImsKeepRegOnAfterRadioOffOn, setup_ims, teardown_imsAndRadio),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_ImsKeepRegOffAfterRadioOffOn, setup_ims, teardown_imsAndRadio),
         cmocka_unit_test_setup_teardown(TestTeleFunc_ImsKeepVolteAvailAfterRadioOffOn, setup_ims, teardown_imsAndRadio),
-        cmocka_unit_test_setup_teardown(TestTeleFunc_ImsKeepVolteUnavailAfterRadioOffOn, setup_ims, teardown_imsAndRadio),
-        cmocka_unit_test_setup_teardown(TestTeleAbn_ImsTurnOnAfterModemOff, setup_ims, teardown_imsAndModem),
-        cmocka_unit_test_setup_teardown(TestTeleAbn_ImsTurnOffAfterModemOff, setup_ims, teardown_imsAndModem),
         cmocka_unit_test_setup_teardown(TestTeleAbn_ImsVolteAvailAfterModemOff, setup_ims, teardown_imsAndModem),
-        cmocka_unit_test_setup_teardown(TestTeleAbn_ImsTurnOnAfterRadioOff, setup_ims, teardown_imsAndRadio),
-        cmocka_unit_test_setup_teardown(TestTeleAbn_ImsTurnOffAfterRadioOff, setup_ims, teardown_imsAndRadio),
         cmocka_unit_test_setup_teardown(TestTeleAbn_ImsVolteAvailAfterRadioOff, setup_ims, teardown_imsAndRadio),
-        cmocka_unit_test_setup_teardown(TestTeleAbn_ImsTurnOnWithSimAbsent, setup_imsAndSim, teardown_imsAndSim),
-        cmocka_unit_test_setup_teardown(TestTeleAbn_ImsTurnOffWithSimAbsent, setup_imsAndSim, teardown_imsAndSim),
         cmocka_unit_test_setup_teardown(TestTeleAbn_ImsVolteAvailWithSimAbsent, setup_imsAndSim, teardown_imsAndSim),
-        cmocka_unit_test_setup_teardown(TestTeleAbn_ImsTurnOnWhenCallDialing, setup_imsAndCall, teardown_imsAndCall),
-        cmocka_unit_test_setup_teardown(TestTeleAbn_ImsTurnOffWhenCallDialing, setup_imsAndCall, teardown_imsAndCall),
         cmocka_unit_test_setup_teardown(TestTeleAbn_ImsVolteAvailWhenCallDialing, setup_imsAndCall, teardown_imsAndCall),
-        cmocka_unit_test_setup_teardown(TestTeleAbn_ImsVolteCapOffWhenCallDialing, setup_imsAndCall, teardown_imsAndCall),
-        cmocka_unit_test_setup_teardown(TestTeleAbn_ImsTurnOnWhenCallActive, setup_imsAndCall, teardown_imsAndCall),
-        cmocka_unit_test_setup_teardown(TestTeleAbn_ImsTurnOffWhenCallActive, setup_imsAndCall, teardown_imsAndCall),
         cmocka_unit_test_setup_teardown(TestTeleAbn_ImsVolteAvailWhenCallActive, setup_imsAndCall, teardown_imsAndCall),
-        cmocka_unit_test_setup_teardown(TestTeleAbn_ImsVolteCapOffWhenCallActive, setup_imsAndCall, teardown_imsAndCall),
     };
 
     const struct CMUnitTest SSTestSuits[] = {
