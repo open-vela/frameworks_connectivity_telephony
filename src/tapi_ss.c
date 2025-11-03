@@ -943,8 +943,11 @@ static int ussd_request_received(DBusConnection* connection,
 
 static void report_data_logging_for_ss(dbus_context* ctx, char* type, char* fail_reason)
 {
+    char covered_plmn[MAX_MCC_LENGTH + MAX_MNC_LENGTH + 1] = { '\0' };
+
+    tapi_get_coverted_plmn(ctx, 0, covered_plmn);
 #ifdef CONFIG_TELEPHONY_DFX
-    OFONO_DFX_SS_INFO(type, fail_reason);
+    OFONO_DFX_SS_INFO(type, fail_reason, covered_plmn);
 #else
     tapi_async_result* ar;
     char out_data[LOG_IND_BUF_SIZE] = { 0 };
@@ -954,8 +957,8 @@ static void report_data_logging_for_ss(dbus_context* ctx, char* type, char* fail
         if (ar == NULL) {
             tapi_log_error("Memory allocation failed");
         } else {
-            snprintf(out_data, LOG_IND_BUF_SIZE, "%s,%s,%s", "SS_INFO",
-                type, fail_reason);
+            snprintf(out_data, LOG_IND_BUF_SIZE, "%s,%s,%s,%s", "SS_INFO",
+                type, fail_reason, covered_plmn);
             ar->status = OK;
             ar->data = out_data;
             ctx->logging_over_cb(ar);

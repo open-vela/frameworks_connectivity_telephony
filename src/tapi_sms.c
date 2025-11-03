@@ -530,33 +530,13 @@ int tapi_sms_get_op_code(tapi_context context, int slot_id)
     return get_op_code_base_mcc_mnc(mcc, mnc);
 }
 
-static void tapi_sms_get_coverted_plmn(tapi_context context, int slot_id, char* covered_plmn)
-{
-    char* mcc = NULL;
-    char* mnc = NULL;
-    int result;
-
-    result = tapi_network_get_mcc(context, slot_id, &mcc);
-    if (result != OK) {
-        strncpy(covered_plmn, "unknow", MAX_MCC_LENGTH + MAX_MNC_LENGTH + 1);
-        return;
-    }
-    result = tapi_network_get_mnc(context, slot_id, &mnc);
-    if (result != OK) {
-        strncpy(covered_plmn, "unknow", MAX_MCC_LENGTH + MAX_MNC_LENGTH + 1);
-        return;
-    }
-
-    get_covered_plmn(mcc, mnc, covered_plmn);
-}
-
 static void report_data_logging_for_sms(dbus_context* ctx, int slot_id, int sms_type,
     int direction, int fail_flag)
 {
     char covered_plmn[MAX_MCC_LENGTH + MAX_MNC_LENGTH + 1] = { '\0' };
     int opcode = tapi_sms_get_op_code(ctx, slot_id);
 
-    tapi_sms_get_coverted_plmn(ctx, slot_id, covered_plmn);
+    tapi_get_coverted_plmn(ctx, slot_id, covered_plmn);
 
 #ifdef CONFIG_TELEPHONY_DFX
     OFONO_DFX_SMS_INFO(opcode, sms_type, direction, fail_flag, covered_plmn);

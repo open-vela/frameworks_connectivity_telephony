@@ -70,32 +70,32 @@ static void ss_data_logging_cb(tapi_async_result* result)
         syslog(LOG_DEBUG, "expected_dfx_value:%d", dfx_data.expected_dfx_value[i]);
         switch (dfx_data.expected_dfx_value[i]) {
         case EVENT_SET_CALL_WAITING_DFX_DONE:
-            if (!strcmp("SS_INFO,ss:set call waiting,NA", data)) {
+            if (strstr(data, "SS_INFO,ss:set call waiting,NA")) {
                 dfx_data.received_dfx_flag[i] = true;
             }
             break;
         case EVENT_GET_CALL_WAITING_DFX_DONE:
-            if (!strcmp("SS_INFO,ss:get call waiting,NA", data)) {
+            if (strstr(data, "SS_INFO,ss:get call waiting,NA")) {
                 dfx_data.received_dfx_flag[i] = true;
             }
             break;
         case EVENT_QUERY_ALL_CALL_BARRING_DFX_DONE:
-            if (!strcmp("SS_INFO,ss:request callbarring,fail_reason:NA", data)) {
+            if (strstr(data, "SS_INFO,ss:request callbarring,fail_reason:NA")) {
                 dfx_data.received_dfx_flag[i] = true;
             }
             break;
         case EVENT_SET_CALL_BARRING_DFX_DONE:
-            if (!strcmp("SS_INFO,ss:set callbarring,NA", data)) {
+            if (strstr(data, "SS_INFO,ss:set callbarring,NA")) {
                 dfx_data.received_dfx_flag[i] = true;
             }
             break;
         case EVENT_SET_CALL_FORWARDING_DFX_DONE:
-            if (!strcmp("SS_INFO,ss:set call forwarding,NA", data)) {
+            if (strstr(data, "SS_INFO,ss:set call forwarding,NA")) {
                 dfx_data.received_dfx_flag[i] = true;
             }
             break;
         case EVENT_QUERY_CALL_FORWARDING_DFX_DONE:
-            if (!strcmp("SS_INFO,ss:query call forwarding,NA", data)) {
+            if (strstr(data, "SS_INFO,ss:query call forwarding,NA")) {
                 dfx_data.received_dfx_flag[i] = true;
             }
             break;

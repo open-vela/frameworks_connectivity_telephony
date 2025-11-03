@@ -93,11 +93,11 @@ const char* get_env_interface_support_string(const char* interface);
 bool is_interface_supported(const char* interface);
 int get_modem_id_by_proxy(dbus_context* context, GDBusProxy* proxy);
 int get_op_code_base_mcc_mnc(const char* mcc, const char* mnc);
-void get_covered_plmn(const char* mcc, const char* mnc, char* covered_plmn);
 tapi_service_module get_service_module_by_proxy_type(enum dbus_proxy_type type);
 const char* get_dbus_proxy_type_interface(enum dbus_proxy_type type);
 bool tapi_support_proxy_type(enum dbus_proxy_type type);
 bool tapi_support_interface(const char* interface);
+void tapi_get_coverted_plmn(tapi_context context, int slot_id, char* covered_plmn);
 
 /**
  * Power on or off modem.

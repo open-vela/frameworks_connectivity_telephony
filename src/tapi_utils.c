@@ -647,7 +647,7 @@ int get_modem_id_by_proxy(dbus_context* context, GDBusProxy* proxy)
     return 0;
 }
 
-void get_covered_plmn(const char* mcc, const char* mnc, char* covered_plmn)
+static void get_covered_plmn(const char* mcc, const char* mnc, char* covered_plmn)
 {
     char* ptr = covered_plmn;
 
@@ -658,6 +658,26 @@ void get_covered_plmn(const char* mcc, const char* mnc, char* covered_plmn)
         *ptr++ = mnc[i] - '0' + 'a';
     }
     *ptr = '\0';
+}
+
+void tapi_get_coverted_plmn(tapi_context context, int slot_id, char* covered_plmn)
+{
+    char* mcc = NULL;
+    char* mnc = NULL;
+    int result;
+
+    result = tapi_network_get_mcc(context, slot_id, &mcc);
+    if (result != OK) {
+        strncpy(covered_plmn, "unknow", MAX_MCC_LENGTH + MAX_MNC_LENGTH + 1);
+        return;
+    }
+    result = tapi_network_get_mnc(context, slot_id, &mnc);
+    if (result != OK) {
+        strncpy(covered_plmn, "unknow", MAX_MCC_LENGTH + MAX_MNC_LENGTH + 1);
+        return;
+    }
+
+    get_covered_plmn(mcc, mnc, covered_plmn);
 }
 
 int get_op_code_base_mcc_mnc(const char* mcc, const char* mnc)
