@@ -313,14 +313,15 @@ static void transmit_apdu_cb(DBusMessage* message, void* user_data)
         return;
     }
 
+    free(ar->data);
+    ar->data = NULL;
+
     if ((cb = handler->cb_function) == NULL) {
         tapi_log_error("callback in %s is null", __func__);
-        free(ar->data);
         return;
     }
 
     dbus_error_init(&err);
-    free(ar->data);
     if (dbus_set_error_from_message(&err, message) == true) {
         handle_error_code_message(err.message, ar);
         dbus_error_free(&err);

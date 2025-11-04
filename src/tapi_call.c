@@ -429,15 +429,16 @@ static void dial_call_callback(DBusMessage* message, void* user_data)
         return;
     }
 
+    free(ar->data);
+    ar->data = NULL;
+
     cb = handler->cb_function;
     if (cb == NULL) {
         tapi_log_error("callback in %s is null", __func__);
-        free(ar->data);
         return;
     }
 
     dbus_error_init(&err);
-    free(ar->data);
     if (dbus_set_error_from_message(&err, message) == true) {
         tapi_log_error("error from message in %s, %s: %s", __func__, err.name, err.message);
         dbus_error_free(&err);
