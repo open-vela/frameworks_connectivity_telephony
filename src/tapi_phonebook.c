@@ -347,7 +347,7 @@ int tapi_phonebook_load_adn_entries(tapi_context context,
         return -EINVAL;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_PHONEBOOK];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_PHONEBOOK);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -398,7 +398,7 @@ int tapi_phonebook_load_fdn_entries(tapi_context context,
         return -EINVAL;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_PHONEBOOK];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_PHONEBOOK);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -467,7 +467,7 @@ int tapi_phonebook_insert_fdn_entry(tapi_context context, int slot_id,
         return -EINVAL;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_PHONEBOOK];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_PHONEBOOK);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -541,7 +541,7 @@ int tapi_phonebook_delete_fdn_entry(tapi_context context, int slot_id,
         return -EINVAL;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_PHONEBOOK];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_PHONEBOOK);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -624,7 +624,7 @@ int tapi_phonebook_update_fdn_entry(tapi_context context, int slot_id, int event
         return -EINVAL;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_PHONEBOOK];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_PHONEBOOK);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;

@@ -910,7 +910,7 @@ static int manage_call_proxy_method(tapi_context context, int slot_id, const cha
         return -EINVAL;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_CALL);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -956,7 +956,7 @@ static int manager_conference(tapi_context context, int slot_id,
         return -EINVAL;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_CALL);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -998,7 +998,7 @@ static int call_play_dtmf(tapi_context context, int slot_id, unsigned char digit
         return -EINVAL;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_CALL);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -1070,7 +1070,7 @@ int tapi_call_dial_async(tapi_context context, int slot_id, char* number, int hi
         return -EINVAL;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_CALL);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -1221,7 +1221,7 @@ int tapi_call_get_all_calls(tapi_context context, int slot_id, int event_id,
         return -EINVAL;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_CALL);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -1275,7 +1275,7 @@ int tapi_call_merge_call_async(tapi_context context, int slot_id, int event_id, 
         return -EINVAL;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_CALL);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -1341,7 +1341,7 @@ int tapi_call_separate_call(tapi_context context,
         return -EINVAL;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_CALL);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -1395,7 +1395,7 @@ int tapi_call_send_tones(void* context, int slot_id, char* tones)
         return -EINVAL;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_CALL);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -1476,7 +1476,7 @@ int tapi_call_get_ecc_list(tapi_context context, int slot_id, ecc_info* out)
         return -EAGAIN;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_CALL);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -1719,7 +1719,7 @@ int tapi_call_answer_by_id_async(tapi_context context, int slot_id, char* call_i
         return -EINVAL;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_CALL);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -1787,7 +1787,7 @@ int tapi_call_hangup_by_id(tapi_context context, int slot_id, char* call_id)
         return -EINVAL;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_CALL);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -1848,7 +1848,7 @@ int tapi_call_deflect_by_id(tapi_context context, int slot_id, char* call_id, ch
         return -EINVAL;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_CALL);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;

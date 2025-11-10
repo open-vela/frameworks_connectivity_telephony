@@ -98,6 +98,7 @@ const char* get_dbus_proxy_type_interface(enum dbus_proxy_type type);
 bool tapi_support_proxy_type(enum dbus_proxy_type type);
 bool tapi_support_interface(const char* interface);
 void tapi_get_coverted_plmn(tapi_context context, int slot_id, char* covered_plmn);
+GDBusProxy* get_dbus_proxy_by_type(dbus_context* ctx, int slot_id, enum dbus_proxy_type type);
 
 /**
  * Power on or off modem.

@@ -580,7 +580,7 @@ int tapi_sms_send_message(tapi_context context, int slot_id, int sms_id,
         return -EINVAL;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SMS];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_SMS);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -661,7 +661,7 @@ int tapi_sms_send_data_message(tapi_context context, int slot_id, int sms_id,
         return -EINVAL;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SMS];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_SMS);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -738,7 +738,7 @@ bool tapi_sms_set_service_center_address(tapi_context context, int slot_id, char
         return -EINVAL;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SMS];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_SMS);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -769,7 +769,7 @@ int tapi_sms_get_service_center_address(tapi_context context, int slot_id, char*
         return -EINVAL;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SMS];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_SMS);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -810,7 +810,7 @@ int tapi_sms_enable_delivery_report(tapi_context context, int slot_id, bool enab
         return -EAGAIN;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SMS];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_SMS);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -841,7 +841,7 @@ int tapi_sms_get_delivery_report_status(tapi_context context, int slot_id, bool*
         return -EAGAIN;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SMS];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_SMS);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -874,7 +874,7 @@ int tapi_sms_get_all_messages_from_sim(tapi_context context, int slot_id,
         return -EINVAL;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_CALL);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -940,7 +940,7 @@ int tapi_sms_copy_message_to_sim(tapi_context context, int slot_id,
         return -EINVAL;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SMS];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_SMS);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -987,7 +987,7 @@ int tapi_sms_delete_message_from_sim(tapi_context context, int slot_id, int inde
         return -EINVAL;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SMS];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_SMS);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;

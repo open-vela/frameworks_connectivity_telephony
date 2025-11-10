@@ -997,7 +997,7 @@ int tapi_ss_initiate_service(tapi_context context, int slot_id, int event_id,
         return -EINVAL;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SS];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_SS);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -1054,7 +1054,7 @@ int tapi_ss_request_call_barring(tapi_context context, int slot_id, int event_id
         return -EINVAL;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_BARRING];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_CALL_BARRING);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -1123,7 +1123,7 @@ int tapi_ss_set_call_barring_option(tapi_context context, int slot_id, int event
         return -EINVAL;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_BARRING];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_CALL_BARRING);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -1218,7 +1218,7 @@ int tapi_ss_get_call_barring_option(tapi_context context, int slot_id, const cha
         return -EAGAIN;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_BARRING];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_CALL_BARRING);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -1271,7 +1271,7 @@ int tapi_ss_change_call_barring_password(tapi_context context, int slot_id, int 
         return -EINVAL;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_BARRING];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_CALL_BARRING);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -1343,7 +1343,7 @@ int tapi_ss_disable_all_call_barrings(tapi_context context, int slot_id, int eve
         return -EINVAL;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_BARRING];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_CALL_BARRING);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -1404,7 +1404,7 @@ int tapi_ss_disable_all_incoming(tapi_context context, int slot_id,
         return -EINVAL;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_BARRING];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_CALL_BARRING);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -1465,7 +1465,7 @@ int tapi_ss_disable_all_outgoing(tapi_context context, int slot_id,
         return -EINVAL;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_BARRING];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_CALL_BARRING);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -1527,7 +1527,7 @@ int tapi_ss_query_call_forwarding_option(tapi_context context, int slot_id, int 
         return -EINVAL;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_FORWARDING];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_CALL_FORWARDING);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -1600,7 +1600,7 @@ int tapi_ss_set_call_forwarding_option(tapi_context context, int slot_id, int ev
         return -EAGAIN;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_FORWARDING];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_CALL_FORWARDING);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -1661,7 +1661,7 @@ int tapi_get_ussd_state(tapi_context context, int slot_id, char** out)
         return -EAGAIN;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SS];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_SS);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -1709,7 +1709,7 @@ int tapi_ss_send_ussd(tapi_context context, int slot_id, int event_id, char* rep
         return -EINVAL;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SS];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_SS);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -1765,7 +1765,7 @@ int tapi_ss_cancel_ussd(tapi_context context, int slot_id, int event_id,
         return -EINVAL;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SS];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_SS);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -1826,7 +1826,7 @@ int tapi_ss_set_call_waiting(tapi_context context, int slot_id, int event_id, bo
         return -EAGAIN;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_SETTING];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_CALL_SETTING);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -1887,7 +1887,7 @@ int tapi_ss_get_call_waiting(tapi_context context, int slot_id, int event_id,
         return -EAGAIN;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_SETTING];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_CALL_SETTING);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -1947,7 +1947,7 @@ int tapi_ss_get_calling_line_presentation_info(tapi_context context, int slot_id
         return -EAGAIN;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_SETTING];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_CALL_SETTING);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -1996,7 +1996,7 @@ int tapi_ss_set_calling_line_restriction(tapi_context context, int slot_id, int 
         return -EAGAIN;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_SETTING];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_CALL_SETTING);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -2057,7 +2057,7 @@ int tapi_ss_get_calling_line_restriction_info(tapi_context context, int slot_id,
         return -EAGAIN;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL_SETTING];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_CALL_SETTING);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -2115,7 +2115,7 @@ int tapi_ss_enable_fdn(tapi_context context, int slot_id, int event_id,
         return -EINVAL;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_SIM);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -2168,7 +2168,7 @@ int tapi_ss_query_fdn(tapi_context context, int slot_id, int event_id,
         return -EINVAL;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_SIM);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;

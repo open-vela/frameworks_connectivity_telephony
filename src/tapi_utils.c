@@ -784,3 +784,12 @@ bool tapi_support_interface(const char* interface)
 
     return false;
 }
+
+GDBusProxy* get_dbus_proxy_by_type(dbus_context* ctx, int slot_id, enum dbus_proxy_type type)
+{
+    if (ctx->dbus_proxy[slot_id][type] == NULL) {
+        ctx->dbus_proxy[slot_id][type] = g_dbus_proxy_new(
+            ctx->client, tapi_utils_get_modem_path(slot_id), get_dbus_proxy_type_interface(type));
+    }
+    return ctx->dbus_proxy[slot_id][type];
+}

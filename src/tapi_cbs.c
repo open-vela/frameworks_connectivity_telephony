@@ -155,7 +155,7 @@ int tapi_sms_set_cell_broadcast_power_on(tapi_context context, int slot_id, bool
         return -EAGAIN;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CBS];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_CBS);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -185,10 +185,10 @@ int tapi_sms_get_cell_broadcast_power_on(tapi_context context, int slot_id, bool
         return -EINVAL;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CBS];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_CBS);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
-        return -EISCONN;
+        return -EIO;
     }
 
     *state = proxy_get_bool(proxy, "Powered");
@@ -220,7 +220,7 @@ int tapi_sms_set_cell_broadcast_topics(tapi_context context, int slot_id, char* 
         return -EINVAL;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CBS];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_CBS);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -251,10 +251,10 @@ int tapi_sms_get_cell_broadcast_topics(tapi_context context, int slot_id, char**
         return -EINVAL;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CBS];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_CBS);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
-        return -EISCONN;
+        return -EIO;
     }
 
     if (!g_dbus_proxy_get_property_basic(proxy, "Topics", &value)) {

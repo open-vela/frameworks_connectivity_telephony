@@ -1133,12 +1133,10 @@ static void on_modem_property_change(GDBusProxy* proxy, const char* name,
 
     modem_id = get_modem_id_by_proxy(ctx, proxy);
     dbus_message_iter_get_basic(iter, &new_state);
-    tapi_log_info("%s - from %d to %d", __func__, ctx->modem_state[modem_id], new_state);
 
     if (ctx->modem_state[modem_id] == MODEM_STATE_AWARE && new_state == MODEM_STATE_ALIVE) {
         tapi_log_info("%s - refresh dbus_proxy ", __func__);
         release_mutable_dbus_proxy(ctx);
-        get_mutable_dbus_proxy(ctx);
     }
 
     ctx->modem_state[modem_id] = new_state;
@@ -1486,7 +1484,7 @@ int tapi_set_pref_net_mode(tapi_context context,
         return -EAGAIN;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_RADIO];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_RADIO);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -1544,7 +1542,7 @@ int tapi_get_pref_net_mode(tapi_context context, int slot_id, tapi_pref_net_mode
         return -EAGAIN;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_RADIO];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_RADIO);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -1827,7 +1825,7 @@ int tapi_get_phone_state(tapi_context context, int slot_id, tapi_phone_state* st
         return -EAGAIN;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_CALL];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_CALL);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -2016,7 +2014,7 @@ int tapi_get_msisdn_number(tapi_context context, int slot_id, char* out, int len
         return -EAGAIN;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_SIM];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_SIM);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
@@ -2730,7 +2728,7 @@ int tapi_set_fast_dormancy(tapi_context context,
         return -EAGAIN;
     }
 
-    proxy = ctx->dbus_proxy[slot_id][DBUS_PROXY_RADIO];
+    proxy = get_dbus_proxy_by_type(ctx, slot_id, DBUS_PROXY_RADIO);
     if (proxy == NULL) {
         tapi_log_error("no available proxy in %s", __func__);
         return -EIO;
