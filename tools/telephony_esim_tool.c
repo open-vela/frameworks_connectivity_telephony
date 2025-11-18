@@ -714,6 +714,7 @@ static int telephonytool_cmd_get_main_menu_title(tapi_context context, char* par
 
     ret = tapi_stk_get_main_menu_title(context, atoi(slot_id), &title);
     syslog(LOG_DEBUG, "%s, ret: %d, slot_id: %s, title: %s", __func__, ret, slot_id, title);
+    free(title);
 
     return 0;
 }
