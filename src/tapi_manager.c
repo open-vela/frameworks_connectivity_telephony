@@ -2033,11 +2033,7 @@ int tapi_get_msisdn_number(tapi_context context, int slot_id, char* out, int len
         return -EINVAL;
     }
 
-    if (value != NULL) {
-        strlcpy(out, value, length);
-    } else {
-        out[0] = '\0';
-    }
+    strlcpy(out, value, length);
 
     return OK;
 }
