@@ -2046,13 +2046,12 @@ static void TestTeleFunc_CI_ModemVerifyPrefNetMode(void** state)
     assert_true(value == get_value);
 }
 
-// static void TestTeleFunc_CI_ModemGetPrefNetMode(void** state)
-// {
-//     sleep(5);
-//     tapi_pref_net_mode get_value = NETWORK_PREF_NET_TYPE_ANY;
-//     int ret = get_pref_net_mode_test(0, &get_value);
-//     assert_int_equal(ret, OK);
-// }
+static void TestTeleFunc_CI_ModemGetPrefNetMode(void** state)
+{
+    tapi_pref_net_mode get_value = NETWORK_PREF_NET_TYPE_ANY;
+    int ret = get_pref_net_mode_test(0, &get_value);
+    assert_int_equal(ret, OK);
+}
 
 static void TestTeleFunc_CI_ModemSetRadioPowerOn(void** state)
 {
@@ -4184,7 +4183,7 @@ int main(int argc, char* argv[])
         cmocka_unit_test(TestTeleFunc_ModemSetLteOnlyPrefNetMode),
         cmocka_unit_test(TestTeleFunc_ModemSetLteWcdmaPrefNetMode),
         cmocka_unit_test(TestTeleFunc_ModemSetLteGsmWcdmaPrefNetMode),
-        // cmocka_unit_test(TestTeleFunc_CI_ModemGetPrefNetMode),
+        cmocka_unit_test(TestTeleFunc_CI_ModemGetPrefNetMode),
         cmocka_unit_test(TestTeleFunc_CI_ModemRegisterOrUnregister),
         cmocka_unit_test(TestTeleFunc_ModemInvokeOemShotRilRequestRaw),
         cmocka_unit_test(TestTeleFunc_ModemInvokeOemLongRilRequestRaw),
